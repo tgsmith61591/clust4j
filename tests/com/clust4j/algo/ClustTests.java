@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -9,6 +10,7 @@ import org.junit.Test;
 
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
+import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
 
 public class ClustTests {
@@ -79,7 +81,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(2).setScale(true));
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -98,7 +100,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(3).setScale(false));
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(false));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -117,7 +119,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(3).setScale(true));
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -140,7 +142,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeans.KMeansPlanner(1).setScale(b));
+			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(1).setScale(b));
 			km.train();
 			assertTrue(km.didConverge());
 		}
@@ -148,12 +150,14 @@ public class ClustTests {
 		assertTrue(km.totalCost() == 9.0);
 	}
 
+	@Test
+	public void KMedoidsTestDefDist() {
+		assertTrue(KMedoids.DEF_DIST.equals(Distance.MANHATTAN));
+	}
+	
 	/** Scale = false */
 	@Test
 	public void KMedoidsTest1() {
-		if(!medoid_tests)
-			return;
-		
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -171,9 +175,6 @@ public class ClustTests {
 	/** Scale = true */
 	@Test
 	public void KMedoidsTest2() {
-		if(!medoid_tests)
-			return;
-		
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -191,9 +192,6 @@ public class ClustTests {
 	/** Now scale = false and multiclass */
 	@Test
 	public void KMedoidsTest3() {
-		if(!medoid_tests)
-			return;
-		
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -205,6 +203,7 @@ public class ClustTests {
 		KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(3).setScale(false));
 		km.train();
 		
+		System.out.println(Arrays.toString(km.getPredictedLabels()));
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
 		assertTrue(km.didConverge());
@@ -213,13 +212,10 @@ public class ClustTests {
 	/** Now scale = true and multiclass */
 	@Test
 	public void KMedoidsTest4() {
-		if(!medoid_tests)
-			return;
-		
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
-			new double[] {4.1234,    0.0001,    1.8900002},
+			new double[] {4.1234,    0.2801,    1.8900002},
 			new double[] {100,       200,       100}
 		};
 		
@@ -235,9 +231,6 @@ public class ClustTests {
 	// What if k = 1??
 	@Test
 	public void KMedoidsTest5() {
-		if(!medoid_tests)
-			return;
-		
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -311,7 +304,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				km = new KMeans(mat, new KMeans.KMeansPlanner(k).setScale(b));
+				km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(b));
 				km.train();
 			}
 		}

@@ -1,7 +1,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -11,51 +10,14 @@ import com.clust4j.utils.GeometricallySeparable;
 
 public class KMeans extends AbstractKCentroidClusterer {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
-	final public static double DEF_MIN_CHNG = 0.005;
-	
-	final private double minChange;
-	
-	
-	
-	final public static class KMeansPlanner extends BaseKCentroidPlanner {
-		private double minChange = DEF_MIN_CHNG;
-
-		public KMeansPlanner(int k) {
-			super(k);
-		}
-
-		public KMeansPlanner setMinChangeStoppingCriteria(final double min) {
-			this.minChange = min;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setDist(final GeometricallySeparable dist) {
-			return (KMeansPlanner) super.setDist(dist);
-		}
-		
-		@Override
-		public KMeansPlanner setMaxIter(final int max) {
-			return (KMeansPlanner) super.setMaxIter(max);
-		}
-		
-		public KMeansPlanner setScale(final boolean scale) {
-			return (KMeansPlanner) super.setScale(scale);
-		}
-	}
-	
-	
-	
 	
 	public KMeans(final AbstractRealMatrix data, final int k) {
-		this(data, new KMeansPlanner(k));
+		this(data, new BaseKCentroidPlanner(k));
 	}
 	
-	public KMeans(final AbstractRealMatrix data, final KMeansPlanner builder) {
+	public KMeans(final AbstractRealMatrix data, final BaseKCentroidPlanner builder) {
 		super(data, builder);
-		this.minChange = builder.minChange;
 	}
-	
 	
 	
 	
@@ -77,10 +39,6 @@ public class KMeans extends AbstractKCentroidClusterer {
 		}
 		
 		return sumI;
-	}
-	
-	public double getMinChange() {
-		return minChange;
 	}
 	
 	@Override
@@ -105,50 +63,12 @@ public class KMeans extends AbstractKCentroidClusterer {
 		
 		return newCentroid;
 	}
-
-	private TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
-		/* Key is the closest centroid, value is the records that belong to it */
-
-		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
-		final int m = data.getRowDimension();
-		
-		/* Loop over each record in the matrix */
-		for(int rec = 0; rec < m; rec++) {
-			final double[] record = data.getRow(rec);
-			double min_dist = Double.MAX_VALUE;
-			int closest_cent = 0;
-			
-			/* Loop over every centroid, get calculate dist from record,
-			 * identify the closest centroid to this record */
-			for(int i = 0; i < k; i++) {
-				final double[] centroid = centroids.get(i);
-				final double dis = getDistanceMetric().distance(record, centroid);
-				
-				/* Track the current min distance. If dist
-				 * is shorter than the previous min, assign
-				 * new closest centroid to this record */
-				if(dis < min_dist) {
-					min_dist = dis;
-					closest_cent = i;
-				}
-			}
-			
-			labels[rec] = closest_cent;
-			if(cent.get(closest_cent) == null)
-				cent.put(closest_cent, new ArrayList<Integer>());
-			
-			cent.get(closest_cent).add(rec);
-		}
-		
-		return cent;
-	}
 	
 	@Override
 	final public void train() {
 		if(isTrained)
 			return;
 		
-		//initCentroids(); Now initialized in super
 		Double oldCost = null;
 		labels = new int[m];
 		

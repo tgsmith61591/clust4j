@@ -137,5 +137,6 @@ public class DBSCAN extends AbstractDensityClusterer {
 			return;
 		
 		// TODO:
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

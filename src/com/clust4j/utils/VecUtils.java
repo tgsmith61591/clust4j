@@ -24,12 +24,28 @@ public class VecUtils {
 		return copy;
 	}
 	
+	final public static double max(final double[] a) {
+		double max = Double.MIN_VALUE;
+		for(double d : a)
+			if(d > max)
+				max = d;
+		return max;
+	}
+	
 	final public static double mean(final double[] a) {
 		return mean(a, sum(a));
 	}
 	
 	final public static double mean(final double[] a, final double sum) {
 		return sum / a.length;
+	}
+	
+	final public static double min(final double[] a) {
+		double min = Double.MAX_VALUE;
+		for(double d : a)
+			if(d < min)
+				min = d;
+		return min;
 	}
 	
 	final public static double stdDev(final double[] a) {

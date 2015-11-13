@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -12,8 +13,12 @@ import com.clust4j.utils.GeometricallySeparable;
 
 public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClusterer implements CentroidLearner {
 	final public static int DEF_MAX_ITER = 100;
+	final public static double DEF_MIN_CHNG = 0.005;
+	
 
 	final protected int maxIter;
+	final protected double minChange;
+	
 	protected boolean isTrained = false;
 	protected boolean converged = false;
 	protected double cost;
@@ -32,15 +37,17 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		super(data, planner, planner.k);
 		
 		this.maxIter = planner.maxIter;
+		this.minChange = planner.minChange;
 		this.m = data.getRowDimension();
 		
 		initCentroids();
 	}
 	
-	protected static class BaseKCentroidPlanner extends AbstractClusterer.BaseClustererPlanner {
+	public static class BaseKCentroidPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private int maxIter = DEF_MAX_ITER;
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean scale = DEF_SCALE;
+		private double minChange = DEF_MIN_CHNG;
 		private int k;
 		
 		public BaseKCentroidPlanner(final int k) {
@@ -67,6 +74,11 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 			this.maxIter = max;
 			return this;
 		}
+
+		public BaseKCentroidPlanner setMinChangeStoppingCriteria(final double min) {
+			this.minChange = min;
+			return this;
+		}
 		
 		@Override
 		public BaseKCentroidPlanner setScale(final boolean scale) {
@@ -76,8 +88,63 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	}
 
 	
+	
+
+
+	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+		/* Key is the closest centroid, value is the records that belong to it */
+		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
+		
+		/* Loop over each record in the matrix */
+		for(int rec = 0; rec < m; rec++) {
+			final double[] record = data.getRow(rec);
+			double min_dist = Double.MAX_VALUE;
+			int closest_cent = 0;
+			
+			/* Loop over every centroid, get calculate dist from record,
+			 * identify the closest centroid to this record */
+			for(int i = 0; i < k; i++) {
+				final double[] centroid = centroids.get(i);
+				final double dis = getDistanceMetric().distance(record, centroid);
+				
+				/* Track the current min distance. If dist
+				 * is shorter than the previous min, assign
+				 * new closest centroid to this record */
+				if(dis < min_dist) {
+					min_dist = dis;
+					closest_cent = i;
+				}
+			}
+			
+			labels[rec] = closest_cent;
+			if(cent.get(closest_cent) == null)
+				cent.put(closest_cent, new ArrayList<Integer>());
+			
+			cent.get(closest_cent).add(rec);
+		}
+		
+		return cent;
+	}
+	
 	public boolean didConverge() {
 		return converged;
+	}
+	
+	public double getCostOfSystem() {
+		double cost = 0;
+		double[] oid;
+		ArrayList<Integer> medoid_members;
+		for(Map.Entry<Integer, ArrayList<Integer>> medoid_entry : cent_to_record.entrySet()) {
+			oid = centroids.get(medoid_entry.getKey());
+			medoid_members = medoid_entry.getValue();
+			cost += getCost(medoid_members, oid);
+		}
+		
+		return cost;
+	}
+	
+	public double getMinChange() {
+		return minChange;
 	}
 	
 	final private void initCentroids() {
@@ -138,4 +205,6 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	public double totalCost() {
 		return cost;
 	}
+	
+	abstract double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid);
 }
