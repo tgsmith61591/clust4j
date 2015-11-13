@@ -6,6 +6,7 @@ A Java-based set of classification clustering algorithm implementations.
 
 
 ### Example data (for reproducability):
+    ```java
     final int k = 2;
     final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         new double[] {0.005,     0.182751,  0.1284},
@@ -20,6 +21,7 @@ A Java-based set of classification clustering algorithm implementations.
     });
 		
     final int[] trainLabels = new int[] {0, 1, 1};
+    ```
     
 
 
@@ -27,24 +29,29 @@ A Java-based set of classification clustering algorithm implementations.
 - Partitional algorithms:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
+            ```java
             KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true));
             knn.train();
             final int[] results = knn.getPredictedLabels(); // [0,1]
+            ```
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
+            ```java
             KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
             km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
+            ```
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
+            ```java
             KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(k).setScale(true));
             km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
-
+            ```
 
 ### Future implementations:
 - Density-based:
@@ -57,7 +64,9 @@ A Java-based set of classification clustering algorithm implementations.
  - The default `AbstractClusterer.BaseClustererPlanner.getScale()` returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
 
+        ```java
         // With normalization
         new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(false));
         // Without normalization
         new KMeans(mat, k);
+        ```
