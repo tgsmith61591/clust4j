@@ -5,7 +5,7 @@ A Java-based set of classification clustering algorithm implementations.
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
 
 
-### Example data used:
+### Example data (for reproducability):
     final int k = 2;
     final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         new double[] {0.005,     0.182751,  0.1284},
@@ -27,25 +27,21 @@ A Java-based set of classification clustering algorithm implementations.
 - Partitional algorithms:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
-            KNN knn = new KNN(mat, test, trainLabels, 
-                              new KNN.KNNPlanner(k)
-                              .setScale(true));
-		    knn.train();
+            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true));
+            knn.train();
             final int[] results = knn.getPredictedLabels(); // [0,1]
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
-            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k)
-                                   .setScale(true));
-		    km.train();
+            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
+            km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(k)
-                                       .setScale(true));
-		    km.train();
+            KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(k).setScale(true));
+            km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
