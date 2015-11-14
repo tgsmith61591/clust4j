@@ -138,5 +138,6 @@ public abstract class AbstractClusterer implements Classifier {
 	
 	public abstract String getName();
 	public abstract boolean isTrained();
+	public abstract int predict(final double[] newRecord);
 	public abstract void train();
 }

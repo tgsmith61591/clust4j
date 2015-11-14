@@ -59,6 +59,6 @@ A Java-based set of classification clustering algorithm implementations.
 
 
         // With normalization
-        new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(false));
+        new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
         // Without normalization
         new KMeans(mat, k);

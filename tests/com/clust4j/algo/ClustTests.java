@@ -2,7 +2,6 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -14,7 +13,6 @@ import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
 
 public class ClustTests {
-	private static boolean medoid_tests = false;
 	private static boolean print = false;
 	private static final MatrixFormatter formatter = new MatrixFormatter();
 	private static Array2DRowRealMatrix getRandom(final int rows, final int cols) {
@@ -137,7 +135,7 @@ public class ClustTests {
 			new double[] {100,       200,       100}
 		};
 		
-		final boolean[] scale = new boolean[]{false, true};
+		final boolean[] scale = new boolean[]{true, false};
 		
 		KMeans km = null;
 		for(boolean b : scale) {
@@ -145,9 +143,13 @@ public class ClustTests {
 			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(1).setScale(b));
 			km.train();
 			assertTrue(km.didConverge());
-		}
 
-		assertTrue(km.totalCost() == 9.0);
+			if(b)
+				assertTrue(km.totalCost() == 9.0);
+		}
+		
+		// Test predict function
+		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getPredictedLabels()[3]);
 	}
 
 	@Test
@@ -178,7 +180,8 @@ public class ClustTests {
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
-			new double[] {4.1234,    0.27395,   1.8900002}
+			new double[] {4.1234,    0.27395,   1.8900002},
+			new double[] {0.015, 	 0.161352,  0.1173},
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
@@ -186,6 +189,7 @@ public class ClustTests {
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
+		assertTrue(km.getPredictedLabels()[0] == km.getPredictedLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -203,7 +207,6 @@ public class ClustTests {
 		KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(3).setScale(false));
 		km.train();
 		
-		System.out.println(Arrays.toString(km.getPredictedLabels()));
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
 		assertTrue(km.didConverge());
@@ -312,10 +315,7 @@ public class ClustTests {
 	
 	@Test
 	public void KMedoidsLoadTest1() {
-		if(!medoid_tests)
-			return;
-		
-		final Array2DRowRealMatrix mat = getRandom(10000, 10);
+		final Array2DRowRealMatrix mat = getRandom(2500, 5);
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5,7};
 		

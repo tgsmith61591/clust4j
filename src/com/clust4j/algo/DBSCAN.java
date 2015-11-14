@@ -132,6 +132,12 @@ public class DBSCAN extends AbstractDensityClusterer {
 	}
 	
 	@Override
+	public int predict(final double[] newRecord) {
+		// TODO:
+		return 0;
+	}
+	
+	@Override
 	final public void train() {
 		if(isTrained)
 			return;

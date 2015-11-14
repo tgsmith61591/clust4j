@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.CentroidLearner;
@@ -18,6 +19,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 
 	final protected int maxIter;
 	final protected double minChange;
+	final protected int[] init_centroid_indices;
 	
 	protected boolean isTrained = false;
 	protected boolean converged = false;
@@ -40,7 +42,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		this.minChange = planner.minChange;
 		this.m = data.getRowDimension();
 		
-		initCentroids();
+		init_centroid_indices = initCentroids();
 	}
 	
 	public static class BaseKCentroidPlanner extends AbstractClusterer.BaseClustererPlanner {
@@ -90,37 +92,14 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	
 	
 
-
-	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
-		/* Key is the closest centroid, value is the records that belong to it */
-		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
-		
-		/* Loop over each record in the matrix */
-		for(int rec = 0; rec < m; rec++) {
-			final double[] record = data.getRow(rec);
-			double min_dist = Double.MAX_VALUE;
-			int closest_cent = 0;
-			
-			/* Loop over every centroid, get calculate dist from record,
-			 * identify the closest centroid to this record */
-			for(int i = 0; i < k; i++) {
-				final double[] centroid = centroids.get(i);
-				final double dis = getDistanceMetric().distance(record, centroid);
-				
-				/* Track the current min distance. If dist
-				 * is shorter than the previous min, assign
-				 * new closest centroid to this record */
-				if(dis < min_dist) {
-					min_dist = dis;
-					closest_cent = i;
-				}
-			}
-			
-			labels[rec] = closest_cent;
-			if(cent.get(closest_cent) == null)
-				cent.put(closest_cent, new ArrayList<Integer>());
-			
-			cent.get(closest_cent).add(rec);
+	
+	@Override
+	public ArrayList<double[]> getCentroids() {
+		final ArrayList<double[]> cent = new ArrayList<double[]>();
+		for(double[] d : centroids) {
+			final double[] copy = new double[d.length];
+			System.arraycopy(d, 0, copy, 0, d.length);
+			cent.add(copy);
 		}
 		
 		return cent;
@@ -147,34 +126,6 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		return minChange;
 	}
 	
-	final private void initCentroids() {
-		// Initialize centroids with K random records
-		// Creates a list of integer sequence 0 -> nrow(data), then shuffles it
-		// and takes the first K indices as the centroid records. Then manually
-		// sets recordIndices to null to invoke GC to free up space
-		ArrayList<Integer> recordIndices = new ArrayList<Integer>();
-		for(int i = 0; i < data.getRowDimension(); i++) 
-			recordIndices.add(i);
-		Collections.shuffle(recordIndices, getSeed());
-		
-		for(int i = 0; i < k; i++) 
-			centroids.add(data.getRow(recordIndices.get(i)));
-		
-		recordIndices = null;
-	}
-	
-	@Override
-	public ArrayList<double[]> getCentroids() {
-		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids) {
-			final double[] copy = new double[d.length];
-			System.arraycopy(d, 0, copy, 0, d.length);
-			cent.add(copy);
-		}
-		
-		return cent;
-	}
-	
 	public int getMaxIter() {
 		return maxIter;
 	}
@@ -184,6 +135,30 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		return labels;
 	}
 	
+	/**
+	 * Returns the ordered indices of the centroids
+	 * @return
+	 */
+	final private int[] initCentroids() {
+		// Initialize centroids with K random records
+		// Creates a list of integer sequence 0 -> nrow(data), then shuffles it
+		// and takes the first K indices as the centroid records. Then manually
+		// sets recordIndices to null to invoke GC to free up space
+		ArrayList<Integer> recordIndices = new ArrayList<Integer>();
+		for(int i = 0; i < data.getRowDimension(); i++) 
+			recordIndices.add(i);
+		Collections.shuffle(recordIndices, getSeed());
+		
+		final int[] cent_indices = new int[k];
+		for(int i = 0; i < k; i++) {
+			centroids.add(data.getRow(recordIndices.get(i)));
+			cent_indices[i] = recordIndices.get(i);
+		}
+		
+		recordIndices = null;
+		return cent_indices;
+	}
+	
 	@Override
 	public boolean isTrained() {
 		return isTrained;
@@ -191,6 +166,27 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	
 	public int itersElapsed() {
 		return iter;
+	}
+	
+	@Override
+	public int predict(final double[] newRecord) {
+		int n;
+		if((n = newRecord.length) != data.getColumnDimension())
+			throw new DimensionMismatchException(n, data.getColumnDimension());
+		
+		int nearestLabel = 0;
+		double shortestDist = Double.MAX_VALUE;
+		double[] cent;
+		for(int i = 0; i < k; i++) {
+			cent = centroids.get(i);
+			double dist = getDistanceMetric().distance(newRecord, cent);
+			if(dist < shortestDist) {
+				shortestDist = dist;
+				nearestLabel = i;
+			}
+		}
+		
+		return nearestLabel;
 	}
 
 	@Override
@@ -207,4 +203,5 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	}
 	
 	abstract double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid);
+	abstract protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels();
 }

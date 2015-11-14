@@ -1,16 +1,34 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 
 public class KMedoids extends AbstractKCentroidClusterer {
 	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
+	
+	/**
+	 * Stores the indices of the current medoids. Each index,
+	 * 0 thru k-1, corresponds to the class label for the cluster.
+	 */
+	private int[] medoid_indices = new int[k];
+	
+	/**
+	 * Upper triangular, M x M matrix denoting distances between records.
+	 * Is only populated during training phase and then set to null for 
+	 * garbage collection, as a large-M matrix has a high space footprint: O(M choose 2).
+	 * This is only needed during training and then can safely be collected
+	 * to free up heap space.
+	 */
+	private double[][] dist_mat = null;
+	
 	
 	final public static class KMedoidsPlanner extends BaseKCentroidPlanner {
 		public KMedoidsPlanner(int k) {
@@ -19,12 +37,104 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		}
 	}
 	
+	
+	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
 		this(data, new KMedoidsPlanner(k));
 	}
 	
 	public KMedoids(final AbstractRealMatrix data, final BaseKCentroidPlanner builder) {
 		super(data, builder);
+	}
+	
+	
+	
+
+	/**
+	 * The KMeans cluster assignment method leverages the super class' predict method,
+	 * however KMedoids does <i>not</i>, as it internally uses the dist_mat for faster
+	 * distance look-ups. This means more, less-generalized code, but faster execution time.
+	 */
+	@Override
+	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+		/* Key is the closest centroid, value is the records that belong to it */
+		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
+		
+		/* Loop over each record in the matrix */
+		for(int rec = 0; rec < m; rec++) {
+			double min_dist = Double.MAX_VALUE;
+			int closest_cent = 0;
+			
+			/* Loop over every centroid, get calculate dist from record,
+			 * identify the closest centroid to this record */
+			for(int i = 0; i < k; i++) {
+				final int centroid_idx = medoid_indices[i];
+				final double dis = dist_mat[FastMath.min(rec, centroid_idx)][FastMath.max(rec, centroid_idx)];
+				
+				/* Track the current min distance. If dist
+				 * is shorter than the previous min, assign
+				 * new closest centroid to this record */
+				if(dis < min_dist) {
+					min_dist = dis;
+					closest_cent = i;
+				}
+			}
+			
+			labels[rec] = closest_cent;
+			if(cent.get(closest_cent) == null)
+				cent.put(closest_cent, new ArrayList<Integer>());
+			
+			cent.get(closest_cent).add(rec);
+		}
+		
+		return cent;
+	}
+	
+	/**
+	 * Returns the cost of a newly proposed system of medoids
+	 * @param med_indices
+	 * @return calculation of new system cost
+	 */
+	final double simulateSystemCost(final int[] med_indices, final double costToBeat) {
+		/* Key is the closest centroid, value is the records that belong to it */
+		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
+		
+		/* Loop over each record in the matrix */
+		for(int rec = 0; rec < m; rec++) {
+			double min_dist = Double.MAX_VALUE;
+			int closest_cent = 0;
+			
+			/* Loop over every centroid, get calculate dist from record,
+			 * identify the closest centroid to this record */
+			for(int i = 0; i < k; i++) {
+				final int centroid_idx = med_indices[i];
+				final double dis = dist_mat[FastMath.min(rec, centroid_idx)][FastMath.max(rec, centroid_idx)];
+				
+				/* Track the current min distance. If dist
+				 * is shorter than the previous min, assign
+				 * new closest centroid to this record */
+				if(dis < min_dist) {
+					min_dist = dis;
+					closest_cent = i;
+				}
+			}
+			
+			if(cent.get(closest_cent) == null)
+				cent.put(closest_cent, new ArrayList<Integer>());
+			
+			cent.get(closest_cent).add(rec);
+		}
+		
+		
+		// Get simulated cost
+		double cst = 0;
+		for(Map.Entry<Integer, ArrayList<Integer>> entry : cent.entrySet()) {
+			cst += getCost(entry.getValue(), data.getRow(med_indices[entry.getKey()]));
+			if(cst > costToBeat)
+				return costToBeat + 1; // Hack to leave early
+		}
+		
+		return cst;
 	}
 	
 	/**
@@ -53,91 +163,78 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	public void train() {
 		if(isTrained)
 			return;
+		
+		
+		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
+		// We do this in KMedoids and not KMeans, because KMedoids uses
+		// real points as medoids and not means for centroids, thus
+		// the recomputation of distances is unnecessary with the dist mat
+		dist_mat = ClustUtils.distanceMatrix(data, getDistanceMetric());
 
 		
-		// Initialize labels, initialize clusters
+		// Clusters initialized with randoms already in super
+		// Initialize labels
 		labels = new int[m];
+		medoid_indices = init_centroid_indices;
 		cent_to_record = assignClustersAndLabels();
 		
 		
-		// These variables hold the "best" so far (which minimize cost)
-		Double oldCost = getCostOfSystem(); // Initial cost of system
-		cost = oldCost;
-		ArrayList<double[]> bestMedoids = centroids; // Initial centroids
-		TreeMap<Integer, ArrayList<Integer>> best_cent_to_record = cent_to_record; // Initial mapping
-		int[] best_labels = labels; // Store the labels which best minimize the cost function
+		// State vars...
+		// Once this last_config is no longer changing, global min reached
+		int[] best_medoids = new int[k];
+		System.arraycopy(medoid_indices, 0, best_medoids, 0, k);
+		double oldCost = getCostOfSystem();
 		
-
-		// Using Voronoi's algorithm, for each medoid m, identify point which
-		// minimizes the cost in that cluster. Do this until convergence.
 		for(iter = 0; iter < maxIter; iter++) {
-			double[] medoid;
-			double[] current_medoid;
-			ArrayList<Integer> medoid_members;
+		
 			
-			// Minimize cost in each cluster by selecting
-			// best medoid for each cluster
-			double systemCost = 0;
+			// Use the PAM (partitioning around medoids) algorithm
+			// For each cluster in k...
+			double new_cost = Double.MAX_VALUE;
 			for(int i = 0; i < k; i++) {
-				medoid_members = cent_to_record.get(i);
-				current_medoid = centroids.get(i);
-				double current_cluster_cost = getCost(medoid_members, current_medoid);
+				final int medoid_index = best_medoids[i];
+				final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
+				final double[] current_medoid = data.getRow(medoid_index);
+				double cost_of_cluster = getCost(indices_in_cluster, current_medoid);
 				
-				// For each point in the cluster, treat
-				// every point as the medoid, calculate cost
-				// and identify point which minimizes cluster cost
-				for(Integer med : medoid_members) {
-					medoid = data.getRow(med);
-					double tmp_cost = getCost(medoid_members, medoid);
-					if(tmp_cost < current_cluster_cost) {
-						// Store medoid which minimized cost
-						current_cluster_cost = tmp_cost;
-						current_medoid = medoid;
+				// Track min for cluster
+				int best_medoid_index = medoid_index;
+				for(Integer o : indices_in_cluster) {
+					if(o.equals(medoid_index)) // Skip if it's the current medoid
+						continue;
+					
+					final int[] copy_of_medoids = new int[k];
+					System.arraycopy(best_medoids, 0, copy_of_medoids, 0, k);
+					copy_of_medoids[i] = o;
+					
+					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
+					if(new_cost < cost_of_cluster) {
+						cost_of_cluster = new_cost;
+						best_medoid_index = o;
 					}
 				}
 				
-				// Now set this medoid to the minimizing one
-				centroids.set(i, current_medoid);
-				systemCost += current_cluster_cost;
+				// Have found optimal medoid to minimize cost in cluster...
+				best_medoids[i] = best_medoid_index;
 			}
-			
-			System.out.println("Last system cost: " + 
-					oldCost + ". New system cost: " + 
-					systemCost + ". Should converge == " + 
-					(FastMath.abs(oldCost - systemCost) < minChange && iter != 0));
-			
-			// Now that best medoids have been selected, need 
-			// to reassign system and ensure still decreasing...
-			if(FastMath.abs(oldCost - systemCost) < minChange && iter!=0) { // Don't break on iter one...
-				// Labels will be the same at this point.
-				isTrained = true;
+		
+			// Check for stopping condition
+			if( best_medoids.equals(medoid_indices) ||
+					FastMath.abs(oldCost - new_cost) < minChange) { // convergence!
 				converged = true;
-				cost = systemCost;
-				iter++; // Track iters used
-				return;
-			} else { // Has not yet converged
-				if(systemCost < oldCost) { // Still decreasing...
-					cost = systemCost;
-					oldCost = cost;
-					bestMedoids = centroids; // Initial centroids
-					best_cent_to_record = cent_to_record; // Initial mapping
-					best_labels = labels; // Store the labels which best minimize the cost function
-				} else { // Is not decreasing, rather is increasing (if equal, would have exited)
-					cost = oldCost;
-					centroids = bestMedoids;
-					cent_to_record = best_cent_to_record;
-					labels = best_labels;
-					converged = true;
-					iter++;
-					isTrained = true;
-					return;
-				}
-				
+				iter++;
+				break;
+			} else { // can get better... reassign clusters to new medoids, keep going.
+				oldCost = new_cost;
+				medoid_indices = best_medoids;
 				cent_to_record = assignClustersAndLabels();
 			}
-		}
+		} // End iter loop
+		
 		
 		// If non-convergent
+		cost = getCostOfSystem();
+		dist_mat = null; // Force GC to save space efficiency
 		isTrained = true;
 	}
 }

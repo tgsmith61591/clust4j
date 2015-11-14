@@ -127,6 +127,22 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	}
 	
 	@Override
+	public int predict(final double[] newRecord) {
+		if(newRecord.length != data.getColumnDimension())
+			throw new DimensionMismatchException(newRecord.length, data.getColumnDimension());
+		
+		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
+		
+		// Get map of distances to each record
+		for(int train_row = 0; train_row < data.getRowDimension(); train_row++)
+			rec_to_dist.put(train_row, getDistanceMetric().distance(newRecord, data.getRow(train_row)));
+		
+		// Sort treemap on value
+		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils.sortEntriesByValue(rec_to_dist);
+		return identifyMajorityClass(sortedEntries, k, trainLabels);
+	}
+	
+	@Override
 	public AbstractRealMatrix testSet() {
 		return (AbstractRealMatrix) test.copy();
 	}
@@ -141,15 +157,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		
 		for(int test_row = 0; test_row < m; test_row++) {
 			final double[] test_record = test.getRow(test_row);
-			TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
-			
-			// Get map of distances to each record
-			for(int train_row = 0; train_row < data.getRowDimension(); train_row++)
-				rec_to_dist.put(train_row, getDistanceMetric().distance(test_record, data.getRow(train_row)));
-			
-			// Sort treemap on value
-			SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils.sortEntriesByValue(rec_to_dist);
-			labels[test_row] = identifyMajorityClass(sortedEntries, k, trainLabels);
+			labels[test_row] = predict(test_record);
 		}
 		
 		isTrained = true;

@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -20,6 +21,26 @@ public class KMeans extends AbstractKCentroidClusterer {
 	}
 	
 	
+
+	@Override
+	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+		/* Key is the closest centroid, value is the records that belong to it */
+		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
+		
+		/* Loop over each record in the matrix */
+		for(int rec = 0; rec < m; rec++) {
+			final double[] record = data.getRow(rec);
+			int closest_cent = predict(record);
+			
+			labels[rec] = closest_cent;
+			if(cent.get(closest_cent) == null)
+				cent.put(closest_cent, new ArrayList<Integer>());
+			
+			cent.get(closest_cent).add(rec);
+		}
+		
+		return cent;
+	}
 	
 	/**
 	 * Calculates the SSE within the provided cluster
