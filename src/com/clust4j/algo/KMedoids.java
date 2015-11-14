@@ -1,7 +1,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -96,13 +95,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 * @return calculation of new system cost
 	 */
 	final double simulateSystemCost(final int[] med_indices, final double costToBeat) {
-		/* Key is the closest centroid, value is the records that belong to it */
-		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
-		
 		/* Loop over each record in the matrix */
+		double cst = 0;
 		for(int rec = 0; rec < m; rec++) {
 			double min_dist = Double.MAX_VALUE;
-			int closest_cent = 0;
 			
 			/* Loop over every centroid, get calculate dist from record,
 			 * identify the closest centroid to this record */
@@ -113,25 +109,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				/* Track the current min distance. If dist
 				 * is shorter than the previous min, assign
 				 * new closest centroid to this record */
-				if(dis < min_dist) {
+				if(dis < min_dist)
 					min_dist = dis;
-					closest_cent = i;
-				}
 			}
 			
-			if(cent.get(closest_cent) == null)
-				cent.put(closest_cent, new ArrayList<Integer>());
-			
-			cent.get(closest_cent).add(rec);
-		}
-		
-		
-		// Get simulated cost
-		double cst = 0;
-		for(Map.Entry<Integer, ArrayList<Integer>> entry : cent.entrySet()) {
-			cst += getCost(entry.getValue(), data.getRow(med_indices[entry.getKey()]));
-			if(cst > costToBeat)
-				return costToBeat + 1; // Hack to leave early
+			min_dist += cst;
+			if(cst > costToBeat) // Hack to exit early if already higher than minCost...
+				return costToBeat + 1;
 		}
 		
 		return cst;
@@ -180,9 +164,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		
 		
 		// State vars...
-		// Once this last_config is no longer changing, global min reached
-		int[] best_medoids = new int[k];
-		System.arraycopy(medoid_indices, 0, best_medoids, 0, k);
+		// Once this config is no longer changing, global min reached
 		double oldCost = getCostOfSystem();
 		
 		for(iter = 0; iter < maxIter; iter++) {
@@ -192,7 +174,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			// For each cluster in k...
 			double new_cost = Double.MAX_VALUE;
 			for(int i = 0; i < k; i++) {
-				final int medoid_index = best_medoids[i];
+				final int medoid_index = medoid_indices[i];
 				final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
 				final double[] current_medoid = data.getRow(medoid_index);
 				double cost_of_cluster = getCost(indices_in_cluster, current_medoid);
@@ -204,7 +186,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						continue;
 					
 					final int[] copy_of_medoids = new int[k];
-					System.arraycopy(best_medoids, 0, copy_of_medoids, 0, k);
+					System.arraycopy(medoid_indices, 0, copy_of_medoids, 0, k);
 					copy_of_medoids[i] = o;
 					
 					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
@@ -215,25 +197,24 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				}
 				
 				// Have found optimal medoid to minimize cost in cluster...
-				best_medoids[i] = best_medoid_index;
+				medoid_indices[i] = best_medoid_index;
 			}
 		
 			// Check for stopping condition
-			if( best_medoids.equals(medoid_indices) ||
-					FastMath.abs(oldCost - new_cost) < minChange) { // convergence!
+			if( FastMath.abs(oldCost - new_cost) < minChange) { // convergence!
+				oldCost = new_cost;
 				converged = true;
 				iter++;
 				break;
 			} else { // can get better... reassign clusters to new medoids, keep going.
 				oldCost = new_cost;
-				medoid_indices = best_medoids;
 				cent_to_record = assignClustersAndLabels();
 			}
 		} // End iter loop
 		
 		
 		// If non-convergent
-		cost = getCostOfSystem();
+		cost = oldCost;
 		dist_mat = null; // Force GC to save space efficiency
 		isTrained = true;
 	}

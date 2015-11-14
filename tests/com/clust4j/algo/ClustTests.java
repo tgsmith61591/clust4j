@@ -317,7 +317,7 @@ public class ClustTests {
 	public void KMedoidsLoadTest1() {
 		final Array2DRowRealMatrix mat = getRandom(2500, 5);
 		final boolean[] scale = new boolean[] {false, true};
-		final int[] ks = new int[] {1,3,5,7};
+		final int[] ks = new int[] {1,3,5};
 		
 		KMedoids km = null;
 		for(boolean b : scale) {
