@@ -1,6 +1,7 @@
 package com.clust4j.utils;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -8,6 +9,54 @@ import java.util.TreeSet;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 public class ClustUtils {
+	/**
+	 * This utility class is used in some cluster classes to keep
+	 * track of medoid indices. It overrides TreeSet's equals()
+	 * method and returns true if all of the integer values are equal,
+	 * but exploits the underlying hashCode() method to check in contained
+	 * in hashable collections.
+	 * @author Taylor G Smith
+	 */
+	final public static class SortedHashableIntSet extends TreeSet<Integer> {
+		private static final long serialVersionUID = -5206257978720286064L;
+		
+		@Override public boolean equals(Object o) {
+			if(this == o)
+				return true;
+			if(o instanceof SortedHashableIntSet) {
+				SortedHashableIntSet s = (SortedHashableIntSet) o;
+				if(s.size() == this.size()) {
+					Iterator<Integer> aIter = this.iterator();
+					Iterator<Integer> bIter = s.iterator();
+					
+					while(aIter.hasNext() && bIter.hasNext()) {
+						if( aIter.next().intValue() != bIter.next().intValue() )
+							return false;
+					}
+					
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		public static SortedHashableIntSet fromArray(final int[] a) {
+			final SortedHashableIntSet s = new SortedHashableIntSet();
+			for(int i: a)
+				s.add(i);
+			return s;
+		}
+	}
+	
+	
+	/**
+	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
+	 * and an instance of GeometricallySeparable.
+	 * @param data
+	 * @param dist
+	 * @return
+	 */
 	final public static double[][] distanceMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
 		final int m = data.getRowDimension();
 		

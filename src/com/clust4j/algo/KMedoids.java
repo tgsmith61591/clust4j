@@ -1,12 +1,14 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.utils.ClustUtils;
+import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 
@@ -102,9 +104,8 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			
 			/* Loop over every centroid, get calculate dist from record,
 			 * identify the closest centroid to this record */
-			for(int i = 0; i < k; i++) {
-				final int centroid_idx = med_indices[i];
-				final double dis = dist_mat[FastMath.min(rec, centroid_idx)][FastMath.max(rec, centroid_idx)];
+			for(int med_idx: med_indices) {
+				final double dis = dist_mat[FastMath.min(rec, med_idx)][FastMath.max(rec, med_idx)];
 				
 				/* Track the current min distance. If dist
 				 * is shorter than the previous min, assign
@@ -166,6 +167,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// State vars...
 		// Once this config is no longer changing, global min reached
 		double oldCost = getCostOfSystem();
+		HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
 		
 		for(iter = 0; iter < maxIter; iter++) {
 		
@@ -185,15 +187,24 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					if(o.equals(medoid_index)) // Skip if it's the current medoid
 						continue;
 					
+					// Create copy of medoids, set this med_idx to o
 					final int[] copy_of_medoids = new int[k];
 					System.arraycopy(medoid_indices, 0, copy_of_medoids, 0, k);
 					copy_of_medoids[i] = o;
 					
+					// Create the sorted int set, see if these medoid combos have been seen before
+					SortedHashableIntSet medoid_set = SortedHashableIntSet.fromArray(copy_of_medoids);
+					if(seen_medoid_combos.contains(medoid_set))
+						continue; // Micro hack!
+					
+					// Simulate cost, see if better...
 					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
 					if(new_cost < cost_of_cluster) {
 						cost_of_cluster = new_cost;
 						best_medoid_index = o;
 					}
+					
+					seen_medoid_combos.add(medoid_set); // Keep track of simulated medoid combos
 				}
 				
 				// Have found optimal medoid to minimize cost in cluster...
@@ -210,12 +221,17 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				oldCost = new_cost;
 				cent_to_record = assignClustersAndLabels();
 			}
+			
+			
 		} // End iter loop
 		
 		
-		// If non-convergent
+		
 		cost = oldCost;
-		dist_mat = null; // Force GC to save space efficiency
 		isTrained = true;
+		
+		// Force GC to save space efficiency
+		seen_medoid_combos = null;
+		dist_mat = null;
 	}
 }
