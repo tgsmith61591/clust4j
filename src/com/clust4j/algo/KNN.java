@@ -77,49 +77,6 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	
 	
 	
-	/**
-	 * Constructs a KNN from the optimal hyperparams
-	 * via n-fold cross validation.
-	 * @param data
-	 * @param labels
-	 * @param folds
-	 * @param onlyDefaultHyperParams - if true, will only use the 
-	 * KNNPlanner default hyper parameters, otherwise will iterate
-	 * through them, selecting the best via gridsearch.
-	 * @return a cross validated KNN (optimal hyper-params, optimal K)
-	 */
-	public static KNN buildFromCV(
-			final AbstractRealMatrix data, 
-			final int[] labels, 
-			final int folds,
-			final boolean onlyDefaultHyperParams) 
-	{
-		// TODO:
-		throw new UnsupportedOperationException("not yet implemented");
-	}
-	
-	/**
-	 * Will return a cross-validated k-Nearest Neighbor
-	 * learner only having tested the default params in the
-	 * KNNPlanner class.
-	 * @param data
-	 * @param labels
-	 * @param folds
-	 * @return a cross validated KNN
-	 */
-	public static KNN buildFromCV(
-			final AbstractRealMatrix data, 
-			final int[] labels, 
-			final int folds) 
-	{
-		return buildFromCV(data, labels, folds, true);
-	}
-	
-	
-	
-	
-	
-	
 	@Override
 	public String getName() {
 		return "KNN";
@@ -190,14 +147,8 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		return identifyMajorityClass(sortedEntries, k, trainLabels);
 	}
 	
-	@Override
 	public AbstractRealMatrix testSet() {
 		return (AbstractRealMatrix) test.copy();
-	}
-	
-	@Override
-	public AbstractRealMatrix trainSet() {
-		return getData();
 	}
 
 	@Override

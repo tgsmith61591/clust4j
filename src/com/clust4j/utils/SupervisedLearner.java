@@ -1,5 +1,5 @@
 package com.clust4j.utils;
 
-public interface SupervisedLearner extends TrainTestSplit {
+public interface SupervisedLearner {
 	public int[] truthSet();
 }
