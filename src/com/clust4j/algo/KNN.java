@@ -72,6 +72,54 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	}
 	
 	
+	
+	
+	
+	
+	
+	/**
+	 * Constructs a KNN from the optimal hyperparams
+	 * via n-fold cross validation.
+	 * @param data
+	 * @param labels
+	 * @param folds
+	 * @param onlyDefaultHyperParams - if true, will only use the 
+	 * KNNPlanner default hyper parameters, otherwise will iterate
+	 * through them, selecting the best via gridsearch.
+	 * @return a cross validated KNN (optimal hyper-params, optimal K)
+	 */
+	public static KNN buildFromCV(
+			final AbstractRealMatrix data, 
+			final int[] labels, 
+			final int folds,
+			final boolean onlyDefaultHyperParams) 
+	{
+		// TODO:
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+	
+	/**
+	 * Will return a cross-validated k-Nearest Neighbor
+	 * learner only having tested the default params in the
+	 * KNNPlanner class.
+	 * @param data
+	 * @param labels
+	 * @param folds
+	 * @return a cross validated KNN
+	 */
+	public static KNN buildFromCV(
+			final AbstractRealMatrix data, 
+			final int[] labels, 
+			final int folds) 
+	{
+		return buildFromCV(data, labels, folds, true);
+	}
+	
+	
+	
+	
+	
+	
 	@Override
 	public String getName() {
 		return "KNN";
@@ -82,12 +130,12 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		return labels;
 	}
 	
-	final static int identifyMajorityClass(SortedSet<Map.Entry<Integer, Double>> sortedEntries, int K, int[] trainLabels) {
+	final static int identifyMajorityClass(SortedSet<Map.Entry<Integer, Double>> sortedEntries, int K, int[] train_labels) {
 		TreeMap<Integer, Integer> lab_to_ct = new TreeMap<Integer, Integer>();
 		Iterator<Map.Entry<Integer, Double>> iter = sortedEntries.iterator();
 		
 		if(K == 1) // Base case...
-			return trainLabels[iter.next().getKey()];
+			return train_labels[iter.next().getKey()];
 		
 		int i = 0;
 		while(i++ < K) { 
@@ -96,7 +144,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			// thus we know k should be less than the number of rows (or entries)
 			// in this sortedSet. Additionally, K could be recursively decrementing.
 			Map.Entry<Integer, Double> nextEntry = iter.next();
-			int correspLabel = trainLabels[nextEntry.getKey()];
+			int correspLabel = train_labels[nextEntry.getKey()];
 			
 			Integer currCt = lab_to_ct.get(correspLabel);
 			if(null == currCt) // Haven't seen label yet
@@ -116,7 +164,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		Integer maj_lab = first.getKey();   // Holds majority label
 		
 		if(descIter.hasNext() && descIter.next().getValue().equals(maj_ct)) // Then we have a tie...
-			return identifyMajorityClass(sortedEntries, K-1, trainLabels);
+			return identifyMajorityClass(sortedEntries, K-1, train_labels);
 		
 		return maj_lab;
 	}
@@ -145,6 +193,11 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	@Override
 	public AbstractRealMatrix testSet() {
 		return (AbstractRealMatrix) test.copy();
+	}
+	
+	@Override
+	public AbstractRealMatrix trainSet() {
+		return getData();
 	}
 
 	@Override

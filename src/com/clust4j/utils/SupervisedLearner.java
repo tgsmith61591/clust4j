@@ -1,8 +1,5 @@
 package com.clust4j.utils;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
-public interface SupervisedLearner {
-	public AbstractRealMatrix testSet();
+public interface SupervisedLearner extends TrainTestSplit {
 	public int[] truthSet();
 }

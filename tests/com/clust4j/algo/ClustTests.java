@@ -315,7 +315,7 @@ public class ClustTests {
 	
 	@Test
 	public void KMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(2500, 10);
+		final Array2DRowRealMatrix mat = getRandom(5000, 10);
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5};
 		
