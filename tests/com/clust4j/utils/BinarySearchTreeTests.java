@@ -3,6 +3,7 @@ package com.clust4j.utils;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
 import org.junit.Test;
@@ -16,12 +17,12 @@ public class BinarySearchTreeTests {
 		BinarySearchTree<Integer> b = new BinarySearchTree<>(1);
 		
 		assertTrue(b.size() == 1);
-		assertTrue(b.root().getValue() == 1);
+		assertTrue(b.getRoot().getValue() == 1);
 		
 		b.add(2);
 		assertTrue(b.size() == 2);
 		assertTrue(b.values().size() == 2);
-		assertTrue(b.root().leftChild().size() == 1);
+		assertTrue(b.getRoot().leftChild().size() == 1);
 		
 		b.add(0);
 		b.add(3);
@@ -51,25 +52,89 @@ public class BinarySearchTreeTests {
 		    0     3
 		 */
 		
-		assertTrue(b.root().getValue() == 2);
-		assertTrue(b.root().leftChild().getValue() == 1);
-		assertTrue(b.root().leftChild().leftChild().getValue() == 0);
-		assertTrue(!b.root().leftChild().leftChild().hasLeft());
+		assertTrue(b.getRoot().getValue() == 2);
+		assertTrue(b.getRoot().leftChild().getValue() == 1);
+		assertTrue(b.getRoot().leftChild().leftChild().getValue() == 0);
+		assertTrue(!b.getRoot().leftChild().leftChild().hasLeft());
 		
-		assertTrue(b.root().rightChild().getValue() == 5);
-		assertTrue(b.root().rightChild().leftChild().getValue() == 3);
+		assertTrue(b.getRoot().rightChild().getValue() == 5);
+		assertTrue(b.getRoot().rightChild().leftChild().getValue() == 3);
 		
 		assertTrue(b.remove(3));
 		assertTrue(b.size() == 4);
 		
 		assertFalse(b.remove(9));
 		assertTrue(b.size() == 4);
+		
+		System.out.println(b.getRoot());
 	}
 	
 	@Test
 	public void bstTestB() {
 		BinarySearchTree<Integer> b = new BinarySearchTree<>();
 		assertFalse(b.remove(8));
+	}
+	
+	@Test
+	public void bstTestIterators() {
+		BinarySearchTree<Integer> b = new BinarySearchTree<>(1);
+		b.add(2);
+		b.add(0);
+		b.add(3);
+		b.add(5);
+		
+		/*
+		        2
+		      /   \
+		     1     5
+		    /     /
+		   0     3
+		*/
+		
+		int i = 0;
+		Integer[] array = new Integer[b.size()];
+		
+		
+		// IN ORDER TESTS
+		Iterator<Integer> inOrder = b.inOrderIterator();
+		while(inOrder.hasNext())
+			array[i++] = inOrder.next();
+		
+		assertTrue(array[0].intValue() == 0);
+		assertTrue(array[1].intValue() == 1);
+		assertTrue(array[2].intValue() == 2);
+		assertTrue(array[3].intValue() == 3);
+		assertTrue(array[4].intValue() == 5);
+		
+		// POST ORDER TESTS
+		i = 0; 
+		array = new Integer[b.size()];
+		Iterator<Integer> postOrder = b.postOrderIterator();
+		while(postOrder.hasNext())
+			array[i++] = postOrder.next();
+		
+		assertTrue(array[0].intValue() == 0);
+		assertTrue(array[1].intValue() == 1);
+		assertTrue(array[2].intValue() == 3);
+		assertTrue(array[3].intValue() == 5);
+		assertTrue(array[4].intValue() == 2);
+		
+		// PRE ORDER TESTS
+		i = 0; 
+		array = new Integer[b.size()];
+		Iterator<Integer> preOrder = b.preOrderIterator();
+		while(preOrder.hasNext())
+			array[i++] = preOrder.next();
+		
+		assertTrue(array[0].intValue() == 2);
+		assertTrue(array[1].intValue() == 1);
+		assertTrue(array[2].intValue() == 0);
+		assertTrue(array[3].intValue() == 5);
+		assertTrue(array[4].intValue() == 3);
+		
+		i = 0;
+		for(Integer integer: b)
+			assertTrue(array[i++] == integer.intValue());
 	}
 	
 	@Test

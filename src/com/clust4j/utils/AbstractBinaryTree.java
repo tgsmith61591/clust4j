@@ -1,8 +1,11 @@
 package com.clust4j.utils;
 
-import java.util.Collection;
+import java.util.Iterator;
 
-public abstract class AbstractBinaryTree<T> implements java.io.Serializable {
+public abstract class AbstractBinaryTree<T> 
+		extends AbstractTree<T> 
+		implements java.io.Serializable, Iterable<T>
+{
 	private static final long serialVersionUID = 8579121844382472649L;
 	
 	
@@ -10,56 +13,45 @@ public abstract class AbstractBinaryTree<T> implements java.io.Serializable {
 	/**
 	 * Base constructor
 	 */
-	public AbstractBinaryTree() { /* Empty for now */ }
+	public AbstractBinaryTree() {
+		super();
+	}
 
 	
-	
-	
-	public BaseBinaryTreeNode<T> locate(T value) {
-		return null == root() ? null : root().locate(value);
-	}
-	
-	public boolean prune(final BaseBinaryTreeNode<T> node) {
-		if(node.hasLeft() || node.hasRight()) {
-			node.prune();
+	@Override
+	public boolean prune(final BaseTreeNode<T> node) {
+		if(!(node instanceof BaseBinaryTreeNode))
+			throw new IllegalArgumentException("illegal node type");
+		
+		BaseBinaryTreeNode<T> bbt = (BaseBinaryTreeNode<T>) node;
+		if(bbt.hasLeft() || bbt.hasRight()) {
+			bbt.prune();
 			return true;
 		}
 		
 		return false;
 	}
-
-	public int size() {
-		return null == root() ? 0 : root().size();
-	}
 	
 	
-	
-	public abstract void add(T value);
-	public abstract void addAll(Collection<T> values);
-	public abstract boolean remove(T value);
-	public abstract boolean removeAll(Collection<T> remove);
-	public abstract BaseBinaryTreeNode<T> root();
-	public abstract Collection<T> values();
-	
+	public abstract Iterator<T> inOrderIterator();
+	public abstract Iterator<T> postOrderIterator();
+	public abstract Iterator<T> preOrderIterator();
 	
 	
 	/**
-	 * Base abstract node class
+	 * Base abstract binary node class
 	 * @author Taylor G Smith
 	 *
 	 * @param <T>
 	 */
-	protected abstract static class BaseBinaryTreeNode<T> {
-		protected T value = null;
+	protected abstract static class BaseBinaryTreeNode<T> extends AbstractTree.BaseTreeNode<T> {
+		private static final long serialVersionUID = -7171416187589067055L;
 		
-		BaseBinaryTreeNode(final T value) {
-			this.value = value;
+		BaseBinaryTreeNode() {
+			super();
 		}
 		
-		public T getValue() {
-			return value;
-		}
-		
+		@Override
 		public int size() {
 			int this_size = 1;
 			if(hasLeft())
@@ -69,13 +61,9 @@ public abstract class AbstractBinaryTree<T> implements java.io.Serializable {
 			return this_size;
 		}
 		
-		abstract protected void add(T t);
 		abstract boolean hasLeft();
 		abstract boolean hasRight();
 		abstract BaseBinaryTreeNode<T> leftChild();
-		abstract BaseBinaryTreeNode<T> locate(T value);
-		abstract protected void prune();
 		abstract BaseBinaryTreeNode<T> rightChild();
-		abstract public Collection<T> values();
 	}
 }

@@ -167,6 +167,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// State vars...
 		// Once this config is no longer changing, global min reached
 		double oldCost = getCostOfSystem();
+		// Worst case will store up to M choose K...
 		HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
 		
 		for(iter = 0; iter < maxIter; iter++) {

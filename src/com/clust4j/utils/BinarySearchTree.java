@@ -4,12 +4,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class BinarySearchTree<T extends Comparable<? super T>> 
 		extends AbstractBinaryTree<T>
 		implements java.io.Serializable {
 	private static final long serialVersionUID = -478846685921837986L;
+	private int size = -1; // Used to cache size to avoid many searches...
+	
+	/**
+	 * Keeps track of structural modifications in order to
+	 * avoid ConcurrentModificationExceptions from the iterator
+	 */
+	private int modCount = 0;
+	
+	
 	
 	/**
 	 * Generate a new, default comparator
@@ -66,7 +78,7 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			root = new BSTNode<>(t, comparator);
 		else root.add(t);
 		
-		balance();
+		balance(); // Increments modCount!
 	}
 	
 	@Override
@@ -79,16 +91,12 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		if(root != null)
 			vals.addAll(root.values());
 		
-		balance(vals);
+		balance(vals); // Increments modCount!
 	}
 	
 	private void balance() {
 		ArrayList<T> values = (ArrayList<T>) values();
-		Collections.sort(values, comparator);
-		
-		// Now re-insert
-		root = null;
-		balanceRecursive(0, values.size(), values);
+		balance(values); // Increments modCount!
 	}
 	
 	/**
@@ -101,7 +109,9 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		
 		// Re-insert
 		root = null;
-		balanceRecursive(0, values.size(), values);
+		size = values.size();
+		modCount++;
+		balanceRecursive(0, size, values);
 	}
 	
 	private void balanceRecursive(int low, int high, List<T> coll){
@@ -119,19 +129,48 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 	    balanceRecursive(low, midpoint, coll);  
 	}
 	
+	@Override
+	public BSTNode<T> getRoot() {
+		return root;
+	}
+
+	
+	/**
+	 * By default returns a BSTPreOrderIterator
+	 */
+	@Override
+	public Iterator<T> iterator() {
+		return preOrderIterator();
+	}
+	
 	public BSTNode<T> locate(T value) {
-		BaseBinaryTreeNode<T> b = super.locate(value);
+		BaseTreeNode<T> b = super.locate(value);
 		return null == b ? null : (BSTNode<T>) b;
 	}
 	
 	@Override
-	public boolean prune(final BaseBinaryTreeNode<T> node) {
+	public Iterator<T> inOrderIterator() {
+		return new BSTInOrderIterator(root);
+	}
+	
+	@Override
+	public Iterator<T> postOrderIterator() {
+		return new BSTPostOrderIterator(root);
+	}
+	
+	@Override
+	public Iterator<T> preOrderIterator() {
+		return new BSTPreOrderIterator(root);
+	}
+	
+	@Override
+	public boolean prune(final BaseTreeNode<T> node) {
 		if(!(node instanceof BSTNode))
-			throw new IllegalArgumentException("illegal node");
+			throw new IllegalArgumentException("illegal node type");
 		
 		final boolean b;
 		if(b = super.prune(node))
-			balance();
+			balance(); // Increments modCount!
 		
 		return b;
 	}
@@ -151,7 +190,7 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		final boolean b = values.remove(value);
 		
 		if(b)
-			balance(values);
+			balance(values); // Increments modCount!
 		return b;
 	}
 	
@@ -164,14 +203,16 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		final boolean b = values.removeAll(remove);
 		
 		if(b)
-			balance(values);
+			balance(values); // Increments modCount!
 		
 		return b;
 	}
 	
 	@Override
-	public BSTNode<T> root() {
-		return root;
+	public int size() {
+		return null == getRoot() ? 0 : 
+			size == -1 ? size = getRoot().size() : 
+				size;
 	}
 	
 	@Override
@@ -204,12 +245,14 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			implements java.io.Serializable {
 		private static final long serialVersionUID = -4243106326564743392L;
 		
+		private T value;
 		private BSTNode<T> right = null;
 		private BSTNode<T> left = null;
 		transient private Comparator<T> comparator;
 		
 		private BSTNode(T t, final Comparator<T> comparator) {
-			super(t);
+			super();
+			this.value = t;
 			this.comparator = comparator;
 		}
 		
@@ -229,6 +272,11 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			}
 			
 			return addRecurse(left ? root.left : root.right, value);
+		}
+		
+		@Override
+		public T getValue() {
+			return value;
 		}
 		
 		private boolean goesLeft(T incomingValue) {
@@ -275,7 +323,7 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		}
 		
 		/**
-		 * Collects the values of the tree in pre-order
+		 * Collects the values of the tree in PRE ORDER
 		 * @return
 		 */
 		@Override
@@ -297,4 +345,140 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		}
 		
 	}// End BSTNode
+	
+	
+	
+	
+	private abstract class BSTIterator implements Iterator<T> {
+		private final ArrayList<T> internal;
+		private int cursor;
+		private int lastRet = -1;
+		int expectedModCount = modCount;
+		
+		public BSTIterator(BSTNode<T> theRoot) {
+			internal = null == theRoot ? new ArrayList<T>() : 
+				getOrderedValues(theRoot);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return cursor != size;
+		}
+
+		@Override
+		public T next() {
+			checkForComodification();
+			
+			int i = cursor;
+			if(i >= size) // If .next() called and does not have next
+				throw new NoSuchElementException();
+			
+			cursor = i + 1;
+			return internal.get(lastRet = i);
+		}
+
+		/**
+		 * Removes the value from the BinarySearchTree, and requires a 
+		 * full rebalancing operation. Can be expensive in large trees.
+		 * If an item is removed, the ordering of the nodes WILL NOT CHANGE
+		 * in this iterator until a new one is initialized.
+		 */
+		@Override
+		public void remove() {
+			if(lastRet < 0)
+				throw new IllegalStateException();
+			checkForComodification();
+			
+			try {
+				// Remove while avoiding ConcurrentModificationException
+				BinarySearchTree.this.remove(internal.get(lastRet));
+				cursor = lastRet;
+				lastRet = -1; // To avoid two concurrent removes without a next()
+				expectedModCount = modCount;
+			} catch(IndexOutOfBoundsException e) { // Incredibly rare corner case...
+				throw new ConcurrentModificationException();
+			}
+		}
+		
+		final void checkForComodification() {
+			if(modCount != expectedModCount)
+				throw new ConcurrentModificationException();
+		}
+		
+		/**
+		 * Each extending iterator should implement this method
+		 * in correspondence to the required ordering
+		 * @param theRoot
+		 * @return
+		 */
+		protected abstract ArrayList<T> getOrderedValues(BSTNode<T> theRoot);
+	}
+	
+	/**
+	 * Iteratres through the values of the tree IN order
+	 * @author Taylor G Smith
+	 *
+	 */
+	public class BSTInOrderIterator extends BSTIterator {
+		public BSTInOrderIterator(BSTNode<T> theRoot) {
+			super(theRoot);
+		}
+
+		@Override
+		protected ArrayList<T> getOrderedValues(BSTNode<T> theRoot) {
+			final ArrayList<T> values = new ArrayList<T>();
+			return valuesRecurse(theRoot, values);
+		}
+		
+		final private ArrayList<T> valuesRecurse(final BSTNode<T> theRoot, final ArrayList<T> coll) {
+			if(theRoot.hasLeft())
+				valuesRecurse(theRoot.left, coll);
+			coll.add(theRoot.value);
+			if(theRoot.hasRight())
+				valuesRecurse(theRoot.right, coll);
+			return coll;
+		}
+	}
+	
+	/**
+	 * Iteratres through the values of the tree in POST order
+	 * @author Taylor G Smith
+	 *
+	 */
+	public class BSTPostOrderIterator extends BSTIterator {
+		public BSTPostOrderIterator(BSTNode<T> theRoot) {
+			super(theRoot);
+		}
+
+		@Override
+		protected ArrayList<T> getOrderedValues(BSTNode<T> theRoot) {
+			final ArrayList<T> values = new ArrayList<T>();
+			return valuesRecurse(theRoot, values);
+		}
+		
+		final private ArrayList<T> valuesRecurse(final BSTNode<T> theRoot, final ArrayList<T> coll) {
+			if(theRoot.hasLeft())
+				valuesRecurse(theRoot.left, coll);
+			if(theRoot.hasRight())
+				valuesRecurse(theRoot.right, coll);
+			coll.add(theRoot.value);
+			return coll;
+		}
+	}
+	
+	/**
+	 * Iteratres through the values of the tree in PRE order
+	 * @author Taylor G Smith
+	 *
+	 */
+	public class BSTPreOrderIterator extends BSTIterator {
+		public BSTPreOrderIterator(BSTNode<T> theRoot) {
+			super(theRoot);
+		}
+
+		@Override
+		protected ArrayList<T> getOrderedValues(BSTNode<T> theRoot) {
+			return (ArrayList<T>) theRoot.values();
+		}
+	}
 }
