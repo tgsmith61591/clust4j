@@ -8,7 +8,7 @@ import java.util.Random;
 import org.junit.Test;
 
 public class BinarySearchTreeTests {
-	private int big_size = 10_000;
+	private int big_size = 1_000;
 	private boolean slow_test = true;
 
 	@Test
@@ -21,6 +21,7 @@ public class BinarySearchTreeTests {
 		b.add(2);
 		assertTrue(b.size() == 2);
 		assertTrue(b.values().size() == 2);
+		assertTrue(b.root().leftChild().size() == 1);
 		
 		b.add(0);
 		b.add(3);
@@ -88,7 +89,7 @@ public class BinarySearchTreeTests {
 			final int size = bst.size();
 			assertTrue(size == big_size);
 			final long faster = System.currentTimeMillis() - start;
-			System.out.println("Faster test completed in "+ faster/1000+" secs");
+			System.out.println("Faster test completed in "+ (double)faster/1000+" secs");
 			
 			
 			
@@ -102,7 +103,7 @@ public class BinarySearchTreeTests {
 	
 			assertTrue(bst.size() == big_size);
 			final long slower = System.currentTimeMillis() - start;
-			System.out.println("Slower test completed in "+ slower/1000+" secs");
+			System.out.println("Slower test completed in "+ (double)slower/1000+" secs");
 			
 			
 			
