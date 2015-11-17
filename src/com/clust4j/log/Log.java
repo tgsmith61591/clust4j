@@ -516,6 +516,7 @@ public abstract class Log {
 			
 			loggerCreateWasCalled = true;
 			l4j = createLog4jLogger(dir.toString());
+			info(Algo.CLUST4J, "Logging at "+dir.toString());
 		}
 		
 		

@@ -3,6 +3,7 @@ A Java-based set of classification clustering algorithm implementations.
 
 ### Dependencies:
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
+ - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
 
 
 ### Example data (for reproducability):
