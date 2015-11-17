@@ -315,7 +315,7 @@ public class ClustTests {
 	
 	@Test
 	public void KMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(5000, 10);
+		final Array2DRowRealMatrix mat = getRandom(2500, 10);
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5};
 		
@@ -326,5 +326,46 @@ public class ClustTests {
 				km.train();
 			}
 		}
+	}
+	
+	@Test
+	public void agglomerativeTest1() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.00504, 	 0.0001,    0.08172},
+			new double[] {3.65816,   2.9471,    3.12331},
+			new double[] {4.12344,   3.0001,    2.89002}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
+		agglom.train();
+		
+		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
+		
+		String cluster = formatter.format(agglom.getTree().getRoot().rightChild().getCluster().toRealMatrix());
+		System.out.println(cluster);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void agglomerativeTest2() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.00504, 	 0.0001,    0.08172},
+			new double[] {3.65816,   2.9471,    3.12331},
+			new double[] {4.12344,   3.0001,    2.89002}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat, 
+				new AgglomerativeClusterer.BaseHierarchicalPlanner().setLinkage(null)); // Setting linkage to null will break switch
+		agglom.train();
+	}
+	
+	@Test
+	public void agglomerativeTestHuge() {
+		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
+		agglom.train();
+		
+		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 	}
 }

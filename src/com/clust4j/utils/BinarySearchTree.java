@@ -9,6 +9,25 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
+
+/**
+ * An implementation of a the classic self-balancing Binary Search Tree.
+ * All generics must implement Comparable, as they are sorted to maintain
+ * structure. The class provides a default iterator which navigates the tree
+ * in pre-order, but provides methods to navigate in both POST or IN order
+ * in addition.
+ * 
+ * <p>
+ * This tree implements Collection, and as a general rule of thumb any batch
+ * adds or removals will be faster for large data, as they require rebalancing.
+ * See {@link #addAll(Collection)}, {@link #removeAll(Collection)} and
+ * {@link #retainAll(Collection)}.
+ * 
+ * @author Taylor G Smith
+ *
+ * @param <T>
+ */
 public class BinarySearchTree<T extends Comparable<? super T>> 
 		extends AbstractBinaryTree<T>
 		implements java.io.Serializable, Iterable<T>, MutableTree<T> {
@@ -67,22 +86,34 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		this.comparator = comparator;
 	}
 	
+	@SuppressWarnings("unchecked") public BinarySearchTree(final Collection<T> coll) {
+		this((Comparator<T>) defaultComparator(), coll);
+	}
+	
+	public BinarySearchTree(final Comparator<T> comparator, final Collection<T> coll) {
+		super();
+		this.comparator = comparator;
+		addAll(coll);
+	}
+	
 	
 	
 
 	
 	/* ---------------------- METHODS ---------------------- */
 	@Override
-	public void add(T t) {
+	public boolean add(T t) {
 		if(null == root)
 			root = new BSTNode<>(t, comparator);
 		else root.add(t);
 		
 		balance(); // Increments modCount!
+		return true;
 	}
 	
+	@SuppressWarnings("unchecked") 
 	@Override
-	public void addAll(Collection<T> values) {
+	public boolean addAll(Collection<? extends T> values) {
 		List<T> vals;
 		if(values instanceof List)
 			vals = (List<T>)values;
@@ -92,6 +123,7 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			vals.addAll(root.values());
 		
 		balance(vals); // Increments modCount!
+		return true;
 	}
 	
 	private void balance() {
@@ -134,6 +166,11 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		return root;
 	}
 
+
+	@Override
+	public boolean isEmpty() {
+		return size <= 0; // It can be negative one too if cleared...
+	}
 	
 	/**
 	 * By default returns a BSTPreOrderIterator
@@ -141,6 +178,53 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 	@Override
 	public Iterator<T> iterator() {
 		return preOrderIterator();
+	}
+
+	@Override
+	public boolean contains(Object o) {
+		// Could be faster by using locate in the root, but we
+		// cannot be certain that 'o' is comparable...
+		return null == root ? false : values().contains(o);
+	}
+
+	@Override
+	public Object[] toArray() {
+		return null == root ? new Object[0] : values().toArray();
+	}
+
+	/**
+	 * Returns the data in pre-order
+	 * @param a
+	 * @return
+	 */
+	@SuppressWarnings("hiding")
+	@Override
+	public <T> T[] toArray(T[] a) {
+		if(null == root)
+			return a;
+		
+		@SuppressWarnings("unchecked") 
+		final ArrayList<T> data = (ArrayList<T>) values();
+		
+		if(a.length != data.size())
+			throw new DimensionMismatchException(a.length, data.size());
+		
+		for(int i = 0; i < a.length; i++)
+			a[i] = data.get(i);
+		
+		return a;
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		return null == root ? false : values().containsAll(c);
+	}
+
+	@Override
+	public void clear() {
+		root = null;
+		modCount++;
+		size = -1;
 	}
 	
 	public BSTNode<T> locate(T value) {
@@ -179,7 +263,7 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 	 * @return true if found and removed from tree
 	 */
 	@Override
-	public boolean remove(T value) {
+	public boolean remove(Object value) {
 		if(null == root)
 			return false;
 		
@@ -190,9 +274,23 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			balance(values); // Increments modCount!
 		return b;
 	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		if(null == root)
+			return false;
+		
+		final ArrayList<T> values = (ArrayList<T>) values();
+		final boolean b = values.retainAll(c);
+		
+		if(b)
+			balance(values); // Modifies modCount!
+		
+		return b;
+	}
 	
 	@Override
-	public boolean removeAll(Collection<T> remove) {
+	public boolean removeAll(Collection<?> remove) {
 		if(null == root)
 			return false;
 		

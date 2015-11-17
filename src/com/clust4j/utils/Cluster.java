@@ -1,9 +1,11 @@
-package com.clust4j.algo;
+package com.clust4j.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 public class Cluster extends ArrayList<double[]> {
 	private static final long serialVersionUID = 1L;
@@ -90,5 +92,29 @@ public class Cluster extends ArrayList<double[]> {
 	public double[] set(int i, double[] record) {
 		checkRecord(record);
 		return super.set(i, record);
+	}
+	
+	/**
+	 * Generates a COPY of the data inside the cluster
+	 * @param target
+	 * @return
+	 */
+	public double[][] to2DArray() {
+		final double[][] copy = new double[this.size()][];
+		if(copy.length > 0) {
+			final int n = get(0).length;
+			int i = 0;
+			for(double[] d: this) {
+				final double[] row = new double[n];
+				System.arraycopy(d, 0, row, 0, n);
+				copy[i++] = row;
+			}
+		}
+		
+		return copy;
+	}
+	
+	public AbstractRealMatrix toRealMatrix() {
+		return new Array2DRowRealMatrix(to2DArray(), false);
 	}
 }

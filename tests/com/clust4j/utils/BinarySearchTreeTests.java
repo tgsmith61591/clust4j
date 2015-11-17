@@ -3,14 +3,42 @@ package com.clust4j.utils;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
 
 public class BinarySearchTreeTests {
+	private final static Random rand = new Random();
 	private int big_size = 1_000;
 	private boolean slow_test = true;
+	
+	final private static Collection<Double> randomCollection(int size) {
+		final ArrayList<Double> f = new ArrayList<Double>(size);
+		
+		for(int i = 0; i < size; i++)
+			f.add(rand.nextDouble());
+		
+		return f;
+	}
+	
+	final private static Collection<Double> selectRandomN(int n, List<Double> c) {
+		final ArrayList<Integer> indices = new ArrayList<Integer>();
+		final ArrayList<Double> f = new ArrayList<Double>();
+		
+		while(indices.size() < n) {
+			Integer next = rand.nextInt(c.size());
+			if(!indices.contains(next))
+				indices.add(next);
+		}
+		
+		for(Integer index: indices)
+			f.add(c.get(index));
+		
+		return f;
+	}
 
 	@Test
 	public void bstTestA() {
@@ -176,5 +204,29 @@ public class BinarySearchTreeTests {
 		}
 		
 		assertTrue(true);
+	}
+	
+	@Test
+	public void testCollectionsInterface() {
+		final ArrayList<Double> d = (ArrayList<Double>)randomCollection(big_size);
+		final BinarySearchTree<Double> bst = new BinarySearchTree<>(d);
+		assertTrue(bst.size() == big_size);
+		
+		final int n = 10;
+		final Collection<Double> removes = selectRandomN(n, d);
+		d.removeAll(removes);
+		
+		assertTrue(bst.removeAll(removes));
+		assertTrue(bst.size() == big_size - n);
+		
+		final Collection<Double> retains = selectRandomN(big_size - 2*n, d);
+		assertTrue(bst.retainAll(retains));
+		assertTrue(bst.size() == big_size - 2*n);
+		assertTrue(bst.containsAll(retains));
+		assertTrue(bst.removeAll(retains));
+		assertTrue(bst.size() == 0);
+		assertTrue(bst.isEmpty());
+		bst.clear();
+		assertTrue(bst.isEmpty());
 	}
 }
