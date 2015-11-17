@@ -67,6 +67,7 @@ public class ClustTests {
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
+		km.info("testing the kmeans logger");
 	}
 	
 	/** Now scale = true */
@@ -172,6 +173,7 @@ public class ClustTests {
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
+		km.info("testing the k-medoids logger");
 	}
 	
 	/** Scale = true */
@@ -275,7 +277,7 @@ public class ClustTests {
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,2};
 		
-		KNN knn;
+		KNN knn = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
 				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b));
@@ -296,6 +298,9 @@ public class ClustTests {
 			assertTrue(results[0] == trainLabels[1]);
 			assertTrue(results[1] == trainLabels[1]);
 		}
+		
+
+		knn.info("testing the KNN logger");
 	}
 	
 	@Test
@@ -342,9 +347,10 @@ public class ClustTests {
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 		
+		@SuppressWarnings("unused")
 		String cluster = formatter.format(agglom.getTree().getRoot().rightChild().getCluster().toRealMatrix());
-		System.out.println(cluster);
-		System.out.println(agglom);
+		//System.out.println(cluster);
+		//System.out.println(agglom);
 	}
 	
 	@Test
@@ -359,6 +365,9 @@ public class ClustTests {
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 		assertTrue(agglom.getTree().size() == 1);
+		
+		// Quick logging test
+		agglom.info("testing the agglom logger");
 	}
 	
 	@Test(expected=IllegalArgumentException.class)

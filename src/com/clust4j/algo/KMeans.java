@@ -6,6 +6,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 
@@ -139,4 +140,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;
 	} // End train
+
+	@Override
+	public Algo getLoggerTag() {
+		return com.clust4j.log.Log.Tag.Algo.KMEANS_;
+	}
 }

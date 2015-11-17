@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
 
@@ -41,6 +42,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		private boolean scale	= DEF_SCALE;
 		private GeometricallySeparable dist	= DEF_DIST;
 		private Method method	= DEF_METHOD;
+		private boolean verbose	= DEF_VERBOSE;
 		
 		public DBSCANPlanner(final double eps) {
 			this.eps = eps;
@@ -54,6 +56,11 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		@Override
 		public boolean getScale() {
 			return scale;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
 		}
 		
 		public DBSCANPlanner setMinPts(final int minPts) {
@@ -75,6 +82,11 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		
 		public DBSCANPlanner setMethod(final Method method) {
 			this.method = method;
+			return this;
+		}
+		
+		public DBSCANPlanner setVerbose(final boolean v) {
+			this.verbose = v;
 			return this;
 		}
 	}
@@ -145,5 +157,10 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		
 		// TODO:
 		throw new UnsupportedOperationException("Not yet implemented");
+	}
+	
+	@Override
+	public Algo getLoggerTag() {
+		return com.clust4j.log.Log.Tag.Algo.DBSCAN_;
 	}
 }

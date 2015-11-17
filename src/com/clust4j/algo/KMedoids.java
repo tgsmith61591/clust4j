@@ -7,6 +7,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
@@ -234,5 +235,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// Force GC to save space efficiency
 		seen_medoid_combos = null;
 		dist_mat = null;
+	}
+	
+	@Override
+	public Algo getLoggerTag() {
+		return com.clust4j.log.Log.Tag.Algo.KMEDOID;
 	}
 }

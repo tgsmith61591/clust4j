@@ -4,12 +4,15 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.Log;
+import com.clust4j.log.Loggable;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.VecUtils;
 
-public abstract class AbstractClusterer {
+public abstract class AbstractClusterer implements Loggable {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
+	final public static boolean DEF_VERBOSE = false;
 	final public static boolean DEF_SCALE = false;
 	
 	/** Underlying data */
@@ -18,6 +21,8 @@ public abstract class AbstractClusterer {
 	final protected GeometricallySeparable dist;
 	/** Seed for any shuffles */
 	private Random seed = new Random();
+	/** Verbose for heavily logging */
+	final protected boolean verbose;
 	protected boolean isTrained = false;
 	
 
@@ -34,7 +39,9 @@ public abstract class AbstractClusterer {
 	abstract protected static class BaseClustererPlanner {
 		abstract public GeometricallySeparable getDist();
 		abstract public boolean getScale();
+		abstract public boolean getVerbose();
 		abstract public BaseClustererPlanner setScale(final boolean b);
+		abstract public BaseClustererPlanner setVerbose(final boolean b);
 		abstract public BaseClustererPlanner setDist(final GeometricallySeparable dist);
 	}
 	
@@ -52,6 +59,7 @@ public abstract class AbstractClusterer {
 		BaseClustererPlanner planner) 
 	{
 		this.dist = planner.getDist();
+		this.verbose = planner.getVerbose();
 		
 		// Handle data, now...
 		handleData(data);
@@ -127,6 +135,7 @@ public abstract class AbstractClusterer {
 		return seed;
 	}
 	
+	
 	/**
 	 * Reset the current seed
 	 * @param newSeed
@@ -145,6 +154,29 @@ public abstract class AbstractClusterer {
 	
 	
 	public abstract String getName();
+	public abstract com.clust4j.log.Log.Tag.Algo getLoggerTag();
 	public abstract boolean isTrained();
 	public abstract void train();
+	
+	
+	/* -- LOGGER METHODS --  */
+	@Override public void error(String msg) {
+		Log.err(getLoggerTag(), msg);
+	}
+	
+	@Override public void warn(String msg) {
+		Log.warn(getLoggerTag(), msg);
+	}
+	
+	@Override public void info(String msg) {
+		Log.info(getLoggerTag(), msg);
+	}
+	
+	@Override public void trace(String msg) {
+		Log.trace(getLoggerTag(), msg);
+	}
+	
+	@Override public void debug(String msg) {
+		Log.debug(getLoggerTag(), msg);
+	}
 }

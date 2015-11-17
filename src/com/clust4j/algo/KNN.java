@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
@@ -22,11 +23,17 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	
 	final public static class KNNPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private GeometricallySeparable dist = DEF_DIST;
+		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private int k;
 		
 		public KNNPlanner(final int k) {
 			this.k = k;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
 		}
 		
 		@Override
@@ -49,6 +56,12 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		@Override
 		public boolean getScale() {
 			return scale;
+		}
+		
+		@Override
+		public KNNPlanner setVerbose(final boolean v) {
+			this.verbose = v;
+			return this;
 		}
 	}
 
@@ -173,5 +186,10 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		final int[] truthSet = new int[trainLabels.length];
 		System.arraycopy(trainLabels, 0, truthSet, 0, trainLabels.length);
 		return truthSet;
+	}
+	
+	@Override
+	public Algo getLoggerTag() {
+		return com.clust4j.log.Log.Tag.Algo.KNN____;
 	}
 }

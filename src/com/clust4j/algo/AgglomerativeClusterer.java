@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Linkage;
 import com.clust4j.utils.SingleLinkageACTree;
 
@@ -58,5 +59,10 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 			default:
 				throw new IllegalArgumentException("unimplemented linkage method");
 		}
+	}
+
+	@Override
+	public Algo getLoggerTag() {
+		return com.clust4j.log.Log.Tag.Algo.AGGLOM_;
 	}
 }

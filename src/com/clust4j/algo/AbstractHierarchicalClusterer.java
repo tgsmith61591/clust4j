@@ -18,10 +18,16 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean scale = DEF_SCALE;
 		private Linkage linkage = DEF_LINKAGE;
+		private boolean verbose = DEF_VERBOSE;
 
 		@Override
 		public GeometricallySeparable getDist() {
 			return dist;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
 		}
 
 		@Override
@@ -37,6 +43,12 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		@Override
 		public BaseHierarchicalPlanner setScale(boolean b) {
 			this.scale = b;
+			return this;
+		}
+		
+		@Override
+		public BaseHierarchicalPlanner setVerbose(boolean b) {
+			this.verbose = b;
 			return this;
 		}
 

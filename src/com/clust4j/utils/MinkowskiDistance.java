@@ -19,7 +19,7 @@ public class MinkowskiDistance implements GeometricallySeparable {
 		for(int i = 0; i < a.length; i++) {
 			// Don't use math.abs -- too expensive
 			double diff = a[i] - b[i];
-			sum += FastMath.pow(diff < 0 ? -diff : diff, p);
+			sum += FastMath.pow(FastMath.abs(diff), p);
 		}
 		
 		return FastMath.pow(sum, 1d/p);

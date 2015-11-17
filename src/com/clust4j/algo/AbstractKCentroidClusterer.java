@@ -48,6 +48,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	public static class BaseKCentroidPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private int maxIter = DEF_MAX_ITER;
 		private GeometricallySeparable dist = DEF_DIST;
+		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private double minChange = DEF_MIN_CHNG;
 		private int k;
@@ -64,6 +65,11 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		@Override
 		public boolean getScale() {
 			return scale;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
 		}
 		
 		@Override
@@ -85,6 +91,12 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		@Override
 		public BaseKCentroidPlanner setScale(final boolean scale) {
 			this.scale = scale;
+			return this;
+		}
+		
+		@Override
+		public BaseKCentroidPlanner setVerbose(final boolean v) {
+			this.verbose = v;
 			return this;
 		}
 	}
