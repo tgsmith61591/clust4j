@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 
 public class BinarySearchTree<T extends Comparable<? super T>> 
 		extends AbstractBinaryTree<T>
-		implements java.io.Serializable {
+		implements java.io.Serializable, Iterable<T>, MutableTree<T> {
 	private static final long serialVersionUID = -478846685921837986L;
 	private int size = -1; // Used to cache size to avoid many searches...
 	
@@ -148,23 +148,20 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 		return null == b ? null : (BSTNode<T>) b;
 	}
 	
-	@Override
 	public Iterator<T> inOrderIterator() {
 		return new BSTInOrderIterator(root);
 	}
 	
-	@Override
 	public Iterator<T> postOrderIterator() {
 		return new BSTPostOrderIterator(root);
 	}
 	
-	@Override
 	public Iterator<T> preOrderIterator() {
 		return new BSTPreOrderIterator(root);
 	}
 	
 	@Override
-	public boolean prune(final BaseTreeNode<T> node) {
+	public boolean prune(final BaseBinaryTreeNode<T> node) {
 		if(!(node instanceof BSTNode))
 			throw new IllegalArgumentException("illegal node type");
 		
@@ -256,7 +253,6 @@ public class BinarySearchTree<T extends Comparable<? super T>>
 			this.comparator = comparator;
 		}
 		
-		@Override
 		protected void add(T t) {
 			addRecurse(this, t);
 		}

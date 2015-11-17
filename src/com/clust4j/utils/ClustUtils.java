@@ -49,6 +49,21 @@ public class ClustUtils {
 		}
 	}
 	
+	public static final double[][] copyMatrix(final double[][] data) {
+		final double[][] copy = new double[data.length][];
+		
+		if(data.length != 0) {
+			final int n = data[0].length;
+			for(int i = 0; i < copy.length; i++) {
+				final double[] row_copy = new double[n];
+				System.arraycopy(data[i], 0, row_copy, 0, n);
+				copy[i] = row_copy;
+			}
+		}
+		
+		return copy;
+	}
+	
 	
 	/**
 	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
@@ -58,7 +73,18 @@ public class ClustUtils {
 	 * @return
 	 */
 	final public static double[][] distanceMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
-		final int m = data.getRowDimension();
+		return distanceMatrix(data.getData(), dist);
+	}
+	
+	/**
+	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
+	 * and an instance of GeometricallySeparable.
+	 * @param data
+	 * @param dist
+	 * @return
+	 */
+	final public static double[][] distanceMatrix(final double[][] data, GeometricallySeparable dist) {
+		final int m = data.length;
 		
 		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
 		// We do this in KMedoids and not KMeans, because KMedoids uses
@@ -67,7 +93,7 @@ public class ClustUtils {
 		final double[][] dist_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++)
 			for(int j = i + 1; j < m; j++)
-				dist_mat[i][j] = dist.distance(data.getRow(i), data.getRow(j));
+				dist_mat[i][j] = dist.distance(data[i], data[j]);
 		
 		return dist_mat;
 	}

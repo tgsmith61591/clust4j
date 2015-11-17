@@ -10,9 +10,10 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.Classifier;
 import com.clust4j.utils.SupervisedLearner;
 
-public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner {
+public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, Classifier {
 	private boolean isTrained = false;
 	private int[] labels = null;
 	

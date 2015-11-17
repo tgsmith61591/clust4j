@@ -10,9 +10,10 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.CentroidLearner;
+import com.clust4j.utils.Classifier;
 import com.clust4j.utils.GeometricallySeparable;
 
-public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClusterer implements CentroidLearner {
+public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClusterer implements CentroidLearner, Classifier {
 	final public static int DEF_MAX_ITER = 100;
 	final public static double DEF_MIN_CHNG = 0.005;
 	
@@ -21,7 +22,6 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	final protected double minChange;
 	final protected int[] init_centroid_indices;
 	
-	protected boolean isTrained = false;
 	protected boolean converged = false;
 	protected double cost;
 

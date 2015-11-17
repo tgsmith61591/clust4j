@@ -1,10 +1,8 @@
 package com.clust4j.utils;
 
-import java.util.Iterator;
-
 public abstract class AbstractBinaryTree<T> 
 		extends AbstractTree<T> 
-		implements java.io.Serializable, Iterable<T>
+		implements java.io.Serializable
 {
 	private static final long serialVersionUID = 8579121844382472649L;
 	
@@ -18,24 +16,14 @@ public abstract class AbstractBinaryTree<T>
 	}
 
 	
-	@Override
-	public boolean prune(final BaseTreeNode<T> node) {
-		if(!(node instanceof BaseBinaryTreeNode))
-			throw new IllegalArgumentException("illegal node type");
-		
-		BaseBinaryTreeNode<T> bbt = (BaseBinaryTreeNode<T>) node;
-		if(bbt.hasLeft() || bbt.hasRight()) {
-			bbt.prune();
+	public boolean prune(final BaseBinaryTreeNode<T> node) {
+		if(node.hasLeft() || node.hasRight()) {
+			node.prune();
 			return true;
 		}
 		
 		return false;
 	}
-	
-	
-	public abstract Iterator<T> inOrderIterator();
-	public abstract Iterator<T> postOrderIterator();
-	public abstract Iterator<T> preOrderIterator();
 	
 	
 	/**
@@ -47,7 +35,7 @@ public abstract class AbstractBinaryTree<T>
 	protected abstract static class BaseBinaryTreeNode<T> extends AbstractTree.BaseTreeNode<T> {
 		private static final long serialVersionUID = -7171416187589067055L;
 		
-		BaseBinaryTreeNode() {
+		protected BaseBinaryTreeNode() {
 			super();
 		}
 		

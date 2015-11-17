@@ -16,13 +16,7 @@ public abstract class AbstractTree<T> implements java.io.Serializable {
 		return null == getRoot() ? 0 : getRoot().size();
 	}
 	
-	public abstract void add(T value);
-	public abstract void addAll(Collection<T> values);
 	public abstract BaseTreeNode<T> getRoot();
-	public abstract boolean remove(T value);
-	public abstract boolean removeAll(Collection<T> remove);
-	public abstract boolean prune(BaseTreeNode<T> node);
-	public abstract Collection<T> values();
 	
 	/**
 	 * Base abstractnode class
@@ -33,9 +27,8 @@ public abstract class AbstractTree<T> implements java.io.Serializable {
 	protected abstract static class BaseTreeNode<T> implements java.io.Serializable {
 		private static final long serialVersionUID = 3359038232201737728L;
 		
-		BaseTreeNode() { }
+		protected BaseTreeNode() { }
 		
-		abstract protected void add(T t);
 		abstract public T getValue();
 		abstract BaseTreeNode<T> locate(T value);
 		abstract protected void prune();

@@ -3,10 +3,11 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.Classifier;
 
 import static com.clust4j.algo.DBSCAN.Method.*;
 
-public class DBSCAN extends AbstractDensityClusterer {
+public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	/**
 	 * The different types of methods to 
 	 * use in the clustering process.

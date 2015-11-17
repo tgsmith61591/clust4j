@@ -6,10 +6,9 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.VecUtils;
 
-public abstract class AbstractClusterer implements Classifier {
+public abstract class AbstractClusterer {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static boolean DEF_SCALE = false;
 	
@@ -19,6 +18,7 @@ public abstract class AbstractClusterer implements Classifier {
 	final protected GeometricallySeparable dist;
 	/** Seed for any shuffles */
 	private Random seed = new Random();
+	protected boolean isTrained = false;
 	
 
 	
@@ -138,6 +138,5 @@ public abstract class AbstractClusterer implements Classifier {
 	
 	public abstract String getName();
 	public abstract boolean isTrained();
-	public abstract int predict(final double[] newRecord);
 	public abstract void train();
 }
