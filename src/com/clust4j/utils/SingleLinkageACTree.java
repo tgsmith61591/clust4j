@@ -232,15 +232,16 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 	final private static Cluster merge(final Cluster a, final Cluster b) {
 		final Cluster merge = new Cluster();
 		
-		final int n = a.get(0).length;
+		//final int n = a.get(0).length;
 		final Cluster[] car = new Cluster[]{a, b};
 		
 		for(Cluster cl: car) {
-			for(double[] d: cl) {
+			/*for(double[] d: cl) {
 				double[] copy = new double[n];
 				System.arraycopy(d, 0, copy, 0, n);
 				merge.add(copy);
-			}
+			}*/
+			merge.addAll(cl);
 		}
 		
 		return merge;

@@ -362,7 +362,7 @@ public class ClustTests {
 	
 	@Test
 	public void agglomerativeTestHuge() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(2500, 10);
 		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
 		agglom.train();
 		
