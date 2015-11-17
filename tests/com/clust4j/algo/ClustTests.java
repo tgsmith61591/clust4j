@@ -344,6 +344,7 @@ public class ClustTests {
 		
 		String cluster = formatter.format(agglom.getTree().getRoot().rightChild().getCluster().toRealMatrix());
 		System.out.println(cluster);
+		System.out.println(agglom);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -363,7 +364,7 @@ public class ClustTests {
 	@Test
 	public void agglomerativeTestHuge() {
 		final Array2DRowRealMatrix mat = getRandom(1500, 10);
-		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
+		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat, new AgglomerativeClusterer.BaseHierarchicalPlanner().setScale(true));
 		agglom.train();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);

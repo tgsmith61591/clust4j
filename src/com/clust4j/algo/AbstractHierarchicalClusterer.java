@@ -35,13 +35,13 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		}
 
 		@Override
-		public BaseClustererPlanner setScale(boolean b) {
+		public BaseHierarchicalPlanner setScale(boolean b) {
 			this.scale = b;
 			return this;
 		}
 
 		@Override
-		public BaseClustererPlanner setDist(GeometricallySeparable dist) {
+		public BaseHierarchicalPlanner setDist(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
