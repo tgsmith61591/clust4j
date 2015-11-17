@@ -347,6 +347,28 @@ public class ClustTests {
 		System.out.println(agglom);
 	}
 	
+	@Test
+	public void agglomerativeTest2CornerCase() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.00504, 	 0.0001,    0.08172}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
+		agglom.train();
+		
+		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
+		assertTrue(agglom.getTree().size() == 1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void agglomerativeTest3CornerCase() {
+		final double[][] train_array = new double[][] {};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		new AgglomerativeClusterer(mat);
+	}
+	
 	@Test(expected=IllegalArgumentException.class)
 	public void agglomerativeTest2() {
 		final double[][] train_array = new double[][] {

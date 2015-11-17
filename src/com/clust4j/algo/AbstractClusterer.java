@@ -54,11 +54,19 @@ public abstract class AbstractClusterer {
 		this.dist = planner.getDist();
 		
 		// Handle data, now...
+		handleData(data);
+		
+		// Scale if needed
 		if(!planner.getScale())
 			this.data = (AbstractRealMatrix) data.copy();
 		else this.data = scale(data, (AbstractRealMatrix) data.copy());
 	} // End constructor
 	
+	
+	final private void handleData(final AbstractRealMatrix data) {
+		if(data.getRowDimension() == 0)
+			throw new IllegalArgumentException("empty data");
+	}
 	
 	
 	

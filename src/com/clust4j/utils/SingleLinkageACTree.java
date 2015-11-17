@@ -143,6 +143,11 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		}
 		
 		
+		/* CORNER CASE: len(1) */
+		if(data.length == 1)
+			return new SingleLinkageACTree(clusterMap, data);
+		
+		
 		/* So we now have N 'clusters' in data... 
 		 * at each section, we find the two clusters closest to one another...
 		 * Create one big distance matrix, calculate the upper triangular distance.
