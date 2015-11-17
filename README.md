@@ -45,14 +45,14 @@ A Java-based set of classification clustering algorithm implementations.
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
-- [Hierarchical](https://en.wikipedia.org/wiki/Hierarchical_clustering) algorithms:
-  - Agglomerative, a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy.
+- Hierarchical algorithms:
+  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy.
 
 ### Future implementations:
 - Density-based:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
-- Hierarchical:
-  - Divisive, a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy.
+- Hierarchical algorithms:
+  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy.
 
 
 ### Things to note:
