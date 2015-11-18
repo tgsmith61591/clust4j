@@ -25,12 +25,17 @@ public abstract class Log {
 	public static interface Tag {
 		/** Which algorithm is being run? */
 		public static enum Algo implements Tag {
-			AGGLOM_ { @Override public String toString(){return "AGGLOM ";} },
+			AGGLOMERATIVE 	{ @Override public String toString(){return "AGGLOM ";} },
 			CLUST4J,
-			DBSCAN_ { @Override public String toString(){return "DBSCAN ";} },
-			KMEDOID,
-			KMEANS_ { @Override public String toString(){return "K-MEANS";} },
-			KNN____ { @Override public String toString(){return "K-NN   ";} },;
+			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
+			
+			/*DIVISIVE		{ @Override public String toString(){return "DIANA  ";} },*/
+			
+			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
+			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
+			KNN 			{ @Override public String toString(){return "K-NN   ";} },
+			KRNLKNN;
+			
 			
 			boolean _enable;
 		}
@@ -39,8 +44,8 @@ public abstract class Log {
 		public static enum Type implements Tag {
 			TRACE, 
 			DEBUG, 
-			INFO_ { @Override public String toString(){return "INFO ";} }, 
-			WARN_ { @Override public String toString(){return "WARN ";} }, 
+			INFO	{ @Override public String toString(){return "INFO ";} }, 
+			WARN	{ @Override public String toString(){return "WARN ";} }, 
 			ERROR, 
 			FATAL
 		}
@@ -102,7 +107,7 @@ public abstract class Log {
 		
 		private static String log(Locale l, boolean nl, String format, Object... args) {
 			String msg = String.format(l, format, args);
-			Event e = Event.make(Algo.CLUST4J, Type.INFO_, null, msg);
+			Event e = Event.make(Algo.CLUST4J, Type.INFO, null, msg);
 			Log.write(e, false); // Skip the KVLog present in H2O
 			return e.toShortString() + lineSep;
 		}
@@ -311,7 +316,7 @@ public abstract class Log {
 				}
 				
 				if(Event.missed > 0 && !Event.lastEvent.printMe) {
-					Event.lastEvent.init(Algo.CLUST4J, Type.WARN_, null, null, "Logging framework dropped a message", Event.lastGoodTimer);
+					Event.lastEvent.init(Algo.CLUST4J, Type.WARN, null, null, "Logging framework dropped a message", Event.lastGoodTimer);
 					Event.missed--;
 				}
 			}
@@ -483,9 +488,9 @@ public abstract class Log {
 			l4j.fatal(s);
 		else if(e.type == Type.ERROR)
 			l4j.error(s);
-		else if(e.type == Type.WARN_)
+		else if(e.type == Type.WARN)
 			l4j.warn(s);
-		else if(e.type == Type.INFO_)
+		else if(e.type == Type.INFO)
 			l4j.info(s);
 		else if(e.type == Type.DEBUG)
 			l4j.debug(s);
@@ -583,7 +588,7 @@ public abstract class Log {
 	}
 	
 	static public <T extends Throwable> T warn(Algo t, String msg, T exception) {
-		Event e = Event.make(t, Type.WARN_, exception, msg);
+		Event e = Event.make(t, Type.WARN, exception, msg);
 		write(e, true);
 		return exception;
 	}
@@ -593,17 +598,17 @@ public abstract class Log {
 	}
 	
 	static public void info_no_stdout(Algo t, Object... objects) {
-		Event e = Event.make(t, Type.INFO_, null, objects);
+		Event e = Event.make(t, Type.INFO, null, objects);
 		write(e, false);
 	}
 	
 	static public void info_no_DKV(Algo t, Object... objects) {
-		Event e = Event.make(t, Type.INFO_, null, objects);
+		Event e = Event.make(t, Type.INFO, null, objects);
 		write(e, true);
 	}
 	
 	static public void info(Algo t, Object... obj) {
-		Event e = Event.make(t, Type.INFO_, null, obj);
+		Event e = Event.make(t, Type.INFO, null, obj);
 		write(e, true);
 	}
 	

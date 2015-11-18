@@ -164,6 +164,6 @@ public class KMeans extends AbstractKCentroidClusterer {
 
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.KMEANS_;
+		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
 }

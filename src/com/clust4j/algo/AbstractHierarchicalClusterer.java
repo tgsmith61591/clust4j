@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.HierarchicalClusterTree;
 import com.clust4j.utils.Linkage;
 
 public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
@@ -58,4 +59,13 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 			return this;
 		}
 	}
+
+	
+	@Override
+	public String toString() {
+		if(null == getTree()) return super.toString();
+		return super.toString() + ": " + getTree().toString();
+	}
+	
+	public abstract HierarchicalClusterTree getTree();
 }

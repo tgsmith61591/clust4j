@@ -1,9 +1,7 @@
 package com.clust4j.utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -11,81 +9,8 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.AgglomerativeClusterer;
 
-public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
-	private static final long serialVersionUID = -8450284575258068092L;
-	private final AgglomNode root;
-	
-	/**
-	 * Used to retrieve the clusters out of the data from the tree
-	 */
-	private final TreeMap<Integer, double[]> data;
-	final private String rep;
-	final private int size;
-	
-	
-	private SingleLinkageACTree(final TreeMap<Integer, EntryPair<Integer, Integer>> mapping, 
-			final double[][] data, final AgglomerativeClusterer clusterer) {
-		super();
-		
-		final boolean verbose = clusterer.getVerbose();
-		
-		// Since we pulled the data from bottom up, we need to map it...
-		int current_idx = 2*data.length - 1;
-		this.data = new TreeMap<Integer, double[]>();
-		for(double[] d: data)
-			this.data.put(current_idx--, d);
-		
-		if(verbose) clusterer.info("mapping clusters to tree structure (root=1). Use '.getTree()'");
-		
-		this.rep = mapping.toString();
-		
-		// Build the root, then progressively add the values in...
-		TreeMap<Integer, AgglomNode> nodeMapping = new TreeMap<>();
-		
-
-		Integer index; 
-		AgglomNode current, left, right;
-		EntryPair<Integer, Integer> children;
-		
-		root = new AgglomNode(1);
-		nodeMapping.put(1, root);
-		
-		for(Map.Entry<Integer, EntryPair<Integer, Integer>> entry: mapping.entrySet()) {
-			index = entry.getKey();
-			children = entry.getValue();
-			
-			current = nodeMapping.get(index);
-			if(null == current) { // Haven't seen key before
-				nodeMapping.put(index, current = new AgglomNode(index));
-			}
-			
-			if(null != children) {
-				if(verbose) clusterer.info("cluster " + index + " is derived from clusters " + children);
-				
-				left = new AgglomNode(children.getKey());
-				right = new AgglomNode(children.getValue());
-				
-				current.left = left;
-				current.right = right;
-				
-				nodeMapping.put(children.getKey(), left);
-				nodeMapping.put(children.getValue(), right);
-			}
-		}
-		
-		size = root.size();
-		if(verbose) {
-			clusterer.info("tree building complete. Total number of clusters: " + size);
-			clusterer.info("root (agglomeration)=cluster 1. Use '.getTree()'");
-			clusterer.info("leaf nodes = individual records. From a node, use '.getCluster()' to get records");
-		}
-		
-		nodeMapping = null; // Force GC
-	}
-	
-	
-	
-	public static SingleLinkageACTree build(final double[][] data, final GeometricallySeparable dist, final AgglomerativeClusterer clusterer) {
+public class SingleLinkageAgglomerativeFactory {
+	public static HierarchicalClusterTree build(final double[][] data, final GeometricallySeparable dist, final AgglomerativeClusterer clusterer) {
 		return build(data, dist, true, clusterer);
 	}
 	
@@ -129,7 +54,7 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 	 * @param copy
 	 * @return the Agglomerative Cluster tree
 	 */
-	public static SingleLinkageACTree build(final double[][] dat, final GeometricallySeparable dist, 
+	public static HierarchicalClusterTree build(final double[][] dat, final GeometricallySeparable dist, 
 			final boolean copy, final AgglomerativeClusterer clusterer) {
 		
 		final boolean verbose = clusterer.getVerbose();
@@ -173,7 +98,7 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		/* CORNER CASE: len(1) */
 		if(data.length == 1) {
 			if(verbose) clusterer.warn("data of length 1: returning single cluster");
-			return new SingleLinkageACTree(clusterMap, data, clusterer);
+			return new HierarchicalClusterTree(clusterMap, data, clusterer);
 		}
 		
 		
@@ -263,8 +188,9 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		newDataRef = null;
 		
 		
-		return new SingleLinkageACTree(clusterMap, data, clusterer);
+		return new HierarchicalClusterTree(clusterMap, data, clusterer);
 	}
+
 	
 	final private static Cluster merge(final Cluster a, final Cluster b) {
 		final Cluster merge = new Cluster();
@@ -303,147 +229,5 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		}
 		
 		return new EntryPair<>(minRow, minCol);
-	}
-	
-	
-
-	@Override
-	public AgglomNode getRoot() {
-		return root;
-	}
-	
-	@Override
-	public int size() {
-		return size;
-	}
-	
-	@Override
-	public String toString() {
-		return rep;
-	}
-
-	
-	
-	
-	public class AgglomNode extends AbstractBinaryTree.BaseBinaryTreeNode<Integer> {
-		private static final long serialVersionUID = -982952921431298127L;
-		
-		private final Integer value;
-		private AgglomNode left = null;
-		private AgglomNode right = null;
-		
-		
-		
-		protected AgglomNode(Integer c) {
-			value = c;
-		}
-		
-		
-
-		@Override
-		protected boolean hasLeft() {
-			return null != left;
-		}
-
-		@Override
-		protected boolean hasRight() {
-			return null != right;
-		}
-
-		@Override
-		public AgglomNode leftChild() {
-			return left;
-		}
-
-		@Override
-		public AgglomNode rightChild() {
-			return right;
-		}
-		
-		/**
-		 * Returns a copy of the records in this level of cluster
-		 * @return
-		 */
-		public Cluster getCluster() {
-			Collection<Integer> leaves = new ArrayList<Integer>();
-			getLeafNodes(this, leaves);
-			Cluster c = new Cluster();
-			
-			for(Integer leaf: leaves) {
-				final double[] row = SingleLinkageACTree.this.data.get(leaf);
-				final double[] copy = new double[row.length];
-				System.arraycopy(row, 0, copy, 0, row.length);
-				c.add(copy);
-			}
-			
-			return c;
-		}
-		
-		private void getLeafNodes(AgglomNode node, Collection<Integer> leaves) {
-			if(!node.hasLeft() && !node.hasRight()) // LEAF!
-				leaves.add(node.value);
-			
-			if(node.hasLeft())
-				getLeafNodes(node.left, leaves);
-			if(node.hasRight())
-				getLeafNodes(node.right, leaves);
-				
-			return;
-		}
-
-		@Override
-		public Integer getValue() {
-			return value;
-		}
-
-		/**
-		 * Locates in pre-order...
-		 */
-		@Override
-		protected AgglomNode locate(Integer value) {
-			if(this.value.intValue() == value.intValue())
-				return this;
-			
-			AgglomNode result = null;
-			if(hasLeft())
-				result = left.locate(value);
-			
-			// If it's not null, it's been found
-			if(null != result)
-				return result;
-			
-			// Didn't find in left branch...
-			if(hasRight())
-				result = right.locate(value);
-			
-			// Either null or AgglomNode
-			return result;
-		}
-
-		@Override
-		protected void prune() {
-			right = null;
-			left = null;
-		}
-
-		/**
-		 * Collects the values of the tree in PRE ORDER
-		 * @return
-		 */
-		@Override
-		public Collection<Integer> values() {
-			final ArrayList<Integer> values = new ArrayList<>();
-			return valuesRecurse(this, values);
-		}
-		
-		private final Collection<Integer> valuesRecurse(final AgglomNode root, final Collection<Integer> coll) {
-			coll.add(root.value);
-			if(root.hasLeft())
-				valuesRecurse(root.left, coll);
-			if(root.hasRight())
-				valuesRecurse(root.right, coll);
-			return coll;
-		}
-		
 	}
 }

@@ -53,12 +53,8 @@ public class ClustUtils {
 		final double[][] copy = new double[data.length][];
 		
 		if(data.length != 0) {
-			final int n = data[0].length;
-			for(int i = 0; i < copy.length; i++) {
-				final double[] row_copy = new double[n];
-				System.arraycopy(data[i], 0, row_copy, 0, n);
-				copy[i] = row_copy;
-			}
+			for(int i = 0; i < copy.length; i++)
+				copy[i] = VecUtils.copy(data[i]);
 		}
 		
 		return copy;

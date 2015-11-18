@@ -161,6 +161,6 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.DBSCAN_;
+		return com.clust4j.log.Log.Tag.Algo.DBSCAN;
 	}
 }

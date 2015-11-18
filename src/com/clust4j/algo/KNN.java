@@ -11,84 +11,33 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Classifier;
-import com.clust4j.utils.SupervisedLearner;
+import com.clust4j.utils.VecUtils;
 
-public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, Classifier {
+public class KNN extends AbstractKNNClusterer {
 	private boolean isTrained = false;
 	private int[] labels = null;
 	
 	final private AbstractRealMatrix test;
 	final private int[] trainLabels;
-	
-	final public static class KNNPlanner extends AbstractClusterer.BaseClustererPlanner {
-		private GeometricallySeparable dist = DEF_DIST;
-		private boolean verbose = DEF_VERBOSE;
-		private boolean scale = DEF_SCALE;
-		private int k;
-		
-		public KNNPlanner(final int k) {
-			this.k = k;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		@Override
-		public KNNPlanner setDist(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		@Override
-		public KNNPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-
-		@Override
-		public GeometricallySeparable getDist() {
-			return dist;
-		}
-
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public KNNPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-	}
 
 	public KNN(AbstractRealMatrix train, AbstractRealMatrix test, final int[] labels, final int k) {
 		this(train, test, labels, new KNNPlanner(k));
 	}
 	
 	public KNN(AbstractRealMatrix train, AbstractRealMatrix test, final int[] labels, KNNPlanner builder) {
-		super(train, builder, builder.k);
+		super(train, builder);
 		
 		if(labels.length != train.getRowDimension())
 			throw new DimensionMismatchException(labels.length, train.getRowDimension());
 		if(train.getColumnDimension() != test.getColumnDimension())
 			throw new DimensionMismatchException(train.getColumnDimension(), test.getColumnDimension());
 		
-		this.trainLabels = new int[labels.length];
-		System.arraycopy(labels, 0, trainLabels, 0, labels.length);
+		this.trainLabels = VecUtils.copy(labels);
 		
 		if(!builder.scale)
 			this.test = (AbstractRealMatrix) test.copy();
 		else this.test = super.scale(test, (AbstractRealMatrix) test.copy());
 	}
-	
-	
-	
-	
 	
 	
 	
@@ -202,13 +151,11 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	
 	@Override
 	public int[] truthSet() {
-		final int[] truthSet = new int[trainLabels.length];
-		System.arraycopy(trainLabels, 0, truthSet, 0, trainLabels.length);
-		return truthSet;
+		return VecUtils.copy(trainLabels);
 	}
 	
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.KNN____;
+		return com.clust4j.log.Log.Tag.Algo.KNN;
 	}
 }

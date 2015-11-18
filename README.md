@@ -1,12 +1,14 @@
 ## clust4j
 A Java-based set of classification clustering algorithm implementations.
 
+
 ### Dependencies:
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
   - The `commons-math` dependency is included in [dep/](https://github.com/tgsmith61591/clust4j/tree/master/dep/commons-math-3-3.2) and is already in the `.classpath`
  - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
   - The `log4j` dependency is included in [dep/](https://github.com/tgsmith61591/clust4j/tree/master/dep/apache-log4j-1.2.17) and is already in the `.classpath`.
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
+
 
 
 ### Example data (for reproducability):
@@ -24,6 +26,7 @@ A Java-based set of classification clustering algorithm implementations.
     });
 		
     final int[] trainLabels = new int[] {0, 1, 1};
+
     
 
 
@@ -57,13 +60,15 @@ A Java-based set of classification clustering algorithm implementations.
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 
-### Future implementations:
+
+### Future implementations*:
 - Density-based:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 - Hierarchical algorithms:
-  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering)*, a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
+  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
 
-*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for DIANA's (DIvisive ANAlysis) runtime is O(2<sup>n</sup>), as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
+*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for [DIANA](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)'s (DIvisive ANAlysis) runtime is O(2<sup>n</sup>), as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
+
 
 
 ### Things to note:
@@ -74,3 +79,5 @@ A Java-based set of classification clustering algorithm implementations.
         new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
         // Without normalization
         new KMeans(mat, k);
+
+ - By default, logging is disabled. This can be enabled in any `BaseClustererPlanner` class by invoking `AbstractClusterer.BaseClustererPlanner.setVerbose(true)`.

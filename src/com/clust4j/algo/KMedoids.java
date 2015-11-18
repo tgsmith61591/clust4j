@@ -9,6 +9,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
+import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
 
@@ -208,8 +209,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						continue;
 					
 					// Create copy of medoids, set this med_idx to o
-					final int[] copy_of_medoids = new int[k];
-					System.arraycopy(medoid_indices, 0, copy_of_medoids, 0, k);
+					final int[] copy_of_medoids = VecUtils.copy(medoid_indices);
 					copy_of_medoids[i] = o;
 					
 					// Create the sorted int set, see if these medoid combos have been seen before
@@ -272,6 +272,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.KMEDOID;
+		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
 	}
 }

@@ -4,10 +4,30 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Linkage;
-import com.clust4j.utils.SingleLinkageACTree;
+import com.clust4j.utils.HierarchicalClusterTree;
+import com.clust4j.utils.SingleLinkageAgglomerativeFactory;
 
+/**
+ * Agglomerative clustering is a hierarchical clustering process in
+ * which each input record initially is mapped to its own cluster.
+ * Progressively, each cluster is merged by locating the least dissimilar 
+ * clusters in a M x M distance matrix, merging them, removing the corresponding
+ * rows and columns from the distance matrix and adding a new row/column vector
+ * of distances corresponding to the new cluster until there is one cluster.
+ * <p>
+ * Agglomerative clustering does <i>not</i> scale well to large data, performing
+ * at O(n<sup>2</sup>) computationally, yet it outperforms its cousin, Divisive Clustering 
+ * (DIANA), which performs at O(2<sup>n</sup>).
+ * 
+ * @author Taylor G Smith
+ * 
+ * @see com.clust4j.utils.SingleLinkageAgglomerativeFactory
+ * @see com.clust4j.utils.HierarchicalClusterTree
+ * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
+ * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
+ */
 public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
-	private SingleLinkageACTree tree = null;
+	private HierarchicalClusterTree tree = null;
 	
 	public AgglomerativeClusterer(AbstractRealMatrix data) {
 		super(data, new AbstractHierarchicalClusterer.BaseHierarchicalPlanner());
@@ -23,19 +43,14 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 		return "Agglomerative";
 	}
 	
-	public SingleLinkageACTree getTree() {
+	@Override
+	public HierarchicalClusterTree getTree() {
 		return tree;
 	}
 
 	@Override
 	public boolean isTrained() {
 		return isTrained;
-	}
-	
-	@Override
-	public String toString() {
-		if(null == tree) return super.toString();
-		return super.toString() + ": " + tree.toString();
 	}
 
 	@Override
@@ -58,7 +73,7 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 		switch(link) {
 			case SINGLE:
 				if(verbose) info("single linkage selected -- building SingleLinkageACTree");
-				tree = SingleLinkageACTree
+				tree = SingleLinkageAgglomerativeFactory
 						.build(data.getData(), 
 								getDistanceMetric(), 
 								false, this);
@@ -71,6 +86,6 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.AGGLOM_;
+		return com.clust4j.log.Log.Tag.Algo.AGGLOMERATIVE;
 	}
 }
