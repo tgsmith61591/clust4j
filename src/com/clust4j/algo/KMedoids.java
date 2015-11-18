@@ -11,10 +11,8 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
-import com.clust4j.utils.GeometricallySeparable;
 
 public class KMedoids extends AbstractKCentroidClusterer {
-	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
 	
 	/**
 	 * Stores the indices of the current medoids. Each index,
@@ -32,21 +30,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	private double[][] dist_mat = null;
 	
 	
-	final public static class KMedoidsPlanner extends BaseKCentroidPlanner {
-		public KMedoidsPlanner(int k) {
-			super(k);
-			super.setDist(DEF_DIST);
-		}
-	}
-	
-	
 	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
-		this(data, new KMedoidsPlanner(k));
+		this(data, new BaseKCentroidPlanner(k).setDist(Distance.MANHATTAN));
 	}
 	
 	public KMedoids(final AbstractRealMatrix data, final BaseKCentroidPlanner builder) {
-		super(data, builder);
+		super(data, builder.setDist(Distance.MANHATTAN));
 	}
 	
 	

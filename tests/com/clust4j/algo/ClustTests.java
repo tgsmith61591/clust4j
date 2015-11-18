@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
-import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
 
 public class ClustTests {
@@ -152,11 +151,6 @@ public class ClustTests {
 		// Test predict function
 		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getPredictedLabels()[3]);
 	}
-
-	@Test
-	public void KMedoidsTestDefDist() {
-		assertTrue(KMedoids.DEF_DIST.equals(Distance.MANHATTAN));
-	}
 	
 	/** Scale = false */
 	@Test
@@ -187,7 +181,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(2).setScale(true));
+		KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(2).setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -207,7 +201,7 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, new KMedoids
-				.KMedoidsPlanner(3)
+				.BaseKCentroidPlanner(3)
 				.setScale(false));
 		km.train();
 		
@@ -227,7 +221,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(3).setScale(true));
+		KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(3).setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -250,7 +244,7 @@ public class ClustTests {
 		KMedoids km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(1).setScale(b));
+			km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(1).setScale(b));
 			km.train();
 			assertTrue(km.didConverge());
 		}
@@ -332,7 +326,7 @@ public class ClustTests {
 			for(int k : ks) {
 				km = new KMedoids(mat, 
 						new KMedoids
-							.KMedoidsPlanner(k)
+							.BaseKCentroidPlanner(k)
 							.setScale(b) );
 				km.train();
 			}
