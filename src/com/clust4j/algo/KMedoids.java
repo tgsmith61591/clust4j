@@ -199,7 +199,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				final int medoid_index = medoid_indices[i];
 				final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
 				final double[] current_medoid = data.getRow(medoid_index);
-				double cost_of_cluster = getCost(indices_in_cluster, current_medoid);
+				
+				/*
+				 * Need to take min here, because as the optimal medoids are found, from one
+				 * cluster to another, cost_of_cluster will change (up or down). This ensures the
+				 * min always being tracked.
+				 */
+				double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, current_medoid), oldCost);
 				
 				if(verbose)
 					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ")");
@@ -261,6 +267,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			
 		} // End iter loop
 		
+		
+		if(verbose && !converged) // KMedoids should always converge...
+			warn("algorithm did not converge");
 		
 		
 		cost = oldCost;

@@ -156,7 +156,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 		
 		
 		if(verbose)
-			info("algorithm did not converge. Total system cost: " + cost);
+			warn("algorithm did not converge. Total system cost: " + cost);
 		
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;

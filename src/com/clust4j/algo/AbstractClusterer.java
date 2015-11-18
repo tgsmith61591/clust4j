@@ -80,7 +80,7 @@ public abstract class AbstractClusterer implements Loggable {
 		if(!planner.getScale())
 			this.data = (AbstractRealMatrix) data.copy();
 		else {
-			if(verbose) info("normalizing matrix columns");
+			if(verbose) info("normalizing matrix columns (centering and scaling)");
 			this.data = scale(data, (AbstractRealMatrix) data.copy());
 		}
 	} // End constructor
@@ -169,6 +169,10 @@ public abstract class AbstractClusterer implements Loggable {
 	
 	public UUID getKey() {
 		return modelKey;
+	}
+	
+	public boolean getVerbose() {
+		return verbose;
 	}
 	
 	

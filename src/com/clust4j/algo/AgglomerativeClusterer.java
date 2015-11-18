@@ -48,15 +48,23 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 	}
 	
 	private void buildTree(Linkage link) {
-		if(null == link)
-			throw new IllegalArgumentException("null linkage passed to planner");
+		if(null == link) {
+			String e = "null linkage passed to planner";
+			if(verbose)
+				error(e);
+			throw new IllegalArgumentException(e);
+		}
 		
 		switch(link) {
 			case SINGLE:
+				if(verbose) info("single linkage selected -- building SingleLinkageACTree");
 				tree = SingleLinkageACTree
-						.build(data.getData(), getDistanceMetric(), false);
+						.build(data.getData(), 
+								getDistanceMetric(), 
+								false, this);
 				break;
 			default:
+				if(verbose) error("unimplemented linkage method");
 				throw new IllegalArgumentException("unimplemented linkage method");
 		}
 	}

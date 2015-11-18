@@ -1,5 +1,6 @@
 package com.clust4j.algo;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
@@ -101,12 +102,16 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		return labels;
 	}
 	
-	final static int identifyMajorityClass(SortedSet<Map.Entry<Integer, Double>> sortedEntries, int K, int[] train_labels) {
+	final static int identifyMajorityClass(SortedSet<Map.Entry<Integer, Double>> sortedEntries, int K, int[] train_labels, KNN knn) {
 		TreeMap<Integer, Integer> lab_to_ct = new TreeMap<Integer, Integer>();
 		Iterator<Map.Entry<Integer, Double>> iter = sortedEntries.iterator();
 		
-		if(K == 1) // Base case...
-			return train_labels[iter.next().getKey()];
+		if(K == 1) { // Base case... 
+			final int label = train_labels[iter.next().getKey()];
+			if(knn.verbose)
+				knn.info("reached recursion base case; returning label: " + label);
+			return label;
+		}
 		
 		int i = 0;
 		while(i++ < K) { 
@@ -134,9 +139,14 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		Integer maj_ct = first.getValue();  // Holds majority count
 		Integer maj_lab = first.getKey();   // Holds majority label
 		
-		if(descIter.hasNext() && descIter.next().getValue().equals(maj_ct)) // Then we have a tie...
-			return identifyMajorityClass(sortedEntries, K-1, train_labels);
+		if(descIter.hasNext() && descIter.next().getValue().equals(maj_ct)) { // Then we have a tie...
+			if(knn.verbose)
+				knn.info("tie identified; recursing with K-1 (" + (K-1) + ") until majority label found");
+			return identifyMajorityClass(sortedEntries, K-1, train_labels, knn);
+		}
 		
+		if(knn.verbose)
+			knn.info("no ties found; returning label: " + maj_lab);
 		return maj_lab;
 	}
 
@@ -147,10 +157,16 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	
 	@Override
 	public int predict(final double[] newRecord) {
-		if(newRecord.length != data.getColumnDimension())
+		if(newRecord.length != data.getColumnDimension()) {
+			if(verbose)
+				error("Dimension mismatch: " + newRecord.length + ", " + data.getColumnDimension());
 			throw new DimensionMismatchException(newRecord.length, data.getColumnDimension());
+		}
 		
 		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
+		
+		if(verbose)
+			info("computing " + k + " nearest neighbors for " + Arrays.toString(newRecord));
 		
 		// Get map of distances to each record
 		for(int train_row = 0; train_row < data.getRowDimension(); train_row++)
@@ -158,7 +174,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		
 		// Sort treemap on value
 		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils.sortEntriesByValue(rec_to_dist);
-		return identifyMajorityClass(sortedEntries, k, trainLabels);
+		return identifyMajorityClass(sortedEntries, k, trainLabels, this);
 	}
 	
 	public AbstractRealMatrix testSet() {
@@ -177,6 +193,9 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			final double[] test_record = test.getRow(test_row);
 			labels[test_row] = predict(test_record);
 		}
+		
+		if(verbose)
+			info("labeling complete. Test labels: " + Arrays.toString(labels));
 		
 		isTrained = true;
 	}

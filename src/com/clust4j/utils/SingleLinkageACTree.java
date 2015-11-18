@@ -9,6 +9,8 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.algo.AgglomerativeClusterer;
+
 public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 	private static final long serialVersionUID = -8450284575258068092L;
 	private final AgglomNode root;
@@ -21,9 +23,11 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 	final private int size;
 	
 	
-	private SingleLinkageACTree(final TreeMap<Integer, EntryPair<Integer, Integer>> mapping, final double[][] data) {
+	private SingleLinkageACTree(final TreeMap<Integer, EntryPair<Integer, Integer>> mapping, 
+			final double[][] data, final AgglomerativeClusterer clusterer) {
 		super();
 		
+		final boolean verbose = clusterer.getVerbose();
 		
 		// Since we pulled the data from bottom up, we need to map it...
 		int current_idx = 2*data.length - 1;
@@ -31,12 +35,13 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		for(double[] d: data)
 			this.data.put(current_idx--, d);
 		
-		
+		if(verbose) clusterer.info("mapping clusters to tree structure (root=1). Use '.getTree()'");
 		
 		this.rep = mapping.toString();
 		
 		// Build the root, then progressively add the values in...
 		TreeMap<Integer, AgglomNode> nodeMapping = new TreeMap<>();
+		
 
 		Integer index; 
 		AgglomNode current, left, right;
@@ -55,6 +60,8 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 			}
 			
 			if(null != children) {
+				if(verbose) clusterer.info("cluster " + index + " is derived from clusters " + children);
+				
 				left = new AgglomNode(children.getKey());
 				right = new AgglomNode(children.getValue());
 				
@@ -67,13 +74,19 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		}
 		
 		size = root.size();
+		if(verbose) {
+			clusterer.info("tree building complete. Total number of clusters: " + size);
+			clusterer.info("root (agglomeration)=cluster 1. Use '.getTree()'");
+			clusterer.info("leaf nodes = individual records. From a node, use '.getCluster()' to get records");
+		}
+		
 		nodeMapping = null; // Force GC
 	}
 	
 	
 	
-	public static SingleLinkageACTree build(final double[][] data, final GeometricallySeparable dist) {
-		return build(data, dist, true);
+	public static SingleLinkageACTree build(final double[][] data, final GeometricallySeparable dist, final AgglomerativeClusterer clusterer) {
+		return build(data, dist, true, clusterer);
 	}
 	
 	/**
@@ -116,18 +129,32 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 	 * @param copy
 	 * @return the Agglomerative Cluster tree
 	 */
-	public static SingleLinkageACTree build(final double[][] dat, final GeometricallySeparable dist, final boolean copy) {
+	public static SingleLinkageACTree build(final double[][] dat, final GeometricallySeparable dist, 
+			final boolean copy, final AgglomerativeClusterer clusterer) {
+		
+		final boolean verbose = clusterer.getVerbose();
+		if(verbose && copy) clusterer.info("creating local data copy");
 		final double[][] data = copy ? ClustUtils.copyMatrix(dat) : dat;
+		
+		
 		int m = data.length;
 		int currentCluster = (2 * m) - 1; // There will always be 2M-1 clusters at the end
-		if(m < 1)
-			throw new IllegalArgumentException("empty data");
+		if(m < 1) {
+			String e = "empty data";
+			if(verbose) clusterer.error(e);
+			throw new IllegalArgumentException(e);
+		}
 		
 		
 		// The structure that will contain the cluster number mapped to the two clusters
 		// that make it up. If the value is null, then they are leaf clusters
 		TreeMap<Integer, EntryPair<Integer, Integer>> clusterMap = new TreeMap<>();
 		HashMap<Cluster, Integer> clusterNumbers = new HashMap<>();
+		
+		
+		// Log if necessary
+		if(verbose) clusterer.info("agglomerative clustering will produce 2M-1 clusters total (" + currentCluster + ")");
+		if(verbose) clusterer.info("building initial set of M clusters (" + m + ")");
 		
 		
 		// Create the N clusters of data...
@@ -144,8 +171,10 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		
 		
 		/* CORNER CASE: len(1) */
-		if(data.length == 1)
-			return new SingleLinkageACTree(clusterMap, data);
+		if(data.length == 1) {
+			if(verbose) clusterer.warn("data of length 1: returning single cluster");
+			return new SingleLinkageACTree(clusterMap, data, clusterer);
+		}
 		
 		
 		/* So we now have N 'clusters' in data... 
@@ -157,7 +186,8 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		 * distance matrix.
 		 */
 		Array2DRowRealMatrix distance = new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
-		
+		if(verbose) clusterer.info("calculated " + m + " x " + m + " distance matrix");
+		if(verbose) clusterer.info("beginning cluster agglomeration");
 		
 		/*
 		 * At this point, index J in clusters corresponds to either row or col J in the dist matrix...
@@ -183,6 +213,8 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 			b = clusters.get(j);
 			mergedClusterIndices = new EntryPair<Integer, Integer>(clusterNumbers.get(a), clusterNumbers.get(b));
 			clusterMap.put(currentCluster, mergedClusterIndices);
+			
+			if(verbose) clusterer.info("merging clusters " + i + " & " + j + ", computing updated distance matrix (m="+m+")");
 			
 			// Must remove `j` first to avoid left shift
 			clusters.remove(j);
@@ -231,7 +263,7 @@ public class SingleLinkageACTree extends AbstractBinaryTree<Integer> {
 		newDataRef = null;
 		
 		
-		return new SingleLinkageACTree(clusterMap, data);
+		return new SingleLinkageACTree(clusterMap, data, clusterer);
 	}
 	
 	final private static Cluster merge(final Cluster a, final Cluster b) {
