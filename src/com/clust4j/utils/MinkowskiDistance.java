@@ -24,4 +24,9 @@ public class MinkowskiDistance implements GeometricallySeparable {
 		
 		return FastMath.pow(sum, 1d/p);
 	}
+	
+	@Override
+	public String getName() {
+		return "Minkowski";
+	}
 }

@@ -91,14 +91,28 @@ public class KMeans extends AbstractKCentroidClusterer {
 		if(isTrained)
 			return;
 		
+		
+		if(verbose) info("beginning training segmentation for K = " + k);
+			
+		
 		Double oldCost = null;
 		labels = new int[m];
 		
 		// Enclose in for loop to ensure completes in proper iterations
 		for(iter = 0; iter < maxIter; iter++) {
 			
+			
+			if(verbose && iter%10 == 0)  {
+				info("training iteration " + iter +
+						"; current system cost = " + 
+						oldCost ); //+ "; " + centroidsToString());
+			}
+			
+			
 			/* Key is the closest centroid, value is the records that belong to it */
 			cent_to_record = assignClustersAndLabels();
+				
+			
 			
 			// Now reassign centroids based on records inside cluster
 			ArrayList<double[]> newCentroids = new ArrayList<double[]>();
@@ -126,6 +140,10 @@ public class KMeans extends AbstractKCentroidClusterer {
 				// Evaluate new SSE vs old SSE. If meets stopping criteria, break,
 				// otherwise update new SSE and continue.
 				if( FastMath.abs(oldCost - newCost) < minChange ) {
+					if(verbose)
+						info("training reached convergence at iteration "+ iter + 
+								"; Total system cost: " + cost);
+					
 					isTrained = true;
 					converged = true;
 					iter++; // Track iters used
@@ -136,6 +154,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 			}
 		} // End iter for
 		
+		
+		if(verbose)
+			info("algorithm did not converge. Total system cost: " + cost);
 		
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;

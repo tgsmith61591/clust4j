@@ -200,14 +200,19 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		
 		return nearestLabel;
 	}
+	
+	public String centroidsToString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("centroids: [");
+		for(int i = 0; i < centroids.size(); i++)
+			sb.append(Arrays.toString(centroids.get(i)) + (i == centroids.size()-1 ? "":", "));
+		sb.append("]");
+		return sb.toString();
+	}
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getName() + " centroids: [");
-		for(int i = 0; i < centroids.size(); i++)
-			sb.append(Arrays.toString(centroids.get(i)) + (i == centroids.size()-1 ? "]":", "));
-		return sb.toString();
+		return getName() + " " + centroidsToString();
 	}
 	
 	public double totalCost() {

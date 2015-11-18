@@ -67,7 +67,7 @@ public class ClustTests {
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
-		km.info("testing the kmeans logger");
+		//km.info("testing the kmeans logger");
 	}
 	
 	/** Now scale = true */
@@ -173,7 +173,7 @@ public class ClustTests {
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
-		km.info("testing the k-medoids logger");
+		//km.info("testing the k-medoids logger");
 	}
 	
 	/** Scale = true */
@@ -206,7 +206,9 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(3).setScale(false));
+		KMedoids km = new KMedoids(mat, new KMedoids
+				.KMedoidsPlanner(3)
+				.setScale(false));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -300,7 +302,7 @@ public class ClustTests {
 		}
 		
 
-		knn.info("testing the KNN logger");
+		//knn.info("testing the KNN logger");
 	}
 	
 	@Test
@@ -327,7 +329,10 @@ public class ClustTests {
 		KMedoids km = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(k).setScale(b));
+				km = new KMedoids(mat, 
+						new KMedoids
+							.KMedoidsPlanner(k)
+							.setScale(b) );
 				km.train();
 			}
 		}
@@ -367,7 +372,7 @@ public class ClustTests {
 		assertTrue(agglom.getTree().size() == 1);
 		
 		// Quick logging test
-		agglom.info("testing the agglom logger");
+		//agglom.info("testing the agglom logger");
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -399,5 +404,27 @@ public class ClustTests {
 		agglom.train();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
+	}
+	
+	@Test
+	public void KMeansLoadTest2FullLogger() {
+		final Array2DRowRealMatrix mat = getRandom(5000, 10);
+		KMeans km = new KMeans(mat, new KMeans
+				.BaseKCentroidPlanner(5)
+					.setScale(true)
+					.setVerbose(true)
+				);
+		km.train();
+	}
+	
+	@Test
+	public void KMedoidsLoadTest2FullLogger() {
+		final Array2DRowRealMatrix mat = getRandom(5000, 10);
+		KMedoids km = new KMedoids(mat, new KMedoids
+				.BaseKCentroidPlanner(5)
+					.setScale(true)
+					.setVerbose(true)
+				);
+		km.train();
 	}
 }

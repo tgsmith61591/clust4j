@@ -115,7 +115,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					min_dist = dis;
 			}
 			
-			min_dist += cst;
+			cst += min_dist;
 			if(cst > costToBeat) // Hack to exit early if already higher than minCost...
 				return costToBeat + 1;
 		}
@@ -150,12 +150,22 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		if(isTrained)
 			return;
 		
+		if(verbose) info("beginning training segmentation for K = " + k);
+		
 		
 		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
 		dist_mat = ClustUtils.distanceMatrix(data, getDistanceMetric());
+		
+		
+		if(verbose) info("calculated " + 
+						dist_mat.length + " x " + 
+						dist_mat.length + 
+						" distance matrix");
+				//+ ": HEAD = " + new MatrixFormatter()
+				//	.format(new Array2DRowRealMatrix(dist_mat), 6));
 
 		
 		// Clusters initialized with randoms already in super
@@ -171,11 +181,19 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// Worst case will store up to M choose K...
 		HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
 		
+
+		
+		if(verbose)  {
+			info("initial training system cost: " + oldCost );
+		}
+		
+		
 		for(iter = 0; iter < maxIter; iter++) {
 		
 			
 			// Use the PAM (partitioning around medoids) algorithm
 			// For each cluster in k...
+			double min_cost = Double.MAX_VALUE;
 			double new_cost = Double.MAX_VALUE;
 			for(int i = 0; i < k; i++) {
 				final int medoid_index = medoid_indices[i];
@@ -183,10 +201,14 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				final double[] current_medoid = data.getRow(medoid_index);
 				double cost_of_cluster = getCost(indices_in_cluster, current_medoid);
 				
+				if(verbose)
+					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ")");
+				
+				
 				// Track min for cluster
 				int best_medoid_index = medoid_index;
 				for(Integer o : indices_in_cluster) {
-					if(o.equals(medoid_index)) // Skip if it's the current medoid
+					if(o.intValue() == medoid_index) // Skip if it's the current medoid
 						continue;
 					
 					// Create copy of medoids, set this med_idx to o
@@ -203,6 +225,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
 					if(new_cost < cost_of_cluster) {
 						cost_of_cluster = new_cost;
+						if(verbose)
+							info("new cost-minimizing system found; current cost: " + new_cost);
+						
 						best_medoid_index = o;
 					}
 					
@@ -211,16 +236,25 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				
 				// Have found optimal medoid to minimize cost in cluster...
 				medoid_indices[i] = best_medoid_index;
+				min_cost = cost_of_cluster;
 			}
 		
 			// Check for stopping condition
-			if( FastMath.abs(oldCost - new_cost) < minChange) { // convergence!
-				oldCost = new_cost;
+			if( FastMath.abs(oldCost - min_cost) < minChange) { // convergence!
+				// new_cost may sometimes retain Double.MAX_VALUE if never reassigned
+				// in above loop, which means system hasn't changed and min is actually
+				// the OLD cost
+				oldCost = FastMath.min(oldCost, min_cost);
+				
+				if(verbose)
+					info("training reached convergence at iteration "+ (iter+1) + 
+							"; Total system cost: " + oldCost);
+				
 				converged = true;
 				iter++;
 				break;
 			} else { // can get better... reassign clusters to new medoids, keep going.
-				oldCost = new_cost;
+				oldCost = min_cost;
 				cent_to_record = assignClustersAndLabels();
 			}
 			

@@ -16,6 +16,11 @@ public enum Distance implements GeometricallySeparable {
 			
 			return sum;
 		}
+		
+		@Override
+		public String getName() {
+			return "Manhattan";
+		}
 	},
 	
 	EUCLIDEAN {
@@ -30,6 +35,11 @@ public enum Distance implements GeometricallySeparable {
 			}
 			
 			return FastMath.sqrt(sum);
+		}
+		
+		@Override
+		public String getName() {
+			return "Euclidean";
 		}
 	}
 }

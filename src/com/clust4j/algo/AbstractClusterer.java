@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.Random;
+import java.util.UUID;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
@@ -14,6 +15,7 @@ public abstract class AbstractClusterer implements Loggable {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static boolean DEF_VERBOSE = false;
 	final public static boolean DEF_SCALE = false;
+	final private UUID modelKey;
 	
 	/** Underlying data */
 	final protected AbstractRealMatrix data;
@@ -60,14 +62,27 @@ public abstract class AbstractClusterer implements Loggable {
 	{
 		this.dist = planner.getDist();
 		this.verbose = planner.getVerbose();
+		this.modelKey = UUID.randomUUID();
 		
 		// Handle data, now...
 		handleData(data);
 		
+		// Log info
+		if(verbose) {
+			info("initializing " + getName() + 
+					" clustering with " + data.getRowDimension() + 
+					" x " + data.getColumnDimension() + " data matrix");
+			info("distance metric: " + dist.getName());
+		}
+		
+		
 		// Scale if needed
 		if(!planner.getScale())
 			this.data = (AbstractRealMatrix) data.copy();
-		else this.data = scale(data, (AbstractRealMatrix) data.copy());
+		else {
+			if(verbose) info("normalizing matrix columns");
+			this.data = scale(data, (AbstractRealMatrix) data.copy());
+		}
 	} // End constructor
 	
 	
@@ -150,6 +165,10 @@ public abstract class AbstractClusterer implements Loggable {
 	@Override
 	public String toString() {
 		return getName() + " clusterer";
+	}
+	
+	public UUID getKey() {
+		return modelKey;
 	}
 	
 	

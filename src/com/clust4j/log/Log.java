@@ -26,7 +26,7 @@ public abstract class Log {
 		/** Which algorithm is being run? */
 		public static enum Algo implements Tag {
 			AGGLOM_ { @Override public String toString(){return "AGGLOM ";} },
-			CLUST4J { @Override public String toString(){return "clust4j";} },
+			CLUST4J,
 			DBSCAN_ { @Override public String toString(){return "DBSCAN ";} },
 			KMEDOID,
 			KMEANS_ { @Override public String toString(){return "K-MEANS";} },
