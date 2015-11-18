@@ -44,13 +44,13 @@ A Java-based set of classification clustering algorithm implementations.
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoids.KMedoidsPlanner(k).setScale(true));
+            KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(k).setScale(true));
             km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
 - Hierarchical algorithms:
-  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy.
+  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, Divisive Clustering.
 
             AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true));
             a.train();
@@ -61,7 +61,9 @@ A Java-based set of classification clustering algorithm implementations.
 - Density-based:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 - Hierarchical algorithms:
-  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy.
+  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering)*, a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
+
+*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for DIANA's (DIvisive ANAlysis) runtime is O(2<sup>n</sup>), as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
 
 
 ### Things to note:
