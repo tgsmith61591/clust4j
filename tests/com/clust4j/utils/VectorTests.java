@@ -99,9 +99,7 @@ public class VectorTests {
 		final double[] a = new double[]{1,1,1,1};
 		final double[] b = new double[]{1,2,3,4};
 		final double cosSim1 = VecUtils.cosSim(a, b);
-		final double cosSim2 = new CosineSimilarity().distance(a, b);
 		
-		assertTrue(Precision.equals(cosSim1, cosSim2, Precision.EPSILON));
 		assertTrue(Precision.equals(cosSim1, 0.9128709291752769));
 	}
 }

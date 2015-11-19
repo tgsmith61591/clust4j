@@ -38,6 +38,12 @@ A Java-based set of classification clustering algorithm implementations.
             knn.train();
             final int[] results = knn.getPredictedLabels(); // [0,1]
 
+  - [Kernel *k*-Nearest Neighbor](http://bcmi.sjtu.edu.cn/~yukai/papers/yu-npl02.pdf), an implementation of KNN using a kernel similarity matrix instead of a distance matrix.
+
+            KernelKNN kknn = new KernelKNN(mat, test, trainLabels, new KernelKNN.KernelKNNPlanner(k, new LinearKernel()).setScale(true));
+            kknn.train();
+            final int[] results = kknn.getPredictedLabels(); // [0,1]
+
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
             KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
