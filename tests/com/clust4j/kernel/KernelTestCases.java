@@ -7,7 +7,8 @@ import java.util.Random;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
-import com.clust4j.algo.KernelKNN;
+import com.clust4j.algo.KNN;
+import com.clust4j.algo.KNN.KNNPlanner;
 import com.clust4j.utils.VecUtils;
 
 public class KernelTestCases {
@@ -29,6 +30,14 @@ public class KernelTestCases {
 		assertTrue(new LinearKernel().distance(a, b) == 0);
 		assertTrue(VecUtils.isOrthogonalTo(a, b));
 	}
+	
+	@Test
+	public void testProjections() {
+		final double[] a = new double[]{5,0};
+		final double[] b = new double[]{3,0};
+		assertTrue(new LinearKernel().distance(a, b) == 15);
+	}
+	
 
 	@Test
 	public void testBigger() {
@@ -54,7 +63,7 @@ public class KernelTestCases {
 		};
 		
 		final double[][] test_array = new double[][] {
-			new double[] {0.01302, 	 0.0012,    0.06948},
+			new double[] {0.00502, 	 0.0003,    0.08148},
 			new double[] {3.01837,   2.2293,    3.94812}
 		};
 		
@@ -66,28 +75,28 @@ public class KernelTestCases {
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,2};
 		
-		KernelKNN knn = null;
+		KNN knn = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				knn = new KernelKNN(train, test, trainLabels, 
-						new KernelKNN.KernelKNNPlanner(k, 
-								new LinearKernel())
+				knn = new KNN(train, test, trainLabels, 
+						new KNNPlanner(k)
+						.setDist(new GaussianKernel())
 						.setScale(b)
 						.setVerbose(!b));
 				knn.train();
 				
 				final int[] results = knn.getPredictedLabels();
-				//assertTrue(results[0] == trainLabels[0]);
-				//assertTrue(results[1] == trainLabels[1]);
+				assertTrue(results[0] == trainLabels[0]);
+				assertTrue(results[1] == trainLabels[1]);
 			}
 		}
 		
 		// Try with k = 3, labels will be 1 both ways:
 		for(boolean b : scale) {
 			// Only verbose if scaling just to avoid too many loggings from this one test
-			knn = new KernelKNN(train, test, trainLabels, 
-					new KernelKNN.KernelKNNPlanner(3, 
-							new LinearKernel())
+			knn = new KNN(train, test, trainLabels, 
+					new KNNPlanner(3)
+					.setDist(new LinearKernel())
 					.setScale(b));
 			knn.train();
 			
@@ -96,7 +105,35 @@ public class KernelTestCases {
 			assertTrue(results[1] == trainLabels[1]);
 		}
 		
-
-		//knn.info("testing the KNN logger");
+	}
+	
+	@Test
+	public void testLinearSeparability() {
+		// Perfectly linearly separable
+		final double[][] train_array = new double[][] {
+			new double[] {0.0, 	 1.0},
+			new double[] {2.0,   3.0},
+			new double[] {2.0,   4.0}
+		};
+		
+		final double[][] test_array = new double[][] {
+			new double[] {0.0, 	 0.5},
+			new double[] {2.0,   3.5}
+		};
+		
+		final int[] trainLabels = new int[] {0, 1, 1};
+		
+		final Array2DRowRealMatrix train = new Array2DRowRealMatrix(train_array);
+		final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(test_array);
+		
+		// Test with no normalization
+		KNN knn1 = new KNN(train, test, trainLabels, 
+				new KNNPlanner(2)
+					.setDist(new LinearKernel())
+					.setVerbose(true));
+		knn1.train();
+		assertTrue(knn1.getPredictedLabels()[0] == 0 && knn1.getPredictedLabels()[1] == 1);
+		
+		
 	}
 }

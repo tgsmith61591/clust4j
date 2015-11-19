@@ -145,7 +145,6 @@ public class VecUtils {
 	public static double lpNorm(final double[] a, final double p) {
 		if(p == 1) return l1Norm(a);
 		if(p == 2) return l2Norm(a);
-		if(p < 1) throw new IllegalArgumentException("p cannot be less than 1");
 		
 		double power = 1.0 / p;
 		return FastMath.pow(sum(abs(a)), power);

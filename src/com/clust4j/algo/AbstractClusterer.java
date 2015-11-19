@@ -27,6 +27,7 @@ public abstract class AbstractClusterer implements Loggable {
 	/** Verbose for heavily logging */
 	final protected boolean verbose;
 	protected boolean isTrained = false;
+	final private boolean similarity;
 	
 
 	
@@ -64,6 +65,7 @@ public abstract class AbstractClusterer implements Loggable {
 		this.dist = planner.getDist();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
+		this.similarity = this.dist instanceof SimilarityMetric;
 		
 		// Handle data, now...
 		handleData(data);
@@ -73,7 +75,7 @@ public abstract class AbstractClusterer implements Loggable {
 			info("initializing " + getName() + 
 					" clustering with " + data.getRowDimension() + 
 					" x " + data.getColumnDimension() + " data matrix");
-			info((this.dist instanceof SimilarityMetric ? "similarity" : "distance") + 
+			info((similarity ? "similarity" : "distance") + 
 					" metric: " + dist.getName());
 		}
 		
@@ -162,6 +164,15 @@ public abstract class AbstractClusterer implements Loggable {
 		final Random old = seed;
 		this.seed = newSeed;
 		return old;
+	}
+	
+	/**
+	 * Returns whether the clustering algorithm uses a similarity
+	 * metric rather than a distance metric for geometric separability
+	 * @return
+	 */
+	public boolean usesSimilarityMetric() {
+		return similarity;
 	}
 	
 	@Override

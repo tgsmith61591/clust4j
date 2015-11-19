@@ -38,12 +38,6 @@ A Java-based set of classification clustering algorithm implementations.
             knn.train();
             final int[] results = knn.getPredictedLabels(); // [0,1]
 
-  - [Kernel *k*-Nearest Neighbor](http://bcmi.sjtu.edu.cn/~yukai/papers/yu-npl02.pdf), an implementation of KNN using a kernel similarity matrix instead of a distance matrix.
-
-            KernelKNN kknn = new KernelKNN(mat, test, trainLabels, new KernelKNN.KernelKNNPlanner(k, new LinearKernel()).setScale(true));
-            kknn.train();
-            final int[] results = kknn.getPredictedLabels(); // [0,1]
-
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
             KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
@@ -65,6 +59,17 @@ A Java-based set of classification clustering algorithm implementations.
             a.train();
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
+
+
+### Distance metrics
+A number of separability metrics are available for use:
+ - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
+ - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
+ - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
+ - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods
+
+Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, else it will try to *minimize* distance.
 
 
 ### Future implementations*:

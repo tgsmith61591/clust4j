@@ -33,8 +33,7 @@ public abstract class Log {
 			
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
-			KNN 			{ @Override public String toString(){return "K-NN   ";} },
-			KRNLKNN;
+			KNN 			{ @Override public String toString(){return "K-NN   ";} },;
 			
 			
 			boolean _enable;
