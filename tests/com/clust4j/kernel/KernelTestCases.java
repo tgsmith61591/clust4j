@@ -2,11 +2,14 @@ package com.clust4j.kernel;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.algo.ClustTests;
+import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KNN;
 import com.clust4j.algo.KNN.KNNPlanner;
 import com.clust4j.utils.MatrixFormatter;
@@ -154,5 +157,32 @@ public class KernelTestCases {
 		knn1.train();
 		assertTrue(knn1.getPredictedLabels()[0] == 0 && knn1.getPredictedLabels()[1] == 1);
 		
+		
+		
+		// Test with KMEANS
+		KMeans km = new KMeans(train, 
+				new KMeans.BaseKCentroidPlanner(2)
+					.setDist(kernel)
+					.setVerbose(true)
+				);
+		km.train();
+		System.out.println(Arrays.toString(km.getPredictedLabels()));
+	}
+	
+	@Test
+	public void KernelKMeansLoadTest1() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(10000, 10);
+		final int[] ks = new int[] {1,3,5,7};
+		Kernel kernel = new GaussianKernel(0.05);
+		
+		KMeans km = null;
+		for(int k : ks) {
+			km = new KMeans(mat, new KMeans
+					.BaseKCentroidPlanner(k)
+					.setDist(kernel)
+					.setVerbose(true)
+					.setScale(false));
+			km.train();
+		}
 	}
 }

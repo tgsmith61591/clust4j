@@ -13,6 +13,8 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
 
+// TODO: kernel compatability...
+
 public class KMedoids extends AbstractKCentroidClusterer {
 	
 	/**

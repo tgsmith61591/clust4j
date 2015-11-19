@@ -58,7 +58,7 @@ public class SingleLinkageAgglomerativeFactory {
 			final boolean copy, final AgglomerativeClusterer clusterer) {
 		
 		final boolean verbose = clusterer.getVerbose();
-		final boolean similarity = clusterer.getSeparabilityMetric() instanceof SimilarityMetric;
+		final boolean similarity = clusterer.usesSimilarityMetric();
 		
 		if(verbose && copy) clusterer.info("creating local data copy");
 		final double[][] data = copy ? ClustUtils.copyMatrix(dat) : dat;
@@ -112,7 +112,10 @@ public class SingleLinkageAgglomerativeFactory {
 		 * from each other cluster's centroid to the new one. This constitutes the new
 		 * distance matrix.
 		 */
-		Array2DRowRealMatrix distance = new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
+		Array2DRowRealMatrix distance = similarity ? 
+			new Array2DRowRealMatrix(ClustUtils.distToSimilarityMatrix(data, dist), false) : 
+				new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
+			
 		if(verbose) clusterer.info("calculated " + m + " x " + m + " distance matrix");
 		if(verbose) clusterer.info("beginning cluster agglomeration");
 		
@@ -131,7 +134,7 @@ public class SingleLinkageAgglomerativeFactory {
 		while(m > 1) {
 			
 			// Find the row/col indices that get merged next
-			closest = similarity ? maxSimInDistMatrix(distance) : minDistInDistMatrix(distance);
+			closest = minDistInDistMatrix(distance);
 			i = closest.getKey();
 			j = closest.getValue();
 			
@@ -210,27 +213,6 @@ public class SingleLinkageAgglomerativeFactory {
 		}
 		
 		return merge;
-	}
-	
-	final private static EntryPair<Integer, Integer> maxSimInDistMatrix(final AbstractRealMatrix data) {
-		final int m = data.getRowDimension();
-		
-		int maxRow = -1;
-		int maxCol = -1;
-		double max = Double.MIN_VALUE;
-		
-		for(int i = 0; i < m - 1; i++) {
-			for(int j = i + 1; j < m; j++) {
-				final double current = data.getEntry(i, j);
-				if(current > max) {
-					maxRow = i;
-					maxCol = j;
-					max = current;
-				}
-			}
-		}
-		
-		return new EntryPair<>(maxRow, maxCol);
 	}
 	
 	final private static EntryPair<Integer, Integer> minDistInDistMatrix(final AbstractRealMatrix data) {

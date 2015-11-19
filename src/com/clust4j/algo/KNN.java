@@ -109,13 +109,15 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			info("computing " + k + " nearest neighbors for " + Arrays.toString(newRecord));
 		
 		// Get map of distances to each record
-		for(int train_row = 0; train_row < data.getRowDimension(); train_row++)
-			rec_to_dist.put(train_row, getSeparabilityMetric().getSeparability(newRecord, data.getRow(train_row)));
+		for(int train_row = 0; train_row < data.getRowDimension(); train_row++) {
+			final double sim = getSeparabilityMetric().getSeparability(newRecord, data.getRow(train_row));
+			rec_to_dist.put(train_row, usesSimilarityMetric() ? -sim : sim);
+		}
 		
 		// Sort treemap on value
 		// If the distance metric is a similarity metric, we want it DESC else ASC
 		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils
-				.sortEntriesByValue( rec_to_dist, usesSimilarityMetric() );
+				.sortEntriesByValue( rec_to_dist );
 		return identifyMajorityClass(sortedEntries, k, trainLabels, this);
 	}
 

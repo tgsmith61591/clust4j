@@ -186,18 +186,24 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		if((n = newRecord.length) != data.getColumnDimension())
 			throw new DimensionMismatchException(n, data.getColumnDimension());
 		
+		
 		int nearestLabel = 0;
 		double shortestDist = Double.MAX_VALUE;
 		double[] cent;
 		for(int i = 0; i < k; i++) {
 			cent = centroids.get(i);
 			double dist = getSeparabilityMetric().getSeparability(newRecord, cent);
+			if(usesSimilarityMetric())
+				dist = -dist;
+			
 			if(dist < shortestDist) {
 				shortestDist = dist;
 				nearestLabel = i;
 			}
 		}
-		
+
+		// stdout takes so long, it slows down...
+		// if(verbose) info("Predicted class for new record " + Arrays.toString(newRecord) + " = " + nearestLabel);
 		return nearestLabel;
 	}
 	

@@ -14,7 +14,7 @@ import com.clust4j.utils.MatrixFormatter;
 public class ClustTests {
 	private static boolean print = false;
 	private static final MatrixFormatter formatter = new MatrixFormatter();
-	private static Array2DRowRealMatrix getRandom(final int rows, final int cols) {
+	public static Array2DRowRealMatrix getRandom(final int rows, final int cols) {
 		final Random rand = new Random();
 		final double[][] data = new double[rows][cols];
 		

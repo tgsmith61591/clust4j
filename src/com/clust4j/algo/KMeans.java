@@ -90,16 +90,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 	final public void train() {
 		if(isTrained)
 			return;
-		
-		trainDistance();
-		// TODO: if is similarity, do a different procedure...
-	} // End train
-	
-	
-	/**
-	 * The training procedure for a distance-based GeometricallySeparable metric
-	 */
-	private void trainDistance() {
+
 		if(verbose) info("beginning training segmentation for K = " + k);
 			
 		
@@ -148,9 +139,10 @@ public class KMeans extends AbstractKCentroidClusterer {
 				// Evaluate new SSE vs old SSE. If meets stopping criteria, break,
 				// otherwise update new SSE and continue.
 				if( FastMath.abs(oldCost - newCost) < minChange ) {
-					if(verbose)
+					if(verbose) {
 						info("training reached convergence at iteration "+ iter + 
 								"; Total system cost: " + cost);
+					}
 					
 					isTrained = true;
 					converged = true;
@@ -168,7 +160,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 		
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;
-	}
+	} // End train
 	
 
 	@Override
