@@ -97,7 +97,9 @@ Various similarity metrics—kernel methods, in particular—allow the clusterin
         // Without normalization
         new KMeans(mat, k);
 
- - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `AbstractClusterer.BaseClustererPlanner.setVerbose(true)`, or it can be set globally: `AbstractClusterer.DEF_VERBOSE = true;`.
+ - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `AbstractClusterer.BaseClustererPlanner.setVerbose(true)`, or it can be set globally:
+
+        AbstractClusterer.DEF_VERBOSE = true;
 
 
 
