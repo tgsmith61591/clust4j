@@ -91,6 +91,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 		if(isTrained)
 			return;
 
+		final long now = System.currentTimeMillis();
 		if(verbose) info("beginning training segmentation for K = " + k);
 			
 		
@@ -142,6 +143,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 					if(verbose) {
 						info("training reached convergence at iteration "+ iter + 
 								"; Total system cost: " + cost);
+						
+						info("model " + getKey() + " completed in " + 
+								(System.currentTimeMillis() - now)/1000d + " sec");
 					}
 					
 					isTrained = true;
@@ -155,8 +159,11 @@ public class KMeans extends AbstractKCentroidClusterer {
 		} // End iter for
 		
 		
-		if(verbose)
+		if(verbose) {
 			warn("algorithm did not converge. Total system cost: " + cost);
+			info("model " + getKey() + " completed in " + 
+					(System.currentTimeMillis() - now)/1000d + " sec");
+		}
 		
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;

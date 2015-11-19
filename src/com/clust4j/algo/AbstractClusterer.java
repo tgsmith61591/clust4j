@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.Distance;
@@ -75,6 +76,12 @@ public abstract class AbstractClusterer implements Loggable {
 			info("initializing " + getName() + 
 					" clustering with " + data.getRowDimension() + 
 					" x " + data.getColumnDimension() + " data matrix");
+			
+			
+			if(this.dist instanceof Kernel)
+				warn("running " + getName() + " in Kernel mode; this is a much more expensive option");
+			
+			
 			info((similarity ? "similarity" : "distance") + 
 					" metric: " + dist.getName());
 		}

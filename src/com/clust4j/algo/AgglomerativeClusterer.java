@@ -58,7 +58,10 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 		if(isTrained)
 			return;
 		
+		final long now = System.currentTimeMillis();
 		buildTree(linkage);
+		
+		if(verbose) info("model " + getKey() + " completed in " + (System.currentTimeMillis() - now)/1000d + " sec");
 		isTrained = true;
 	}
 	

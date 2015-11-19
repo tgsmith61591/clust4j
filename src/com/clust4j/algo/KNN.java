@@ -190,6 +190,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			return;
 		
 		final int m = test.getRowDimension();
+		final long now = System.currentTimeMillis();
 		labels = new int[m];
 		
 		for(int test_row = 0; test_row < m; test_row++) {
@@ -197,8 +198,11 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			labels[test_row] = predict(test_record);
 		}
 		
-		if(verbose)
+		if(verbose) {
 			info("labeling complete. Test labels: " + Arrays.toString(labels));
+			info("model " + getKey() + " completed in " + 
+					(System.currentTimeMillis() - now)/1000d + " sec");
+		}
 		
 		isTrained = true;
 	}

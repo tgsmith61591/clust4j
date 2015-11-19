@@ -144,7 +144,7 @@ public class SingleLinkageAgglomerativeFactory {
 			mergedClusterIndices = new EntryPair<Integer, Integer>(clusterNumbers.get(a), clusterNumbers.get(b));
 			clusterMap.put(currentCluster, mergedClusterIndices);
 			
-			if(verbose) clusterer.info("merging clusters " + i + " & " + j + ", computing updated distance matrix (m="+m+")");
+			if(verbose) clusterer.trace("merging clusters " + i + " & " + j + ", computing updated distance matrix (m="+m+")");
 			
 			// Must remove `j` first to avoid left shift
 			clusters.remove(j);

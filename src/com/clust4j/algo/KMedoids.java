@@ -145,6 +145,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		
 		if(verbose) info("beginning training segmentation for K = " + k);
 		
+		final long now = System.currentTimeMillis();
 		
 		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
 		// We do this in KMedoids and not KMeans, because KMedoids uses
@@ -244,9 +245,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				// the OLD cost
 				oldCost = FastMath.min(oldCost, min_cost);
 				
-				if(verbose)
+				if(verbose) {
 					info("training reached convergence at iteration "+ (iter+1) + 
 							"; Total system cost: " + oldCost);
+				
+					info("model " + getKey() + " completed in " + 
+							(System.currentTimeMillis() - now)/1000d + " sec");
+				}
 				
 				converged = true;
 				iter++;
@@ -260,8 +265,12 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		} // End iter loop
 		
 		
-		if(verbose && !converged) // KMedoids should always converge...
+		if(verbose && !converged) { // KMedoids should always converge...
 			warn("algorithm did not converge");
+			
+			info("model " + getKey() + " completed in " + 
+					(System.currentTimeMillis() - now)/1000d + " sec");
+		}
 		
 		
 		cost = oldCost;

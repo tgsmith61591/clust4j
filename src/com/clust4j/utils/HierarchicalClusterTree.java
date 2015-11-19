@@ -56,7 +56,7 @@ public class HierarchicalClusterTree extends AbstractBinaryTree<Integer> {
 			}
 			
 			if(null != children) {
-				if(verbose) clusterer.info("cluster " + index + " is derived from clusters " + children);
+				if(verbose) clusterer.trace("cluster " + index + " is derived from clusters " + children);
 				
 				left = new HierarchicalNode(children.getKey());
 				right = new HierarchicalNode(children.getValue());
