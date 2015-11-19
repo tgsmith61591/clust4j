@@ -12,6 +12,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.SupervisedLearner;
 import com.clust4j.utils.VecUtils;
 
@@ -19,9 +20,11 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 
 	final protected int[] trainLabels;
 	final protected AbstractRealMatrix test;
+	final private boolean similarity;
 	
 	protected boolean isTrained = false;
 	protected int[] labels = null;
+	
 	
 	public AbstractKNNClusterer(AbstractRealMatrix train, 
 			AbstractRealMatrix test, 
@@ -39,6 +42,8 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 		if(!planner.scale)
 			this.test = (AbstractRealMatrix) test.copy();
 		else this.test = super.scale(test, (AbstractRealMatrix) test.copy());
+		
+		this.similarity = getDistanceMetric() instanceof SimilarityMetric;
 	}
 
 	public static class KNNPlanner extends AbstractClusterer.BaseClustererPlanner {
@@ -104,7 +109,9 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 			rec_to_dist.put(train_row, getDistanceMetric().distance(newRecord, data.getRow(train_row)));
 		
 		// Sort treemap on value
-		SortedSet<Map.Entry<Integer, Double>> sortedEntries = topKSortedByValue(rec_to_dist);
+		// If the distance metric is a similarity metric, we want it DESC else ASC
+		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils
+				.sortEntriesByValue( rec_to_dist, similarity );
 		return identifyMajorityClass(sortedEntries, k, trainLabels, this);
 	}
 
@@ -195,5 +202,4 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 		return VecUtils.copy(trainLabels);
 	}
 	
-	protected abstract SortedSet<Map.Entry<Integer, Double>> topKSortedByValue(TreeMap<Integer, Double> rec_to_dist);
 }

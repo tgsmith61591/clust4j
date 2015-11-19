@@ -4,9 +4,10 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
-public abstract class AbstractKernel implements GeometricallySeparable {
+public abstract class AbstractKernel implements GeometricallySeparable, SimilarityMetric {
 	
 	public AbstractKernel() {}
 	

@@ -9,6 +9,7 @@ import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractClusterer implements Loggable {
@@ -72,7 +73,8 @@ public abstract class AbstractClusterer implements Loggable {
 			info("initializing " + getName() + 
 					" clustering with " + data.getRowDimension() + 
 					" x " + data.getColumnDimension() + " data matrix");
-			info("distance metric: " + dist.getName());
+			info((this.dist instanceof SimilarityMetric ? "similarity" : "distance") + 
+					" metric: " + dist.getName());
 		}
 		
 		
