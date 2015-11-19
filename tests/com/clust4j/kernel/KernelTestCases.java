@@ -2,7 +2,6 @@ package com.clust4j.kernel;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -10,6 +9,7 @@ import org.junit.Test;
 
 import com.clust4j.algo.ClustTests;
 import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KNN;
 import com.clust4j.algo.KNN.KNNPlanner;
 import com.clust4j.utils.MatrixFormatter;
@@ -78,7 +78,7 @@ public class KernelTestCases {
 			for(int k : ks) {
 				knn = new KNN(train, test, trainLabels, 
 						new KNNPlanner(k)
-						.setDist(new GaussianKernel())
+						.setSep(new GaussianKernel())
 						.setScale(b)
 						.setVerbose(!b));
 				knn.train();
@@ -94,7 +94,7 @@ public class KernelTestCases {
 			// Only verbose if scaling just to avoid too many loggings from this one test
 			knn = new KNN(train, test, trainLabels, 
 					new KNNPlanner(3)
-					.setDist(new LinearKernel())
+					.setSep(new LinearKernel())
 					.setScale(b));
 			knn.train();
 			
@@ -152,7 +152,7 @@ public class KernelTestCases {
 		// Test with no normalization
 		KNN knn1 = new KNN(train, test, trainLabels, 
 				new KNNPlanner(2)
-					.setDist(kernel)
+					.setSep(kernel)
 					.setVerbose(true));
 		knn1.train();
 		assertTrue(knn1.getPredictedLabels()[0] == 0 && knn1.getPredictedLabels()[1] == 1);
@@ -162,11 +162,11 @@ public class KernelTestCases {
 		// Test with KMEANS
 		KMeans km = new KMeans(train, 
 				new KMeans.BaseKCentroidPlanner(2)
-					.setDist(kernel)
+					.setSep(kernel)
 					.setVerbose(true)
 				);
 		km.train();
-		System.out.println(Arrays.toString(km.getPredictedLabels()));
+		System.out.println();
 	}
 	
 	@Test
@@ -179,10 +179,29 @@ public class KernelTestCases {
 		for(int k : ks) {
 			km = new KMeans(mat, new KMeans
 					.BaseKCentroidPlanner(k)
-					.setDist(kernel)
+					.setSep(kernel)
 					.setVerbose(true)
 					.setScale(false));
 			km.train();
 		}
+		System.out.println();
+	}
+	
+	@Test
+	public void KernelKMedoidsLoadTest1() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(2000, 10);
+		final int[] ks = new int[] {1,3,5,7};
+		Kernel kernel = new GaussianKernel(0.05);
+		
+		KMedoids km = null;
+		for(int k : ks) {
+			km = new KMedoids(mat, 
+					new KMedoids.KMedoidsPlanner(k)
+						.setSep(kernel)
+						.setVerbose(true)
+						.setScale(false));
+			km.train();
+		}
+		System.out.println();
 	}
 }

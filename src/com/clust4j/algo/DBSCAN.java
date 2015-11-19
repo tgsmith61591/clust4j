@@ -49,7 +49,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		}
 		
 		@Override
-		public GeometricallySeparable getDist() {
+		public GeometricallySeparable getSep() {
 			return dist;
 		}
 		
@@ -75,7 +75,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		}
 		
 		@Override
-		public DBSCANPlanner setDist(final GeometricallySeparable dist) {
+		public DBSCANPlanner setSep(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

@@ -9,6 +9,8 @@ import org.junit.Test;
 
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
 
 public class ClustTests {
@@ -163,6 +165,8 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 2);
+		assertTrue(km.getSeparabilityMetric().equals(Distance.MANHATTAN));
+		
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -181,7 +185,9 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(2).setScale(true));
+		KMedoids km = new KMedoids(mat, 
+				new KMedoidsPlanner(2)
+					.setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -200,9 +206,9 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids
-				.BaseKCentroidPlanner(3)
-				.setScale(false));
+		KMedoids km = new KMedoids(mat, 
+				new KMedoidsPlanner(3)
+					.setScale(false));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -221,7 +227,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(3).setScale(true));
+		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -244,7 +250,7 @@ public class ClustTests {
 		KMedoids km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(1).setScale(b));
+			km = new KMedoids(mat, new KMedoidsPlanner(1).setScale(b));
 			km.train();
 			assertTrue(km.didConverge());
 		}
@@ -325,8 +331,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			for(int k : ks) {
 				km = new KMedoids(mat, 
-						new KMedoids
-							.BaseKCentroidPlanner(k)
+						new KMedoidsPlanner(k)
 							.setScale(b) );
 				km.train();
 			}
@@ -418,8 +423,8 @@ public class ClustTests {
 	@Test
 	public void KMedoidsLoadTest2FullLogger() {
 		final Array2DRowRealMatrix mat = getRandom(5000, 10);
-		KMedoids km = new KMedoids(mat, new KMedoids
-				.BaseKCentroidPlanner(5)
+		KMedoids km = new KMedoids(mat, 
+				new KMedoidsPlanner(5)
 					.setScale(true)
 					.setVerbose(true)
 				);

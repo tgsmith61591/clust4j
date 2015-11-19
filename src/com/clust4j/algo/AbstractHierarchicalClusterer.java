@@ -22,7 +22,7 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		private boolean verbose = DEF_VERBOSE;
 
 		@Override
-		public GeometricallySeparable getDist() {
+		public GeometricallySeparable getSep() {
 			return dist;
 		}
 		
@@ -54,7 +54,7 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		}
 
 		@Override
-		public BaseHierarchicalPlanner setDist(GeometricallySeparable dist) {
+		public BaseHierarchicalPlanner setSep(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

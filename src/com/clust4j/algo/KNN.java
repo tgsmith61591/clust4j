@@ -64,7 +64,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		}
 		
 		@Override
-		public KNNPlanner setDist(final GeometricallySeparable dist) {
+		public KNNPlanner setSep(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -76,7 +76,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		}
 
 		@Override
-		public GeometricallySeparable getDist() {
+		public GeometricallySeparable getSep() {
 			return dist;
 		}
 

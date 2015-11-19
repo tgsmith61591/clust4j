@@ -9,11 +9,10 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
+import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
-
-// TODO: kernel compatability...
 
 public class KMedoids extends AbstractKCentroidClusterer {
 	
@@ -32,15 +31,52 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 */
 	private double[][] dist_mat = null;
 	
+	private final GeometricallySeparable metric; // Just to save repeated function call overhead
+	
 	
 	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
-		this(data, new BaseKCentroidPlanner(k).setDist(Distance.MANHATTAN));
+		this(data, new KMedoidsPlanner(k).setSep(Distance.MANHATTAN));
 	}
 	
-	public KMedoids(final AbstractRealMatrix data, final BaseKCentroidPlanner builder) {
-		super(data, builder.setDist(Distance.MANHATTAN));
+	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner builder) {
+		super(data, builder);
+		metric = getSeparabilityMetric();
 	}
+	
+	
+	
+	public static class KMedoidsPlanner extends BaseKCentroidPlanner {
+		public KMedoidsPlanner(int k) {
+			super(k);
+			super.setSep(Distance.MANHATTAN); // BY DEFAULT
+		}
+		
+		@Override
+		public KMedoidsPlanner setSep(final GeometricallySeparable dist) {
+			return (KMedoidsPlanner) super.setSep(dist);
+		}
+		
+		public KMedoidsPlanner setMaxIter(final int max) {
+			return (KMedoidsPlanner) super.setMaxIter(max);
+		}
+
+		public KMedoidsPlanner setMinChangeStoppingCriteria(final double min) {
+			return (KMedoidsPlanner) super.setMinChangeStoppingCriteria(min);
+		}
+		
+		@Override
+		public KMedoidsPlanner setScale(final boolean scale) {
+			return (KMedoidsPlanner) super.setScale(scale);
+		}
+		
+		@Override
+		public KMedoidsPlanner setVerbose(final boolean v) {
+			return (KMedoidsPlanner) super.setVerbose(v);
+		}
+	}
+	
+	
 	
 	
 	
@@ -127,7 +163,8 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		double sumI = 0;
 		for(Integer rec : inCluster) { // Row nums of belonging records
 			final double[] record = data.getRow(rec);
-			sumI += KMedoids.DEF_DIST.getSeparability(record, newCentroid);
+			//sumI += KMedoids.DEF_DIST.getSeparability(record, newCentroid); // Pre-kernel adaptation
+			sumI += metric.getSeparability(record, newCentroid);
 		}
 		
 		return sumI;
@@ -151,7 +188,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
-		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+		dist_mat = usesSimilarityMetric() ? 
+				ClustUtils.distToSimilarityMatrix(data, getSeparabilityMetric()) : // If it is similarity, use the sim mat 
+					ClustUtils.distanceMatrix(data, getSeparabilityMetric()); // If it isn't sim, use dist
 		
 		
 		if(verbose) info("calculated " + 

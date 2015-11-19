@@ -58,8 +58,8 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		}
 		
 		@Override
-		public GeometricallySeparable getDist() {
-			return dist;
+		public GeometricallySeparable getSep() {
+			return this.dist;
 		}
 		
 		@Override
@@ -73,7 +73,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		}
 		
 		@Override
-		public BaseKCentroidPlanner setDist(final GeometricallySeparable dist) {
+		public BaseKCentroidPlanner setSep(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

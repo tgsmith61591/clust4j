@@ -23,7 +23,7 @@ public abstract class AbstractClusterer implements Loggable {
 	/** Underlying data */
 	final protected AbstractRealMatrix data;
 	/** Similarity metric */
-	final protected GeometricallySeparable dist;
+	final private GeometricallySeparable dist;
 	/** Seed for any shuffles */
 	private Random seed = new Random();
 	/** Verbose for heavily logging */
@@ -43,12 +43,12 @@ public abstract class AbstractClusterer implements Loggable {
 	 * @author Taylor G Smith
 	 */
 	abstract protected static class BaseClustererPlanner {
-		abstract public GeometricallySeparable getDist();
+		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
 		abstract public boolean getVerbose();
 		abstract public BaseClustererPlanner setScale(final boolean b);
 		abstract public BaseClustererPlanner setVerbose(final boolean b);
-		abstract public BaseClustererPlanner setDist(final GeometricallySeparable dist);
+		abstract public BaseClustererPlanner setSep(final GeometricallySeparable dist);
 	}
 	
 	
@@ -60,11 +60,9 @@ public abstract class AbstractClusterer implements Loggable {
 	 * @param data
 	 * @param planner
 	 */
-	public AbstractClusterer(
-		AbstractRealMatrix data, 
-		BaseClustererPlanner planner) 
-	{
-		this.dist = planner.getDist();
+	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
+		
+		this.dist = planner.getSep();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
 		this.similarity = this.dist instanceof SimilarityMetric;

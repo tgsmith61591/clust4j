@@ -47,7 +47,7 @@ ____
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoids.BaseKCentroidPlanner(k).setScale(true));
+            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setScale(true));
             km.train();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
@@ -76,6 +76,12 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
 Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
 
 ![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_11b_notitle2.png)
+
+To initialize any clusterer with a kernel as the `GeometricallySeparable` metric (example uses `GaussianKernel`):
+
+    final Kernel kernel = new GaussianKernel();
+    KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setSep(kernel));
+
 
 ----
 ### Future implementations*:
