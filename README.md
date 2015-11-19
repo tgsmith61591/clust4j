@@ -95,8 +95,8 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
 
 
 ##### References:
- - <sub><sup>Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)</sup></sub>
- - <sub><sup>Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)</sup></sub>
- -  <sub><sup>Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich</sup></sub>
- -  <sub><sup>[kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package</sup></sub>
- -  <sub><sup>[h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)</sup></sub>
+ - Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
+ - Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)
+ -  Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
+ -  [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
+ -  [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
