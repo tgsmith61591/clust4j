@@ -2,6 +2,7 @@ package com.clust4j.utils;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 public class VectorTests {
@@ -91,5 +92,16 @@ public class VectorTests {
 		assertTrue( VecUtils.l1Norm(neg) == 9 );
 		assertTrue( VecUtils.lpNorm(neg, 1) == 9 );
 		assertTrue( VecUtils.lpNorm(neg, 2) == VecUtils.l2Norm(neg) );
+	}
+	
+	@Test
+	public void testCosSim() {
+		final double[] a = new double[]{1,1,1,1};
+		final double[] b = new double[]{1,2,3,4};
+		final double cosSim1 = VecUtils.cosSim(a, b);
+		final double cosSim2 = new CosineSimilarity().distance(a, b);
+		
+		assertTrue(Precision.equals(cosSim1, cosSim2, Precision.EPSILON));
+		assertTrue(Precision.equals(cosSim1, 0.9128709291752769));
 	}
 }

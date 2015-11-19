@@ -27,4 +27,9 @@ public abstract class AbstractKernel implements GeometricallySeparable {
 	public double[][] kernelMatrix(final double[][] data) {
 		return ClustUtils.distanceMatrix(data, this);
 	}
+	
+	@Override
+	public String toString() {
+		return getName();
+	}
 }

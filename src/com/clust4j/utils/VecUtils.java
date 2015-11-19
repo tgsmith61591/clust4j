@@ -61,6 +61,23 @@ public class VecUtils {
 		return copy;
 	}
 	
+	public static double cosSim(final double[] a, final double[] b) {
+		checkDims(a, b);
+		
+		// Calculate all in one to avoid O(3N)
+		double innerProdSum = 0;
+		double normAsum = 0;
+		double normBsum = 0;
+		
+		for(int i = 0; i < a.length; i++) {
+			innerProdSum += a[i] * b[i];
+			normAsum += a[i] * a[i];
+			normBsum += b[i] * b[i];
+		}
+		
+		return innerProdSum / (FastMath.sqrt(normAsum) * FastMath.sqrt(normBsum));
+	}
+	
 	public static double[] divide(final double[] numer, final double[] by) {
 		checkDims(numer, by);
 		
