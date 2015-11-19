@@ -34,7 +34,7 @@ public class RadialBasisKernel extends Kernel {
 	}
 	
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
+	public double getSimilarity(final double[] a, final double[] b) {
 		return FastMath.exp( sigma * toHilbertPSpace(a,b) );
 	}
 }

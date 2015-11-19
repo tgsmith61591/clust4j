@@ -35,7 +35,7 @@ public class GeneralizedMinKernel extends MinKernel {
 	}
 	
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
+	public double getSimilarity(final double[] a, final double[] b) {
 		VecUtils.checkDims(a, b);
 		
 		double sum = 0;

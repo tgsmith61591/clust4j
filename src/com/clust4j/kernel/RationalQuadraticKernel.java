@@ -21,7 +21,7 @@ public class RationalQuadraticKernel extends ConstantKernel {
 	
 	
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		final double lp = toHilbertPSpace(a, b);
 		final double sqnm = FastMath.pow(lp, 2);
 		return 1 - (sqnm / (sqnm + getConstant()));

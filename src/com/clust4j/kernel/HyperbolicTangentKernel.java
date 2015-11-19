@@ -39,7 +39,7 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 	
 	
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		return FastMath.tanh(alpha * VecUtils.innerProduct(a, b) + getConstant());
 	}
 

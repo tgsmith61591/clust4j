@@ -89,42 +89,42 @@ public class ClustUtils {
 		final double[][] dist_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++)
 			for(int j = i + 1; j < m; j++)
-				dist_mat[i][j] = dist.getSeparability(data[i], data[j]);
+				dist_mat[i][j] = dist.getDistance(data[i], data[j]);
 		
 		return dist_mat;
 	}
 	
 	/**
 	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
-	 * and an instance of GeometricallySeparable. (equal to the negative distance matrix)
+	 * and an instance of SimilarityMetric.
 	 * @param data
 	 * @param dist
 	 * @return
 	 */
-	final public static double[][] distToSimilarityMatrix(final AbstractRealMatrix data, GeometricallySeparable sim) {
-		return distToSimilarityMatrix(data.getData(), sim);
+	final public static double[][] similarityMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
+		return similarityMatrix(data.getData(),sim);
 	}
 	
 	/**
 	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
-	 * and an instance of GeometricallySeparable. (equal to the negative distance matrix)
+	 * and an instance of SimilarityMetric.
 	 * @param data
 	 * @param dist
 	 * @return
 	 */
-	final public static double[][] distToSimilarityMatrix(final double[][] data, GeometricallySeparable sim) {
+	final public static double[][] similarityMatrix(final double[][] data, SimilarityMetric sim) {
 		final int m = data.length;
 		
-		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
+		// Compute similarity matrix, which is O(N^2) space, O(Nc2) time
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
-		final double[][] dist_mat = new double[m][m];
+		final double[][] sim_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++)
 			for(int j = i + 1; j < m; j++)
-				dist_mat[i][j] = -sim.getSeparability(data[i], data[j]);
+				sim_mat[i][j] = sim.getSimilarity(data[i], data[j]);
 		
-		return dist_mat;
+		return sim_mat;
 	}
 	
 	

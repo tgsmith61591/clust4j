@@ -172,15 +172,6 @@ public abstract class AbstractClusterer implements Loggable {
 		return old;
 	}
 	
-	/**
-	 * Returns whether the clustering algorithm uses a similarity
-	 * metric rather than a distance metric for geometric separability
-	 * @return
-	 */
-	public boolean usesSimilarityMetric() {
-		return similarity;
-	}
-	
 	@Override
 	public String toString() {
 		return getName() + " clusterer";

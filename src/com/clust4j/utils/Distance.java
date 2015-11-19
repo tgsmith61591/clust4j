@@ -5,7 +5,7 @@ import org.apache.commons.math3.util.FastMath;
 public enum Distance implements GeometricallySeparable {
 	MANHATTAN {
 		@Override 
-		public double getSeparability(final double[] a, final double[] b) {
+		public double getDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			double sum = 0;
 			for(int i = 0; i < a.length; i++) {
@@ -25,7 +25,7 @@ public enum Distance implements GeometricallySeparable {
 	
 	EUCLIDEAN {
 		@Override 
-		public double getSeparability(final double[] a, final double[] b) {
+		public double getDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			double sum = 0;
 			for(int i = 0; i < a.length; i++) {

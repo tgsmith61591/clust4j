@@ -6,6 +6,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
@@ -48,6 +49,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 	 * @param inCluster
 	 * @return Sum of Squared Errors
 	 */
+	@Override
 	final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
 		// Now calc the SSE in cluster i
 		double sumI = 0;
@@ -91,7 +93,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 		if(isTrained)
 			return;
 
-		final long now = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		if(verbose) info("beginning training segmentation for K = " + k);
 			
 		
@@ -145,7 +147,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 								"; Total system cost: " + cost);
 						
 						info("model " + getKey() + " completed in " + 
-								(System.currentTimeMillis() - now)/1000d + " sec");
+							LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 					}
 					
 					isTrained = true;
@@ -162,7 +164,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 		if(verbose) {
 			warn("algorithm did not converge. Total system cost: " + cost);
 			info("model " + getKey() + " completed in " + 
-					(System.currentTimeMillis() - now)/1000d + " sec");
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 		}
 		
 		// If the SSE delta never converges, still need to set isTrained to true

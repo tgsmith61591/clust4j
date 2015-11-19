@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Linkage;
 import com.clust4j.utils.HierarchicalClusterTree;
@@ -58,10 +59,10 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 		if(isTrained)
 			return;
 		
-		final long now = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		buildTree(linkage);
 		
-		if(verbose) info("model " + getKey() + " completed in " + (System.currentTimeMillis() - now)/1000d + " sec");
+		if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 		isTrained = true;
 	}
 	

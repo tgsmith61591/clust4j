@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.VecUtils;
@@ -153,7 +154,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	}
 	
 	/**
-	 * Calculates the intracluster cost
+	 * Calculates the intracluster cost, only used in {@link #getCostOfSystem()}
 	 * @param inCluster
 	 * @return the sum of manhattan distances between vectors and the centroid
 	 */
@@ -163,12 +164,26 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		double sumI = 0;
 		for(Integer rec : inCluster) { // Row nums of belonging records
 			final double[] record = data.getRow(rec);
-			//sumI += KMedoids.DEF_DIST.getSeparability(record, newCentroid); // Pre-kernel adaptation
-			sumI += metric.getSeparability(record, newCentroid);
+			sumI += metric.getDistance(record, newCentroid);
 		}
 		
-		return sumI;
+		return sumI; // The separability is never neg as returned by methods...
 	}
+	
+	/**
+	 * KMedoids-only hack to quickly get cost for cluster, 
+	 * as the matrix is already cached
+	 * @param indices
+	 * @param med_idx
+	 * @return
+	 */
+	protected double getCost(ArrayList<Integer> indices, final int med_idx) {
+		double cost = 0;
+		for(Integer idx: indices)
+			cost += dist_mat[FastMath.min(idx, med_idx)][FastMath.max(idx, med_idx)];
+		return cost;
+	}
+	
 	
 	@Override
 	public String getName() {
@@ -182,25 +197,23 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		
 		if(verbose) info("beginning training segmentation for K = " + k);
 		
-		final long now = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		
 		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
-		dist_mat = usesSimilarityMetric() ? 
-				ClustUtils.distToSimilarityMatrix(data, getSeparabilityMetric()) : // If it is similarity, use the sim mat 
-					ClustUtils.distanceMatrix(data, getSeparabilityMetric()); // If it isn't sim, use dist
+		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric()); // If it isn't sim, use dist
 		
 		
 		if(verbose) info("calculated " + 
 						dist_mat.length + " x " + 
 						dist_mat.length + 
-						" distance matrix");
+						" distance matrix in " + 
+						LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 				//+ ": HEAD = " + new MatrixFormatter()
 				//	.format(new Array2DRowRealMatrix(dist_mat), 6));
 
-		
 		// Clusters initialized with randoms already in super
 		// Initialize labels
 		labels = new int[m];
@@ -210,7 +223,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		
 		// State vars...
 		// Once this config is no longer changing, global min reached
-		double oldCost = getCostOfSystem();
+		double oldCost = getCostOfSystem(); // Tracks cost per iteration...
 		// Worst case will store up to M choose K...
 		HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
 		
@@ -220,28 +233,29 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			info("initial training system cost: " + oldCost );
 		}
 		
+
+		// Use the PAM (partitioning around medoids) algorithm
+		// For each cluster in k...
+		double min_cost = Double.MAX_VALUE;
+		double new_cost = Double.MAX_VALUE;
 		
 		for(iter = 0; iter < maxIter; iter++) {
 		
 			
-			// Use the PAM (partitioning around medoids) algorithm
-			// For each cluster in k...
-			double min_cost = Double.MAX_VALUE;
-			double new_cost = Double.MAX_VALUE;
 			for(int i = 0; i < k; i++) {
+				
 				final int medoid_index = medoid_indices[i];
 				final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
-				final double[] current_medoid = data.getRow(medoid_index);
 				
 				/*
 				 * Need to take min here, because as the optimal medoids are found, from one
 				 * cluster to another, cost_of_cluster will change (up or down). This ensures the
 				 * min always being tracked.
 				 */
-				double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, current_medoid), oldCost);
+				double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, medoid_index), oldCost);
 				
 				if(verbose)
-					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ")");
+					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ") ");
 				
 				
 				// Track min for cluster
@@ -261,10 +275,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					
 					// Simulate cost, see if better...
 					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
-					if(new_cost < cost_of_cluster) {
-						cost_of_cluster = new_cost;
+					if(new_cost < /*cost_of_cluster*/ oldCost) {
+						/*cost_of_cluster*/ oldCost = new_cost;
 						if(verbose)
-							info("new cost-minimizing system found; current cost: " + new_cost);
+							info("new cost-minimizing system found; current cost: " + new_cost );
 						
 						best_medoid_index = o;
 					}
@@ -289,7 +303,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 							"; Total system cost: " + oldCost);
 				
 					info("model " + getKey() + " completed in " + 
-							(System.currentTimeMillis() - now)/1000d + " sec");
+							LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 				}
 				
 				converged = true;
@@ -308,7 +322,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			warn("algorithm did not converge");
 			
 			info("model " + getKey() + " completed in " + 
-					(System.currentTimeMillis() - now)/1000d + " sec");
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 		}
 		
 		

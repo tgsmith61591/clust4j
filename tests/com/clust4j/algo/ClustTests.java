@@ -187,7 +187,8 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 
 				new KMedoidsPlanner(2)
-					.setScale(true));
+					.setScale(true)
+					.setVerbose(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
@@ -208,7 +209,8 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 
 				new KMedoidsPlanner(3)
-					.setScale(false));
+					.setScale(false)
+					.setVerbose(true));
 		km.train();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);

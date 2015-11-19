@@ -25,7 +25,7 @@ public class LinearKernel extends ConstantKernel {
 	}
 	
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
+	public double getSimilarity(final double[] a, final double[] b) {
 		return VecUtils.innerProduct(a, b) + getConstant();
 	}
 	

@@ -16,7 +16,7 @@ public class MinKernel extends Kernel {
 	}
 
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		return VecUtils.sum(VecUtils.pmin(a, b));
 	}
 

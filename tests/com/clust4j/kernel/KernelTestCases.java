@@ -27,7 +27,7 @@ public class KernelTestCases {
 	}
 	
 	public static String formatKernelMatrix(final double[][] data, final Kernel kernel) {
-		return formatter.format(new Array2DRowRealMatrix(kernel.kernelMatrix(data), false));
+		return formatter.format(new Array2DRowRealMatrix(kernel.kernelSimilarityMatrix(data), false));
 	}
 	
 	public static void print(final String s) {
@@ -40,7 +40,7 @@ public class KernelTestCases {
 		final double[] b = new double[]{1,0};
 		
 		// Perfectly orthogonal
-		assertTrue(new LinearKernel().getSeparability(a, b) == new LinearKernel().getConstant());
+		assertTrue(new LinearKernel().getSimilarity(a, b) == new LinearKernel().getConstant());
 		assertTrue(VecUtils.isOrthogonalTo(a, b));
 	}
 	
@@ -48,7 +48,7 @@ public class KernelTestCases {
 	public void testProjections() {
 		final double[] a = new double[]{5,0};
 		final double[] b = new double[]{3,0};
-		assertTrue(new LinearKernel().getSeparability(a, b) == 15 + new LinearKernel().getConstant());
+		assertTrue(new LinearKernel().getSimilarity(a, b) == 15 + new LinearKernel().getConstant());
 	}
 
 	
@@ -126,27 +126,27 @@ public class KernelTestCases {
 		
 		// Look at the kernel matrix...
 		Kernel kernel = new LinearKernel();
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 3.0);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 3.0);
 
 		final double sigma = 0.05;
 		
 		kernel = new LaplacianKernel(sigma);
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.8681234453945849);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 0.8681234453945849);
 		
 		kernel = new ANOVAKernel(sigma, 1);
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 1.6374615061559636);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 1.6374615061559636);
 		
 		kernel = new SplineKernel();
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 5.333333333333333);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 5.333333333333333);
 		
 		kernel = new PolynomialKernel();
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 4.0);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 4.0);
 		
 		kernel = new HyperbolicTangentKernel();
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.999329299739067);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 0.999329299739067);
 		
 		kernel = new RadialBasisKernel(sigma);
-		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.6703200460356393);
+		assertTrue(kernel.kernelSimilarityMatrix(train_array)[0][1] == 0.6703200460356393);
 		
 		
 		// Test with no normalization

@@ -52,7 +52,7 @@ public class PolynomialKernel extends ConstantKernel {
 	}
 	
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
+	public double getSimilarity(final double[] a, final double[] b) {
 		return FastMath.pow(alpha * VecUtils.innerProduct(a, b) + getConstant(), degree);
 	}
 }

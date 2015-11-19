@@ -126,7 +126,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		double[] oid;
 		ArrayList<Integer> medoid_members;
 		for(Map.Entry<Integer, ArrayList<Integer>> medoid_entry : cent_to_record.entrySet()) {
-			oid = centroids.get(medoid_entry.getKey());
+			oid = centroids.get(medoid_entry.getKey()); //cent-med-oid
 			medoid_members = medoid_entry.getValue();
 			cost += getCost(medoid_members, oid);
 		}
@@ -192,9 +192,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		double[] cent;
 		for(int i = 0; i < k; i++) {
 			cent = centroids.get(i);
-			double dist = getSeparabilityMetric().getSeparability(newRecord, cent);
-			if(usesSimilarityMetric())
-				dist = -dist;
+			double dist = getSeparabilityMetric().getDistance(newRecord, cent);
 			
 			if(dist < shortestDist) {
 				shortestDist = dist;

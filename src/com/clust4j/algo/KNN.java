@@ -110,8 +110,8 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		
 		// Get map of distances to each record
 		for(int train_row = 0; train_row < data.getRowDimension(); train_row++) {
-			final double sim = getSeparabilityMetric().getSeparability(newRecord, data.getRow(train_row));
-			rec_to_dist.put(train_row, usesSimilarityMetric() ? -sim : sim);
+			final double sim = getSeparabilityMetric().getDistance(newRecord, data.getRow(train_row));
+			rec_to_dist.put(train_row, sim);
 		}
 		
 		// Sort treemap on value

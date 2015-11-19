@@ -25,8 +25,8 @@ public class LogKernel extends PowerKernel {
 	}
 	
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
-		final double sup = super.getSeparability(a, b);
+	public double getSimilarity(final double[] a, final double[] b) {
+		final double sup = super.getSimilarity(a, b);
 		return -FastMath.log(-sup + 1);
 	}
 }

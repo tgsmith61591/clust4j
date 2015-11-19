@@ -20,7 +20,7 @@ public class CircularKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		final double lp = toHilbertPSpace(a, b);
 		
 		// Per corner case condition

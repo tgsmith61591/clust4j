@@ -28,7 +28,7 @@ public class MultiquadricKernel extends ConstantKernel {
 	}
 
 	@Override
-	public double getSeparability(final double[] a, final double[] b) {
+	public double getSimilarity(final double[] a, final double[] b) {
 		double lp = toHilbertPSpace(a, b);
 		double sqnm = FastMath.pow(lp, 2);
 		return FastMath.sqrt(sqnm + FastMath.pow(getConstant(), 2));

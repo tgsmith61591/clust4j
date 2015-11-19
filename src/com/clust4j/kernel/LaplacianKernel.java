@@ -46,7 +46,7 @@ public class LaplacianKernel extends RadialBasisKernel {
 	
 
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		// Kernlab's laplacedot returns:
 		// return(exp(-sigma*sqrt(-(round(2*crossprod(x,y) - crossprod(x) - crossprod(y),9)))))
 		//

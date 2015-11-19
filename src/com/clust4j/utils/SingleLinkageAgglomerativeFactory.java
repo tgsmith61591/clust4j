@@ -58,7 +58,6 @@ public class SingleLinkageAgglomerativeFactory {
 			final boolean copy, final AgglomerativeClusterer clusterer) {
 		
 		final boolean verbose = clusterer.getVerbose();
-		final boolean similarity = clusterer.usesSimilarityMetric();
 		
 		if(verbose && copy) clusterer.info("creating local data copy");
 		final double[][] data = copy ? ClustUtils.copyMatrix(dat) : dat;
@@ -112,9 +111,7 @@ public class SingleLinkageAgglomerativeFactory {
 		 * from each other cluster's centroid to the new one. This constitutes the new
 		 * distance matrix.
 		 */
-		Array2DRowRealMatrix distance = similarity ? 
-			new Array2DRowRealMatrix(ClustUtils.distToSimilarityMatrix(data, dist), false) : 
-				new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
+		Array2DRowRealMatrix distance = new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
 			
 		if(verbose) clusterer.info("calculated " + m + " x " + m + " distance matrix");
 		if(verbose) clusterer.info("beginning cluster agglomeration");
@@ -180,7 +177,7 @@ public class SingleLinkageAgglomerativeFactory {
 			// Now add in the NEW last col, which is the dist from the new centroid 
 			// to the other cluster centroids...
 			for(int k = 0; k < newM - 1; k++) // Skip the last one, which is the new cluster...
-				newDataRef[k][newM - 1] = dist.getSeparability(clusters.get(k).centroid(), centroid);
+				newDataRef[k][newM - 1] = dist.getDistance(clusters.get(k).centroid(), centroid);
 			
 			
 			// Now assign to the new distance matrix...

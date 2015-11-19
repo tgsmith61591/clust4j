@@ -16,7 +16,7 @@ public class SplineKernel extends Kernel {
 	}
 
 	@Override
-	public double getSeparability(double[] a, double[] b) {
+	public double getSimilarity(double[] a, double[] b) {
 		/*
 		 * Kernlab's R package returns the following:
 		 * 
