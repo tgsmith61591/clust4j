@@ -14,17 +14,18 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class LinearKernel extends AbstractConstantKernel {
+public class LinearKernel extends ConstantKernel {
+	public static final double DEFAULT_LIN_CONSTANT = 0;
 	private double constant;
 
-	public LinearKernel() { this(DEFAULT_CONSTANT); }
+	public LinearKernel() { this(DEFAULT_LIN_CONSTANT); }
 	public LinearKernel(final double constant) {
 		super();
 		this.constant = constant;
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
+	public double getSeparability(final double[] a, final double[] b) {
 		return VecUtils.innerProduct(a, b) + getConstant();
 	}
 	

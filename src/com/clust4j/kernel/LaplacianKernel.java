@@ -46,11 +46,19 @@ public class LaplacianKernel extends RadialBasisKernel {
 	
 
 	@Override
-	public double distance(double[] a, double[] b) {
-		final double lp = getLpNorm(a, b, getSigma());
-		final double numer = FastMath.pow(lp, exponential);
-		final double denom = sigma_scalar * FastMath.pow(getSigma(), sigma_exp);
-		return FastMath.exp(-numer / denom);
+	public double getSeparability(double[] a, double[] b) {
+		// Kernlab's laplacedot returns:
+		// return(exp(-sigma*sqrt(-(round(2*crossprod(x,y) - crossprod(x) - crossprod(y),9)))))
+		//
+		// which simplifies to:
+		// return(exp(-sigma*sqrt(-hilbert)))
+		
+		
+		double hilbert = toHilbertPSpace(a, b);
+		hilbert = exponential > 1 ? FastMath.pow(hilbert, exponential) : -hilbert;
+		final double sigma_val = sigma_scalar * FastMath.pow(getSigma(), sigma_exp);
+		
+		return FastMath.exp(-sigma_val * FastMath.sqrt(hilbert));
 	}
 	
 	public double getPower() {

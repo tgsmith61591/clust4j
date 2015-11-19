@@ -27,8 +27,8 @@ public class CauchyKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
-		final double lp2 = FastMath.pow(getLpNorm(a, b, 2), 2);
+	public double getSeparability(final double[] a, final double[] b) {
+		final double lp2 = FastMath.pow(toHilbertPSpace(a, b), 2);
 		return 1d / (1 + lp2/FastMath.pow(getSigma(), 2));
 	}
 }

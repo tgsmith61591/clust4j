@@ -102,4 +102,28 @@ public class VectorTests {
 		
 		assertTrue(Precision.equals(cosSim1, 0.9128709291752769));
 	}
+	
+	@Test
+	public void testHilbertSpace() {
+		final double[] a = new double[]{0, 5};
+		final double[] b = new double[]{0, 3};
+		
+		final double inner = VecUtils.innerProduct(a, b);
+		final double length = VecUtils.l2Norm(a) * VecUtils.l2Norm(b) * VecUtils.cosSim(a, b);
+		assertTrue(inner == length);
+	}
+	
+	@Test
+	public void testPMinMax() {
+		final double[] a = new double[]{0, 5};
+		final double[] b = new double[]{3, 0};
+		assertTrue(VecUtils.equalsExactly(VecUtils.pmax(a, b), new double[]{3,5}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.pmin(a, b), new double[]{0,0}));
+	}
+	
+	@Test
+	public void testProd() {
+		final double[] a = new double[]{1, 2, 3};
+		assertTrue(VecUtils.prod(a) == 6);
+	}
 }

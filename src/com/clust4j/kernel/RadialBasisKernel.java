@@ -15,8 +15,8 @@ import org.apache.commons.math3.util.FastMath;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class RadialBasisKernel extends AbstractKernel {
-	public final static double DEFAULT_SIGMA = 0.5;
+public class RadialBasisKernel extends Kernel {
+	public final static double DEFAULT_SIGMA = 1;
 	private double sigma;
 	
 	public RadialBasisKernel() { this(DEFAULT_SIGMA); }
@@ -34,8 +34,7 @@ public class RadialBasisKernel extends AbstractKernel {
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
-		final double lp = getLpNorm(a, b, 2);
-		return FastMath.exp(-lp / FastMath.pow(sigma, 2));
+	public double getSeparability(final double[] a, final double[] b) {
+		return FastMath.exp( sigma * toHilbertPSpace(a,b) );
 	}
 }

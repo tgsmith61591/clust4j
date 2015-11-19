@@ -9,16 +9,26 @@ import org.junit.Test;
 
 import com.clust4j.algo.KNN;
 import com.clust4j.algo.KNN.KNNPlanner;
+import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
 public class KernelTestCases {
+	final static MatrixFormatter formatter = new MatrixFormatter();
 	final static Random rand = new Random();
 	
-	private static double[] randomVector(int length) {
+	public static double[] randomVector(int length) {
 		final double[] a = new double[length];
 		for(int i = 0; i < a.length; i++)
 			a[i] = rand.nextDouble();
 		return a;
+	}
+	
+	public static String formatKernelMatrix(final double[][] data, final Kernel kernel) {
+		return formatter.format(new Array2DRowRealMatrix(kernel.kernelMatrix(data), false));
+	}
+	
+	public static void print(final String s) {
+		System.out.println(s);
 	}
 
 	@Test
@@ -27,7 +37,7 @@ public class KernelTestCases {
 		final double[] b = new double[]{1,0};
 		
 		// Perfectly orthogonal
-		assertTrue(new LinearKernel().distance(a, b) == 0);
+		assertTrue(new LinearKernel().getSeparability(a, b) == new LinearKernel().getConstant());
 		assertTrue(VecUtils.isOrthogonalTo(a, b));
 	}
 	
@@ -35,22 +45,7 @@ public class KernelTestCases {
 	public void testProjections() {
 		final double[] a = new double[]{5,0};
 		final double[] b = new double[]{3,0};
-		assertTrue(new LinearKernel().distance(a, b) == 15);
-	}
-	
-
-	@Test
-	public void testBigger() {
-		final double[] a = randomVector(10);
-		final double[] b = randomVector(10);
-		System.out.println(new LinearKernel().distance(a, b));
-	}
-	
-	@Test
-	public void testGaussianKernel() {
-		final double[] a = new double[]{0, 1, 2, 3};
-		final double[] b = new double[]{1, 0,-1,-2};
-		System.out.println(new GaussianKernel(2).distance(a, b));
+		assertTrue(new LinearKernel().getSeparability(a, b) == 15 + new LinearKernel().getConstant());
 	}
 
 	
@@ -126,14 +121,38 @@ public class KernelTestCases {
 		final Array2DRowRealMatrix train = new Array2DRowRealMatrix(train_array);
 		final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(test_array);
 		
+		// Look at the kernel matrix...
+		Kernel kernel = new LinearKernel();
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 3.0);
+
+		final double sigma = 0.05;
+		
+		kernel = new LaplacianKernel(sigma);
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.8681234453945849);
+		
+		kernel = new ANOVAKernel(sigma, 1);
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 1.6374615061559636);
+		
+		kernel = new SplineKernel();
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 5.333333333333333);
+		
+		kernel = new PolynomialKernel();
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 4.0);
+		
+		kernel = new HyperbolicTangentKernel();
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.999329299739067);
+		
+		kernel = new RadialBasisKernel(sigma);
+		assertTrue(kernel.kernelMatrix(train_array)[0][1] == 0.6703200460356393);
+		
+		
 		// Test with no normalization
 		KNN knn1 = new KNN(train, test, trainLabels, 
 				new KNNPlanner(2)
-					.setDist(new LinearKernel())
+					.setDist(kernel)
 					.setVerbose(true));
 		knn1.train();
 		assertTrue(knn1.getPredictedLabels()[0] == 0 && knn1.getPredictedLabels()[1] == 1);
-		
 		
 	}
 }

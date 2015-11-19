@@ -9,7 +9,7 @@ import org.apache.commons.math3.util.FastMath;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class MultiquadricKernel extends AbstractConstantKernel {
+public class MultiquadricKernel extends ConstantKernel {
 	private final double constant;
 	
 	public MultiquadricKernel() { this(DEFAULT_CONSTANT); }
@@ -28,8 +28,8 @@ public class MultiquadricKernel extends AbstractConstantKernel {
 	}
 
 	@Override
-	public double distance(final double[] a, final double[] b) {
-		double lp = getLpNorm(a, b, 2);
+	public double getSeparability(final double[] a, final double[] b) {
+		double lp = toHilbertPSpace(a, b);
 		double sqnm = FastMath.pow(lp, 2);
 		return FastMath.sqrt(sqnm + FastMath.pow(getConstant(), 2));
 	}

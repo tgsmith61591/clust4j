@@ -191,7 +191,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		double[] cent;
 		for(int i = 0; i < k; i++) {
 			cent = centroids.get(i);
-			double dist = getDistanceMetric().distance(newRecord, cent);
+			double dist = getSeparabilityMetric().getSeparability(newRecord, cent);
 			if(dist < shortestDist) {
 				shortestDist = dist;
 				nearestLabel = i;

@@ -7,9 +7,9 @@ import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
-public abstract class AbstractKernel implements GeometricallySeparable, SimilarityMetric {
+public abstract class Kernel implements GeometricallySeparable, SimilarityMetric {
 	
-	public AbstractKernel() {}
+	public Kernel() {}
 	
 	
 	/* public final double similarity(final double[] a) {
@@ -17,8 +17,8 @@ public abstract class AbstractKernel implements GeometricallySeparable, Similari
 	} */
 	
 	
-	protected static double getLpNorm(final double[] a, final double[] b, final double p) {
-		return VecUtils.lpNorm(VecUtils.subtract(a, b), p);
+	protected static double toHilbertPSpace(final double[] a, final double[] b) {
+		return 2*VecUtils.innerProduct(a, b) - VecUtils.innerProduct(a,a) - VecUtils.innerProduct(b,b);
 	}
 	
 	public double[][] kernelMatrix(final AbstractRealMatrix a) {

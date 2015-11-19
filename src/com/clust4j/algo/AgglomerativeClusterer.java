@@ -75,7 +75,7 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 				if(verbose) info("single linkage selected -- building SingleLinkageACTree");
 				tree = SingleLinkageAgglomerativeFactory
 						.build(data.getData(), 
-								getDistanceMetric(), 
+								getSeparabilityMetric(), 
 								false, this);
 				break;
 			default:

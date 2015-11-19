@@ -12,7 +12,7 @@ public class MinkowskiDistance implements GeometricallySeparable {
 	}
 
 	@Override
-	public double distance(double[] a, double[] b) {
+	public double getSeparability(double[] a, double[] b) {
 		VecUtils.checkDims(a,b);
 		
 		double sum = 0;

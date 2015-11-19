@@ -27,7 +27,7 @@ public class InverseMultiquadricKernel extends MultiquadricKernel {
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
-		return 1 / super.distance(a, b);
+	public double getSeparability(final double[] a, final double[] b) {
+		return 1 / super.getSeparability(a, b);
 	}
 }

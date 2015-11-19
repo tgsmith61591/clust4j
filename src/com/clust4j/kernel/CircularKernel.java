@@ -20,8 +20,8 @@ public class CircularKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double distance(double[] a, double[] b) {
-		final double lp = getLpNorm(a, b, 2);
+	public double getSeparability(double[] a, double[] b) {
+		final double lp = toHilbertPSpace(a, b);
 		
 		// Per corner case condition
 		if(lp >= getSigma())

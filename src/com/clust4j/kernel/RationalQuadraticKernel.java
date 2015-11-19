@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class RationalQuadraticKernel extends AbstractConstantKernel {
+public class RationalQuadraticKernel extends ConstantKernel {
 	private final double constant;
 	
 	public RationalQuadraticKernel() { this(DEFAULT_CONSTANT); }
@@ -21,8 +21,8 @@ public class RationalQuadraticKernel extends AbstractConstantKernel {
 	
 	
 	@Override
-	public double distance(double[] a, double[] b) {
-		final double lp = getLpNorm(a, b, 2);
+	public double getSeparability(double[] a, double[] b) {
+		final double lp = toHilbertPSpace(a, b);
 		final double sqnm = FastMath.pow(lp, 2);
 		return 1 - (sqnm / (sqnm + getConstant()));
 	}

@@ -91,7 +91,15 @@ public class KMeans extends AbstractKCentroidClusterer {
 		if(isTrained)
 			return;
 		
-		
+		trainDistance();
+		// TODO: if is similarity, do a different procedure...
+	} // End train
+	
+	
+	/**
+	 * The training procedure for a distance-based GeometricallySeparable metric
+	 */
+	private void trainDistance() {
 		if(verbose) info("beginning training segmentation for K = " + k);
 			
 		
@@ -160,7 +168,8 @@ public class KMeans extends AbstractKCentroidClusterer {
 		
 		// If the SSE delta never converges, still need to set isTrained to true
 		isTrained = true;
-	} // End train
+	}
+	
 
 	@Override
 	public Algo getLoggerTag() {

@@ -125,7 +125,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		double sumI = 0;
 		for(Integer rec : inCluster) { // Row nums of belonging records
 			final double[] record = data.getRow(rec);
-			sumI += KMedoids.DEF_DIST.distance(record, newCentroid);
+			sumI += KMedoids.DEF_DIST.getSeparability(record, newCentroid);
 		}
 		
 		return sumI;
@@ -148,7 +148,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
-		dist_mat = ClustUtils.distanceMatrix(data, getDistanceMetric());
+		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
 		
 		
 		if(verbose) info("calculated " + 

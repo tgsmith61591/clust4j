@@ -89,7 +89,7 @@ public class ClustUtils {
 		final double[][] dist_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++)
 			for(int j = i + 1; j < m; j++)
-				dist_mat[i][j] = dist.distance(data[i], data[j]);
+				dist_mat[i][j] = dist.getSeparability(data[i], data[j]);
 		
 		return dist_mat;
 	}

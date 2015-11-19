@@ -22,8 +22,8 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class HyperbolicTangentKernel extends AbstractConstantKernel {
-	public static final double DEFAULT_ALPHA = 0.5;
+public class HyperbolicTangentKernel extends ConstantKernel {
+	public static final double DEFAULT_ALPHA = 1;
 	
 	private final double constant;
 	private final double alpha;
@@ -39,7 +39,7 @@ public class HyperbolicTangentKernel extends AbstractConstantKernel {
 	
 	
 	@Override
-	public double distance(double[] a, double[] b) {
+	public double getSeparability(double[] a, double[] b) {
 		return FastMath.tanh(alpha * VecUtils.innerProduct(a, b) + getConstant());
 	}
 

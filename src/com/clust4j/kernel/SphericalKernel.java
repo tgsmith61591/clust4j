@@ -27,8 +27,8 @@ public class SphericalKernel extends CircularKernel {
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
-		final double lp = getLpNorm(a, b, 2);
+	public double getSeparability(final double[] a, final double[] b) {
+		final double lp = toHilbertPSpace(a, b);
 		if(lp >= getSigma())
 			return 0d;
 		

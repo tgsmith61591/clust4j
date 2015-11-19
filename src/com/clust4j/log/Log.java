@@ -29,6 +29,7 @@ public abstract class Log {
 			CLUST4J,
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
 			
+			// Unneeded unless decide to implement divisive hierarchical clustering
 			/*DIVISIVE		{ @Override public String toString(){return "DIANA  ";} },*/
 			
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },

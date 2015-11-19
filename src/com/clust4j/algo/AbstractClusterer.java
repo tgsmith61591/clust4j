@@ -139,10 +139,10 @@ public abstract class AbstractClusterer implements Loggable {
 	}
 	
 	/**
-	 * Returns the distance metric used to assess vector similarity
+	 * Returns the separability metric used to assess vector similarity/distance
 	 * @return distance metric
 	 */
-	public GeometricallySeparable getDistanceMetric() {
+	public GeometricallySeparable getSeparabilityMetric() {
 		return dist;
 	}
 	

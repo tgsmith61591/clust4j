@@ -11,9 +11,9 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class PolynomialKernel extends AbstractConstantKernel {
-	public final static double DEFAULT_ALPHA = 0.5;
-	public final static double DEFAULT_DEGREE= 0.5;
+public class PolynomialKernel extends ConstantKernel {
+	public final static double DEFAULT_ALPHA = 1;
+	public final static double DEFAULT_DEGREE= 1;
 	
 	protected final double alpha;
 	protected final double constant;
@@ -52,7 +52,7 @@ public class PolynomialKernel extends AbstractConstantKernel {
 	}
 	
 	@Override
-	public double distance(final double[] a, final double[] b) {
+	public double getSeparability(final double[] a, final double[] b) {
 		return FastMath.pow(alpha * VecUtils.innerProduct(a, b) + getConstant(), degree);
 	}
 }

@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
  * @see <a href="http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html">Souza, Cesar R. -- Kernel Functions for Machine Learning Applications.</a>
  * @author Taylor G Smith
  */
-public class PowerKernel extends AbstractKernel {
+public class PowerKernel extends Kernel {
 	public static final double DEFAULT_DEGREE = 1;
 	private final double degree;
 	
@@ -23,8 +23,8 @@ public class PowerKernel extends AbstractKernel {
 	}
 
 	@Override
-	public double distance(double[] a, double[] b) {
-		return -(FastMath.pow(getLpNorm(a, b, 2), degree));
+	public double getSeparability(double[] a, double[] b) {
+		return -(FastMath.pow(toHilbertPSpace(a, b), degree));
 	}
 
 	@Override

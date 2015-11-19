@@ -214,11 +214,51 @@ public class VecUtils {
 		return ab;
 	}
 	
+	/**
+	 * Returns a vector of the max parallel elements in each respective vector
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double[] pmax(final double[] a, final double[] b) {
+		checkDims(a, b);
+		
+		final double[] out = new double[a.length];
+		for(int i = 0; i < a.length; i++)
+			out[i] = FastMath.max(a[i], b[i]);
+		
+		return out;
+	}
+	
+	/**
+	 * Returns a vector of the min parallel elements in each respective vector
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double[] pmin(final double[] a, final double[] b) {
+		checkDims(a, b);
+		
+		final double[] out = new double[a.length];
+		for(int i = 0; i < a.length; i++)
+			out[i] = FastMath.min(a[i], b[i]);
+		
+		return out;
+	}
+	
 	public static double[] pow(final double[] a, final double p) {
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.pow(a[i], p);
 		return b;
+	}
+	
+	public static double prod(final double[] a) {
+		checkDims(a);
+		double prod = 1;
+		for(double d: a)
+			prod *= d;
+		return prod;
 	}
 	
 	public static double[] scalarAdd(final double[] a, final double b) {
