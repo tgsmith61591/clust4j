@@ -1,7 +1,7 @@
 ## clust4j
-A Java-based set of classification clustering algorithm implementations.
+A Java-based set of clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
 
-
+____
 ### Dependencies:
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
   - The `commons-math` dependency is included in [dep/](https://github.com/tgsmith61591/clust4j/tree/master/dep/commons-math-3-3.2) and is already in the `.classpath`
@@ -10,7 +10,7 @@ A Java-based set of classification clustering algorithm implementations.
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
 
 
-
+____
 ### Example data (for reproducability):
     final int k = 2;
     final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
@@ -93,6 +93,13 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
 
  - By default, logging is disabled. This can be enabled in any `BaseClustererPlanner` class by invoking `AbstractClusterer.BaseClustererPlanner.setVerbose(true)`.
 
+
+
+
+
+
+
+----
 
 ##### References:
  - Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
