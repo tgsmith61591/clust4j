@@ -60,7 +60,7 @@ ____
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 
-
+----
 ### Separability metrics
 A number of separability metrics are available for use:
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
@@ -72,6 +72,12 @@ A number of separability metrics are available for use:
 Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, else it will try to *minimize* distance.
 
 
+###### When to use similarity metrics over distance metrics?
+Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
+
+![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_11b_notitle2.png)
+
+----
 ### Future implementations*:
 - Density-based:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
@@ -105,5 +111,6 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
  - Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
  - Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)
  -  Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
+ -  Chitta, R., [Kernel Clustering](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)
  -  [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
  -  [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
