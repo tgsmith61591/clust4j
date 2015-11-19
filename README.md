@@ -61,7 +61,7 @@ A Java-based set of classification clustering algorithm implementations.
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 
 
-### Distance metrics
+### Separability metrics
 A number of separability metrics are available for use:
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
  - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
