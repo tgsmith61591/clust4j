@@ -110,7 +110,7 @@ Various similarity metrics—kernel methods, in particular—allow the clusterin
 ##### References:
  - Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
  - Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)
- -  Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
- -  Chitta, R., [Kernel Clustering](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)
- -  [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
- -  [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
+ - Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
+ - Chitta, R., [Kernel Clustering](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)
+ - [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
+ - [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
