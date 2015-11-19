@@ -104,7 +104,7 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 			rec_to_dist.put(train_row, getDistanceMetric().distance(newRecord, data.getRow(train_row)));
 		
 		// Sort treemap on value
-		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils.sortEntriesByValue(rec_to_dist);
+		SortedSet<Map.Entry<Integer, Double>> sortedEntries = topKSortedByValue(rec_to_dist);
 		return identifyMajorityClass(sortedEntries, k, trainLabels, this);
 	}
 
@@ -194,4 +194,6 @@ public abstract class AbstractKNNClusterer extends AbstractPartitionalClusterer 
 	public int[] truthSet() {
 		return VecUtils.copy(trainLabels);
 	}
+	
+	protected abstract SortedSet<Map.Entry<Integer, Double>> topKSortedByValue(TreeMap<Integer, Double> rec_to_dist);
 }
