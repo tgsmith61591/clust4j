@@ -53,7 +53,7 @@ ____
             final int[] results = km.getPredictedLabels();
 
 - Hierarchical algorithms:
-  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, Divisive Clustering.
+  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
             AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true));
             a.train();
@@ -63,11 +63,28 @@ ____
 ----
 ### Separability metrics
 A number of separability metrics are available for use:
+
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
  - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
  - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
- - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods<sup>[1]</sup>
+   - ANOVA kernel
+   - Cauchy kernel
+   - Circular kernel
+   - Exponential kernel
+   - Gaussian kernel
+   - Hyperbolic Tangent (sigmoid/tanh kernel) kernel
+   - Laplacian kernel
+   - Linear kernel
+   - Log kernel
+   - Multiquadric kernel
+   - Polynomial kernel
+   - Power kernel
+   - Radial Basis kernel
+   - Rational Quadratic kernel
+   - Spherical kernel
+   - Spline kernel
 
 Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, else it will try to *minimize* distance.
 
