@@ -171,7 +171,7 @@ public class KernelTestCases {
 	
 	@Test
 	public void KernelKMeansLoadTest1() {
-		final Array2DRowRealMatrix mat = ClustTests.getRandom(10000, 10);
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(5000, 10);
 		final int[] ks = new int[] {1,3,5,7};
 		Kernel kernel = new GaussianKernel(0.05);
 		
@@ -189,7 +189,7 @@ public class KernelTestCases {
 	
 	@Test
 	public void KernelKMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = ClustTests.getRandom(2000, 10);
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(1000, 10);
 		final int[] ks = new int[] {1,3,5,7};
 		Kernel kernel = new GaussianKernel(0.05);
 		

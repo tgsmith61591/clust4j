@@ -73,7 +73,7 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
 
 
 ###### When to use similarity metrics over distance metrics?
-Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
+Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space<sup>[4]</sup>, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
 
 ![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_11b_notitle2.png)
 
@@ -90,7 +90,7 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 - Hierarchical algorithms:
   - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
 
-*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for [DIANA](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)'s (DIvisive ANAlysis) runtime is O(2<sup>n</sup>), as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
+*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for [DIANA](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)'s (DIvisive ANAlysis) runtime is O(2<sup>n</sup>)<sup>[7]</sup>, as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
 
 
 
@@ -111,14 +111,13 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 
 
 
-
-
 ----
 
 ##### References:
- - Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
- - Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)
- - Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
- - Chitta, R., [Kernel Clustering](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)
- - [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
- - [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
+ 1. Souza C.R., [Kernel Functions for Machine Learning](http://crsouza.blogspot.com/2010/03/kernel-functions-for-machine-learning.html)
+ 2. Yu K., Ji L., Zhang X., [Kernel Nearest-Neighbor Algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.125.3253&rep=rep1&type=pdf)
+ 3. Ester M., Kriegel H.-P., Sander J.S., Xu X., 1996. [A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), Institute for Computer Science, University of Munich
+ 4. Chitta, R., [Kernel Clustering](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)
+ 5. [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
+ 6. [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
+ 7. [Divisive Clustering](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)

@@ -48,9 +48,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	
 	
 	public static class KMedoidsPlanner extends BaseKCentroidPlanner {
+		public final static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
+		public final static int DEF_MAX_ITER = 10; // Converges faster than KMeans, needs less
+		
 		public KMedoidsPlanner(int k) {
 			super(k);
-			super.setSep(Distance.MANHATTAN); // BY DEFAULT
+			super.setSep(DEF_DIST); // BY DEFAULT
+			super.setMaxIter(DEF_MAX_ITER);
 		}
 		
 		@Override
@@ -240,8 +244,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			// For each cluster in k...
 			// MUST BE DOUBLE MAX; if oldCost and no change, will
 			// automatically "converge" and exit...
-			double min_cost = oldCost;
-			double new_cost = Double.MAX_VALUE;
+			double min_cost = oldCost; // The current minimum
 		
 			
 			for(int i = 0; i < k; i++) {
@@ -249,15 +252,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				final int medoid_index = medoid_indices[i];
 				final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
 				
-				/*
-				 * Need to take min here, because as the optimal medoids are found, from one
-				 * cluster to another, cost_of_cluster will change (up or down). This ensures the
-				 * min always being tracked.
-				 */
-				//double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, medoid_index), oldCost);
-				
 				if(verbose)
-					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ") ");
+					info("optimizing medoid choice for cluster " + 
+						i + " (iter = " + (iter+1) + ") ");
 				
 				
 				// Track min for cluster
@@ -266,21 +263,24 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					if(o.intValue() == medoid_index) // Skip if it's the current medoid
 						continue;
 					
+					
 					// Create copy of medoids, set this med_idx to o
 					final int[] copy_of_medoids = VecUtils.copy(medoid_indices);
 					copy_of_medoids[i] = o;
+					
 					
 					// Create the sorted int set, see if these medoid combos have been seen before
 					SortedHashableIntSet medoid_set = SortedHashableIntSet.fromArray(copy_of_medoids);
 					if(seen_medoid_combos.contains(medoid_set))
 						continue; // Micro hack!
 					
+					
 					// Simulate cost, see if better...
-					new_cost = simulateSystemCost(copy_of_medoids, min_cost);
-					if(new_cost < /*cost_of_cluster*/ min_cost) {
-						/*cost_of_cluster*/ min_cost = new_cost;
+					double simulated_cost = simulateSystemCost(copy_of_medoids, min_cost); // The simulated syst cost
+					if(simulated_cost < min_cost) {
+						min_cost = simulated_cost;
 						if(verbose)
-							trace("new cost-minimizing system found; current cost: " + new_cost );
+							trace("new cost-minimizing system found; current cost: " + simulated_cost );
 						
 						best_medoid_index = o;
 					}
@@ -290,7 +290,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				
 				// Have found optimal medoid to minimize cost in cluster...
 				medoid_indices[i] = best_medoid_index;
-				//min_cost = cost_of_cluster;
 			}
 		
 			// Check for stopping condition
