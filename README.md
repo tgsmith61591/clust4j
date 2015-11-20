@@ -155,7 +155,8 @@ A number of separability metrics are available for use:
 
 
 
-Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, else it will try to *minimize* distance.
+----
+Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, where similarity is the negative distance, else it will try to *minimize* distance.  Classes implementing `SimilarityMetric` should define the `distance(double[], double[])` method to return `-similarity(double[], double[])`.
 
 
 ###### When to use similarity metrics over distance metrics?
