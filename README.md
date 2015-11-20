@@ -73,62 +73,81 @@ A number of separability metrics are available for use:
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Csum_%7Bk=1%7D%5En%20%5Cexp%20(-%5Csigma%20(x%5Ek%20-%20y%5Ek)%5E2)%5Ed)
 
+
    - Cauchy kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cfrac%7B1%7D%7B1%20+%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%5E2%7D%7B%5Csigma%5E2%7D%20%7D)
+
 
    - Circular kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cfrac%7B2%7D%7B%5Cpi%7D%20%5Carccos%20(%20-%20%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D)%20-%20%5Cfrac%7B2%7D%7B%5Cpi%7D%20%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20%5Csqrt%7B1%20-%20%5Cleft(%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20%5Cright)%5E2%7D)
 
+
    - Exponential kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%20%7D%7B2%5Csigma%5E2%7D%5Cright))
+
 
    - Gaussian kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%20%5E2%7D%7B2%5Csigma%5E2%7D%5Cright))
 
+
    - Hyperbolic Tangent (sigmoid/tanh) kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Ctanh%20(%5Calpha%20x%5ET%20y%20+%20c))
+
 
    - Laplacian kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%20%7D%7B%5Csigma%7D%5Cright))
 
+
    - Linear kernel
 
      ![Image](http://latex.codecogs.com/gif.latex?k(x,%20y)%20=%20x%5ET%20y%20+%20c)
+
 
    - Log kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,y)%20=%20-%20log%20(%5ClVert%20x-y%20%5CrVert%20%5Ed%20+%201))
 
+
    - Multiquadric (and Inverse Multiquadric) kernel
+
+     ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Csqrt%7B%5ClVert%20x-y%20%5CrVert%5E2%20+%20c%5E2%7D)
+
+
    - Polynomial kernel
 
      ![Image](http://latex.codecogs.com/gif.latex?k(x,%20y)%20=%20(%5Calpha%20x%5ET%20y%20+%20c)%5Ed)
+
 
    - Power kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,y)%20=%20-%20%5ClVert%20x-y%20%5CrVert%20%5Ed)
 
+
    - Radial Basis kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%20%7D%7B%5Csigma%7D%5Cright))
+
 
    - Rational Quadratic kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%201%20-%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%5E2%7D%7B%5ClVert%20x-y%20%5CrVert%5E2%20+%20c%7D)
 
+
    - Spherical kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%201%20-%20%5Cfrac%7B3%7D%7B2%7D%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20+%20%5Cfrac%7B1%7D%7B2%7D%20%5Cleft(%20%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20%5Cright)%5E3)
 
+
    - Spline kernel
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,y)%20=%20%5Cprod_%7Bi=1%7D%5Ed%201%20+%20x_i%20y_i%20+%20x_i%20y_i%20%5Cmin(x_i,%20y_i)%20-%20%5Cfrac%7Bx_i%20+%20y_i%7D%7B2%7D%20%5Cmin(x_i,y_i)%5E2%20+%20%5Cfrac%7B%5Cmin(x_i,y_i)%5E3%7D%7B3%7D)
+
 
 
 Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, else it will try to *minimize* distance.
