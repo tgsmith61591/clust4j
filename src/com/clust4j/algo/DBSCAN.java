@@ -178,11 +178,29 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		}
 		
 		
-		// Initialize the neighboorhood array and start each point as NOISE (-1)
+		// Initialize the neighborhood array
 		final int[] neighborhoods = new int[m]; // The number of pts in each record's neighborhood
-		for(int i =0; i < m; i++) {
-			// Identify the 
+		final boolean[][] mask_mat = new boolean[m][m]; // Mask matrix
+		for(int i = 0; i < m-1; i++) {
+			for(int j = i + 1; j < m; j++) {
+				if(i == j)
+					continue;
+				
+				final boolean res = dist_mat[i][j] < eps;
+				mask_mat[i][j] = res;
+				mask_mat[j][i] = res;
+			}
 		}
+		
+		/*
+		 * If EPS == 2...
+		 * 
+		 * [0 1 2 3 4]       [false TRUE  false false false]
+		 * [0 0 1 2 3]       [TRUE  false TRUE  false false]
+		 * [0 0 0 1 2]  ===> [false TRUE  false TRUE  false]
+		 * [0 0 0 0 1]       [false false TRUE  false TRUE ]
+		 * [0 0 0 0 0]       [false false false TRUE  false]
+		 */
 		
 		
 		
