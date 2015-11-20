@@ -16,6 +16,7 @@ import com.clust4j.utils.VecUtils;
 public abstract class AbstractClusterer implements Loggable {
 	public static boolean DEF_VERBOSE = false;
 	
+	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static boolean DEF_SCALE = false;
 	final private UUID modelKey;
@@ -25,7 +26,7 @@ public abstract class AbstractClusterer implements Loggable {
 	/** Similarity metric */
 	final private GeometricallySeparable dist;
 	/** Seed for any shuffles */
-	private Random seed = new Random();
+	private final Random seed;
 	/** Verbose for heavily logging */
 	final protected boolean verbose;
 	protected boolean isTrained = false;
@@ -45,8 +46,10 @@ public abstract class AbstractClusterer implements Loggable {
 	abstract protected static class BaseClustererPlanner {
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
+		abstract public Random getSeed();
 		abstract public boolean getVerbose();
 		abstract public BaseClustererPlanner setScale(final boolean b);
+		abstract public BaseClustererPlanner setSeed(final Random rand);
 		abstract public BaseClustererPlanner setVerbose(final boolean b);
 		abstract public BaseClustererPlanner setSep(final GeometricallySeparable dist);
 	}
@@ -66,6 +69,7 @@ public abstract class AbstractClusterer implements Loggable {
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
 		this.similarity = this.dist instanceof SimilarityMetric;
+		this.seed = planner.getSeed();
 		
 		// Handle data, now...
 		handleData(data);
@@ -78,7 +82,7 @@ public abstract class AbstractClusterer implements Loggable {
 			
 			
 			if(this.dist instanceof Kernel)
-				warn("running " + getName() + " in Kernel mode; this is a much more expensive option");
+				warn("running " + getName() + " in Kernel mode can be an expensive option");
 			
 			
 			info((similarity ? "similarity" : "distance") + 
@@ -158,18 +162,6 @@ public abstract class AbstractClusterer implements Loggable {
 	 */
 	public Random getSeed() {
 		return seed;
-	}
-	
-	
-	/**
-	 * Reset the current seed
-	 * @param newSeed
-	 * @return
-	 */
-	public Random setSeed(final Random newSeed) {
-		final Random old = seed;
-		this.seed = newSeed;
-		return old;
 	}
 	
 	@Override

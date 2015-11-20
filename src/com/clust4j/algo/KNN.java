@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
@@ -50,12 +51,18 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 
 	public static class KNNPlanner extends AbstractClusterer.BaseClustererPlanner {
 		protected GeometricallySeparable dist = DEF_DIST;
+		protected Random seed = DEF_SEED;
 		protected boolean verbose = DEF_VERBOSE;
 		protected boolean scale = DEF_SCALE;
 		protected int k;
 		
 		public KNNPlanner(final int k) {
 			this.k = k;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
 		}
 		
 		@Override
@@ -72,6 +79,12 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		@Override
 		public KNNPlanner setScale(final boolean scale) {
 			this.scale = scale;
+			return this;
+		}
+		
+		@Override
+		public KNNPlanner setSeed(final Random seed) {
+			this.seed = seed;
 			return this;
 		}
 

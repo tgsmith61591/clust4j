@@ -68,43 +68,43 @@ A number of separability metrics are available for use:
  - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
  - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
- - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods<sup>[1]</sup>
-   - ANOVA kernel
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[1]</sup>)
+   - [ANOVA kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#anova), a radial basis function kernel, just as the Gaussian and Laplacian kernels. It is [said to perform well](http://www.nicta.com.au/research/research_publications?sq_content_src=%2BdXJsPWh0dHBzJTNBJTJGJTJGcHVibGljYXRpb25zLmluc2lkZS5uaWN0YS5jb20uYXUlMkZzZWFyY2glMkZmdWxsdGV4dCUzRmlkJTNEMjYxJmFsbD0x) in multidimensional regression problems (Hofmann, 2008).
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Csum_%7Bk=1%7D%5En%20%5Cexp%20(-%5Csigma%20(x%5Ek%20-%20y%5Ek)%5E2)%5Ed)
 
 
-   - Cauchy kernel
+   - [Cauchy kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#cauchy), a long-tailed kernel and can be used to give long-range influence and sensitivity over the high dimension space.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cfrac%7B1%7D%7B1%20+%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%5E2%7D%7B%5Csigma%5E2%7D%20%7D)
 
 
-   - Circular kernel
+   - [Circular kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#circular), an example of an isotropic stationary kernel that is positive definite in R<sup>2</sup>.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cfrac%7B2%7D%7B%5Cpi%7D%20%5Carccos%20(%20-%20%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D)%20-%20%5Cfrac%7B2%7D%7B%5Cpi%7D%20%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20%5Csqrt%7B1%20-%20%5Cleft(%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%7D%7B%5Csigma%7D%20%5Cright)%5E2%7D)
 
 
-   - Exponential kernel
+   - [Exponential kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#exponential); closely related to the Gaussian kernel, with only the square of the norm left out. It is also a radial basis function kernel.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%20%7D%7B2%5Csigma%5E2%7D%5Cright))
 
 
-   - Gaussian kernel
+   - [Gaussian kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#gaussian), an example of radial basis function kernel. The adjustable parameter sigma plays a major role in the performance of the kernel, and should be carefully tuned to the problem at hand. If overestimated, the exponential will behave almost linearly and the higher-dimensional projection will start to lose its non-linear power. In the other hand, if underestimated, the function will lack regularization and the decision boundary will be highly sensitive to noise in training data.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%5Cfrac%7B%20%5ClVert%20x-y%20%5CrVert%20%5E2%7D%7B2%5Csigma%5E2%7D%5Cright))
 
 
-   - Hyperbolic Tangent (sigmoid/tanh) kernel
+   - [Hyperbolic Tangent (sigmoid/tanh) kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#sigmoid), also known as the Sigmoid Kernel and as the Multilayer Perceptron (MLP) kernel. The Sigmoid Kernel comes from the Neural Networks field, where the bipolar sigmoid function is often used as an activation function for artificial neurons.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Ctanh%20(%5Calpha%20x%5ET%20y%20+%20c))
 
 
-   - Laplacian kernel
+   - [Laplacian kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#laplacian); completely equivalent to the exponential kernel, except for being less sensitive for changes in the sigma parameter. Being equivalent, it is also a radial basis function kernel.
 
      ![Image](http://latex.codecogs.com/png.latex?k(x,%20y)%20=%20%5Cexp%5Cleft(-%20%5Cfrac%7B%5ClVert%20x-y%20%5CrVert%20%7D%7B%5Csigma%7D%5Cright))
 
 
-   - Linear kernel
+   - [Linear kernel](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/#linear), the simplest kernel function. It is given by the inner product `<x,y>` plus an optional constant c.
 
      ![Image](http://latex.codecogs.com/gif.latex?k(x,%20y)%20=%20x%5ET%20y%20+%20c)
 
@@ -168,6 +168,8 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 ### Future implementations*:
 - Density-based:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
+  - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
+
 - Hierarchical algorithms:
   - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
 

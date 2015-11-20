@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -50,6 +51,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
+		private Random seed = DEF_SEED;
 		private double minChange = DEF_MIN_CHNG;
 		private int k;
 		
@@ -65,6 +67,11 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		@Override
 		public boolean getScale() {
 			return scale;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
 		}
 		
 		@Override
@@ -91,6 +98,12 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		@Override
 		public BaseKCentroidPlanner setScale(final boolean scale) {
 			this.scale = scale;
+			return this;
+		}
+		
+		@Override
+		public BaseKCentroidPlanner setSeed(final Random seed) {
+			this.seed = seed;
 			return this;
 		}
 		

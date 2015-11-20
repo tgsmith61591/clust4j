@@ -1,5 +1,7 @@
 package com.clust4j.algo;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.GeometricallySeparable;
@@ -18,6 +20,7 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 	public static class BaseHierarchicalPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean scale = DEF_SCALE;
+		private Random seed = DEF_SEED;
 		private Linkage linkage = DEF_LINKAGE;
 		private boolean verbose = DEF_VERBOSE;
 
@@ -36,6 +39,11 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 			return scale;
 		}
 		
+		@Override
+		public Random getSeed() {
+			return seed;
+		}
+		
 		public BaseHierarchicalPlanner setLinkage(Linkage l) {
 			this.linkage = l;
 			return this;
@@ -44,6 +52,12 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		@Override
 		public BaseHierarchicalPlanner setScale(boolean b) {
 			this.scale = b;
+			return this;
+		}
+		
+		@Override
+		public BaseHierarchicalPlanner setSeed(final Random seed) {
+			this.seed = seed;
 			return this;
 		}
 		

@@ -37,4 +37,8 @@ public class RadialBasisKernel extends Kernel {
 	public double getSimilarity(final double[] a, final double[] b) {
 		return FastMath.exp( sigma * toHilbertPSpace(a,b) );
 	}
+	
+	public void setSigma(final double sigma) {
+		this.sigma = sigma;
+	}
 }

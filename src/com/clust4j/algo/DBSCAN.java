@@ -1,34 +1,34 @@
 package com.clust4j.algo;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
 
-import static com.clust4j.algo.DBSCAN.Method.*;
 
 public class DBSCAN extends AbstractDensityClusterer implements Classifier {
-	/**
-	 * The different types of methods to 
-	 * use in the clustering process.
-	 * @author Taylor G Smith */
-	public static enum Method {
-		HYBRID,
-		RAW,
-		DIST
-	}
 	
-	
-	final public static Method DEF_METHOD = DIST;
 	final public static int DEF_MIN_PTS = 5;
 	
 	final private int minPts;
 	final private double eps;
-	final private Method method;
 	
 	private boolean isTrained = false;
 	private int[] labels = null;
+	
+	/**
+	 * Upper triangular, M x M matrix denoting distances between records.
+	 * Is only populated during training phase and then set to null for 
+	 * garbage collection, as a large-M matrix has a high space footprint: O(N^2).
+	 * This is only needed during training and then can safely be collected
+	 * to free up heap space.
+	 */
+	private double[][] dist_mat = null;
 	
 	
 	/**
@@ -38,11 +38,11 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	 */
 	final public static class DBSCANPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private double eps;
-		private int minPts		= DEF_MIN_PTS;
-		private boolean scale	= DEF_SCALE;
+		private int minPts = DEF_MIN_PTS;
+		private boolean scale = DEF_SCALE;
 		private GeometricallySeparable dist	= DEF_DIST;
-		private Method method	= DEF_METHOD;
 		private boolean verbose	= DEF_VERBOSE;
+		private Random seed = DEF_SEED;
 		
 		public DBSCANPlanner(final double eps) {
 			this.eps = eps;
@@ -56,6 +56,11 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		@Override
 		public boolean getScale() {
 			return scale;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
 		}
 		
 		@Override
@@ -75,13 +80,14 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		}
 		
 		@Override
-		public DBSCANPlanner setSep(final GeometricallySeparable dist) {
-			this.dist = dist;
+		public DBSCANPlanner setSeed(final Random seed) {
+			this.seed = seed;
 			return this;
 		}
 		
-		public DBSCANPlanner setMethod(final Method method) {
-			this.method = method;
+		@Override
+		public DBSCANPlanner setSep(final GeometricallySeparable dist) {
+			this.dist = dist;
 			return this;
 		}
 		
@@ -112,7 +118,9 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
-		this.method	= builder.method;
+		
+		if(this.eps <= 0.0)
+			throw new IllegalArgumentException("eps must be greater than 0.0");
 	}
 	
 
@@ -124,10 +132,6 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	@Override
 	public int[] getPredictedLabels() {
 		return labels;
-	}
-	
-	public Method getMethod() {
-		return method;
 	}
 	
 	public int getMinPts() {
@@ -154,6 +158,36 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	final public void train() {
 		if(isTrained)
 			return;
+		
+		
+		// First get the dist matrix
+		final long start = System.currentTimeMillis();
+		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+		final int m = dist_mat.length;
+		
+		
+		// Log info...
+		if(verbose) {
+			info("calculated " + 
+				dist_mat.length + " x " + 
+				dist_mat.length + 
+				" distance matrix in " + 
+				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+			
+			info("computing density neighborhood for each point");
+		}
+		
+		
+		// Initialize the neighboorhood array and start each point as NOISE (-1)
+		final int[] neighborhoods = new int[m]; // The number of pts in each record's neighborhood
+		for(int i =0; i < m; i++) {
+			// Identify the 
+		}
+		
+		
+		
+		
+		
 		
 		// TODO:
 		throw new UnsupportedOperationException("Not yet implemented");

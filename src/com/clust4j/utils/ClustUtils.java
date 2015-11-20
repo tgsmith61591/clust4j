@@ -94,6 +94,22 @@ public class ClustUtils {
 		return dist_mat;
 	}
 	
+
+	public static double minDist(final double[][] data) {
+		final int m = data.length;
+		double min = Double.MAX_VALUE;
+		
+		for(int i = 0; i < m - 1; i++) {
+			for(int j = i + 1; j < m; j++) {
+				final double current = data[i][j];
+				if(current < min)
+					min = current;
+			}
+		}
+		
+		return min;
+	}
+	
 	/**
 	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
 	 * and an instance of SimilarityMetric.

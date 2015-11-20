@@ -191,7 +191,25 @@ public class KernelTestCases {
 	public void KernelKMedoidsLoadTest1() {
 		final Array2DRowRealMatrix mat = ClustTests.getRandom(1000, 10);
 		final int[] ks = new int[] {1,3,5,7};
-		Kernel kernel = new GaussianKernel(0.05);
+		Kernel kernel = new LaplacianKernel(0.05);
+		
+		KMedoids km = null;
+		for(int k : ks) {
+			km = new KMedoids(mat, 
+					new KMedoids.KMedoidsPlanner(k)
+						.setSep(kernel)
+						.setVerbose(true)
+						.setScale(false));
+			km.train();
+		}
+		System.out.println();
+	}
+	
+	@Test
+	public void KernelKMedoidsLoadTest2() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(2000, 10);
+		final int[] ks = new int[] {12};
+		Kernel kernel = new SplineKernel();
 		
 		KMedoids km = null;
 		for(int k : ks) {

@@ -26,7 +26,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	/**
 	 * Upper triangular, M x M matrix denoting distances between records.
 	 * Is only populated during training phase and then set to null for 
-	 * garbage collection, as a large-M matrix has a high space footprint: O(M choose 2).
+	 * garbage collection, as a large-M matrix has a high space footprint: O(N^2).
 	 * This is only needed during training and then can safely be collected
 	 * to free up heap space.
 	 */
@@ -207,7 +207,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// We do this in KMedoids and not KMeans, because KMedoids uses
 		// real points as medoids and not means for centroids, thus
 		// the recomputation of distances is unnecessary with the dist mat
-		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric()); // If it isn't sim, use dist
+		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+		
+		/*System.out.println(new MatrixFormatter()
+			.format(new Array2DRowRealMatrix(dist_mat, false)));*/
 		
 		
 		if(verbose) info("calculated " + 
@@ -215,8 +218,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						dist_mat.length + 
 						" distance matrix in " + 
 						LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
-				//+ ": HEAD = " + new MatrixFormatter()
-				//	.format(new Array2DRowRealMatrix(dist_mat), 6));
 
 		// Clusters initialized with randoms already in super
 		// Initialize labels
@@ -228,6 +229,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		// State vars...
 		// Once this config is no longer changing, global min reached
 		double oldCost = getCostOfSystem(); // Tracks cost per iteration...
+		
 		// Worst case will store up to M choose K...
 		HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
 		
@@ -311,6 +313,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				iter++;
 				break;
 			} else { // can get better... reassign clusters to new medoids, keep going.
+				if(verbose)
+					info("convergence not yet reached, new min cost: " + min_cost);
+				
 				oldCost = min_cost;
 				cent_to_record = assignClustersAndLabels();
 			}
