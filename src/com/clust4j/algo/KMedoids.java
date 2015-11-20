@@ -234,12 +234,14 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		}
 		
 
-		// Use the PAM (partitioning around medoids) algorithm
-		// For each cluster in k...
-		double min_cost = Double.MAX_VALUE;
-		double new_cost = Double.MAX_VALUE;
 		
 		for(iter = 0; iter < maxIter; iter++) {
+			// Use the PAM (partitioning around medoids) algorithm
+			// For each cluster in k...
+			// MUST BE DOUBLE MAX; if oldCost and no change, will
+			// automatically "converge" and exit...
+			double min_cost = oldCost;
+			double new_cost = Double.MAX_VALUE;
 		
 			
 			for(int i = 0; i < k; i++) {
@@ -252,7 +254,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				 * cluster to another, cost_of_cluster will change (up or down). This ensures the
 				 * min always being tracked.
 				 */
-				double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, medoid_index), oldCost);
+				//double cost_of_cluster = FastMath.min(getCost(indices_in_cluster, medoid_index), oldCost);
 				
 				if(verbose)
 					info("optimizing medoid choice for cluster " + i + " (iter = " + (iter+1) + ") ");
@@ -274,11 +276,11 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						continue; // Micro hack!
 					
 					// Simulate cost, see if better...
-					new_cost = simulateSystemCost(copy_of_medoids, oldCost);
-					if(new_cost < /*cost_of_cluster*/ oldCost) {
-						/*cost_of_cluster*/ oldCost = new_cost;
+					new_cost = simulateSystemCost(copy_of_medoids, min_cost);
+					if(new_cost < /*cost_of_cluster*/ min_cost) {
+						/*cost_of_cluster*/ min_cost = new_cost;
 						if(verbose)
-							info("new cost-minimizing system found; current cost: " + new_cost );
+							trace("new cost-minimizing system found; current cost: " + new_cost );
 						
 						best_medoid_index = o;
 					}
@@ -288,7 +290,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				
 				// Have found optimal medoid to minimize cost in cluster...
 				medoid_indices[i] = best_medoid_index;
-				min_cost = cost_of_cluster;
+				//min_cost = cost_of_cluster;
 			}
 		
 			// Check for stopping condition
