@@ -37,6 +37,8 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 	public AgglomerativeClusterer(AbstractRealMatrix data, 
 			AbstractHierarchicalClusterer.BaseHierarchicalPlanner planner) {
 		super(data, planner);
+		
+		if(verbose) info("Linkage="+linkage);
 	}
 
 	@Override

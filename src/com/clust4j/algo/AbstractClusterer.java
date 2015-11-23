@@ -211,4 +211,8 @@ public abstract class AbstractClusterer implements Loggable {
 	@Override public void debug(String msg) {
 		Log.debug(getLoggerTag(), msg);
 	}
+	
+	public void meta(final String msg) {
+		info("[meta "+getName()+"] " + msg);
+	}
 }

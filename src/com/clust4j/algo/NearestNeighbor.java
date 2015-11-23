@@ -1,5 +1,6 @@
 package com.clust4j.algo;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -45,9 +46,9 @@ final class NearestNeighbor {
 	}
 	
 	
-	public SortedSet<Map.Entry<Integer, Double>> getSortedNearestWithinRadius(final double rad) {
+	public ArrayList<Integer> getNearestWithinRadius(final double rad) {
 		// TM container
-		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
+		final ArrayList<Integer> insideRad = new ArrayList<>();
 		
 		// Get map of distances to each record
 		for(int train_row = 0; train_row < dist_mat.length; train_row++) {
@@ -55,12 +56,12 @@ final class NearestNeighbor {
 				continue;
 			
 			final double sim = dist_mat[FastMath.min(recordIdx, train_row)][FastMath.max(recordIdx, train_row)];
-			if(sim < rad) rec_to_dist.put(train_row, sim);
+			if(sim < rad) insideRad.add(train_row);
 		}
 		
 		// Sort treemap on value
 		// If the distance metric is a similarity metric, we want it DESC else ASC
-		return ClustUtils.sortEntriesByValue( rec_to_dist );
+		return insideRad;
 	}
 	
 	

@@ -1,9 +1,8 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Random;
-import java.util.SortedSet;
+import java.util.Stack;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -13,17 +12,30 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
+import com.clust4j.utils.VecUtils;
 
 
+/**
+ * 
+ * 
+ * 
+ * @author Taylor G Smith, adapted from sklearn implementation by Lars Buitinck
+ *
+ */
 public class DBSCAN extends AbstractDensityClusterer implements Classifier {
-	
+	final public static double DEF_EPS = 0.5;
 	final public static int DEF_MIN_PTS = 5;
+	final public static int NOISE_CLASS = -1;
 	
 	final private int minPts;
 	final private double eps;
 	
-	private boolean isTrained = false;
-	private int[] labels = null;
+	
+	// Race conditions exist in retrieving either one of these...
+	private volatile int[] labels = null;
+	private volatile double[] sampleWeights = null;
+	private volatile boolean[] coreSamples = null;
+	private volatile int numClusters;
 	
 	/**
 	 * Upper triangular, M x M matrix denoting distances between records.
@@ -41,16 +53,19 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	 * @author Taylor G Smith
 	 */
 	final public static class DBSCANPlanner extends AbstractClusterer.BaseClustererPlanner {
-		private double eps;
+		private double eps = DEF_EPS;
 		private int minPts = DEF_MIN_PTS;
 		private boolean scale = DEF_SCALE;
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
 		private Random seed = DEF_SEED;
 		
+		
+		public DBSCANPlanner() { }
 		public DBSCANPlanner(final double eps) {
 			this.eps = eps;
 		}
+		
 		
 		@Override
 		public GeometricallySeparable getSep() {
@@ -120,6 +135,13 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner builder) {
 		super(data, builder);
 		
+		
+		if(verbose) {
+			meta("epsilon="+builder.eps);
+			meta("min_pts="+builder.minPts);
+		}
+		
+		
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
 		
@@ -176,19 +198,21 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 			}
 			
 			
-			// Do the neighborhood assignments
+			// Do the neighborhood assignments, get sample weights, find core samples..
 			final long neighbStart = System.currentTimeMillis();
 			labels = new int[m]; // Initialize labels...
+			sampleWeights = new double[m]; // Init sample weights...
+			coreSamples = new boolean[m];
 			
 			
-			SortedSet<Map.Entry<Integer, Double>> ptNeighbs;
-			ArrayList<SortedSet<Map.Entry<Integer, Double>>> neighborhoods = new ArrayList<>();
+			ArrayList<Integer> ptNeighbs;
+			ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
 			for(int i = 0; i < m; i++) {
 				// Each label inits to -1 as noise
-				labels[i] = -1;
+				labels[i] = NOISE_CLASS;
 				
 				try {
-					ptNeighbs = new NearestNeighbor(i, dist_mat).getSortedNearestWithinRadius(eps);
+					ptNeighbs = new NearestNeighbor(i, dist_mat).getNearestWithinRadius(eps);
 				} catch(DimensionMismatchException e) {
 					// Should not happen since i < m
 					if(verbose) error(e.getLocalizedMessage());
@@ -196,33 +220,74 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 				}
 				
 				// Add neighborhood...
+				int pts;
 				neighborhoods.add(ptNeighbs);
+				sampleWeights[i] = pts = ptNeighbs.size();
+				coreSamples[i] = pts > minPts;
 			}
 			
 			
 			// Log checkpoint
 			if(verbose) {
+				final int numCorePts = VecUtils.sum(coreSamples);
 				info("completed density neighborhood calculations in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
+				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
 				info("identifying cluster labels");
 			}
 			
 			
-
-			int nextLabel = 0;
+			// Label the points...
+			int nextLabel = 0, j, v;
 			final long clustStart = System.currentTimeMillis();
+			final Stack<Integer> stack = new Stack<>();
+			ArrayList<Integer> neighb;
+			
+			
+			for(int i = 0; i < m; i++) {
+				// Want to look at unlabeled OR core points...
+				if(labels[i] != NOISE_CLASS || !coreSamples[i])
+					continue;
+				
+		        // Depth-first search starting from i, ending at the non-core points.
+		        // This is very similar to the classic algorithm for computing connected
+		        // components, the difference being that we label non-core points as
+		        // part of a cluster (component), but don't expand their neighborhoods.
+				while(true) {
+					if(labels[i] == -1) {
+						labels[i] = nextLabel;
+						if(coreSamples[i]) {
+							neighb = neighborhoods.get(i);
+							
+							for(j = 0; j < neighb.size(); j++) {
+								v = neighb.get(j);
+								if(labels[v] == NOISE_CLASS)
+									stack.push(v);
+							}
+						}
+					}
+					
+					if(stack.size() == 0) {
+						if(verbose) info("emptied stack for clusterLabel " + nextLabel);
+						break;
+					}
+					
+					i = stack.pop();
+				}
+				
+				nextLabel++;
+			}
 			
 			
 			
-			// TODO: some minpt logic...
-			// throw new UnsupportedOperationException("Not yet implemented"); 
-			
-			
-			
+			// Wrap up...
 			if(verbose) {
 				info("completed cluster labeling in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-				info("completed DBSCAN procedure " + 
+				
+				info((numClusters=nextLabel)+" label"+(nextLabel!=1?"s":"")+" identified");
+				
+				info("model "+getKey()+" completed in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
 			
@@ -235,5 +300,9 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.DBSCAN;
+	}
+	
+	public int getNumberOfIdentifiedClusters() {
+		return numClusters;
 	}
 }

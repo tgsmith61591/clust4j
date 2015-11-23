@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.algo.ClustTests;
+import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KNN;
@@ -209,17 +210,27 @@ public class KernelTestCases {
 	public void KernelKMedoidsLoadTest2() {
 		final Array2DRowRealMatrix mat = ClustTests.getRandom(2000, 10);
 		final int[] ks = new int[] {12};
-		Kernel kernel = new SplineKernel();
+		Kernel kernel = new HyperbolicTangentKernel(); //SplineKernel();
 		
-		KMedoids km = null;
 		for(int k : ks) {
-			km = new KMedoids(mat, 
-					new KMedoids.KMedoidsPlanner(k)
-						.setSep(kernel)
-						.setVerbose(true)
-						.setScale(false));
-			km.fit();
+			new KMedoids(mat, 
+				new KMedoids.KMedoidsPlanner(k)
+					.setSep(kernel)
+					.setVerbose(true)
+					.setScale(false)).fit();
 		}
+		System.out.println();
+	}
+	
+	@Test
+	public void DBSCANTest1() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(1500, 10);
+		Kernel kernel = new RadialBasisKernel(0.05);
+		new DBSCAN(mat, 
+				new DBSCAN.DBSCANPlanner(0.05)
+					.setSep(kernel)
+					.setScale(true)
+					.setVerbose(true)).fit();
 		System.out.println();
 	}
 }

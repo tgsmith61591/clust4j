@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -450,10 +451,29 @@ public class ClustTests {
 	@Test
 	public void DBSCANTest1() {
 		final Array2DRowRealMatrix mat = getRandom(1500, 10);
-		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.05)
-					.setScale(true)
-					.setVerbose(true)
-				);
-		db.fit();
+		new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.05)
+			.setScale(true)
+			.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void DBSCANTest2() {
+		final double[][] train_array = new double[][] {
+				new double[] {0.00504, 	 0.0001,    0.08172},
+				new double[] {3.65816,   2.9471,    3.12331},
+				new double[] {4.12344,   3.0001,    2.89002}
+			};
+			
+			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+			
+			
+		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
+		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.75)
+			.setScale(true)
+			.setMinPts(2)
+			.setVerbose(true))
+				.fit();
+		
+		assertTrue(db.getNumberOfIdentifiedClusters() > 0);
 	}
 }
