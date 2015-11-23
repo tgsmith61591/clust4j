@@ -56,15 +56,17 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 
 	@Override
 	public void train() {
-		if(isTrained)
-			return;
-		
-		final long start = System.currentTimeMillis();
-		buildTree(linkage);
-		
-		if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
-		isTrained = true;
-	}
+		synchronized(this) { // synch because `isTrained` is race condition
+			if(isTrained)
+				return;
+			
+			final long start = System.currentTimeMillis();
+			buildTree(linkage);
+			
+			if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+			isTrained = true;
+		} // End synch
+	} // End train
 	
 	private void buildTree(Linkage link) {
 		if(null == link) {

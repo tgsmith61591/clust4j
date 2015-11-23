@@ -146,7 +146,7 @@ public class VecUtils {
 		if(p == 2) return l2Norm(a);
 		
 		double power = 1.0 / p;
-		return FastMath.pow(sum(abs(a)), power);
+		return FastMath.pow(sum(pow(abs(a), p)), power);
 	}
 	
 	public static double magnitude(final double[] a) {
@@ -334,10 +334,22 @@ public class VecUtils {
 		return ab;
 	}
 	
-	final public static double sum(final double[] a) {
+	public static double sum(final double[] a) {
 		double sum = 0d;
 		for(double d : a)
 			sum += d;
+		return sum;
+	}
+	
+	/**
+	 * Returns the count of <tt>true</tt> in a boolean vector
+	 * @param a
+	 * @return
+	 */
+	public static int sum(final boolean[] a) {
+		int sum = 0;
+		for(boolean b: a)
+			if(b) sum++;
 		return sum;
 	}
 	

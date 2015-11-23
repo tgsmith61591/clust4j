@@ -29,8 +29,8 @@ public abstract class AbstractClusterer implements Loggable {
 	private final Random seed;
 	/** Verbose for heavily logging */
 	final protected boolean verbose;
-	protected boolean isTrained = false;
-	final private boolean similarity;
+	
+	protected volatile boolean isTrained = false;
 	
 
 	
@@ -68,8 +68,8 @@ public abstract class AbstractClusterer implements Loggable {
 		this.dist = planner.getSep();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
-		this.similarity = this.dist instanceof SimilarityMetric;
 		this.seed = planner.getSeed();
+		boolean similarity = this.dist instanceof SimilarityMetric; // Avoid later check
 		
 		// Handle data, now...
 		handleData(data);

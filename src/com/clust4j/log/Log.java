@@ -6,8 +6,6 @@ import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Date;
-import java.text.SimpleDateFormat;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -54,39 +52,7 @@ public abstract class Log {
 	
 	
 	
-	
-	
-	
-	
-	/**
-	 * A faster, non-thread-safe version of H2O's 
-	 * <a href="https://github.com/h2oai/h2o-2/blob/master/src/main/java/water/Timer.java">Timer class</a>
-	 * @author 0XData
-	 */
-	public final static class H2OTimer {
-		private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM HH:mm:ss.SSS");
-		private static final SimpleDateFormat shortFormat = new SimpleDateFormat("HH:mm:ss.SSS");
-		
-		public final long _start = System.currentTimeMillis();
-		public final long _nanos = System.nanoTime();
-		
-		/**Return the difference between when the timer was created and the current time. */
-		public long time() { return System.currentTimeMillis() - _start; }
-		public long nanos(){ return System.nanoTime() - _nanos; }
-		
-		@Override
-		public String toString() {
-			final long now = System.currentTimeMillis();
-			return LogTimeFormatter.millis(now - _start, false) + 
-					" (Wall: " + dateFormat.format(new Date(now)) + ") ";
-		}
-		
-		/** return the start time of this timer.**/
-		public String startAsString() { return dateFormat.format(new Date(_start)); }
-		/** return the start time of this timer.**/
-		public String startAsShortString() { return shortFormat.format(new Date(_start)); }
-	}
-	
+	final static public Timer theTimer = new LogTimer();
 	
 	
 	
@@ -142,27 +108,24 @@ public abstract class Log {
 	
 	
 	/**
-	 * 0XData Event class, but not written for concurrency.
-	 * All volatile or synchronized methods/members are no-longer
-	 * thread safe.
+	 * 0XData Event class
 	 */
 	static class Event {
 		Type type;
 		Algo algo;
-		H2OTimer when;
+		Timer when;
 		long msFromStart;
 		Throwable ouch;
 		Object[] messages;
 		Object message;
 		String thread;
 		
-		/* H2O's is volatile; not this one */
-		boolean printMe;
+		volatile boolean printMe;
 		
 		/* These are all volatile in H2O's API */
-		private static H2OTimer lastGoodTimer = new H2OTimer();
-		private static Event lastEvent = new Event();
-		private static int missed;
+		private volatile static Timer lastGoodTimer = new LogTimer();
+		private volatile static Event lastEvent = new Event();
+		private volatile static int missed;
 		
 		/* Builder methods */
 		static Event make(Tag.Algo algo, Tag.Type type, Throwable ouch, Object[] messages) {
@@ -180,16 +143,18 @@ public abstract class Log {
 			
 			try {
 				result = new Event();
-				result.init(algo, type, ouch, messages, message, lastGoodTimer=new H2OTimer());
+				result.init(algo, type, ouch, messages, message, lastGoodTimer=new LogTimer());
 			} catch(OutOfMemoryError e) {
-				/* This is synchronized in the H2O API, not here */
-				if(lastEvent.printMe) {
-					missed++;
-					return null;
+				synchronized(Event.class) {
+					/* This is synchronized in the H2O API, not here */
+					if(lastEvent.printMe) {
+						missed++;
+						return null;
+					}
+					
+					result = lastEvent;
+					result.init(algo, type, ouch, messages, null, lastGoodTimer);
 				}
-				
-				result = lastEvent;
-				result.init(algo, type, ouch, messages, null, lastGoodTimer);
 			}
 			
 			return result;
@@ -197,7 +162,7 @@ public abstract class Log {
 		
 		private void init(Tag.Algo algo, Tag.Type type, 
 				Throwable ouch, Object[] messages, 
-				Object message, H2OTimer timer) {
+				Object message, Timer timer) {
 			this.algo = algo;
 			this.type = type;
 			this.ouch = ouch;
@@ -310,22 +275,28 @@ public abstract class Log {
 			write0(e, printOnOut);
 			
 			if(Event.lastEvent.printMe || Event.missed > 0) {
-				if(Event.lastEvent.printMe) {
-					Event ev = Event.lastEvent;
-					write0(ev, true);
-					Event.lastEvent = new Event();
+				
+				synchronized(Event.class) {
+					if(Event.lastEvent.printMe) {
+						Event ev = Event.lastEvent;
+						write0(ev, true);
+						Event.lastEvent = new Event();
+					}
+					
+					if(Event.missed > 0 && !Event.lastEvent.printMe) {
+						Event.lastEvent.init(Algo.CLUST4J, Type.WARN, null, null, "Logging framework dropped a message", Event.lastGoodTimer);
+						Event.missed--;
+					}
 				}
 				
-				if(Event.missed > 0 && !Event.lastEvent.printMe) {
-					Event.lastEvent.init(Algo.CLUST4J, Type.WARN, null, null, "Logging framework dropped a message", Event.lastGoodTimer);
-					Event.missed--;
-				}
 			}
 			
 		} catch(OutOfMemoryError xe) {
-			if(!Event.lastEvent.printMe)
-				Event.lastEvent = e;
-			else Event.missed++;
+			synchronized(Event.class) {
+				if(!Event.lastEvent.printMe)
+					Event.lastEvent = e;
+				else Event.missed++;
+			}
 		}
 	}
 	
@@ -437,18 +408,20 @@ public abstract class Log {
 	}
 	
 	private static org.apache.log4j.Logger createLog4jLogger(String logDirParent) {
-		// H2O API is synchronized here... this is not:
-		if(null != _logger)
-			return _logger;
-		
-		String l4jprops = System.getProperty("log4j.properties");
-		if(null != l4jprops)
-			PropertyConfigurator.configure(l4jprops);
-		
-		else {
-			java.util.Properties p = new java.util.Properties();
-			setLog4jProperties(logDirParent, p);
-			PropertyConfigurator.configure(p);
+		synchronized (com.clust4j.log.Log.class) {
+			// H2O API is synchronized here... this is not:
+			if(null != _logger)
+				return _logger;
+			
+			String l4jprops = System.getProperty("log4j.properties");
+			if(null != l4jprops)
+				PropertyConfigurator.configure(l4jprops);
+			
+			else {
+				java.util.Properties p = new java.util.Properties();
+				setLog4jProperties(logDirParent, p);
+				PropertyConfigurator.configure(p);
+			}
 		}
 		
 		return _logger = LogManager.getLogger(Log.class.getName());
@@ -478,8 +451,9 @@ public abstract class Log {
 	/**
 	 * Volatile in H2O API, not here....
 	 */
-	static boolean loggerCreateWasCalled = false;
-	static private ArrayList<Event> startupLogEvents = new ArrayList<Event>();
+	static volatile boolean loggerCreateWasCalled = false;
+	static private Object startupLogEventsLock = new Object();
+	static volatile private ArrayList<Event> startupLogEvents = new ArrayList<Event>();
 	
 	
 	private static void log0(org.apache.log4j.Logger l4j, Event e) {
@@ -530,17 +504,25 @@ public abstract class Log {
 		if(null == l4j) {
 			e.toString();
 			
-			if(startupLogEvents != null)
-				startupLogEvents.add(e);	
-			else {}
+			
+			synchronized(startupLogEventsLock) {
+				if(startupLogEvents != null)
+					startupLogEvents.add(e);	
+				else {
+					// Startup race condition here to be aware of
+				}
+			}
+			
 		} else {
 			if(startupLogEvents != null) {
-				for(int i = 0; i < startupLogEvents.size(); i++) {
-					Event bufferedEvent = startupLogEvents.get(i);
-					log0(l4j, bufferedEvent);
+				synchronized(startupLogEventsLock) {
+					for(int i = 0; i < startupLogEvents.size(); i++) {
+						Event bufferedEvent = startupLogEvents.get(i);
+						log0(l4j, bufferedEvent);
+					}
+					
+					startupLogEvents = null;
 				}
-				
-				startupLogEvents = null;
 			}
 			
 			log0(l4j, e);
@@ -649,7 +631,7 @@ public abstract class Log {
 	public static final Algo[] ALGOS = Algo.values();
 	private static final String lineSep = System.getProperty("line.separator");
 	static String LOG_DIR = null; // Want to log to console...
-	static final H2OTimer time = new H2OTimer();
+	static final Timer time = new LogTimer();
 	
 	
 	

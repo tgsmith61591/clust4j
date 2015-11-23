@@ -154,6 +154,25 @@ public class ClustTests {
 		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getPredictedLabels()[3]);
 	}
 	
+	// Make sure it won't break on a tie...
+	@Test
+	public void KMeansTieTest() {
+		final double[][] data = new double[][] {
+			new double[] {0.000, 	 0.000,     0.000},
+			new double[] {1.500,     1.500,     1.500},
+			new double[] {3.000,     3.000,     3.000}
+		};
+		
+		final boolean[] scale = new boolean[]{true, false};
+		
+		KMeans km = null;
+		for(boolean b : scale) {
+			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(b));
+			km.train();
+		}
+	}
+	
 	/** Scale = false */
 	@Test
 	public void KMedoidsTest1() {

@@ -90,85 +90,89 @@ public class KMeans extends AbstractKCentroidClusterer {
 	
 	@Override
 	final public void train() {
-		if(isTrained)
-			return;
+		synchronized(this) { // Must be synchronized because `isTrained` is a race condition...
+			
+			if(isTrained)
+				return;
 
-		final long start = System.currentTimeMillis();
-		if(verbose) info("beginning training segmentation for K = " + k);
-			
-		
-		Double oldCost = null;
-		labels = new int[m];
-		
-		// Enclose in for loop to ensure completes in proper iterations
-		for(iter = 0; iter < maxIter; iter++) {
-			
-			
-			if(verbose && iter%10 == 0)  {
-				info("training iteration " + iter +
-						"; current system cost = " + 
-						oldCost ); //+ "; " + centroidsToString());
-			}
-			
-			
-			/* Key is the closest centroid, value is the records that belong to it */
-			cent_to_record = assignClustersAndLabels();
+			final long start = System.currentTimeMillis();
+			if(verbose) info("beginning training segmentation for K = " + k);
 				
 			
+			Double oldCost = null;
+			labels = new int[m];
 			
-			// Now reassign centroids based on records inside cluster
-			ArrayList<double[]> newCentroids = new ArrayList<double[]>();
-			double newCost = 0;
-			
-			/* Iterate over each centroid, calculate barycentric mean of
-			 * the points that belong in that cluster as the new centroid */
-			for(int i = 0; i < k; i++) {
+			// Enclose in for loop to ensure completes in proper iterations
+			for(iter = 0; iter < maxIter; iter++) {
 				
-				/* The record numbers that belong to this cluster */
-				final ArrayList<Integer> inCluster = cent_to_record.get(i);
-				final double[] newCentroid = idNewCentroid(inCluster);
-				newCentroids.add(newCentroid);
-				newCost += getCost(inCluster, newCentroid);
-			}
-			
-			
-			// move current newSSE to oldSSE, check stopping condition...
-			centroids = newCentroids;
-			cost = newCost;
-			
-			if(null == oldCost) { // First iteration
-				oldCost = newCost;
-			} else { // At least second iteration, can check delta
-				// Evaluate new SSE vs old SSE. If meets stopping criteria, break,
-				// otherwise update new SSE and continue.
-				if( FastMath.abs(oldCost - newCost) < minChange ) {
-					if(verbose) {
-						info("training reached convergence at iteration "+ iter + 
-								"; Total system cost: " + cost);
-						
-						info("model " + getKey() + " completed in " + 
-							LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
-					}
-					
-					isTrained = true;
-					converged = true;
-					iter++; // Track iters used
-					return;
-				} else {
-					oldCost = newCost;
+				
+				if(verbose && iter%10 == 0)  {
+					info("training iteration " + iter +
+							"; current system cost = " + 
+							oldCost ); //+ "; " + centroidsToString());
 				}
+				
+				
+				/* Key is the closest centroid, value is the records that belong to it */
+				cent_to_record = assignClustersAndLabels();
+					
+				
+				
+				// Now reassign centroids based on records inside cluster
+				ArrayList<double[]> newCentroids = new ArrayList<double[]>();
+				double newCost = 0;
+				
+				/* Iterate over each centroid, calculate barycentric mean of
+				 * the points that belong in that cluster as the new centroid */
+				for(int i = 0; i < k; i++) {
+					
+					/* The record numbers that belong to this cluster */
+					final ArrayList<Integer> inCluster = cent_to_record.get(i);
+					final double[] newCentroid = idNewCentroid(inCluster);
+					newCentroids.add(newCentroid);
+					newCost += getCost(inCluster, newCentroid);
+				}
+				
+				
+				// move current newSSE to oldSSE, check stopping condition...
+				centroids = newCentroids;
+				cost = newCost;
+				
+				if(null == oldCost) { // First iteration
+					oldCost = newCost;
+				} else { // At least second iteration, can check delta
+					// Evaluate new SSE vs old SSE. If meets stopping criteria, break,
+					// otherwise update new SSE and continue.
+					if( FastMath.abs(oldCost - newCost) < minChange ) {
+						if(verbose) {
+							info("training reached convergence at iteration "+ iter + 
+									"; Total system cost: " + cost);
+							
+							info("model " + getKey() + " completed in " + 
+								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+						}
+						
+						isTrained = true;
+						converged = true;
+						iter++; // Track iters used
+						return;
+					} else {
+						oldCost = newCost;
+					}
+				}
+			} // End iter for
+			
+			
+			if(verbose) {
+				warn("algorithm did not converge. Total system cost: " + cost);
+				info("model " + getKey() + " completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
-		} // End iter for
+			
+			// If the SSE delta never converges, still need to set isTrained to true
+			isTrained = true;
+		} // End synchronized
 		
-		
-		if(verbose) {
-			warn("algorithm did not converge. Total system cost: " + cost);
-			info("model " + getKey() + " completed in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
-		}
-		
-		// If the SSE delta never converges, still need to set isTrained to true
-		isTrained = true;
 	} // End train
 	
 

@@ -92,6 +92,9 @@ public class VectorTests {
 		assertTrue( VecUtils.l1Norm(neg) == 9 );
 		assertTrue( VecUtils.lpNorm(neg, 1) == 9 );
 		assertTrue( VecUtils.lpNorm(neg, 2) == VecUtils.l2Norm(neg) );
+		
+		
+		assertTrue( Precision.equals( VecUtils.lpNorm(neg, 2.0000000000000001), VecUtils.l2Norm(neg), Precision.EPSILON) );
 	}
 	
 	@Test

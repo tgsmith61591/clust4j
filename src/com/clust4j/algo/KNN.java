@@ -199,26 +199,29 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 
 	@Override
 	public void train() {
-		if(isTrained)
-			return;
-		
-		final int m = test.getRowDimension();
-		final long now = System.currentTimeMillis();
-		labels = new int[m];
-		
-		for(int test_row = 0; test_row < m; test_row++) {
-			final double[] test_record = test.getRow(test_row);
-			labels[test_row] = predict(test_record);
-		}
-		
-		if(verbose) {
-			info("labeling complete. Test labels: " + Arrays.toString(labels));
-			info("model " + getKey() + " completed in " + 
-					(System.currentTimeMillis() - now)/1000d + " sec");
-		}
-		
-		isTrained = true;
-	}
+		synchronized(this) { // Must be synch because `isTrained` is a race condition
+			if(isTrained)
+				return;
+			
+			final int m = test.getRowDimension();
+			final long now = System.currentTimeMillis();
+			labels = new int[m];
+			
+			for(int test_row = 0; test_row < m; test_row++) {
+				final double[] test_record = test.getRow(test_row);
+				labels[test_row] = predict(test_record);
+			}
+			
+			if(verbose) {
+				info("labeling complete. Test labels: " + Arrays.toString(labels));
+				info("model " + getKey() + " completed in " + 
+						(System.currentTimeMillis() - now)/1000d + " sec");
+			}
+			
+			isTrained = true;
+			
+		} // End synchronized
+	} // End train
 	
 	@Override
 	public int[] truthSet() {

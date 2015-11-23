@@ -156,60 +156,63 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	
 	@Override
 	final public void train() {
-		if(isTrained)
-			return;
-		
-		
-		// First get the dist matrix
-		final long start = System.currentTimeMillis();
-		dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
-		final int m = dist_mat.length;
-		
-		
-		// Log info...
-		if(verbose) {
-			info("calculated " + 
-				dist_mat.length + " x " + 
-				dist_mat.length + 
-				" distance matrix in " + 
-				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+		synchronized(this) { // synch because `isTrained is a race condition
+			if(isTrained)
+				return;
 			
-			info("computing density neighborhood for each point");
-		}
-		
-		
-		// Initialize the neighborhood array
-		final int[] neighborhoods = new int[m]; // The number of pts in each record's neighborhood
-		final boolean[][] mask_mat = new boolean[m][m]; // Mask matrix
-		for(int i = 0; i < m-1; i++) {
-			for(int j = i + 1; j < m; j++) {
-				if(i == j)
-					continue;
+			
+			// First get the dist matrix
+			final long start = System.currentTimeMillis();
+			dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+			final int m = dist_mat.length;
+			
+			
+			// Log info...
+			if(verbose) {
+				info("calculated " + 
+					dist_mat.length + " x " + 
+					dist_mat.length + 
+					" distance matrix in " + 
+					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 				
-				final boolean res = dist_mat[i][j] < eps;
-				mask_mat[i][j] = res;
-				mask_mat[j][i] = res;
+				info("computing density neighborhood for each point");
 			}
-		}
+			
+			
+			// Initialize the neighborhood array
+			final int[] neighborhoods = new int[m]; // The number of pts in each record's neighborhood
+			final boolean[][] mask_mat = new boolean[m][m]; // Mask matrix
+			for(int i = 0; i < m-1; i++) {
+				for(int j = i + 1; j < m; j++) {
+					if(i == j)
+						continue;
+					
+					final boolean res = dist_mat[i][j] < eps;
+					mask_mat[i][j] = res;
+					mask_mat[j][i] = res;
+				}
+			}
+			
+			/*
+			 * I.e., if EPS == 2...
+			 * 
+			 * [0 1 2 3 4]       [false TRUE  false false false]
+			 * [0 0 1 2 3]       [TRUE  false TRUE  false false]
+			 * [0 0 0 1 2]  ===> [false TRUE  false TRUE  false]
+			 * [0 0 0 0 1]       [false false TRUE  false TRUE ]
+			 * [0 0 0 0 0]       [false false false TRUE  false]
+			 */
+			
+			
+			
+			
+			
+			
+			// TODO:
+			throw new UnsupportedOperationException("Not yet implemented");
+		} // End synch
 		
-		/*
-		 * If EPS == 2...
-		 * 
-		 * [0 1 2 3 4]       [false TRUE  false false false]
-		 * [0 0 1 2 3]       [TRUE  false TRUE  false false]
-		 * [0 0 0 1 2]  ===> [false TRUE  false TRUE  false]
-		 * [0 0 0 0 1]       [false false TRUE  false TRUE ]
-		 * [0 0 0 0 0]       [false false false TRUE  false]
-		 */
-		
-		
-		
-		
-		
-		
-		// TODO:
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
+	}// End train
 	
 	@Override
 	public Algo getLoggerTag() {
