@@ -6,12 +6,14 @@ import java.util.Stack;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
+import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
 
@@ -36,6 +38,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	private volatile double[] sampleWeights = null;
 	private volatile boolean[] coreSamples = null;
 	private volatile int numClusters;
+	private volatile int numNoisey;
 	
 	/**
 	 * Upper triangular, M x M matrix denoting distances between records.
@@ -145,8 +148,20 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
 		
-		if(this.eps <= 0.0)
-			throw new IllegalArgumentException("eps must be greater than 0.0");
+		
+		// Error handle...
+		String e;
+		if(this.eps <= 0.0) {
+			e="eps must be greater than 0.0";
+			if(verbose) error(e);
+			throw new IllegalArgumentException(e);
+		}
+		
+		if(this.minPts < 1) {
+			e="minPts must be greater than 0";
+			if(verbose) error(e);
+			throw new IllegalArgumentException(e);
+		}
 	}
 	
 
@@ -156,7 +171,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	}
 	
 	@Override
-	public int[] getPredictedLabels() {
+	public int[] getLabels() {
 		return labels;
 	}
 	
@@ -170,14 +185,11 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	}
 	
 	@Override
-	public int predict(final double[] newRecord) {
-		// TODO:
-		return 0;
-	}
-	
-	@Override
 	final public DBSCAN fit() {
 		synchronized(this) { // synch because alters internal labels and structs
+			
+			if(null!=labels) // Then we've already fit this...
+				return this;
 			
 			
 			// First get the dist matrix
@@ -196,6 +208,15 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 				
 				info("computing density neighborhood for each point (eps=" + eps + ")");
 			}
+			
+			
+			
+			// Super verbose tracing but only for smaller matrices
+			if(verbose && m < 10)
+				trace("distance matrix:"+
+					new MatrixFormatter()
+						.format(new Array2DRowRealMatrix(dist_mat, false)));
+			
 			
 			
 			// Do the neighborhood assignments, get sample weights, find core samples..
@@ -223,7 +244,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 				int pts;
 				neighborhoods.add(ptNeighbs);
 				sampleWeights[i] = pts = ptNeighbs.size();
-				coreSamples[i] = pts > minPts;
+				coreSamples[i] = pts >= minPts;
 			}
 			
 			
@@ -238,7 +259,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 			
 			
 			// Label the points...
-			int nextLabel = 0, j, v;
+			int nextLabel = 0, v;
 			final long clustStart = System.currentTimeMillis();
 			final Stack<Integer> stack = new Stack<>();
 			ArrayList<Integer> neighb;
@@ -259,16 +280,17 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 						if(coreSamples[i]) {
 							neighb = neighborhoods.get(i);
 							
-							for(j = 0; j < neighb.size(); j++) {
-								v = neighb.get(j);
+							for(i = 0; i < neighb.size(); i++) {
+								v = neighb.get(i);
 								if(labels[v] == NOISE_CLASS)
 									stack.push(v);
 							}
 						}
 					}
 					
+					//System.out.println(stack);
 					if(stack.size() == 0) {
-						if(verbose) info("emptied stack for clusterLabel " + nextLabel);
+						if(verbose) info("completed stack for clusterLabel " + nextLabel);
 						break;
 					}
 					
@@ -285,7 +307,15 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 				info("completed cluster labeling in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
 				
-				info((numClusters=nextLabel)+" label"+(nextLabel!=1?"s":"")+" identified");
+				
+				// Count missing
+				numNoisey = 0;
+				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				
+				
+				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+						" classified noise");
 				
 				info("model "+getKey()+" completed in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));

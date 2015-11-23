@@ -56,7 +56,7 @@ final class NearestNeighbor {
 				continue;
 			
 			final double sim = dist_mat[FastMath.min(recordIdx, train_row)][FastMath.max(recordIdx, train_row)];
-			if(sim < rad) insideRad.add(train_row);
+			if(FastMath.abs(sim) < rad) insideRad.add(train_row);
 		}
 		
 		// Sort treemap on value

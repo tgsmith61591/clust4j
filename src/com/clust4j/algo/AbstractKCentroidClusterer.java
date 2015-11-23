@@ -13,8 +13,13 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.utils.CentroidLearner;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.Predictable;
 
-public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClusterer implements CentroidLearner, Classifier {
+public abstract class AbstractKCentroidClusterer 
+		extends AbstractPartitionalClusterer 
+		implements CentroidLearner, Classifier, Predictable {
+	
+	
 	final public static int DEF_MAX_ITER = 100;
 	final public static double DEF_MIN_CHNG = 0.005;
 	
@@ -156,7 +161,7 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 	}
 	
 	@Override
-	public int[] getPredictedLabels() {
+	public int[] getLabels() {
 		return labels;
 	}
 	

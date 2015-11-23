@@ -54,11 +54,16 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 	@Override
 	public AgglomerativeClusterer fit() {
 		synchronized(this) { // synch because alters internal structs
+			
+			if(null!=tree) // Then we've already fit this...
+				return this;
+			
 			final long start = System.currentTimeMillis();
 			buildTree(linkage);
 			
 			if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			return this;
+			
 		} // End synch
 	} // End train
 	

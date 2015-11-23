@@ -2,7 +2,6 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -66,7 +65,7 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, 2).fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 		//km.info("testing the kmeans logger");
 	}
@@ -83,7 +82,7 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true)).fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -101,8 +100,8 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(false)).fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
-		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -119,8 +118,8 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(true)).fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
-		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -147,7 +146,7 @@ public class ClustTests {
 		}
 		
 		// Test predict function
-		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getPredictedLabels()[3]);
+		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getLabels()[3]);
 	}
 	
 	// Make sure it won't break on a tie...
@@ -184,7 +183,7 @@ public class ClustTests {
 		
 		km.fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 		//km.info("testing the k-medoids logger");
 	}
@@ -206,8 +205,8 @@ public class ClustTests {
 					.setVerbose(true));
 		km.fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
-		assertTrue(km.getPredictedLabels()[0] == km.getPredictedLabels()[3]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] == km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -228,8 +227,8 @@ public class ClustTests {
 					.setVerbose(true));
 		km.fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
-		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -247,8 +246,8 @@ public class ClustTests {
 		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(true));
 		km.fit();
 		
-		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
-		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}
 	
@@ -302,7 +301,7 @@ public class ClustTests {
 				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b).setVerbose(!b));
 				knn.fit();
 				
-				final int[] results = knn.getPredictedLabels();
+				final int[] results = knn.getLabels();
 				assertTrue(results[0] == trainLabels[0]);
 				assertTrue(results[1] == trainLabels[1]);
 			}
@@ -314,7 +313,7 @@ public class ClustTests {
 			knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(3).setScale(b));
 			knn.fit();
 			
-			final int[] results = knn.getPredictedLabels();
+			final int[] results = knn.getLabels();
 			assertTrue(results[0] == trainLabels[1]);
 			assertTrue(results[1] == trainLabels[1]);
 		}
@@ -470,7 +469,7 @@ public class ClustTests {
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
 		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.75)
 			.setScale(true)
-			.setMinPts(2)
+			.setMinPts(1)
 			.setVerbose(true))
 				.fit();
 		

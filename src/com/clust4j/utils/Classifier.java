@@ -1,5 +1,5 @@
 package com.clust4j.utils;
 
-public interface Classifier extends Predictable {
-	public int[] getPredictedLabels();
+public interface Classifier {
+	public int[] getLabels();
 }

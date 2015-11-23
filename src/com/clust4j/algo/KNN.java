@@ -15,10 +15,11 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.Predictable;
 import com.clust4j.utils.SupervisedLearner;
 import com.clust4j.utils.VecUtils;
 
-public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, Classifier {
+public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, Classifier, Predictable {
 
 	final private int[] trainLabels;
 	final private AbstractRealMatrix test;
@@ -131,7 +132,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	}
 
 	@Override
-	public int[] getPredictedLabels() {
+	public int[] getLabels() {
 		return labels;
 	}
 	
