@@ -16,10 +16,12 @@ import com.clust4j.utils.VecUtils;
 public abstract class AbstractClusterer implements Loggable {
 	public static boolean DEF_VERBOSE = false;
 	
+	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static boolean DEF_SCALE = false;
 	final private UUID modelKey;
+	
 	
 	/** Underlying data */
 	final protected AbstractRealMatrix data;
@@ -29,8 +31,6 @@ public abstract class AbstractClusterer implements Loggable {
 	private final Random seed;
 	/** Verbose for heavily logging */
 	final protected boolean verbose;
-	
-	protected volatile boolean isTrained = false;
 	
 
 	
@@ -100,6 +100,7 @@ public abstract class AbstractClusterer implements Loggable {
 	} // End constructor
 	
 	
+	
 	final private void handleData(final AbstractRealMatrix data) {
 		if(data.getRowDimension() == 0)
 			throw new IllegalArgumentException("empty data");
@@ -115,6 +116,7 @@ public abstract class AbstractClusterer implements Loggable {
 	final static protected AbstractRealMatrix scale(AbstractRealMatrix data) {
 		return scale(data, (AbstractRealMatrix) data.copy());
 	}
+	
 	
 	/**
 	 * Static method to scale a matrix given a copy
@@ -138,6 +140,7 @@ public abstract class AbstractClusterer implements Loggable {
 		return copy;
 	}
 
+	
 	/**
 	 * Copies the underlying AbstractRealMatrix datastructure
 	 * and returns the clone so as to prevent accidental referential
@@ -148,6 +151,7 @@ public abstract class AbstractClusterer implements Loggable {
 		return (AbstractRealMatrix) data.copy();
 	}
 	
+	
 	/**
 	 * Returns the separability metric used to assess vector similarity/distance
 	 * @return distance metric
@@ -155,6 +159,7 @@ public abstract class AbstractClusterer implements Loggable {
 	public GeometricallySeparable getSeparabilityMetric() {
 		return dist;
 	}
+	
 	
 	/**
 	 * Get the current seed being used
@@ -164,14 +169,17 @@ public abstract class AbstractClusterer implements Loggable {
 		return seed;
 	}
 	
+	
 	@Override
 	public String toString() {
 		return getName() + " clusterer";
 	}
 	
+	
 	public UUID getKey() {
 		return modelKey;
 	}
+	
 	
 	public boolean getVerbose() {
 		return verbose;
@@ -180,8 +188,7 @@ public abstract class AbstractClusterer implements Loggable {
 	
 	public abstract String getName();
 	public abstract com.clust4j.log.Log.Tag.Algo getLoggerTag();
-	public abstract boolean isTrained();
-	public abstract void train();
+	public abstract AbstractClusterer fit();
 	
 	
 	/* -- LOGGER METHODS --  */

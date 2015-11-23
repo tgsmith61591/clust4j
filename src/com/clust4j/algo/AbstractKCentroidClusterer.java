@@ -184,11 +184,6 @@ public abstract class AbstractKCentroidClusterer extends AbstractPartitionalClus
 		return cent_indices;
 	}
 	
-	@Override
-	public boolean isTrained() {
-		return isTrained;
-	}
-	
 	public int itersElapsed() {
 		return iter;
 	}

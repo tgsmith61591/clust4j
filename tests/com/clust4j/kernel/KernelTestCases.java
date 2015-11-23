@@ -81,7 +81,7 @@ public class KernelTestCases {
 						.setSep(new GaussianKernel())
 						.setScale(b)
 						.setVerbose(!b));
-				knn.train();
+				knn.fit();
 				
 				final int[] results = knn.getPredictedLabels();
 				assertTrue(results[0] == trainLabels[0]);
@@ -96,7 +96,7 @@ public class KernelTestCases {
 					new KNNPlanner(3)
 					.setSep(new LinearKernel())
 					.setScale(b));
-			knn.train();
+			knn.fit();
 			
 			final int[] results = knn.getPredictedLabels();
 			assertTrue(results[0] == trainLabels[1]);
@@ -154,7 +154,7 @@ public class KernelTestCases {
 				new KNNPlanner(2)
 					.setSep(kernel)
 					.setVerbose(true));
-		knn1.train();
+		knn1.fit();
 		assertTrue(knn1.getPredictedLabels()[0] == 0 && knn1.getPredictedLabels()[1] == 1);
 		
 		
@@ -165,7 +165,7 @@ public class KernelTestCases {
 					.setSep(kernel)
 					.setVerbose(true)
 				);
-		km.train();
+		km.fit();
 		System.out.println();
 	}
 	
@@ -182,7 +182,7 @@ public class KernelTestCases {
 					.setSep(kernel)
 					.setVerbose(true)
 					.setScale(false));
-			km.train();
+			km.fit();
 		}
 		System.out.println();
 	}
@@ -200,7 +200,7 @@ public class KernelTestCases {
 						.setSep(kernel)
 						.setVerbose(true)
 						.setScale(false));
-			km.train();
+			km.fit();
 		}
 		System.out.println();
 	}
@@ -218,7 +218,7 @@ public class KernelTestCases {
 						.setSep(kernel)
 						.setVerbose(true)
 						.setScale(false));
-			km.train();
+			km.fit();
 		}
 		System.out.println();
 	}

@@ -63,8 +63,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, 2);
-		km.train();
+		KMeans km = new KMeans(mat, 2).fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
@@ -81,8 +80,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true));
-		km.train();
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true)).fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
@@ -100,8 +98,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(false));
-		km.train();
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(false)).fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
@@ -119,8 +116,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(true));
-		km.train();
+		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(true)).fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
@@ -142,8 +138,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(1).setScale(b));
-			km.train();
+			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(1).setScale(b)).fit();
 			assertTrue(km.didConverge());
 
 			if(b)
@@ -169,7 +164,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(b));
-			km.train();
+			km.fit();
 		}
 	}
 	
@@ -186,7 +181,7 @@ public class ClustTests {
 		KMedoids km = new KMedoids(mat, 2);
 		assertTrue(km.getSeparabilityMetric().equals(Distance.MANHATTAN));
 		
-		km.train();
+		km.fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.didConverge());
@@ -208,7 +203,7 @@ public class ClustTests {
 				new KMedoidsPlanner(2)
 					.setScale(true)
 					.setVerbose(true));
-		km.train();
+		km.fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] == km.getPredictedLabels()[3]);
@@ -230,7 +225,7 @@ public class ClustTests {
 				new KMedoidsPlanner(3)
 					.setScale(false)
 					.setVerbose(true));
-		km.train();
+		km.fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
@@ -249,7 +244,7 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(true));
-		km.train();
+		km.fit();
 		
 		assertTrue(km.getPredictedLabels()[1] == km.getPredictedLabels()[2]);
 		assertTrue(km.getPredictedLabels()[0] != km.getPredictedLabels()[3]);
@@ -272,7 +267,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 			km = new KMedoids(mat, new KMedoidsPlanner(1).setScale(b));
-			km.train();
+			km.fit();
 			assertTrue(km.didConverge());
 		}
 	}
@@ -304,7 +299,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			for(int k : ks) {
 				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b).setVerbose(!b));
-				knn.train();
+				knn.fit();
 				
 				final int[] results = knn.getPredictedLabels();
 				assertTrue(results[0] == trainLabels[0]);
@@ -316,7 +311,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			// Only verbose if scaling just to avoid too many loggings from this one test
 			knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(3).setScale(b));
-			knn.train();
+			knn.fit();
 			
 			final int[] results = knn.getPredictedLabels();
 			assertTrue(results[0] == trainLabels[1]);
@@ -337,7 +332,7 @@ public class ClustTests {
 		for(boolean b : scale) {
 			for(int k : ks) {
 				km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(b));
-				km.train();
+				km.fit();
 			}
 		}
 	}
@@ -354,7 +349,7 @@ public class ClustTests {
 				km = new KMedoids(mat, 
 						new KMedoidsPlanner(k)
 							.setScale(b) );
-				km.train();
+				km.fit();
 			}
 		}
 	}
@@ -369,7 +364,7 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
-		agglom.train();
+		agglom.fit();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 		
@@ -387,7 +382,7 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat);
-		agglom.train();
+		agglom.fit();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 		assertTrue(agglom.getTree().size() == 1);
@@ -415,7 +410,7 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat, 
 				new AgglomerativeClusterer.BaseHierarchicalPlanner().setLinkage(null)); // Setting linkage to null will break switch
-		agglom.train();
+		agglom.fit();
 	}
 	
 	@Test
@@ -425,7 +420,7 @@ public class ClustTests {
 				new AgglomerativeClusterer.BaseHierarchicalPlanner()
 					.setScale(true)
 					.setVerbose(true));
-		agglom.train();
+		agglom.fit();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 	}
@@ -438,7 +433,7 @@ public class ClustTests {
 					.setScale(true)
 					.setVerbose(true)
 				);
-		km.train();
+		km.fit();
 	}
 	
 	@Test
@@ -449,6 +444,16 @@ public class ClustTests {
 					.setScale(true)
 					.setVerbose(true)
 				);
-		km.train();
+		km.fit();
+	}
+	
+	@Test
+	public void DBSCANTest1() {
+		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.05)
+					.setScale(true)
+					.setVerbose(true)
+				);
+		db.fit();
 	}
 }

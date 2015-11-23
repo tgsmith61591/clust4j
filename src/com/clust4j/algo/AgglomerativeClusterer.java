@@ -50,21 +50,13 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 	}
 
 	@Override
-	public boolean isTrained() {
-		return isTrained;
-	}
-
-	@Override
-	public void train() {
-		synchronized(this) { // synch because `isTrained` is race condition
-			if(isTrained)
-				return;
-			
+	public AgglomerativeClusterer fit() {
+		synchronized(this) { // synch because alters internal structs
 			final long start = System.currentTimeMillis();
 			buildTree(linkage);
 			
 			if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
-			isTrained = true;
+			return this;
 		} // End synch
 	} // End train
 	

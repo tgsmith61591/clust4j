@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
@@ -22,7 +23,6 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	final private int[] trainLabels;
 	final private AbstractRealMatrix test;
 	
-	private boolean isTrained = false;
 	private int[] labels = null;
 	
 	
@@ -110,27 +110,23 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	
 	@Override
 	public int predict(final double[] newRecord) {
-		if(newRecord.length != data.getColumnDimension()) {
-			if(verbose)
-				error("Dimension mismatch: " + newRecord.length + ", " + data.getColumnDimension());
-			throw new DimensionMismatchException(newRecord.length, data.getColumnDimension());
+		// Log if necessary
+		if(verbose) info("computing " + k + " nearest neighbors for " + Arrays.toString(newRecord));
+		
+		// Get the sorted set
+		final SortedSet<Map.Entry<Integer, Double>> sortedEntries;
+		
+		
+		// Try nearest neighbor model
+		try {
+			sortedEntries = new NearestNeighbor(newRecord, data, getSeparabilityMetric())
+				.getSortedNearest();
+		} catch(DimensionMismatchException e) {
+			if(verbose) error(e.getLocalizedMessage());
+			throw new IllegalArgumentException("newRecord col dims don't match data dims", e);
 		}
 		
-		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
 		
-		if(verbose)
-			info("computing " + k + " nearest neighbors for " + Arrays.toString(newRecord));
-		
-		// Get map of distances to each record
-		for(int train_row = 0; train_row < data.getRowDimension(); train_row++) {
-			final double sim = getSeparabilityMetric().getDistance(newRecord, data.getRow(train_row));
-			rec_to_dist.put(train_row, sim);
-		}
-		
-		// Sort treemap on value
-		// If the distance metric is a similarity metric, we want it DESC else ASC
-		SortedSet<Map.Entry<Integer, Double>> sortedEntries = ClustUtils
-				.sortEntriesByValue( rec_to_dist );
 		return identifyMajorityClass(sortedEntries, k, trainLabels, this);
 	}
 
@@ -187,24 +183,16 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			knn.info("no ties found; returning label: " + maj_lab);
 		return maj_lab;
 	}
-
-	@Override
-	public boolean isTrained() {
-		return isTrained;
-	}
 	
 	public AbstractRealMatrix testSet() {
 		return (AbstractRealMatrix) test.copy();
 	}
 
 	@Override
-	public void train() {
-		synchronized(this) { // Must be synch because `isTrained` is a race condition
-			if(isTrained)
-				return;
-			
+	public KNN fit() {
+		synchronized(this) { // Synch because alters internal structs
 			final int m = test.getRowDimension();
-			final long now = System.currentTimeMillis();
+			final long start = System.currentTimeMillis();
 			labels = new int[m];
 			
 			for(int test_row = 0; test_row < m; test_row++) {
@@ -215,11 +203,10 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 			if(verbose) {
 				info("labeling complete. Test labels: " + Arrays.toString(labels));
 				info("model " + getKey() + " completed in " + 
-						(System.currentTimeMillis() - now)/1000d + " sec");
+						LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
 			
-			isTrained = true;
-			
+			return this;
 		} // End synchronized
 	} // End train
 	

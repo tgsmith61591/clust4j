@@ -195,13 +195,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	}
 
 	@Override
-	public void train() {
-		synchronized(this) { // Synch because `isTrained` is a race condition
-			if(isTrained)
-				return;
+	public KMedoids fit() {
+		synchronized(this) { // Synch because alters internal structs
 			
 			if(verbose) info("beginning training segmentation for K = " + k);
-			
 			final long start = System.currentTimeMillis();
 			
 			// Compute distance matrix, which is O(N^2) space, O(Nc2) time
@@ -315,7 +312,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					break;
 				} else { // can get better... reassign clusters to new medoids, keep going.
 					if(verbose)
-						info("convergence not yet reached, new min cost: " + min_cost);
+						info("algorithm has not converged yet; new min cost: " + min_cost);
 					
 					oldCost = min_cost;
 					cent_to_record = assignClustersAndLabels();
@@ -334,12 +331,12 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			
 			
 			cost = oldCost;
-			isTrained = true;
 			
 			// Force GC to save space efficiency
 			seen_medoid_combos = null;
 			dist_mat = null;
 			
+			return this;
 		} // End synchronized
 	} // End train
 	

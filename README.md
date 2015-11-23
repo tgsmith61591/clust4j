@@ -34,29 +34,25 @@ ____
 - Partitional algorithms:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
-            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true));
-            knn.train();
+            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true)).fit();
             final int[] results = knn.getPredictedLabels(); // [0,1]
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
-            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
-            km.train();
+            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true)).fit();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setScale(true));
-            km.train();
+            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setScale(true)).fit();
             // Returns either [1,0] or [0,1] depending on seed:
             final int[] results = km.getPredictedLabels();
 
 - Hierarchical algorithms:
   - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
-            AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true));
-            a.train();
+            AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true)).fit();
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 

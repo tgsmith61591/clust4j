@@ -1,7 +1,11 @@
 package com.clust4j.algo;
 
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
+import java.util.SortedSet;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.log.LogTimeFormatter;
@@ -144,21 +148,14 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 	}
 	
 	@Override
-	public boolean isTrained() {
-		return isTrained;
-	}
-	
-	@Override
 	public int predict(final double[] newRecord) {
 		// TODO:
 		return 0;
 	}
 	
 	@Override
-	final public void train() {
-		synchronized(this) { // synch because `isTrained is a race condition
-			if(isTrained)
-				return;
+	final public DBSCAN fit() {
+		synchronized(this) { // synch because alters internal labels and structs
 			
 			
 			// First get the dist matrix
@@ -175,41 +172,62 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 					" distance matrix in " + 
 					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 				
-				info("computing density neighborhood for each point");
+				info("computing density neighborhood for each point (eps=" + eps + ")");
 			}
 			
 			
-			// Initialize the neighborhood array
-			final int[] neighborhoods = new int[m]; // The number of pts in each record's neighborhood
-			final boolean[][] mask_mat = new boolean[m][m]; // Mask matrix
-			for(int i = 0; i < m-1; i++) {
-				for(int j = i + 1; j < m; j++) {
-					if(i == j)
-						continue;
-					
-					final boolean res = dist_mat[i][j] < eps;
-					mask_mat[i][j] = res;
-					mask_mat[j][i] = res;
+			// Do the neighborhood assignments
+			final long neighbStart = System.currentTimeMillis();
+			labels = new int[m]; // Initialize labels...
+			
+			
+			SortedSet<Map.Entry<Integer, Double>> ptNeighbs;
+			ArrayList<SortedSet<Map.Entry<Integer, Double>>> neighborhoods = new ArrayList<>();
+			for(int i = 0; i < m; i++) {
+				// Each label inits to -1 as noise
+				labels[i] = -1;
+				
+				try {
+					ptNeighbs = new NearestNeighbor(i, dist_mat).getSortedNearestWithinRadius(eps);
+				} catch(DimensionMismatchException e) {
+					// Should not happen since i < m
+					if(verbose) error(e.getLocalizedMessage());
+					throw new InternalError(i+", "+m);
 				}
+				
+				// Add neighborhood...
+				neighborhoods.add(ptNeighbs);
 			}
 			
-			/*
-			 * I.e., if EPS == 2...
-			 * 
-			 * [0 1 2 3 4]       [false TRUE  false false false]
-			 * [0 0 1 2 3]       [TRUE  false TRUE  false false]
-			 * [0 0 0 1 2]  ===> [false TRUE  false TRUE  false]
-			 * [0 0 0 0 1]       [false false TRUE  false TRUE ]
-			 * [0 0 0 0 0]       [false false false TRUE  false]
-			 */
+			
+			// Log checkpoint
+			if(verbose) {
+				info("completed density neighborhood calculations in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
+				info("identifying cluster labels");
+			}
+			
+			
+
+			int nextLabel = 0;
+			final long clustStart = System.currentTimeMillis();
 			
 			
 			
+			// TODO: some minpt logic...
+			// throw new UnsupportedOperationException("Not yet implemented"); 
 			
 			
 			
-			// TODO:
-			throw new UnsupportedOperationException("Not yet implemented");
+			if(verbose) {
+				info("completed cluster labeling in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				info("completed DBSCAN procedure " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+			}
+			
+			
+			return this;
 		} // End synch
 		
 	}// End train

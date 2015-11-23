@@ -141,16 +141,8 @@ public class MeanShift extends AbstractDensityClusterer implements CentroidLearn
 
 
 	@Override
-	public boolean isTrained() {
-		return isTrained;
-	}
-
-
-	@Override
-	public void train() {
+	public MeanShift fit() {
 		synchronized(this) { // Synch because isTrained is a race condition
-			if(isTrained)
-				return;
 			
 			// TODO:
 			throw new UnsupportedOperationException("Not yet implemented");

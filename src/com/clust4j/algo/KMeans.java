@@ -89,11 +89,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 	}
 	
 	@Override
-	final public void train() {
-		synchronized(this) { // Must be synchronized because `isTrained` is a race condition...
+	final public KMeans fit() {
+		synchronized(this) { // Must be synchronized because alters internal structs
 			
-			if(isTrained)
-				return;
 
 			final long start = System.currentTimeMillis();
 			if(verbose) info("beginning training segmentation for K = " + k);
@@ -152,10 +150,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 						}
 						
-						isTrained = true;
 						converged = true;
 						iter++; // Track iters used
-						return;
+						return this;
 					} else {
 						oldCost = newCost;
 					}
@@ -170,7 +167,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 			}
 			
 			// If the SSE delta never converges, still need to set isTrained to true
-			isTrained = true;
+			return this;
 		} // End synchronized
 		
 	} // End train
