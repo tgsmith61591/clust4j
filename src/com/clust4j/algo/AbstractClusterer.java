@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
+import com.clust4j.utils.Classifier;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.SimilarityMetric;

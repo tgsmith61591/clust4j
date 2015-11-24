@@ -84,7 +84,7 @@ public class KernelTestCases {
 						.setVerbose(!b));
 				knn.fit();
 				
-				final int[] results = knn.fitPredictionLabels();
+				final int[] results = knn.getPredictedLabels();
 				assertTrue(results[0] == trainLabels[0]);
 				assertTrue(results[1] == trainLabels[1]);
 			}
@@ -99,7 +99,7 @@ public class KernelTestCases {
 					.setScale(b));
 			knn.fit();
 			
-			final int[] results = knn.fitPredictionLabels();
+			final int[] results = knn.getPredictedLabels();
 			assertTrue(results[0] == trainLabels[1]);
 			assertTrue(results[1] == trainLabels[1]);
 		}

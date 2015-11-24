@@ -301,7 +301,7 @@ public class ClustTests {
 				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b).setVerbose(!b));
 				knn.fit();
 				
-				final int[] results = knn.fitPredictionLabels();
+				final int[] results = knn.getPredictedLabels();
 				assertTrue(results[0] == trainLabels[0]);
 				assertTrue(results[1] == trainLabels[1]);
 			}
@@ -313,7 +313,7 @@ public class ClustTests {
 			knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(3).setScale(b));
 			knn.fit();
 			
-			final int[] results = knn.fitPredictionLabels();
+			final int[] results = knn.getPredictedLabels();
 			assertTrue(results[0] == trainLabels[1]);
 			assertTrue(results[1] == trainLabels[1]);
 		}
