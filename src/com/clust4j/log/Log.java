@@ -25,6 +25,9 @@ public abstract class Log {
 		public static enum Algo implements Tag {
 			AGGLOMERATIVE 	{ @Override public String toString(){return "AGGLOM ";} },
 			CLUST4J,
+			
+			/** To be used with any custom user cluster algo extensions... */
+			CUSTOM			{ @Override public String toString(){return "CUSTOM ";} },
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
 			
 			// Unneeded unless decide to implement divisive hierarchical clustering
@@ -33,7 +36,8 @@ public abstract class Log {
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			KNN 			{ @Override public String toString(){return "K-NN   ";} },
-			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} };
+			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
+			SPECTRAL		{ @Override public String toString(){return "SPCTRAL";} };
 			
 			
 			boolean _enable;

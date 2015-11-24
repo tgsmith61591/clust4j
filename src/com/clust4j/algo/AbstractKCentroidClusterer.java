@@ -11,13 +11,14 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.CentroidLearner;
+import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.PredictableClassifier;
 import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractKCentroidClusterer 
 		extends AbstractPartitionalClusterer 
-		implements CentroidLearner, PredictableClassifier {
+		implements CentroidLearner, PredictableClassifier, Convergeable {
 	
 	
 	final public static int DEF_MAX_ITER = 100;
@@ -132,6 +133,7 @@ public abstract class AbstractKCentroidClusterer
 		return cent;
 	}
 	
+	@Override
 	public boolean didConverge() {
 		return converged;
 	}
@@ -149,10 +151,12 @@ public abstract class AbstractKCentroidClusterer
 		return cost;
 	}
 	
+	@Override
 	public double getMinChange() {
 		return minChange;
 	}
 	
+	@Override
 	public int getMaxIter() {
 		return maxIter;
 	}
@@ -186,6 +190,7 @@ public abstract class AbstractKCentroidClusterer
 		return cent_indices;
 	}
 	
+	@Override
 	public int itersElapsed() {
 		return iter;
 	}

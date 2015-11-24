@@ -15,10 +15,9 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.PredictableClassifier;
-import com.clust4j.utils.SupervisedLearner;
 import com.clust4j.utils.VecUtils;
 
-public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, PredictableClassifier {
+public class KNN extends AbstractPartitionalClusterer implements PredictableClassifier {
 
 	final private int[] trainLabels;
 	final private AbstractRealMatrix test;
@@ -132,7 +131,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 
 	@Override
 	public int[] getLabels() {
-		return labels;
+		return VecUtils.copy(trainLabels);
 	}
 	
 	final static int identifyMajorityClass(SortedSet<Map.Entry<Integer, Double>> sortedEntries, 
@@ -214,9 +213,8 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 		} // End synchronized
 	} // End train
 	
-	@Override
-	public int[] truthSet() {
-		return VecUtils.copy(trainLabels);
+	public int[] fitPredictionLabels() {
+		return VecUtils.copy(fit().labels);
 	}
 	
 	

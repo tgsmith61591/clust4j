@@ -1,5 +1,7 @@
 package com.clust4j.utils;
 
+import java.util.LinkedHashSet;
+
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -351,6 +353,13 @@ public class VecUtils {
 		for(boolean b: a)
 			if(b) sum++;
 		return sum;
+	}
+	
+	public static <T> LinkedHashSet<T> unique(final T[] arr) {
+		final LinkedHashSet<T> out = new LinkedHashSet<>();
+		for(T t: arr)
+			out.add(t);
+		return out;
 	}
 	
 	final public static double var(final double[] a) {

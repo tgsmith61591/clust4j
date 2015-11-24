@@ -301,7 +301,7 @@ public class ClustTests {
 				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b).setVerbose(!b));
 				knn.fit();
 				
-				final int[] results = knn.getLabels();
+				final int[] results = knn.fitPredictionLabels();
 				assertTrue(results[0] == trainLabels[0]);
 				assertTrue(results[1] == trainLabels[1]);
 			}
@@ -313,7 +313,7 @@ public class ClustTests {
 			knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(3).setScale(b));
 			knn.fit();
 			
-			final int[] results = knn.getLabels();
+			final int[] results = knn.fitPredictionLabels();
 			assertTrue(results[0] == trainLabels[1]);
 			assertTrue(results[1] == trainLabels[1]);
 		}
@@ -499,5 +499,13 @@ public class ClustTests {
 		assertTrue(db.getNumberOfIdentifiedClusters() == 2);
 		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
 		assertTrue(db.getLabels()[0] == db.getLabels()[3]);
+	}
+	
+	@Test
+	public void MeanShiftTest1() {
+		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		new MeanShift(mat, new MeanShift.MeanShiftPlanner(0.05)
+			.setScale(true)
+			.setVerbose(true)).fit();
 	}
 }
