@@ -474,5 +474,30 @@ public class ClustTests {
 				.fit();
 		
 		assertTrue(db.getNumberOfIdentifiedClusters() > 0);
+		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
+	}
+	
+	@Test
+	public void DBSCANTest3() {
+		final double[][] train_array = new double[][] {
+				new double[] {0.00504, 	 0.0001,    0.08172},
+				new double[] {3.65816,   2.9471,    3.12331},
+				new double[] {4.12344,   3.0001,    2.89002},
+				new double[] {0.00403, 	 0.0003,    0.08231}
+			};
+			
+			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+			
+			
+		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
+		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.75)
+			.setScale(true)
+			.setMinPts(1)
+			.setVerbose(true))
+				.fit();
+		
+		assertTrue(db.getNumberOfIdentifiedClusters() == 2);
+		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
+		assertTrue(db.getLabels()[0] == db.getLabels()[3]);
 	}
 }

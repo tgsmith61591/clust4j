@@ -13,6 +13,16 @@ import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
+/**
+ * 
+ * The highest level of cluster abstraction in clust4j, AbstractClusterer
+ * provides the interface for classifier clustering (both supervised and unsupervised).
+ * It also provides all the functionality for any BaseClustererPlanner classes,
+ * data normalizing and logging.
+ * 
+ * @author Taylor G Smith
+ *
+ */
 public abstract class AbstractClusterer implements Loggable {
 	public static boolean DEF_VERBOSE = false;
 	

@@ -198,6 +198,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	public KMedoids fit() {
 		synchronized(this) { // Synch because alters internal structs
 			
+			if(null!=labels) // Already have fit this model
+				return this;
+			
 			if(verbose) info("beginning training segmentation for K = " + k);
 			final long start = System.currentTimeMillis();
 			

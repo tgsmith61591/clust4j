@@ -8,9 +8,11 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.CentroidLearner;
+import com.clust4j.utils.Classifier;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.VecUtils;
 
-public class MeanShift extends AbstractDensityClusterer implements CentroidLearner {
+public class MeanShift extends AbstractDensityClusterer implements CentroidLearner, Classifier {
 	/**
 	 * The kernel bandwidth
 	 */
@@ -21,7 +23,16 @@ public class MeanShift extends AbstractDensityClusterer implements CentroidLearn
 	 */
 	private final Class<? extends RadialBasisKernel> rbfKernelClass;
 
+	/**
+	 * Class labels
+	 * @param data
+	 * @param planner
+	 */
+	private int[] labels;
 	
+
+	/** The centroid records */
+	private ArrayList<double[]> centroids = new ArrayList<double[]>();
 	
 	
 	
@@ -144,6 +155,10 @@ public class MeanShift extends AbstractDensityClusterer implements CentroidLearn
 	public MeanShift fit() {
 		synchronized(this) { // Synch because isTrained is a race condition
 			
+			if(null!=labels) // Already fit this model
+				return this;
+			
+			
 			// TODO:
 			throw new UnsupportedOperationException("Not yet implemented");
 		} // End synch
@@ -153,9 +168,15 @@ public class MeanShift extends AbstractDensityClusterer implements CentroidLearn
 
 	@Override
 	public ArrayList<double[]> getCentroids() {
-		// TODO Auto-generated method stub
-		return null;
+		final ArrayList<double[]> cent = new ArrayList<double[]>();
+		for(double[] d : centroids)
+			cent.add(VecUtils.copy(d));
+		
+		return cent;
 	}
-	
-	
+
+	@Override
+	public int[] getLabels() {
+		return labels;
+	}
 }

@@ -11,13 +11,13 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.utils.CentroidLearner;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Predictable;
+import com.clust4j.utils.PredictableClassifier;
+import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractKCentroidClusterer 
 		extends AbstractPartitionalClusterer 
-		implements CentroidLearner, Classifier, Predictable {
+		implements CentroidLearner, PredictableClassifier {
 	
 	
 	final public static int DEF_MAX_ITER = 100;
@@ -126,11 +126,8 @@ public abstract class AbstractKCentroidClusterer
 	@Override
 	public ArrayList<double[]> getCentroids() {
 		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids) {
-			final double[] copy = new double[d.length];
-			System.arraycopy(d, 0, copy, 0, d.length);
-			cent.add(copy);
-		}
+		for(double[] d : centroids)
+			cent.add(VecUtils.copy(d));
 		
 		return cent;
 	}

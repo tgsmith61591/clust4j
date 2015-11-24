@@ -18,9 +18,10 @@ import com.clust4j.utils.VecUtils;
 
 
 /**
+ * An implementation of DBSCAN (Density-Based Spatial Clustering for Applications with Noise).
  * 
- * 
- * 
+ * @see <a href="http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf">DBSCAN, 
+ * A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise</a>
  * @author Taylor G Smith, adapted from sklearn implementation by Lars Buitinck
  *
  */

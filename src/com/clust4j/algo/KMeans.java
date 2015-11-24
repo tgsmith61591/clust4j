@@ -92,6 +92,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 	final public KMeans fit() {
 		synchronized(this) { // Must be synchronized because alters internal structs
 			
+			if(null!=labels) // Already have fit this model
+				return this;
+			
 
 			final long start = System.currentTimeMillis();
 			if(verbose) info("beginning training segmentation for K = " + k);

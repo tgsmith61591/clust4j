@@ -12,14 +12,13 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Predictable;
+import com.clust4j.utils.PredictableClassifier;
 import com.clust4j.utils.SupervisedLearner;
 import com.clust4j.utils.VecUtils;
 
-public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, Classifier, Predictable {
+public class KNN extends AbstractPartitionalClusterer implements SupervisedLearner, PredictableClassifier {
 
 	final private int[] trainLabels;
 	final private AbstractRealMatrix test;
@@ -192,6 +191,10 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedLearn
 	@Override
 	public KNN fit() {
 		synchronized(this) { // Synch because alters internal structs
+			
+			if(null!=labels) // Already have fit this model
+				return this;
+			
 			final int m = test.getRowDimension();
 			final long start = System.currentTimeMillis();
 			labels = new int[m];
