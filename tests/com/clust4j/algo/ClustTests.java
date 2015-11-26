@@ -480,13 +480,13 @@ public class ClustTests {
 	@Test
 	public void DBSCANTest3() {
 		final double[][] train_array = new double[][] {
-				new double[] {0.00504, 	 0.0001,    0.08172},
-				new double[] {3.65816,   2.9471,    3.12331},
-				new double[] {4.12344,   3.0001,    2.89002},
-				new double[] {0.00403, 	 0.0003,    0.08231}
-			};
-			
-			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+			new double[] {0.00504, 	 0.0001,    0.08172},
+			new double[] {3.65816,   2.9471,    3.12331},
+			new double[] {4.12344,   3.0001,    2.89002},
+			new double[] {0.00403, 	 0.0003,    0.08231}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 			
 			
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
@@ -503,9 +503,19 @@ public class ClustTests {
 	
 	@Test
 	public void MeanShiftTest1() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
-		new MeanShift(mat, new MeanShift.MeanShiftPlanner(0.05)
-			.setScale(true)
-			.setVerbose(true)).fit();
+		final double[][] train_array = new double[][] {
+			new double[] {0.0,  1.0,  2.0,  3.0},
+			new double[] {5.0,  4.3,  19.0, 4.0},
+			new double[] {9.06, 12.6, 3.5,  9.0}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		
+		MeanShift ms = new MeanShift(mat, new MeanShift
+			.MeanShiftPlanner(0.5)
+				.setVerbose(true)).fit();
+		
+		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
+		assertTrue(ms.getNumberOfNoisePoints() == 0);
 	}
 }

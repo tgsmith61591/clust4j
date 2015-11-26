@@ -29,6 +29,22 @@ public class VectorTests {
 	}
 	
 	@Test
+	public void testMutability2() {
+		double[] i = new double[]{1,2,3,4};
+		double[] j = i;
+		
+		i = new double[]{4,3,2,1};
+		assertTrue(j[0] != i[0]);
+	}
+	
+	@Test
+	public void testExtMathNorm() {
+		double[] i = new double[]{0,1.0};
+		double[] j = new double[]{0,0.9};
+		assertTrue( VecUtils.l2Norm(VecUtils.subtract(i, j)) == 0.09999999999999998 );
+	}
+	
+	@Test
 	public void testVecOps() {
 		// Inner
 		final double[] a = new double[]{1,1,1,1};

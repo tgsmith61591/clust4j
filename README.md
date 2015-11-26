@@ -58,6 +58,7 @@ ____
 
 - Density-based algorithms:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
+  - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
 
 ----
 ### Separability metrics
@@ -171,9 +172,6 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 
 ----
 ### Future implementations*:
-- Density-based algorithms:
-  - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
-
 - Hierarchical algorithms:
   - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
 

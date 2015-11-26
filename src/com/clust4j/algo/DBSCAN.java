@@ -14,6 +14,7 @@ import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
 
@@ -25,7 +26,7 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith, adapted from sklearn implementation by Lars Buitinck
  *
  */
-public class DBSCAN extends AbstractDensityClusterer implements Classifier {
+public class DBSCAN extends AbstractDensityClusterer implements Classifier, NoiseyClusterer {
 	final public static double DEF_EPS = 0.5;
 	final public static int DEF_MIN_PTS = 5;
 	final public static int NOISE_CLASS = -1;
@@ -333,7 +334,13 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier {
 		return com.clust4j.log.Log.Tag.Algo.DBSCAN;
 	}
 	
+	@Override
 	public int getNumberOfIdentifiedClusters() {
 		return numClusters;
+	}
+	
+	@Override
+	public int getNumberOfNoisePoints() {
+		return numNoisey;
 	}
 }
