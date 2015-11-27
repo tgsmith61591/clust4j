@@ -518,4 +518,30 @@ public class ClustTests {
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
 		assertTrue(ms.getNumberOfNoisePoints() == 0);
 	}
+	
+	@Test
+	public void MeanShiftTest2() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.001,  1.002,   0.481,   3.029,  2.019},
+			new double[] {0.426,  1.291,   0.615,   2.997,  3.018},
+			new double[] {6.019,  5.069,   3.681,   5.998,  5.182},
+			new double[] {5.928,  4.972,   4.013,   6.123,  5.004},
+			new double[] {12.091, 153.001, 859.013, 74.852, 3.091}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		
+		MeanShift ms = new MeanShift(mat, new MeanShift
+			.MeanShiftPlanner(0.5)
+				.setVerbose(true)).fit();
+		assertTrue(ms.getNumberOfIdentifiedClusters() == 4);
+		assertTrue(ms.getLabels()[2] == ms.getLabels()[3]);
+		System.out.println();
+		
+		
+		ms = new MeanShift(mat, new MeanShift
+			.MeanShiftPlanner(0.05)
+				.setVerbose(true)).fit();
+		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
+	}
 }

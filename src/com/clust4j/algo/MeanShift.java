@@ -45,8 +45,6 @@ public class MeanShift
 	
 	
 	
-	/** Count iterations */
-	private int itersElapsed = 0;
 	
 	/** The max iterations */
 	private final int maxIter;
@@ -73,6 +71,8 @@ public class MeanShift
 	private volatile ArrayList<double[]> centroids;
 	private volatile int numClusters;
 	private volatile int numNoisey;
+	/** Count iterations */
+	private volatile int itersElapsed = 0;
 	
 	
 	
@@ -240,6 +240,10 @@ public class MeanShift
 		return converged;
 	}
 	
+	/**
+	 * Returns the max number of iterations 
+	 * required for algorithm convergence
+	 */
 	@Override
 	public int itersElapsed() {
 		return itersElapsed;
@@ -333,6 +337,7 @@ public class MeanShift
 			
 			
 			// Iterate over sorted centers
+			int redundant_ct = 0;
 			NearestNeighbor model;
 			ArrayList<Integer> indcs;
 			final double[][] cent_dist_mat = ClustUtils.distanceMatrix(sorted_centers, getSeparabilityMetric());
@@ -341,8 +346,11 @@ public class MeanShift
 					model = new NearestNeighbor(i, cent_dist_mat);
 					indcs = model.getNearestWithinRadius(bandwidth);
 					
-					for(Integer id: indcs)
+					for(Integer id: indcs) {
 						unique[id] = false;
+						redundant_ct++;
+					}
+					
 					unique[i] = true; // Keep this as true
 				}
 			}
@@ -352,7 +360,12 @@ public class MeanShift
 			for(int i = 0; i < unique.length; i++)
 				if(unique[i])
 					centroids.add(sorted_centers[i]);
-			if(verbose) info((numClusters=centroids.size())+" optimal kernels identified");
+			
+			if(verbose) {
+				info((numClusters=centroids.size())+" optimal kernels identified");
+				info(redundant_ct + " nearly-identical kernel" + 
+						(redundant_ct!=1?"s":"") + " removed");
+			}
 			
 			
 			// Assign labels now
@@ -377,16 +390,16 @@ public class MeanShift
 			
 			// Wrap up...
 			if(verbose) {
-				info("completed cluster labeling in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-				
-				
 				// Count missing
 				numNoisey = 0;
 				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				
-				
 				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
+				
+				
+				info("completed cluster labeling in " + 
+						LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				
+				
 				info("model "+getKey()+" completed in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
@@ -425,6 +438,11 @@ public class MeanShift
 		
 		int completed_iterations = 0;
 		while(true) {
+			// Keep track of max iterations elapsed
+			if(completed_iterations > itersElapsed)
+				itersElapsed = completed_iterations;
+			
+			
 			final Integer[] i_nbrs = getNeighbors(seed);
 			
 			// Check if exit
