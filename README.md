@@ -11,7 +11,7 @@ ____
 
 
 ____
-### Example data (for reproducability):
+### Example data (to use for reproducability):
     final int k = 2;
     final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         new double[] {0.005,     0.182751,  0.1284},
@@ -178,13 +178,6 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 
 
 ----
-### Future implementations*:
-- **Hierarchical algorithms**:
-  - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
-
-*__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for [DIANA](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)'s (DIvisive ANAlysis) runtime is O(2<sup>n</sup>)<sup>[7]</sup>, as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
-
-
 
 ### Things to note:
  - The default `AbstractClusterer.BaseClustererPlanner.getScale()` returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
@@ -213,3 +206,4 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
  5. [kernlab](https://github.com/cran/kernlab/blob/master/R/kernels.R) R package
  6. [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
  7. [Divisive Clustering](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)
+ 8. [sklearn](https://github.com/scikit-learn/scikit-learn/tree/master/sklearn/cluster) clustering repository
