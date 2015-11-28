@@ -31,7 +31,7 @@ ____
 
 
 ### Currently implemented algorithms:
-- Partitional algorithms:
+- **Partitional algorithms**:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
             KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true)).fit();
@@ -41,24 +41,31 @@ ____
 
             KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true)).fit();
             // Returns either [1,0] or [0,1] depending on seed:
-            final int[] results = km.getPredictedLabels();
+            final int[] results = km.getLabels();
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
             KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setScale(true)).fit();
             // Returns either [1,0] or [0,1] depending on seed:
-            final int[] results = km.getPredictedLabels();
+            final int[] results = km.getLabels();
 
-- Hierarchical algorithms:
+- **Hierarchical algorithms**:
   - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
             AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true)).fit();
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 
-- Density-based algorithms:
+- **Density-based algorithms**:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
+
+            DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75).setScale(true)).fit();
+            final int[] results = db.getLabels();
+
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
+
+            MeanShift ms = new MeanShift(mat, new MeanShiftPlanner(0.5)).fit();
+            final int[] results = ms.getLabels();
 
 ----
 ### Separability metrics
@@ -172,7 +179,7 @@ To initialize any clusterer with a kernel as the `GeometricallySeparable` metric
 
 ----
 ### Future implementations*:
-- Hierarchical algorithms:
+- **Hierarchical algorithms**:
   - [Divisive](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "top down" approach: all observations start in one cluster, and splits are performed recursively as one moves down the hierarchy. 
 
 *__Update__ (Nov. 2015): as of now, there are no immediate plans to implement Divisive Clustering. The best estimates for [DIANA](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)'s (DIvisive ANAlysis) runtime is O(2<sup>n</sup>)<sup>[7]</sup>, as opposed to Agglomerative Clustering's O(n<sup>2</sup>). The only reason for implementing it would, thus, be out of the sake of completeness in the family of Hierarchical Clustering.
