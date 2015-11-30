@@ -226,11 +226,12 @@ public class KernelTestCases {
 	public void DBSCANTest1() {
 		final Array2DRowRealMatrix mat = ClustTests.getRandom(1500, 10);
 		Kernel kernel = new RadialBasisKernel(0.05);
-		new DBSCAN(mat, 
+		DBSCAN db = new DBSCAN(mat, 
 				new DBSCAN.DBSCANPlanner(0.05)
 					.setSep(kernel)
 					.setScale(true)
 					.setVerbose(true)).fit();
 		System.out.println();
+		assertTrue(db.hasWarnings());
 	}
 }

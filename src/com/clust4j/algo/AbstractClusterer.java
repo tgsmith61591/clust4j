@@ -42,6 +42,10 @@ public abstract class AbstractClusterer implements Loggable {
 	/** Verbose for heavily logging */
 	final protected boolean verbose;
 	
+	
+	/** Have any warnings occurred -- volatile because can change */
+	volatile private boolean hasWarnings = false;
+	
 
 	
 	
@@ -179,6 +183,14 @@ public abstract class AbstractClusterer implements Loggable {
 		return seed;
 	}
 	
+	/**
+	 * Whether the algorithm resulted in any warnings
+	 * @return
+	 */
+	public boolean hasWarnings() {
+		return hasWarnings;
+	}
+	
 	
 	@Override
 	public String toString() {
@@ -207,6 +219,7 @@ public abstract class AbstractClusterer implements Loggable {
 	}
 	
 	@Override public void warn(String msg) {
+		hasWarnings = true;
 		Log.warn(getLoggerTag(), msg);
 	}
 	

@@ -16,7 +16,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.CentroidLearner;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.ClusterStateException;
+import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
@@ -56,7 +56,7 @@ public class MeanShift
 	private final double bandwidth;
 
 	/** Class labels */
-	private int[] labels;
+	private volatile int[] labels = null;
 	
 	/** The M x N seeds to be used as initial kernel points */
 	private double[][] seeds;
@@ -313,7 +313,7 @@ public class MeanShift
 				error = "No point was within bandwidth="+bandwidth+
 						" of any seed. Increase the bandwidth or try different seeds.";
 				if(verbose) error(error);
-				throw new ClusterStateException(error);
+				throw new IllegalClusterStateException(error);
 			}
 			
 			

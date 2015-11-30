@@ -499,6 +499,7 @@ public class ClustTests {
 		assertTrue(db.getNumberOfIdentifiedClusters() == 2);
 		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
 		assertTrue(db.getLabels()[0] == db.getLabels()[3]);
+		assertFalse(db.hasWarnings());
 	}
 	
 	@Test
@@ -517,6 +518,7 @@ public class ClustTests {
 		
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
 		assertTrue(ms.getNumberOfNoisePoints() == 0);
+		assertFalse(ms.hasWarnings());
 	}
 	
 	@Test
@@ -543,5 +545,6 @@ public class ClustTests {
 			.MeanShiftPlanner(0.05)
 				.setVerbose(true)).fit();
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
+		assertFalse(ms.hasWarnings());
 	}
 }

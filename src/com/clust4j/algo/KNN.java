@@ -22,7 +22,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedClass
 	final private int[] trainLabels;
 	final private AbstractRealMatrix test;
 	
-	private int[] labels = null;
+	volatile private int[] labels = null;
 	
 	
 	public KNN(AbstractRealMatrix train, AbstractRealMatrix test, final int[] labels, final int k) {

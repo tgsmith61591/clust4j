@@ -21,7 +21,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 * Stores the indices of the current medoids. Each index,
 	 * 0 thru k-1, corresponds to the class label for the cluster.
 	 */
-	private int[] medoid_indices = new int[k];
+	volatile private int[] medoid_indices = new int[k];
 	
 	/**
 	 * Upper triangular, M x M matrix denoting distances between records.
@@ -32,8 +32,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 */
 	private double[][] dist_mat = null;
 	
-	private final GeometricallySeparable metric; // Just to save repeated function call overhead
-	
 	
 	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
@@ -42,7 +40,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	
 	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner builder) {
 		super(data, builder);
-		metric = getSeparabilityMetric();
 	}
 	
 	
@@ -168,7 +165,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		double sumI = 0;
 		for(Integer rec : inCluster) { // Row nums of belonging records
 			final double[] record = data.getRow(rec);
-			sumI += metric.getDistance(record, newCentroid);
+			sumI += getSeparabilityMetric().getDistance(record, newCentroid);
 		}
 		
 		return sumI; // The separability is never neg as returned by methods...

@@ -29,11 +29,11 @@ public abstract class AbstractKCentroidClusterer
 	final protected double minChange;
 	final protected int[] init_centroid_indices;
 	
-	protected boolean converged = false;
-	protected double cost;
+	volatile protected boolean converged = false;
+	volatile protected double cost;
 
-	protected int[] labels = null;
-	protected int iter = 0;
+	volatile protected int[] labels = null;
+	volatile protected int iter = 0;
 	
 	final protected int m;
 	
