@@ -194,10 +194,10 @@ Various similarity metrics—kernel methods, in particular—allow the clusterin
 
 To initialize any clusterer with a kernel as the `GeometricallySeparable` metric (example uses `GaussianKernel`):
 
-    ```java
-    final Kernel kernel = new GaussianKernel();
-    KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setSep(kernel));
-    ```
+```java
+final Kernel kernel = new GaussianKernel();
+KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setSep(kernel));
+```
 
 __Note:__ though similarity metrics *may* be used with any clustering algorithm, it is recommended that they *not* be used with [density-based](https://github.com/tgsmith61591/clust4j/blob/master/src/com/clust4j/algo/AbstractDensityClusterer.java) clustering algorithms, as they seek "neighborhoods" around points and similarity metrics such as kernels will not accurately describe a point's neighborhood.  Using a similarity metric with a density-based algorithm will cause a warning to be logged.
 
