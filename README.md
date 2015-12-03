@@ -44,37 +44,49 @@ final int[] trainLabels = new int[] {0, 1, 1};
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
-            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k)).fit();
-            final int[] results = km.getLabels();
+        ```java
+        KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k)).fit();
+        final int[] results = km.getLabels();
+        ```
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k)).fit();
-            final int[] results = km.getLabels();
+        ```java
+        KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k)).fit();
+        final int[] results = km.getLabels();
+        ```
 
   - [Affinity Propagation](https://en.wikipedia.org/wiki/Affinity_propagation), a clustering algorithm based on the concept of "message passing" between data points.Like `KMedoids`, Affinity Propagation finds "exemplars", members of the input set that are representative of clusters.
 
-            AffinityPropagation ap = new AffinityPropagation(mat, new AffinityPropagationPlanner()).fit();
-            final int[] results = ap.getLabels();
+        ```java
+        AffinityPropagation ap = new AffinityPropagation(mat, new AffinityPropagationPlanner()).fit();
+        final int[] results = ap.getLabels();
+        ```
 
 
 - **Hierarchical algorithms**:
   - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
-            AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner()).fit();
-            // Print the tree, where 1 is the root:
-            System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
+        ```java
+        AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner()).fit();
+        // Print the tree, where 1 is the root:
+        System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
+        ```
 
 - **Density-based algorithms**:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 
-            DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75)).fit();
-            final int[] results = db.getLabels();
+        ```java
+        DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75)).fit();
+        final int[] results = db.getLabels();
+        ```
 
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
 
-            MeanShift ms = new MeanShift(mat, new MeanShiftPlanner(0.5)).fit();
-            final int[] results = ms.getLabels();
+        ```java
+        MeanShift ms = new MeanShift(mat, new MeanShiftPlanner(0.5)).fit();
+        final int[] results = ms.getLabels();
+        ```
 
 ----
 ### Separability metrics
@@ -182,8 +194,10 @@ Various similarity metrics—kernel methods, in particular—allow the clusterin
 
 To initialize any clusterer with a kernel as the `GeometricallySeparable` metric (example uses `GaussianKernel`):
 
+    ```java
     final Kernel kernel = new GaussianKernel();
     KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setSep(kernel));
+    ```
 
 __Note:__ though similarity metrics *may* be used with any clustering algorithm, it is recommended that they *not* be used with [density-based](https://github.com/tgsmith61591/clust4j/blob/master/src/com/clust4j/algo/AbstractDensityClusterer.java) clustering algorithms, as they seek "neighborhoods" around points and similarity metrics such as kernels will not accurately describe a point's neighborhood.  Using a similarity metric with a density-based algorithm will cause a warning to be logged.
 
@@ -192,17 +206,18 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 ### Things to note:
  - The default `AbstractClusterer.BaseClustererPlanner.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
-
-        // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
-        new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
+    ```java
+    // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
+    new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
+    ```
 
  - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`.
  - Note that both of the above settings may be set globally:
 
-```java
-AbstractClusterer.DEF_VERBOSE = true;
-AbstractClusterer.DEF_SCALE = true;
-```
+    ```java
+    AbstractClusterer.DEF_VERBOSE = true;
+    AbstractClusterer.DEF_SCALE = true;
+    ```
 
 
 
