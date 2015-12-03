@@ -3,6 +3,7 @@ package com.clust4j.utils;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 
 public class MatUtils {
@@ -323,7 +324,7 @@ public class MatUtils {
 	}
 	
 	public static double[][] multiply(final double[][] a, final double[][] b) {
-		checkDims(a);
+		/*checkDims(a);
 		checkDims(b);
 		
 		final int m1=a.length, n1=a[0].length;
@@ -338,7 +339,11 @@ public class MatUtils {
 				for(int k = 0; k < n1; k++)
 					c[i][j] += a[i][k] * b[k][j];
 		
-		return c;
+		return c;*/
+		
+		final Array2DRowRealMatrix aa = new Array2DRowRealMatrix(a, false);
+		final Array2DRowRealMatrix bb = new Array2DRowRealMatrix(b, false);
+		return aa.multiply(bb).getDataRef();
 	}
 	
 	
@@ -353,6 +358,11 @@ public class MatUtils {
 			for(int j = 0; j < copy[i].length; j++)
 				copy[i][j] = -copy[i][j];
 		return copy;
+	}
+	
+	
+	public static double[][] randomGaussian(final int m, final int n) {
+		return randomGaussian(m, n, new Random());
 	}
 	
 	
