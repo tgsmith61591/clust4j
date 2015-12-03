@@ -37,8 +37,10 @@ final int[] trainLabels = new int[] {0, 1, 1};
 - **Partitional algorithms**:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
-            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k)).fit();
-            final int[] results = knn.getPredictedLabels(); // [0,1]
+        ```java
+        KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k)).fit();
+        final int[] results = knn.getPredictedLabels(); // [0,1]
+        ```
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
