@@ -60,7 +60,7 @@ public class SingleLinkageAgglomerativeFactory {
 		final boolean verbose = clusterer.getVerbose();
 		
 		if(verbose && copy) clusterer.info("creating local data copy");
-		final double[][] data = copy ? ClustUtils.copyMatrix(dat) : dat;
+		final double[][] data = copy ? MatUtils.copyMatrix(dat) : dat;
 		
 		
 		int m = data.length;
@@ -111,7 +111,7 @@ public class SingleLinkageAgglomerativeFactory {
 		 * from each other cluster's centroid to the new one. This constitutes the new
 		 * distance matrix.
 		 */
-		Array2DRowRealMatrix distance = new Array2DRowRealMatrix(ClustUtils.distanceMatrix(data, dist), false); // Don't force copy
+		Array2DRowRealMatrix distance = new Array2DRowRealMatrix(ClustUtils.distanceUpperTriangMatrix(data, dist), false); // Don't force copy
 			
 		if(verbose) clusterer.info("calculated " + m + " x " + m + " distance matrix");
 		if(verbose) clusterer.info("beginning cluster agglomeration");

@@ -49,27 +49,23 @@ public class ClustUtils {
 		}
 	}
 	
-	public static final double[][] copyMatrix(final double[][] data) {
-		final double[][] copy = new double[data.length][];
+	public static double[][] distanceFullMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
+		return distanceFullMatrix(data.getData(), dist);
+	}
+	
+	public static double[][] distanceFullMatrix(final double[][] data, GeometricallySeparable dist) {
+		final int m = data.length;
 		
-		if(data.length != 0) {
-			for(int i = 0; i < copy.length; i++)
-				copy[i] = VecUtils.copy(data[i]);
+		final double[][] dist_mat = new double[m][m];
+		for(int i = 0; i < m - 1; i++) {
+			for(int j = i + 1; j < m; j++) {
+				final double d = dist.getDistance(data[i], data[j]);
+				dist_mat[i][j] = d;
+				dist_mat[j][i] = d;
+			}
 		}
 		
-		return copy;
-	}
-	
-	
-	/**
-	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
-	 * and an instance of GeometricallySeparable.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] distanceMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
-		return distanceMatrix(data.getData(), dist);
+		return dist_mat;
 	}
 	
 	/**
@@ -79,7 +75,18 @@ public class ClustUtils {
 	 * @param dist
 	 * @return
 	 */
-	final public static double[][] distanceMatrix(final double[][] data, GeometricallySeparable dist) {
+	final public static double[][] distanceUpperTriangMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
+		return distanceUpperTriangMatrix(data.getData(), dist);
+	}
+	
+	/**
+	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
+	 * and an instance of GeometricallySeparable.
+	 * @param data
+	 * @param dist
+	 * @return
+	 */
+	final public static double[][] distanceUpperTriangMatrix(final double[][] data, GeometricallySeparable dist) {
 		final int m = data.length;
 		
 		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
@@ -110,15 +117,23 @@ public class ClustUtils {
 		return min;
 	}
 	
-	/**
-	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
-	 * and an instance of SimilarityMetric.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] similarityMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
-		return similarityMatrix(data.getData(),sim);
+	public static double[][] similarityFullMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
+		return similarityFullMatrix(data.getData(), sim);
+	}
+	
+	public static double[][] similarityFullMatrix(final double[][] data, SimilarityMetric sim) {
+		final int m = data.length;
+		
+		final double[][] dist_mat = new double[m][m];
+		for(int i = 0; i < m - 1; i++) {
+			for(int j = i + 1; j < m; j++) {
+				final double d = sim.getSimilarity(data[i], data[j]);
+				dist_mat[i][j] = d;
+				dist_mat[j][i] = d;
+			}
+		}
+		
+		return dist_mat;
 	}
 	
 	/**
@@ -128,7 +143,18 @@ public class ClustUtils {
 	 * @param dist
 	 * @return
 	 */
-	final public static double[][] similarityMatrix(final double[][] data, SimilarityMetric sim) {
+	final public static double[][] similarityUpperTriangMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
+		return similarityUpperTriangMatrix(data.getData(),sim);
+	}
+	
+	/**
+	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
+	 * and an instance of SimilarityMetric.
+	 * @param data
+	 * @param dist
+	 * @return
+	 */
+	final public static double[][] similarityUpperTriangMatrix(final double[][] data, SimilarityMetric sim) {
 		final int m = data.length;
 		
 		// Compute similarity matrix, which is O(N^2) space, O(Nc2) time

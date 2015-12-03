@@ -196,7 +196,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 			
 			// First get the dist matrix
 			final long start = System.currentTimeMillis();
-			dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 			final int m = dist_mat.length;
 			
 			

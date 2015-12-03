@@ -1,5 +1,6 @@
 package com.clust4j.utils;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -7,14 +8,26 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 public class VecUtils {
+	/** Double.MIN_VALUE is not negative; this is */
+	public final static double SAFE_MIN = Double.NEGATIVE_INFINITY;
+	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
 	final static public void checkDims(final double[] a) {
-		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length");
+		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
 	}
 	
 	final static public void checkDims(final double[] a, final double[] b) {
+		if(a.length != b.length) throw new DimensionMismatchException(a.length, b.length);
+		checkDims(a); // Only need to do one, knowing they are same length
+	}
+	
+	final static public void checkDims(final int[] a) {
+		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
+	}
+	
+	final static public void checkDims(final int[] a, final int[] b) {
 		if(a.length != b.length) throw new DimensionMismatchException(a.length, b.length);
 		checkDims(a); // Only need to do one, knowing they are same length
 	}
@@ -36,6 +49,79 @@ public class VecUtils {
 			ab[i] = a[i] + b[i];
 		
 		return ab;
+	}
+	
+	
+	public static int[] arange(final int length) {
+		return arange(0, length, 1);
+	}
+	
+	public static int[] arange(final int start_inc, final int end_exc) {
+		return arange(start_inc, end_exc, start_inc>end_exc?-1:1);
+	}
+	
+	public static int[] arange(final int start_inc, final int end_exc, final int increment) {
+		if(increment == 0)
+			throw new IllegalArgumentException("increment cannot equal zero");
+		if(start_inc > end_exc && increment > 0)
+			throw new IllegalArgumentException("increment can't be positive for this range");
+		if(start_inc < end_exc && increment < 0)
+			throw new IllegalArgumentException("increment can't be negative for this range");
+		
+		
+		int length = FastMath.abs(end_exc - start_inc);
+		if(length == 0)
+			throw new IllegalArgumentException("start_inc ("+start_inc+") cannot equal end_exc ("+end_exc+")");
+		if(length%FastMath.abs(increment)!=0)
+			throw new IllegalArgumentException("increment will not create evenly spaced elements");
+		length /= FastMath.abs(increment);
+		
+		
+		final int[] out = new int[length];
+		if(increment < 0) {
+			int j = 0;
+			for(int i = start_inc; i > end_exc; i+=increment) out[j++] = i;
+		} else {
+			int j = 0;
+			for(int i = start_inc; i < end_exc; i+=increment) out[j++] = i;
+		}
+		
+		return out;
+	}
+	
+	
+	public static int argMax(final double[] v) {
+		checkDims(v);
+		
+		double max = SAFE_MIN;
+		int max_idx = -1;
+		
+		for(int i = 0; i < v.length; i++) {
+			double val = v[i];
+			if(val > max) {
+				max = val;
+				max_idx = i;
+			}
+		}
+		
+		return max_idx;
+	}
+	
+	public static int argMin(final double[] v) {
+		checkDims(v);
+		
+		double min = SAFE_MAX;
+		int min_idx = -1;
+		
+		for(int i = 0; i < v.length; i++) {
+			double val = v[i];
+			if(val < min) {
+				min = val;
+				min_idx = i;
+			}
+		}
+		
+		return min_idx;
 	}
 	
 	final public static double[] center(final double[] a) {
@@ -87,6 +173,15 @@ public class VecUtils {
 			ab[i] = numer[i] / by[i];
 		
 		return ab;
+	}
+	
+	public static boolean equalsExactly(final int[] a, final int[] b) {
+		checkDims(a, b);
+		
+		for(int i = 0; i < a.length; i++)
+			if(a[i] != b[i])
+				return false;
+		return true;
 	}
 	
 	public static boolean equalsExactly(final double[] a, final double[] b) {
@@ -156,7 +251,7 @@ public class VecUtils {
 	}
 	
 	final public static double max(final double[] a) {
-		double max = Double.MIN_VALUE;
+		double max = SAFE_MIN;
 		for(double d : a)
 			if(d > max)
 				max = d;
@@ -171,8 +266,24 @@ public class VecUtils {
 		return sum / a.length;
 	}
 	
+	public static double median(final double[] a) {
+		checkDims(a);
+		if(a.length == 1)
+			return a[0];
+		
+		// Get copy, sort it
+		final double[] copy = copy(a);
+		Arrays.sort(copy);
+		
+		int mid = copy.length/2;
+		if(copy.length%2 != 0) // if not even in length
+			return copy[mid];
+		
+		return (copy[mid-1]+copy[mid])/2d;
+	}
+	
 	final public static double min(final double[] a) {
-		double min = Double.MAX_VALUE;
+		double min = SAFE_MAX;
 		for(double d : a)
 			if(d < min)
 				min = d;

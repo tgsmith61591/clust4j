@@ -145,4 +145,50 @@ public class VectorTests {
 		final double[] a = new double[]{1, 2, 3};
 		assertTrue(VecUtils.prod(a) == 6);
 	}
+	
+	@Test
+	public void testMedian() {
+		final double[] a = new double[]{2, 1, 3};
+		assertTrue(VecUtils.median(a) == 2);
+		
+		final double[] b = new double[]{2, 1, 3, 5, 4, 9};
+		assertTrue(VecUtils.median(b) == 3.5);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMedianExcept() {
+		final double[] a = new double[]{};
+		VecUtils.median(a);
+	}
+	
+	@Test
+	public void testArgs() {
+		assertTrue(-5 > VecUtils.SAFE_MIN);
+		
+		final double[] a = new double[]{0, 5};
+		assertTrue(VecUtils.argMax(a) == 1);
+		assertTrue(VecUtils.argMin(a) == 0);
+		
+		final double[] b = new double[]{0,0};
+		assertTrue(VecUtils.argMax(b) == 0);
+		assertTrue(VecUtils.argMin(b) == 0);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testArgs2() {
+		final double[] a = new double[]{};
+		VecUtils.argMax(a);
+	}
+	
+	@Test
+	public void testArange() {
+		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10),new int[]{0,1,2,3,4,5,6,7,8,9}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10,0),new int[]{10,9,8,7,6,5,4,3,2,1}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10,0,-2),new int[]{10,8,6,4,2}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testArange2() {
+		VecUtils.arange(10,0,-3);
+	}
 }

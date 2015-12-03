@@ -23,6 +23,7 @@ public abstract class Log {
 	public static interface Tag {
 		/** Which algorithm is being run? */
 		public static enum Algo implements Tag {
+			AFFINITY_PROP	{ @Override public String toString(){return "AFFINTY";} },
 			AGGLOMERATIVE 	{ @Override public String toString(){return "AGGLOM ";} },
 			CLUST4J,
 			
@@ -36,8 +37,8 @@ public abstract class Log {
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			KNN 			{ @Override public String toString(){return "K-NN   ";} },
-			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
-			SPECTRAL		{ @Override public String toString(){return "SPCTRAL";} };
+			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },;
+			//SPECTRAL		{ @Override public String toString(){return "SPCTRAL";} };
 			
 			
 			boolean _enable;

@@ -20,6 +20,7 @@ import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
@@ -115,7 +116,7 @@ public class MeanShift
 			}
 			
 			if(verbose) info("initializing kernels from given seeds");
-			seeds = ClustUtils.copyMatrix(planner.seeds);
+			seeds = MatUtils.copyMatrix(planner.seeds);
 		} else { // Default = all
 			if(verbose) info("no seeds provided; defaulting to all datapoints");
 			seeds = data.getData();
@@ -254,7 +255,7 @@ public class MeanShift
 	 * @return
 	 */
 	public double[][] getKernelSeeds() {
-		return ClustUtils.copyMatrix(seeds);
+		return MatUtils.copyMatrix(seeds);
 	}
 	
 	public int getMaxIter() {
@@ -340,7 +341,7 @@ public class MeanShift
 			int redundant_ct = 0;
 			NearestNeighbor model;
 			ArrayList<Integer> indcs;
-			final double[][] cent_dist_mat = ClustUtils.distanceMatrix(sorted_centers, getSeparabilityMetric());
+			final double[][] cent_dist_mat = ClustUtils.distanceUpperTriangMatrix(sorted_centers, getSeparabilityMetric());
 			for(int i = 0; i < sorted_centers.length; i++) {
 				if(unique[i]) {
 					model = new NearestNeighbor(i, cent_dist_mat);

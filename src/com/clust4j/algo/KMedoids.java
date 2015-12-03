@@ -205,7 +205,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			// We do this in KMedoids and not KMeans, because KMedoids uses
 			// real points as medoids and not means for centroids, thus
 			// the recomputation of distances is unnecessary with the dist mat
-			dist_mat = ClustUtils.distanceMatrix(data, getSeparabilityMetric());
+			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 			
 			/*System.out.println(new MatrixFormatter()
 				.format(new Array2DRowRealMatrix(dist_mat, false)));*/

@@ -31,7 +31,7 @@ public abstract class Kernel implements SimilarityMetric {
 	}
 	
 	public double[][] kernelDistanceMatrix(final double[][] data) {
-		return ClustUtils.distanceMatrix(data, this);
+		return ClustUtils.distanceUpperTriangMatrix(data, this);
 	}
 	
 	
@@ -40,7 +40,7 @@ public abstract class Kernel implements SimilarityMetric {
 	}
 	
 	public double[][] kernelSimilarityMatrix(final double[][] data) {
-		return ClustUtils.similarityMatrix(data, this);
+		return ClustUtils.similarityUpperTriangMatrix(data, this);
 	}
 	
 	
