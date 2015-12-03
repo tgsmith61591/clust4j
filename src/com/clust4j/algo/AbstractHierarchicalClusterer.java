@@ -81,5 +81,9 @@ public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
 		return super.toString() + ": " + getTree().toString();
 	}
 	
+	/**
+	 * Get the tree generated from splits or merges
+	 * @return the hierarchical tree
+	 */
 	public abstract HierarchicalClusterTree getTree();
 }

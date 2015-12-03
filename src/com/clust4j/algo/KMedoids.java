@@ -15,6 +15,21 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
 
+/**
+ * <a href="https://en.wikipedia.org/wiki/K-medoids">KMedoids</a> is
+ * a clustering algorithm related to the {@link KMeans} algorithm and the 
+ * medoidshift algorithm. Both the KMeans and KMedoids algorithms are 
+ * partitional (breaking the dataset up into groups) and both attempt 
+ * to minimize the distance between points labeled to be in a cluster 
+ * and a point designated as the center of that cluster. In contrast to 
+ * the KMeans algorithm, KMedoids chooses datapoints as centers (medoids 
+ * or exemplars) and works with an arbitrary matrix of distances between 
+ * datapoints instead of Euclidean distance (l2 norm). This method was proposed in 
+ * 1987 for the work with Manhattan distance (l1 norm) and other distances.
+ * 
+ * @see {@link AbstractPartitionalClusterer}
+ * @author Taylor G Smith
+ */
 public class KMedoids extends AbstractKCentroidClusterer {
 	
 	/**

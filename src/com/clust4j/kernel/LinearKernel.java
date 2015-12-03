@@ -4,7 +4,7 @@ import com.clust4j.utils.VecUtils;
 
 /**
  * The Linear kernel is the simplest kernel function. 
- * It is given by the inner product <x,y> plus an optional constant c. 
+ * It is given by the inner product <tt>&lt;x,y&gt;</tt> plus an optional constant c. 
  * Kernel algorithms using a linear kernel are often equivalent to 
  * their non-kernel counterparts, i.e. 
  * 

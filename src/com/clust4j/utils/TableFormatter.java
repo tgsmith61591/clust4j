@@ -14,17 +14,17 @@ public class TableFormatter {
 		RIGHT
 	}
 	
-    /** The default prefix: "{". */
+    /** The default prefix: "". */
     protected static final String DEFAULT_PREFIX = "";
-    /** The default suffix: "}". */
+    /** The default suffix: "". */
     protected static final String DEFAULT_SUFFIX = "";
-    /** The default row prefix: "{". */
+    /** The default row prefix: "". */
     protected static final String DEFAULT_ROW_PREFIX = "";
-    /** The default row suffix: "}". */
+    /** The default row suffix: "". */
     protected static final String DEFAULT_ROW_SUFFIX = "";
-    /** The default row separator: ",". */
+    /** The default row separator: "\n". */
     protected static final String DEFAULT_ROW_SEPARATOR = System.getProperty("line.separator");
-    /** The default column separator: ",". */
+    /** The default column separator: "". */
     protected static final String DEFAULT_COLUMN_SEPARATOR = "";
     /** The default locale */
     protected static final Locale DEFAULT_LOCALE = Locale.US;

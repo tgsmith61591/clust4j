@@ -19,10 +19,16 @@ import com.clust4j.utils.VecUtils;
 
 
 /**
- * An implementation of DBSCAN (Density-Based Spatial Clustering for Applications with Noise).
+ * <a href="https://en.wikipedia.org/wiki/DBSCAN">DBSCAN</a> (Density Based Spatial Clustering
+ * for Applications with Noise) is a data clustering algorithm proposed by Martin Ester, 
+ * Hans-Peter Kriegel, Jörg Sander and Xiaowei Xu in 1996. It is a density-based clustering 
+ * algorithm: given a set of points in some space, it groups together points that are 
+ * closely packed together (points with many nearby neighbors), marking as outliers 
+ * points that lie alone in low-density regions (whose nearest neighbors are too far away).
  * 
  * @see <a href="http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf">DBSCAN, 
  * A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise</a>
+ * @see {@link AbstractDensityClusterer}
  * @author Taylor G Smith, adapted from sklearn implementation by Lars Buitinck
  *
  */

@@ -176,8 +176,8 @@ public abstract class AbstractClusterer implements Loggable {
 	
 	
 	/**
-	 * Get the current seed being used
-	 * @return
+	 * Get the current seed being used for random state
+	 * @return the random seed
 	 */
 	public Random getSeed() {
 		return seed;
@@ -185,7 +185,7 @@ public abstract class AbstractClusterer implements Loggable {
 	
 	/**
 	 * Whether the algorithm resulted in any warnings
-	 * @return
+	 * @return whether the clustering effort has generated any warnings
 	 */
 	public boolean hasWarnings() {
 		return hasWarnings;
@@ -198,18 +198,29 @@ public abstract class AbstractClusterer implements Loggable {
 	}
 	
 	
+	/**
+	 * Get the model key, the model's unique UUID
+	 * @return the model's unique UUID
+	 */
 	public UUID getKey() {
 		return modelKey;
 	}
 	
 	
+	/**
+	 * Get the state of the model's verbosity
+	 * @return is the model set to verbose mode or not?
+	 */
 	public boolean getVerbose() {
 		return verbose;
 	}
 	
 	
+	/** Get the name of this model */
 	public abstract String getName();
+	/** Get the associated Log tag for this model */
 	public abstract com.clust4j.log.Log.Tag.Algo getLoggerTag();
+	/** The the model */
 	public abstract AbstractClusterer fit();
 	
 	
@@ -235,6 +246,11 @@ public abstract class AbstractClusterer implements Loggable {
 		Log.debug(getLoggerTag(), msg);
 	}
 	
+	/**
+	 * Log info related to the internal state 
+	 * of the model (not progress)
+	 * @param msg
+	 */
 	public void meta(final String msg) {
 		info("[meta "+getName()+"] " + msg);
 	}

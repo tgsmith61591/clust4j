@@ -32,7 +32,7 @@ public abstract class Log {
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
 			
 			// Unneeded unless decide to implement divisive hierarchical clustering
-			/*DIVISIVE		{ @Override public String toString(){return "DIANA  ";} },*/
+			/*DIVISIVE		{ @Override public String toString(){return "DIVISVE";} },*/
 			
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },

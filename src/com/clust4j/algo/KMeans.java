@@ -11,6 +11,16 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 
+/**
+ * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
+ * a method of vector quantization, originally from signal processing, that is popular 
+ * for cluster analysis in data mining. KMeans clustering aims to partition <i>m</i> 
+ * observations into <i>k</i> clusters in which each observation belongs to the cluster 
+ * with the nearest mean, serving as a prototype of the cluster. This results in 
+ * a partitioning of the data space into <a href="https://en.wikipedia.org/wiki/Voronoi_cell">Voronoi cells</a>.
+ * 
+ * @author Taylor G Smith
+ */
 public class KMeans extends AbstractKCentroidClusterer {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	

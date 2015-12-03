@@ -20,6 +20,18 @@ import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
+/**
+ * <a href="https://en.wikipedia.org/wiki/Affinity_propagation">Affinity Propagation</a> (AP) 
+ * is a clustering algorithm based on the concept of "message passing" between data points. 
+ * Unlike other clustering algorithms such as {@link KMeans} or {@link KMedoids}, 
+ * AP does not require the number of clusters to be determined or estimated before 
+ * running the algorithm. Like KMedoids, AP finds "exemplars", members of the input 
+ * set that are representative of clusters.
+ * 
+ * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/cluster/affinity_propagation_.py">sklearn</a>
+ * @author Taylor G Smith, adapted from sklearn Python implementation
+ *
+ */
 public class AffinityPropagation extends AbstractClusterer implements Convergeable, Classifier, SelfSegmenting, CentroidLearner {
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
 	final public static int DEF_ITER_BREAK = 15;
@@ -560,9 +572,5 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 	@Override
 	public ArrayList<double[]> getCentroids() {
 		return centroids;
-	}
-	
-	public ArrayList<Integer> getCentroidIndices() {
-		return centroidIndices;
 	}
 }

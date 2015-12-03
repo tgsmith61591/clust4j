@@ -17,6 +17,18 @@ import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.SupervisedClassifier;
 import com.clust4j.utils.VecUtils;
 
+
+/**
+ * <a href="https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm">K-Nearest Neighbors</a> (KNN) is
+ * a non-parametric method used for classification and regression (classification only in this library). 
+ * In both cases, the input consists of the <i>k</i> closest training examples in the feature space.
+ * In KNN classification, the output is a class membership. An object is classified by a majority vote 
+ * of its neighbors, with the object being assigned to the class most common among its <i>k</i> nearest 
+ * neighbors (<i>k</i> is a positive integer, typically small). If <i>k</i> = 1, then the object is simply 
+ * assigned to the class of that single nearest neighbor.
+ * 
+ * @author Taylor G Smith
+ */
 public class KNN extends AbstractPartitionalClusterer implements SupervisedClassifier {
 
 	final private int[] trainLabels;
