@@ -34,32 +34,36 @@ ____
 - **Partitional algorithms**:
   - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
 
-            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k).setScale(true)).fit();
+            KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k)).fit();
             final int[] results = knn.getPredictedLabels(); // [0,1]
 
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
-            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true)).fit();
-            // Returns either [1,0] or [0,1] depending on seed:
+            KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k)).fit();
             final int[] results = km.getLabels();
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setScale(true)).fit();
-            // Returns either [1,0] or [0,1] depending on seed:
+            KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k)).fit();
             final int[] results = km.getLabels();
+
+  - [Affinity Propagation](https://en.wikipedia.org/wiki/Affinity_propagation), a clustering algorithm based on the concept of "message passing" between data points.Like `KMedoids`, Affinity Propagation finds "exemplars", members of the input set that are representative of clusters.
+
+            AffinityPropagation ap = new AffinityPropagation(mat, new AffinityPropagationPlanner()).fit();
+            final int[] results = ap.getLabels();
+
 
 - **Hierarchical algorithms**:
   - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
-            AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner().setScale(true)).fit();
+            AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner()).fit();
             // Print the tree, where 1 is the root:
             System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
 
 - **Density-based algorithms**:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 
-            DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75).setScale(true)).fit();
+            DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75)).fit();
             final int[] results = db.getLabels();
 
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
@@ -181,15 +185,17 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 ----
 
 ### Things to note:
- - The default `AbstractClusterer.BaseClustererPlanner.getScale()` returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
+ - The default `AbstractClusterer.BaseClustererPlanner.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
 
-        // With normalization
+        // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
         new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
-        // Without normalization
-        new KMeans(mat, k);
 
- - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `AbstractClusterer.BaseClustererPlanner.setVerbose(true)`, or it can be set globally:
+This can also be set globally:
+
+        AbstractClusterer.DEF_SCALE = true;
+
+ - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`, or it can be set globally:
 
         AbstractClusterer.DEF_VERBOSE = true;
 

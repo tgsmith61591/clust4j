@@ -25,11 +25,10 @@ import com.clust4j.utils.VecUtils;
  */
 public abstract class AbstractClusterer implements Loggable {
 	public static boolean DEF_VERBOSE = false;
-	
+	public static boolean DEF_SCALE = false;
 	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
-	final public static boolean DEF_SCALE = false;
 	final private UUID modelKey;
 	
 	
