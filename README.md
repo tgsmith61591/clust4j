@@ -12,20 +12,23 @@ ____
 
 ____
 ### Example data (to use for reproducability):
-    final int k = 2;
-    final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
-        new double[] {0.005,     0.182751,  0.1284},
-        new double[] {3.65816,   0.29518,   2.123316},
-        new double[] {4.1234,    0.2301,    1.8900002}
-    });	
 
-    /* Test data, where necessary */
-    final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(new double[][] {
-        new double[] {0.01302,   0.0012,   0.06948},
-        new double[] {3.01837,   2.2293,   3.94812}
-    });
+```java
+final int k = 2;
+final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
+    new double[] {0.005,     0.182751,  0.1284},
+    new double[] {3.65816,   0.29518,   2.123316},
+    new double[] {4.1234,    0.2301,    1.8900002}
+});	
+
+/* Test data, where necessary */
+final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(new double[][] {
+    new double[] {0.01302,   0.0012,   0.06948},
+    new double[] {3.01837,   2.2293,   3.94812}
+});
 		
-    final int[] trainLabels = new int[] {0, 1, 1};
+final int[] trainLabels = new int[] {0, 1, 1};
+```
 
     
 
@@ -194,9 +197,10 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
  - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`.
  - Note that both of the above settings may be set globally:
 
-        AbstractClusterer.DEF_VERBOSE = true;
-        AbstractClusterer.DEF_SCALE = true;
-
+```java
+AbstractClusterer.DEF_VERBOSE = true;
+AbstractClusterer.DEF_SCALE = true;
+```
 
 
 
