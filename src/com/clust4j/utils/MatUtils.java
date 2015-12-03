@@ -17,7 +17,14 @@ public class MatUtils {
 	
 	final static protected void checkDims(final double[][] a) {
 		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
-		VecUtils.checkDims(a[0]);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
 	}
 	
 	public static final double[][] add(final double[][] a, final double[][] b) {

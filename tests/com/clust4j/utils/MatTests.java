@@ -195,4 +195,9 @@ public class MatTests {
 		assertTrue(cube[1][0] == data[2][1]);
 		assertTrue(cube[1][1] == data[2][2]);
 	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMatCheck() {
+		MatUtils.checkDims(new double[5][]);
+	}
 }
