@@ -191,14 +191,11 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
         // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
         new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
 
-This can also be set globally:
-
-        AbstractClusterer.DEF_SCALE = true;
-
- - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`, or it can be set globally:
+ - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`.
+ - Note that both of the above settings may be set globally:
 
         AbstractClusterer.DEF_VERBOSE = true;
-
+        AbstractClusterer.DEF_SCALE = true;
 
 
 
