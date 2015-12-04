@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighbors.RunMode;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
@@ -39,6 +40,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 	
 	final private int minPts;
 	final private double eps;
+	final private boolean scale;
 	
 	
 	// Race conditions exist in retrieving either one of these...
@@ -155,6 +157,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 		
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
+		this.scale	= builder.scale;
 		
 		
 		// Error handle...
@@ -234,19 +237,26 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 			coreSamples = new boolean[m];
 			
 			
+			// Fit the nearest neighbor model...
+			final NearestNeighbors nnModel = new NearestNeighbors(data, 
+				new NearestNeighborsPlanner(RunMode.RADIUS)
+					.setRadius(eps)
+					.setDistanceMatrix(dist_mat)
+					.setScale(scale)
+					.setSeed(getSeed())
+					.setSep(getSeparabilityMetric())
+					.setVerbose(false)) // Don't want nested verbosity logging...
+				.fit();
+			final ArrayList<Integer>[] nearest = nnModel.getNearest();
+			
+			
+			
 			ArrayList<Integer> ptNeighbs;
 			ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
 			for(int i = 0; i < m; i++) {
 				// Each label inits to -1 as noise
 				labels[i] = NOISE_CLASS;
-				
-				try {
-					ptNeighbs = new NearestNeighbor(i, dist_mat).getNearestWithinRadius(eps);
-				} catch(DimensionMismatchException e) {
-					// Should not happen since i < m
-					if(verbose) error(e.getLocalizedMessage());
-					throw new InternalError(i+", "+m);
-				}
+				ptNeighbs = nearest[i];
 				
 				// Add neighborhood...
 				int pts;

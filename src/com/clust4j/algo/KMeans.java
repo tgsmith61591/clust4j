@@ -152,7 +152,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 				if(null == oldCost) { // First iteration
 					oldCost = newCost;
 				} else { // At least second iteration, can check delta
-					// Evaluate new SSE vs old SSE. If meets stopping criteria, break,
+					// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
 					// otherwise update new SSE and continue.
 					if( FastMath.abs(oldCost - newCost) < minChange ) {
 						if(verbose) {

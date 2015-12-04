@@ -337,15 +337,14 @@ public class MeanShift
 			for(int i = 0; i < unique.length; i++) unique[i] = true;
 			
 			
+			
 			// Iterate over sorted centers
 			int redundant_ct = 0;
-			NearestNeighbor model;
 			ArrayList<Integer> indcs;
 			final double[][] cent_dist_mat = ClustUtils.distanceUpperTriangMatrix(sorted_centers, getSeparabilityMetric());
 			for(int i = 0; i < sorted_centers.length; i++) {
 				if(unique[i]) {
-					model = new NearestNeighbor(i, cent_dist_mat);
-					indcs = model.getNearestWithinRadius(bandwidth);
+					indcs = NearestNeighbors.getNearestWithinRadius(bandwidth, cent_dist_mat, i);
 					
 					for(Integer id: indcs) {
 						unique[id] = false;

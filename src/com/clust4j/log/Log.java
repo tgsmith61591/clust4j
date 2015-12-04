@@ -31,14 +31,14 @@ public abstract class Log {
 			CUSTOM			{ @Override public String toString(){return "CUSTOM ";} },
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
 			
-			// Unneeded unless decide to implement divisive hierarchical clustering
+			// No longer any plans to implement divisive (DIANA) clustering
 			/*DIVISIVE		{ @Override public String toString(){return "DIVISVE";} },*/
 			
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			KNN 			{ @Override public String toString(){return "K-NN   ";} },
-			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },;
-			//SPECTRAL		{ @Override public String toString(){return "SPCTRAL";} };
+			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
+			NEAREST			{ @Override public String toString(){return "NEAREST";} };
 			
 			
 			boolean _enable;

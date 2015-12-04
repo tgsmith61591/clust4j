@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -10,8 +11,11 @@ import org.junit.Test;
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighbors.RunMode;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.VecUtils;
 
 public class ClustTests {
 	private static boolean print = false;
@@ -585,5 +589,38 @@ public class ClustTests {
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
 				.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void NNTest1() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.0,  1.0,  2.0,  3.0},
+			new double[] {1.0,  2.3,  2.0,  4.0},
+			new double[] {9.06, 12.6, 6.5,  9.0}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		
+		NearestNeighbors nn = new NearestNeighbors(mat, 
+			new NearestNeighborsPlanner()
+				.setVerbose(true)
+				.setK(1)).fit();
+		
+		ArrayList<Integer>[] ne = nn.getNearest();
+		assertTrue(ne[0].size() == 1);
+		assertTrue(ne[0].get(0) == 1);
+		
+		nn = new NearestNeighbors(mat, 
+			new NearestNeighborsPlanner(RunMode.RADIUS)
+				.setVerbose(true)
+				.setRadius(3d)).fit();
+		
+		ne = nn.getNearest();
+		assertTrue(ne[0].size() == 1);
+		assertTrue(ne[1].size() == 1);
+		assertTrue(ne[2].isEmpty());
+		
+		assertTrue( VecUtils.equalsExactly(nn.getNearestRecords(0)[0],train_array[1]) );
+		assertTrue( VecUtils.equalsExactly(nn.getNearestRecords(1)[0],train_array[0]) );
 	}
 }

@@ -130,8 +130,7 @@ public class KNN extends AbstractPartitionalClusterer implements SupervisedClass
 		
 		// Try nearest neighbor model
 		try {
-			sortedEntries = new NearestNeighbor(newRecord, data, getSeparabilityMetric())
-				.getSortedNearest();
+			sortedEntries = NearestNeighbors.getSortedNearest(data, getSeparabilityMetric(), newRecord);
 		} catch(DimensionMismatchException e) {
 			if(verbose) error(e.getLocalizedMessage());
 			throw new IllegalArgumentException("newRecord col dims don't match data dims", e);

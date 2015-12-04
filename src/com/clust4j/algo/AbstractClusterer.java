@@ -219,7 +219,11 @@ public abstract class AbstractClusterer implements Loggable {
 	public abstract String getName();
 	/** Get the associated Log tag for this model */
 	public abstract com.clust4j.log.Log.Tag.Algo getLoggerTag();
-	/** The the model */
+	/** 
+	 * Fit the model.
+	 * In order to coalesce with the milieu of clust4j,
+	 * the execution of this method should be synchronized on 'this'
+	 */
 	public abstract AbstractClusterer fit();
 	
 	
