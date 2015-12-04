@@ -18,11 +18,47 @@ import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 
+/**
+ * A generalized {@link AbstractClusterer} that fits the nearest neighbor
+ * records for each record in an {@link AbstractRealMatrix}. This algorithm can
+ * be run in two modes ({@link RunMode}):
+ * <p>
+ * <b>K_NEAREST</b>: will find the K nearest neighbors for each record in the matrix. In the
+ * case of <i>k</i> exceeding or equaling the number of rows in the data, <i>k</i> will
+ * be truncated to <i>m - 1</i>, where <i>m</i> is the number of records. Default = 5.
+ * 
+ * <p>
+ * <b>RADIUS</b>: will identify the records within a radius of each point. Note that the
+ * number of points will vary for each record; some may even result in zero neighbors. Default = 0.5.
+ * 
+ * <p>
+ * This algorithm is used extensively internally within various algorithms including {@link MeanShift},
+ * {@link DBSCAN}, and {@link KNN}.
+ * 
+ * @author Taylor G Smith
+ * @see {@link RunMode}
+ */
 public class NearestNeighbors extends AbstractClusterer {
 	
+	/**
+	 * The mode in which to run the {@link NearestNeighbors} algorithm:
+	 * <p>
+	 * <b>K_NEAREST</b>: will find the K nearest neighbors for each record in the matrix. In the
+	 * case of <i>k</i> exceeding or equaling the number of rows in the data, <i>k</i> will
+	 * be truncated to <i>m - 1</i>, where <i>m</i> is the number of records. Default = 5.
+	 * 
+	 * <p>
+	 * <b>RADIUS</b>: will identify the records within a radius of each point. Note that the
+	 * number of points will vary for each record; some may even result in zero neighbors. Default = 0.5.
+	 * 
+	 * @author Taylor G Smith
+	 */
 	public static enum RunMode {
-		K_NEAREST,				// Find K nearest neighbors
-		RADIUS					// Return the neighborhood points within a certain radius
+		/** Find K nearest neighbors*/
+		K_NEAREST,
+		
+		/** Return the neighborhood points within a certain radius -- can be zero */
+		RADIUS
 	}
 	
 	
@@ -51,17 +87,28 @@ public class NearestNeighbors extends AbstractClusterer {
 		super(data, planner);
 		
 		this.runmode = planner.runmode;
+		final boolean radius_run = runmode.equals(RunMode.RADIUS);
+		
 		this.k = FastMath.min(planner.k, (m = data.getRowDimension()) - 1);
-		if(k <= 0)
+		if(k <= 0 && !radius_run)
 			throw new IllegalArgumentException("k="+k);
 			
 		this.neighborhood = planner.neighborhood;
 		
 		if(verbose) {
 			meta("runmode="+runmode);
-			if(this.k != planner.k)
-				warn(planner.k + " is greater than the number of rows in data. reducing k to " + this.k);
+			meta(radius_run?("radius="+neighborhood):("k="+k));
+			
+			if(this.k != planner.k && !radius_run)
+				warn("provided k (" + planner.k + ") is greater than the number of "
+						+ "rows in data. reducing k to " + this.k + " (m - 1)");
 		}
+		
+		
+		// Check whether using similarity metric AND radius...
+		// Will throw a warning if so.
+		if(radius_run) AbstractDensityClusterer.checkState(this);
+		
 		
 		if(null == planner.dist_mat) {
 			if(verbose) info("computing distance matrix (" + m + "x" + m + ")");
@@ -155,11 +202,18 @@ public class NearestNeighbors extends AbstractClusterer {
 		return k;
 	}
 	
-	public double[][] getNearestRecords(final int row) {
+	/**
+	 * Return the rows that correspond to the nearest neighbor
+	 * indices identified in the {@link #fit()} method.
+	 * @param rowNumber
+	 * @throws ModelNotFitException if the model is not fit yet
+	 * @return the nearest records
+	 */
+	public double[][] getNearestRecords(final int rowNumber) {
 		ArrayList<Integer> closest = null;
 		
 		try {
-			closest = nearest[row];
+			closest = nearest[rowNumber];
 		} catch(NullPointerException e) {
 			throw new ModelNotFitException(e);
 		} catch(ArrayIndexOutOfBoundsException e) {
@@ -208,7 +262,7 @@ public class NearestNeighbors extends AbstractClusterer {
 			
 			final boolean knn = runmode.equals(RunMode.K_NEAREST);
 			if(verbose) info("identifying " + (knn ? 
-				(k+" nearest records for each point") : 
+				(k+" nearest record"+(k!=1?"s":"")+" for each point") : 
 					("neighborhoods for each record within radius="+neighborhood)));
 			
 			long start = System.currentTimeMillis();
@@ -244,6 +298,12 @@ public class NearestNeighbors extends AbstractClusterer {
 						}
 					}
 				}
+				
+				// Check how many weren't classified
+				int ct = 0;
+				for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
+				if(verbose && ct > 0) warn(ct + " record" + (ct!=1?"s have":" has") + 
+					" no records within radius=" + neighborhood);
 			}
 			
 			

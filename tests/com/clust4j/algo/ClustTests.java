@@ -609,6 +609,7 @@ public class ClustTests {
 		ArrayList<Integer>[] ne = nn.getNearest();
 		assertTrue(ne[0].size() == 1);
 		assertTrue(ne[0].get(0) == 1);
+		System.out.println();
 		
 		nn = new NearestNeighbors(mat, 
 			new NearestNeighborsPlanner(RunMode.RADIUS)
@@ -622,5 +623,32 @@ public class ClustTests {
 		
 		assertTrue( VecUtils.equalsExactly(nn.getNearestRecords(0)[0],train_array[1]) );
 		assertTrue( VecUtils.equalsExactly(nn.getNearestRecords(1)[0],train_array[0]) );
+	}
+	
+	@Test
+	public void NN_KNEAREST_LoadTest() {
+		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		
+		final int[] ks = new int[]{1, 5, 10};
+		for(int k: ks) {
+			new NearestNeighbors(mat, 
+				new NearestNeighborsPlanner()
+					.setVerbose(true)
+					.setK(k)).fit();
+		}
+	}
+	
+	@Test
+	public void NN_RADIUS_LoadTest() {
+		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		
+		final double[] radii = new double[]{0.5, 5.0, 10.0};
+		for(double radius: radii) {
+			new NearestNeighbors(mat, 
+				new NearestNeighborsPlanner(RunMode.RADIUS)
+					.setVerbose(true)
+					.setRadius(radius)).fit();
+			System.out.println();
+		}
 	}
 }

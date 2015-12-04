@@ -2,6 +2,7 @@ package com.clust4j.kernel;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -13,7 +14,10 @@ import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KNN;
+import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.KNN.KNNPlanner;
+import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighbors.RunMode;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
@@ -275,5 +279,62 @@ public class KernelTestCases {
 			.AffinityPropagationPlanner()
 				.setSep(new GaussianKernel())
 				.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void NNTest1() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.0,  1.0,  2.0,  3.0},
+			new double[] {1.0,  2.3,  2.0,  4.0},
+			new double[] {9.06, 12.6, 6.5,  9.0}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		
+		NearestNeighbors nn = new NearestNeighbors(mat, 
+			new NearestNeighborsPlanner()
+				.setVerbose(true)
+				.setSep(new GaussianKernel())
+				.setK(1)).fit();
+		
+		ArrayList<Integer>[] ne = nn.getNearest();
+		assertTrue(ne[0].size() == 1);
+		assertTrue(ne[0].get(0) == 1);
+		System.out.println();
+		
+		nn = new NearestNeighbors(mat, 
+			new NearestNeighborsPlanner(RunMode.RADIUS)
+				.setVerbose(true)
+				.setSep(new GaussianKernel())
+				.setRadius(3d)).fit();
+	}
+	
+	@Test
+	public void NN_KNEAREST_LoadTest() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(1500, 10);
+		
+		final int[] ks = new int[]{1, 5, 10};
+		for(int k: ks) {
+			new NearestNeighbors(mat, 
+				new NearestNeighborsPlanner()
+					.setVerbose(true)
+					.setSep(new GaussianKernel())
+					.setK(k)).fit();
+		}
+	}
+	
+	@Test
+	public void NN_RADIUS_LoadTest() {
+		final Array2DRowRealMatrix mat = ClustTests.getRandom(1500, 10);
+		
+		final double[] radii = new double[]{0.5, 5.0, 10.0};
+		for(double radius: radii) {
+			new NearestNeighbors(mat, 
+				new NearestNeighborsPlanner(RunMode.RADIUS)
+					.setVerbose(true)
+					.setSep(new GaussianKernel())
+					.setRadius(radius)).fit();
+			System.out.println();
+		}
 	}
 }
