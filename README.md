@@ -96,7 +96,7 @@ A number of separability metrics are available for use:
  - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
  - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
- - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1]](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)]
    
 
 
@@ -208,7 +208,7 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 ----
 
 ### Things to note:
- - The default `AbstractClusterer.BaseClustererPlanner.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
+ - The default ```{java}AbstractClusterer.BaseClustererPlanner.getScale()``` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
     ```java
     // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
