@@ -192,6 +192,10 @@ Various similarity metrics—kernel methods, in particular—allow the clusterin
 
 ![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_11b_notitle2.png)
 
+Whereas a distance metric in Euclidean space may struggle with oddly shaped clusters:
+
+![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_17b_notitle2.png)
+
 To initialize any clusterer with a kernel as the `GeometricallySeparable` metric (example uses `GaussianKernel`):
 
 ```java
