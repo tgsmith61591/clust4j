@@ -92,12 +92,13 @@ final int[] trainLabels = new int[] {0, 1, 1};
   - NearestNeighbors, a generalized clusterer that will fit the nearest points for each record in a matrix. This algorithm can be run in two modes: __DENSITY__ and __K_NEAREST__.
 
         ```java
-	// RunMode == K_NEAREST
-        NearestNeighbors nn = new NearestNeighbors(mat).fit(); // Default RunMode is K_NEAREST (k = 5)
-        ArrayList<Integer>[] results = nn.getNearest(); // results[i] holds the points (in sorted order for K_NEAREST)
-
-	nn = new NearestNeighbors(mat, new NearestNeighborsPlanner(RunMode.RADIUS)).fit(); // Default radius is 0.5
-	results = nn.getNearest(); // results[i] holds the points that are within the radius
+        // RunMode == K_NEAREST (default RunMode; k = 5)
+        NearestNeighbors nn = new NearestNeighbors(mat).fit();
+        ArrayList<Integer>[] results = nn.getNearest(); // results[i] holds the points in sorted order
+        
+        // RunMode == DENSITY (default radius = 0.5)
+        nn = new NearestNeighbors(mat, new NearestNeighborsPlanner(RunMode.RADIUS)).fit();
+        results = nn.getNearest(); // results[i] holds the points that are within the radius
         ```
 
 ----
