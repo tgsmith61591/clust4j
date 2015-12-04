@@ -188,11 +188,11 @@ Notice the differentiation between *similarity*-based and *distance*-based geome
 
 
 ###### When to use similarity metrics over distance metrics?
-Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space<sup>[4]</sup>, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
+Various similarity metrics—kernel methods, in particular—allow the clustering algorithm to segment the data in Hilbert Space<sup>[[4](http://www.cse.msu.edu/~cse902/S14/ppt/kernelClustering.pdf)]</sup>, which can—assuming the proper kernel is selected—allow the algorithm to identify "complex," or non-(hyper)spherically shaped clusters:
 
 ![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_11b_notitle2.png)
 
-Whereas a distance metric in Euclidean space may struggle with oddly shaped clusters:
+Whereas a distance metric in Euclidean space may struggle with oddly shaped clusters<sup>[[9](http://stats.stackexchange.com/questions/133656/how-to-understand-the-drawbacks-of-k-means)]</sup>:
 
 ![Image](http://www.ml.uni-saarland.de/code/pSpectralClustering/images/clusters_17b_notitle2.png)
 
@@ -236,3 +236,4 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
  6. [h2o](https://github.com/h2oai/h2o-2) (for log wrapper structure)
  7. [Divisive Clustering](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)
  8. [sklearn](https://github.com/scikit-learn/scikit-learn/tree/master/sklearn/cluster) clustering repository
+ 9. [The Drawbacks of k-Means](http://stats.stackexchange.com/questions/133656/how-to-understand-the-drawbacks-of-k-means)
