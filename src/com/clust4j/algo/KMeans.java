@@ -114,6 +114,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 			labels = new int[m];
 			
 			// Enclose in for loop to ensure completes in proper iterations
+			long iterStart = System.currentTimeMillis();
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				
@@ -156,8 +157,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 					// otherwise update new SSE and continue.
 					if( FastMath.abs(oldCost - newCost) < minChange ) {
 						if(verbose) {
-							info("training reached convergence at iteration "+ iter + 
-									"; Total system cost: " + cost);
+							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
+									LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
+							info("Total system cost: " + cost);
 							
 							info("model " + getKey() + " completed in " + 
 								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));

@@ -332,6 +332,7 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 			double[] Y2;	// vector of maxes post neg inf
 			double[] sum_e;
 			
+			long iterStart = System.currentTimeMillis();
 			for(iterCt = 0; iterCt < maxIter; iterCt++) {
 				if(verbose)
 					trace("beginning iteration " + (iterCt+1));
@@ -418,7 +419,9 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 					converged = maskCt == m;
 					
 					if((converged && numClusters > 0) || iterCt == maxIter) {
-						if(verbose) info("converged after " + (iterCt++) + " iteration"+(iterCt!=1?"s":""));
+						iterCt++;
+						if(verbose) info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
+							" (avg iteration time: " + LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
 						break;
 					}
 				} // End outer if

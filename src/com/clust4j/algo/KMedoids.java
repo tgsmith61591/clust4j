@@ -253,7 +253,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			}
 			
 
-			
+			long iterStart = System.currentTimeMillis();
 			for(iter = 0; iter < maxIter; iter++) {
 				// Use the PAM (partitioning around medoids) algorithm
 				// For each cluster in k...
@@ -315,8 +315,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					oldCost = FastMath.min(oldCost, min_cost);
 					
 					if(verbose) {
-						info("training reached convergence at iteration "+ (iter+1) + 
-								"; Total system cost: " + oldCost);
+						info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
+							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
+						info("Total system cost: " + oldCost);
 					
 						info("model " + getKey() + " completed in " + 
 								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
