@@ -1,5 +1,9 @@
 package com.clust4j.utils;
 
+/**
+ * An interface to be implemented by {@link AbstractAutonomousClusterer}<tt>s</tt> that converge
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
+ */
 public interface Convergeable {
 	/**
 	 * Returns whether the algorithm has converged yet.

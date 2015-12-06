@@ -1,5 +1,5 @@
 ## clust4j
-A Java-based set of clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
+A Java-based set of unsupervised clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
 
 ____
 ### Dependencies:
@@ -20,14 +20,6 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
     new double[] {3.65816,   0.29518,   2.123316},
     new double[] {4.1234,    0.2301,    1.8900002}
 });	
-
-/* Test data, where necessary */
-final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(new double[][] {
-    new double[] {0.01302,   0.0012,   0.06948},
-    new double[] {3.01837,   2.2293,   3.94812}
-});
-		
-final int[] trainLabels = new int[] {0, 1, 1};
 ```
 
     
@@ -35,13 +27,6 @@ final int[] trainLabels = new int[] {0, 1, 1};
 
 ### Currently implemented algorithms:
 - **Partitional algorithms**:
-  - [*k*-Nearest Neighbor](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm), a non-parametric, supervised clustering method used for classification. 
-
-        ```java
-        KNN knn = new KNN(mat, test, trainLabels, new KNN.KNNPlanner(k)).fit();
-        final int[] results = knn.getPredictedLabels(); // [0,1]
-        ```
-
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
         ```java

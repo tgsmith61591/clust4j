@@ -35,7 +35,7 @@ import com.clust4j.utils.ModelNotFitException;
  * This algorithm is used extensively internally within various algorithms including {@link MeanShift},
  * {@link DBSCAN}, and {@link KNN}.
  * 
- * @author Taylor G Smith
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  * @see {@link RunMode}
  */
 public class NearestNeighbors extends AbstractClusterer {
@@ -326,27 +326,6 @@ public class NearestNeighbors extends AbstractClusterer {
 			
 			int row = FastMath.min(i, record), col = FastMath.max(i, record);
 			rec_to_dist.put(row == record ? col : row, dist_mat[row][col]);
-		}
-		
-		// Sort treemap on value
-		// If the distance metric is a similarity metric, we want it DESC else ASC
-		return ClustUtils.sortEntriesByValue( rec_to_dist );
-	}
-	
-	
-	/**
-	 * For use with KNN -- doesn't take a distance matrix, calculates it on the fly
-	 * @return
-	 */
-	protected static SortedSet<Map.Entry<Integer, Double>> getSortedNearest(final AbstractRealMatrix data, 
-				final GeometricallySeparable dist, final double[] record) {
-		// TM container
-		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
-		
-		// Get map of distances to each record
-		for(int train_row = 0; train_row < data.getRowDimension(); train_row++) {
-			final double sim = dist.getDistance(record, data.getRow(train_row));
-			rec_to_dist.put(train_row, sim);
 		}
 		
 		// Sort treemap on value

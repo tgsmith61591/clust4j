@@ -15,7 +15,6 @@ import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.SelfSegmenting;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
@@ -29,10 +28,10 @@ import com.clust4j.utils.MatUtils.Axis;
  * set that are representative of clusters.
  * 
  * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/cluster/affinity_propagation_.py">sklearn</a>
- * @author Taylor G Smith, adapted from sklearn Python implementation
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn Python implementation
  *
  */
-public class AffinityPropagation extends AbstractClusterer implements Convergeable, Classifier, SelfSegmenting, CentroidLearner {
+public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, Classifier, CentroidLearner {
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
 	final public static int DEF_ITER_BREAK = 15;
 	final public static int DEF_MAX_ITER = 200;
@@ -334,9 +333,6 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 			
 			long iterStart = System.currentTimeMillis();
 			for(iterCt = 0; iterCt < maxIter; iterCt++) {
-				if(verbose)
-					trace("beginning iteration " + (iterCt+1));
-				
 				tmp = MatUtils.add(A, sim_mat);
 				
 				// Get indices of ROW max
@@ -411,7 +407,7 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 				if(iterCt >= iterBreak) {
 					sum_e = MatUtils.rowSums(e);
 					
-					// Create bool_mask
+					// masking
 					int maskCt = 0;
 					for(int i = 0; i < sum_e.length; i++)
 						maskCt += sum_e[i] == 0 || sum_e[i] == iterBreak ? 1 : 0;
@@ -425,8 +421,6 @@ public class AffinityPropagation extends AbstractClusterer implements Convergeab
 						break;
 					}
 				} // End outer if
-				
-				if(verbose) trace("iter " + (iterCt) + ": algorithm has not reached convergence");
 			} // End for
 
 			

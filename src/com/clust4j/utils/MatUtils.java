@@ -4,9 +4,12 @@ import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.util.Precision;
 
 public class MatUtils {
+	/** Size at which to use BlockRealMatrix for multiplication */
+	public final static int BLOCK_MAT_THRESH = 1000;
 	public final static double TINY = 2.2250738585072014e-308;
 	public final static double EPS = 2.2204460492503131e-16;
 	public final static int MIN_ACCEPTABLE_MAT_LEN = 1;
@@ -331,22 +334,11 @@ public class MatUtils {
 	}
 	
 	public static double[][] multiply(final double[][] a, final double[][] b) {
-		/*checkDims(a);
-		checkDims(b);
-		
-		final int m1=a.length, n1=a[0].length;
-		final int m2=b.length, n2=b[0].length;
-		
-		if(n1 != m2)
-			throw new DimensionMismatchException(n1, m2);
-		
-		final double[][] c = new double[m1][n2];
-		for(int i = 0; i < m1; i++)
-			for(int j = 0; j < n2; j++)
-				for(int k = 0; k < n1; k++)
-					c[i][j] += a[i][k] * b[k][j];
-		
-		return c;*/
+		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
+			final BlockRealMatrix aa = new BlockRealMatrix(a);
+			final BlockRealMatrix bb = new BlockRealMatrix(b);
+			return aa.multiply(bb).getData();
+		}
 		
 		final Array2DRowRealMatrix aa = new Array2DRowRealMatrix(a, false);
 		final Array2DRowRealMatrix bb = new Array2DRowRealMatrix(b, false);

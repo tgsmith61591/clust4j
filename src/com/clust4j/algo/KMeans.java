@@ -19,7 +19,7 @@ import com.clust4j.utils.GeometricallySeparable;
  * with the nearest mean, serving as a prototype of the cluster. This results in 
  * a partitioning of the data space into <a href="https://en.wikipedia.org/wiki/Voronoi_cell">Voronoi cells</a>.
  * 
- * @author Taylor G Smith
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public class KMeans extends AbstractKCentroidClusterer {
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;

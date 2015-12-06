@@ -276,56 +276,6 @@ public class ClustTests {
 		}
 	}
 	
-	
-	/* Test KNN with k = 1, 2 and 3; scale = true and false */
-	@Test
-	public void KNNTest1() {
-		final double[][] train_array = new double[][] {
-			new double[] {0.00504, 	 0.0001,    0.08172},
-			new double[] {3.65816,   2.9471,    3.12331},
-			new double[] {4.12344,   3.0001,    2.89002}
-		};
-		
-		final double[][] test_array = new double[][] {
-			new double[] {0.01302, 	 0.0012,    0.06948},
-			new double[] {3.01837,   2.2293,    3.94812}
-		};
-		
-		final int[] trainLabels = new int[] {0, 1, 1};
-		
-		final Array2DRowRealMatrix train = new Array2DRowRealMatrix(train_array);
-		final Array2DRowRealMatrix test  = new Array2DRowRealMatrix(test_array);
-		
-		final boolean[] scale = new boolean[] {false, true};
-		final int[] ks = new int[] {1,2};
-		
-		KNN knn = null;
-		for(boolean b : scale) {
-			for(int k : ks) {
-				knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(k).setScale(b).setVerbose(!b));
-				knn.fit();
-				
-				final int[] results = knn.getPredictedLabels();
-				assertTrue(results[0] == trainLabels[0]);
-				assertTrue(results[1] == trainLabels[1]);
-			}
-		}
-		
-		// Try with k = 3, labels will be 1 both ways:
-		for(boolean b : scale) {
-			// Only verbose if scaling just to avoid too many loggings from this one test
-			knn = new KNN(train, test, trainLabels, new KNN.KNNPlanner(3).setScale(b));
-			knn.fit();
-			
-			final int[] results = knn.getPredictedLabels();
-			assertTrue(results[0] == trainLabels[1]);
-			assertTrue(results[1] == trainLabels[1]);
-		}
-		
-
-		//knn.info("testing the KNN logger");
-	}
-	
 	@Test
 	public void KMeansLoadTest1() {
 		final Array2DRowRealMatrix mat = getRandom(10000, 10);
@@ -585,7 +535,7 @@ public class ClustTests {
 	
 	@Test
 	public void AffinityPropLoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(1000, 10);
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
 				.setVerbose(true)).fit();

@@ -13,7 +13,7 @@ import com.clust4j.algo.MeanShift;
  * @see {@link DBSCAN}
  * @see {@link MeanShift}
  */
-public interface NoiseyClusterer extends SelfSegmenting {
+public interface NoiseyClusterer {
 	/**
 	 * the number of points that were not classified as
 	 * belonging to any clusters.

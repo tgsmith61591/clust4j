@@ -20,7 +20,7 @@ import com.clust4j.utils.SingleLinkageAgglomerativeFactory;
  * at O(n<sup>2</sup>) computationally, yet it outperforms its cousin, Divisive Clustering 
  * (DIANA), which performs at O(2<sup>n</sup>).
  * 
- * @author Taylor G Smith
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  * 
  * @see com.clust4j.utils.SingleLinkageAgglomerativeFactory
  * @see com.clust4j.utils.HierarchicalClusterTree

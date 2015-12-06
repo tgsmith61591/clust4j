@@ -20,7 +20,7 @@ import com.clust4j.utils.VecUtils;
  * It also provides all the functionality for any BaseClustererPlanner classes,
  * data normalizing and logging.
  * 
- * @author Taylor G Smith
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
  */
 public abstract class AbstractClusterer implements Loggable {
@@ -56,7 +56,7 @@ public abstract class AbstractClusterer implements Loggable {
 	 * 
 	 * @author Taylor G Smith
 	 */
-	abstract protected static class BaseClustererPlanner {
+	abstract public static class BaseClustererPlanner {
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
 		abstract public Random getSeed();

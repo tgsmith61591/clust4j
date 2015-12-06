@@ -13,7 +13,6 @@ import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
@@ -22,7 +21,7 @@ import com.clust4j.utils.VecUtils;
 /**
  * <a href="https://en.wikipedia.org/wiki/DBSCAN">DBSCAN</a> (Density Based Spatial Clustering
  * for Applications with Noise) is a data clustering algorithm proposed by Martin Ester, 
- * Hans-Peter Kriegel, Jörg Sander and Xiaowei Xu in 1996. It is a density-based clustering 
+ * Hans-Peter Kriegel, Jorg Sander and Xiaowei Xu in 1996. It is a density-based clustering 
  * algorithm: given a set of points in some space, it groups together points that are 
  * closely packed together (points with many nearby neighbors), marking as outliers 
  * points that lie alone in low-density regions (whose nearest neighbors are too far away).
@@ -30,17 +29,16 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf">DBSCAN, 
  * A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise</a>
  * @see {@link AbstractDensityClusterer}
- * @author Taylor G Smith, adapted from sklearn implementation by Lars Buitinck
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn implementation by Lars Buitinck
  *
  */
-public class DBSCAN extends AbstractDensityClusterer implements Classifier, NoiseyClusterer {
+public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer {
 	final public static double DEF_EPS = 0.5;
 	final public static int DEF_MIN_PTS = 5;
 	final public static int NOISE_CLASS = -1;
 	
 	final private int minPts;
 	final private double eps;
-	final private boolean scale;
 	
 	
 	// Race conditions exist in retrieving either one of these...
@@ -157,7 +155,6 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 		
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
-		this.scale	= builder.scale;
 		
 		
 		// Error handle...
@@ -242,7 +239,7 @@ public class DBSCAN extends AbstractDensityClusterer implements Classifier, Nois
 				new NearestNeighborsPlanner(RunMode.RADIUS)
 					.setRadius(eps)
 					.setDistanceMatrix(dist_mat)
-					.setScale(scale)
+					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 					.setSeed(getSeed())
 					.setSep(getSeparabilityMetric())
 					.setVerbose(false)) // Don't want nested verbosity logging...

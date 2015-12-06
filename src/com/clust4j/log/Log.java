@@ -36,7 +36,6 @@ public abstract class Log {
 			
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
-			KNN 			{ @Override public String toString(){return "K-NN   ";} },
 			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
 			NEAREST			{ @Override public String toString(){return "NEAREST";} };
 			

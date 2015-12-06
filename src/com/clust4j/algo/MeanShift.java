@@ -14,7 +14,6 @@ import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.CentroidLearner;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Convergeable;
@@ -34,11 +33,11 @@ import com.clust4j.utils.VecUtils;
  * distance to the current estimate is used.
  * 
  * @see <a href="https://en.wikipedia.org/wiki/Mean_shift">Mean shift on Wikipedia</a>
- * @author Taylor G Smith, adapted from <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/cluster/mean_shift_.py">sklearn implementation</a>
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/cluster/mean_shift_.py">sklearn implementation</a>
  */
 public class MeanShift 
 		extends AbstractDensityClusterer 
-		implements CentroidLearner, Classifier, Convergeable, NoiseyClusterer {
+		implements CentroidLearner, Convergeable, NoiseyClusterer {
 	final public static int DEF_MAX_ITER = 300;
 	final public static double DEF_MIN_CHANGE = 0d;
 	final public static int DEF_MIN_BIN_FREQ = 1;

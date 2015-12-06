@@ -28,7 +28,7 @@ import com.clust4j.utils.Distance;
  * 1987 for the work with Manhattan distance (l1 norm) and other distances.
  * 
  * @see {@link AbstractPartitionalClusterer}
- * @author Taylor G Smith
+ * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public class KMedoids extends AbstractKCentroidClusterer {
 	
