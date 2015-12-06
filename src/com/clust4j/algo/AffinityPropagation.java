@@ -292,7 +292,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			// matrix, R, and the availability matrix, A
 			double[][] A = new double[m][m];
 			double[][] R = new double[m][m];
-			double[][] tmp; // Intermediate staging...
+			double[][] tmp = new double[m][m]; // Intermediate staging...
 			
 			
 			if(addNoise) {
@@ -325,7 +325,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			
 			// Begin here
-			int[] I = null;
+			int[] I = new int[m];
 			double[][] e = new double[m][iterBreak];
 			double[] Y;		// vector of arg maxes
 			double[] Y2;	// vector of maxes post neg inf
@@ -333,14 +333,33 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			long iterStart = System.currentTimeMillis();
 			for(iterCt = 0; iterCt < maxIter; iterCt++) {
-				tmp = MatUtils.add(A, sim_mat);
 				
-				// Get indices of ROW max
-				I = MatUtils.argMax(tmp, Axis.ROW);
-				
-				// Vector of arg maxes
+				// Reassign tmp, create vector of arg maxes. Can
+				// assign tmp like this:
+				//
+				//		tmp = MatUtils.add(A, sim_mat);
+				//
+				//
+				// But requires extra M x M pass. Also get indices of ROW max. 
+				// Can do like this:
+				//
+				//		I = MatUtils.argMax(tmp, Axis.ROW);
+				//
+				// But requires extra pass on order of M
 				Y = new double[m];
 				for(int i = 0; i < m; i++) {
+					double runningMax = VecUtils.SAFE_MIN;
+					int runningMaxIdx = -1;			// Idx of max row element
+					for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
+						tmp[i][j] = A[i][j] + sim_mat[i][j];
+						
+						if(tmp[i][j] > runningMax) {
+							runningMax = tmp[i][j];
+							runningMaxIdx = j;
+						}
+					}
+					
+					I[i] = runningMaxIdx;			// Idx of max element for row
 					Y[i] = tmp[i][I[i]]; // Grab the current val
 					tmp[i][I[i]] = Double.NEGATIVE_INFINITY; // Set that idx to neg inf now
 				}
@@ -348,8 +367,6 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				// Get new max vector
 				Y2 = MatUtils.max(tmp, Axis.ROW);
-				//double[][] YM = MatUtils.fromVector(Y, m, Axis.ROW);
-				//tmp = MatUtils.subtract(sim_mat, YM);
 				tmp = MatUtils.scalarSubtract(sim_mat, Y, Axis.ROW);
 				
 				int ind = 0;
@@ -357,28 +374,47 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					tmp[ind][j] = sim_mat[ind][j] - Y2[ind++];
 				
 				
-				// Damping
-				tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
-				R	= MatUtils.scalarMultiply(R, damping);
-				R	= MatUtils.add(R, tmp);
 				
-				
-				// Compute availability -- start by setting anything less than 0 to 0 in tmp:
+				// First damping ====================================
+				// This can be done like this (which is more readable):
+				//
+				//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
+				//		R	= MatUtils.scalarMultiply(R, damping);
+				//		R	= MatUtils.add(R, tmp);
+				//
+				// But it requires two extra MXM passes, which can be costly...
+				// We know R & tmp are both m X m, so we can combine the 
+				// three steps all together...
 				for(int i = 0; i < m; i++) {
-					for(int j = 0; j < m; j++)
-						tmp[i][j] = FastMath.max(R[i][j], 0);
-					tmp[i][i] = R[i][i]; // Set diagonal elements in tmp equal to those in R
+					for(int j = 0; j < m; j++) {
+						tmp[i][j] *= (1 - damping);
+						R[i][j] = (R[i][j] * damping) + tmp[i][j];
+					}
 				}
 				
 				
-				// Get column sums, transform to matrix, subtract from tmp
-				//final double[][] colSumsMat = MatUtils.fromVector(MatUtils.colSums(tmp), m, Axis.COL);
-				//tmp = MatUtils.subtract(tmp, colSumsMat);
-				tmp = MatUtils.scalarSubtract(tmp, MatUtils.colSums(tmp), Axis.COL);
-				
-				// Set any negative values to zero but keep diagonal at original
+				// Compute availability -- start by setting anything less than 0 to 0 in tmp:
+				// Also calc column sums in same pass...
+				final double[] columnSums = new double[m];
 				for(int i = 0; i < m; i++) {
 					for(int j = 0; j < m; j++) {
+						tmp[i][j] = FastMath.max(R[i][j], 0);
+						if(i != j) // Because we set diag after this outside j loop
+							columnSums[j] += tmp[i][j];
+					}
+					
+					tmp[i][i] = R[i][i]; // Set diagonal elements in tmp equal to those in R
+					columnSums[i] += tmp[i][i];
+				}
+				
+				
+				// Set any negative values to zero but keep diagonal at original
+				// Originally ran this way, but costs an extra M x M operation:
+				// tmp = MatUtils.scalarSubtract(tmp, colSums, Axis.COL);
+				for(int i = 0; i < m; i++) {
+					for(int j = 0; j < m; j++) {
+						tmp[i][j] -= columnSums[j];
+						
 						if(i == j)
 							continue;
 						else if(tmp[i][j] < 0)
@@ -387,18 +423,40 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				}
 				
 				
-				// More damping
-				tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
-				A	= MatUtils.scalarMultiply(A, damping);
-				A	= MatUtils.subtract(A, tmp);
 				
+				// More damping ====================================
+				// This can be done like this (which is more readable):
+				//
+				//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
+				//		A	= MatUtils.scalarMultiply(A, damping);
+				//		A	= MatUtils.subtract(A, tmp);
+				//
+				// But it requires two extra MXM passes, which can be costly...
+				// We know A & tmp are both m X m, so we can combine the 
+				// three steps all together...
 				
-				// Check convergence criteria ----------------------
-				final double[] diagA = MatUtils.diagFromSquare(A);
-				final double[] diagR = MatUtils.diagFromSquare(R);
-				final double[] mask = new double[diagA.length];
-				for(int i = 0; i < mask.length; i++)
-					mask[i] = diagA[i] + diagR[i] > 0 ? 1d : 0d;
+				// ALSO CHECK CONVERGENCE CRITERIA
+				
+				// Check convergence criteria =====================
+				// This can be done like this for readability:
+				//
+				//		final double[] diagA = MatUtils.diagFromSquare(A);
+				//		final double[] diagR = MatUtils.diagFromSquare(R);
+				//		final double[] mask = new double[diagA.length];
+				//		for(int i = 0; i < mask.length; i++)
+				//			mask[i] = diagA[i] + diagR[i] > 0 ? 1d : 0d;
+
+				final double[] mask = new double[m];
+				for(int i = 0; i < m; i++) {
+					for(int j = 0; j < m; j++) {
+						tmp[i][j] *= (1 - damping);
+						A[i][j] = (A[i][j] * damping) - tmp[i][j];
+					}
+					
+					mask[i] = A[i][i] + R[i][i] > 0 ? 1d : 0d;
+				}
+					
+					
 					
 				// Set the mask in `e`
 				MatUtils.setColumnInPlace(e, iterCt % iterBreak, mask);
