@@ -530,6 +530,9 @@ public class ClustTests {
 					assertTrue(labels[2] == labels[3]);
 					if(bool) assertTrue(a.getNumberOfIdentifiedClusters() == 3);
 					assertTrue(a.didConverge());
+					assertTrue(labels[0] == 0);
+					assertTrue(labels[2] == 1);
+					assertTrue(labels[4] == 2);
 		}
 	}
 	

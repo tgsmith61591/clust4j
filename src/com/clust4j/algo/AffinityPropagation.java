@@ -345,36 +345,35 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				//
 				//		I = MatUtils.argMax(tmp, Axis.ROW);
 				//
-				// But requires extra pass on order of M
+				// But requires extra pass on order of M. Finally, capture the second
+				// highest record in each row, and store in a vector. Then row-wise
+				// scalar subtract Y from the sim_mat
 				Y = new double[m];
+				Y2 = new double[m]; // Second max for each row
 				for(int i = 0; i < m; i++) {
 					double runningMax = VecUtils.SAFE_MIN;
+					double secondMax = VecUtils.SAFE_MIN;
 					int runningMaxIdx = -1;			// Idx of max row element
 					for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
 						tmp[i][j] = A[i][j] + sim_mat[i][j];
 						
 						if(tmp[i][j] > runningMax) {
+							secondMax = runningMax;
 							runningMax = tmp[i][j];
 							runningMaxIdx = j;
+						} else if(tmp[i][j] > secondMax) {
+							secondMax = tmp[i][j];
 						}
 					}
 					
 					I[i] = runningMaxIdx;			// Idx of max element for row
 					Y[i] = tmp[i][I[i]]; // Grab the current val
+					Y2[i] = secondMax;
 					tmp[i][I[i]] = Double.NEGATIVE_INFINITY; // Set that idx to neg inf now
 				}
 				
 				
-				// Get new max vector
-				Y2 = MatUtils.max(tmp, Axis.ROW);
-				tmp = MatUtils.scalarSubtract(sim_mat, Y, Axis.ROW);
-				
-				int ind = 0;
-				for(int j: I) 
-					tmp[ind][j] = sim_mat[ind][j] - Y2[ind++];
-				
-				
-				
+				// Second i thru m loop, get new max vector and then first damping.
 				// First damping ====================================
 				// This can be done like this (which is more readable):
 				//
@@ -385,18 +384,22 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				// But it requires two extra MXM passes, which can be costly...
 				// We know R & tmp are both m X m, so we can combine the 
 				// three steps all together...
+				// Finally, compute availability -- start by setting anything 
+				// less than 0 to 0 in tmp. Also calc column sums in same pass...
+				int ind = 0;
+				final double[] columnSums = new double[m];
 				for(int i = 0; i < m; i++) {
+					// Get new max vector
+					for(int j = 0; j < m; j++) tmp[i][j] = sim_mat[i][j] - Y[i];
+					tmp[ind][I[i]] = sim_mat[ind][I[i]] - Y2[ind++];
+					
+					// Perform damping
 					for(int j = 0; j < m; j++) {
 						tmp[i][j] *= (1 - damping);
 						R[i][j] = (R[i][j] * damping) + tmp[i][j];
 					}
-				}
-				
-				
-				// Compute availability -- start by setting anything less than 0 to 0 in tmp:
-				// Also calc column sums in same pass...
-				final double[] columnSums = new double[m];
-				for(int i = 0; i < m; i++) {
+					
+					// Piecewise calculate column sums
 					for(int j = 0; j < m; j++) {
 						tmp[i][j] = FastMath.max(R[i][j], 0);
 						if(i != j) // Because we set diag after this outside j loop
@@ -411,19 +414,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				// Set any negative values to zero but keep diagonal at original
 				// Originally ran this way, but costs an extra M x M operation:
 				// tmp = MatUtils.scalarSubtract(tmp, colSums, Axis.COL);
-				for(int i = 0; i < m; i++) {
-					for(int j = 0; j < m; j++) {
-						tmp[i][j] -= columnSums[j];
-						
-						if(i == j)
-							continue;
-						else if(tmp[i][j] < 0)
-							tmp[i][j] = 0;
-					}
-				}
-				
-				
-				
+				// Finally, more damping...
 				// More damping ====================================
 				// This can be done like this (which is more readable):
 				//
@@ -445,10 +436,14 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				//		final double[] mask = new double[diagA.length];
 				//		for(int i = 0; i < mask.length; i++)
 				//			mask[i] = diagA[i] + diagR[i] > 0 ? 1d : 0d;
-
 				final double[] mask = new double[m];
 				for(int i = 0; i < m; i++) {
 					for(int j = 0; j < m; j++) {
+						tmp[i][j] -= columnSums[j];
+						
+						if(tmp[i][j] < 0 && i != j) // Don't set diag to 0
+							tmp[i][j] = 0;
+						
 						tmp[i][j] *= (1 - damping);
 						A[i][j] = (A[i][j] * damping) - tmp[i][j];
 					}
