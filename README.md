@@ -1,5 +1,5 @@
 ## clust4j
-A Java-based set of unsupervised clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
+A Java-based set of __unsupervised__ clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
 
 ____
 ### Dependencies:

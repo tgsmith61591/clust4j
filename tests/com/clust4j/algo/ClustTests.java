@@ -535,7 +535,7 @@ public class ClustTests {
 	
 	@Test
 	public void AffinityPropLoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(1500, 10);
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
 				.setVerbose(true)).fit();

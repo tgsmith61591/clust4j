@@ -348,8 +348,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				// Get new max vector
 				Y2 = MatUtils.max(tmp, Axis.ROW);
-				double[][] YM = MatUtils.fromVector(Y, m, Axis.ROW);
-				tmp = MatUtils.subtract(sim_mat, YM);
+				//double[][] YM = MatUtils.fromVector(Y, m, Axis.ROW);
+				//tmp = MatUtils.subtract(sim_mat, YM);
+				tmp = MatUtils.scalarSubtract(sim_mat, Y, Axis.ROW);
 				
 				int ind = 0;
 				for(int j: I) 
@@ -371,8 +372,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				
 				// Get column sums, transform to matrix, subtract from tmp
-				final double[][] colSumsMat = MatUtils.fromVector(MatUtils.colSums(tmp),m,Axis.COL);
-				tmp = MatUtils.subtract(tmp, colSumsMat);
+				//final double[][] colSumsMat = MatUtils.fromVector(MatUtils.colSums(tmp), m, Axis.COL);
+				//tmp = MatUtils.subtract(tmp, colSumsMat);
+				tmp = MatUtils.scalarSubtract(tmp, MatUtils.colSums(tmp), Axis.COL);
 				
 				// Set any negative values to zero but keep diagonal at original
 				for(int i = 0; i < m; i++) {
@@ -404,7 +406,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				// Get k
 				numClusters = (int)VecUtils.sum(mask);
 
-				if(iterCt >= iterBreak) {
+				if(iterCt >= iterBreak) { // Time to check convergence criteria...
 					sum_e = MatUtils.rowSums(e);
 					
 					// masking
@@ -419,7 +421,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						if(verbose) info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
 							" (avg iteration time: " + LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
 						break;
-					}
+					} // Else did not converge...
 				} // End outer if
 			} // End for
 

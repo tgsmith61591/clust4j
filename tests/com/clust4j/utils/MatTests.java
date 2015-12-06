@@ -200,4 +200,50 @@ public class MatTests {
 	public void testMatCheck() {
 		MatUtils.checkDims(new double[5][]);
 	}
+	
+	public void testMatVecScalarOperations() {
+		final double[][] data = new double[][] {
+			new double[] {0.000, 	 0.000,     0.000},
+			new double[] {1.000,     1.000,     1.000},
+			new double[] {3.000,     3.000,     3.000}
+		};
+		
+		final double[] operator = new double[]{1,2,3};
+		
+		
+		// Addition
+		double[][] addedRowWise = MatUtils.scalarAdd(data, operator, Axis.ROW);
+		assertTrue(MatUtils.equalsExactly(addedRowWise, new double[][]{
+			new double[] {1.000, 	 1.000,     1.000},
+			new double[] {3.000,     3.000,     3.000},
+			new double[] {6.000,     6.000,     6.000}
+		}));
+		
+		double[][] addedColWise = MatUtils.scalarAdd(data, operator, Axis.COL);
+		assertTrue(MatUtils.equalsExactly(addedColWise, new double[][]{
+			new double[] {1.000, 	 2.000,     3.000},
+			new double[] {2.000,     3.000,     4.000},
+			new double[] {4.000,     5.000,     6.000}
+		}));
+		
+		
+		// Subtraction
+		double[][] subRowWise = MatUtils.scalarSubtract(data, operator, Axis.ROW);
+		assertTrue(MatUtils.equalsExactly(subRowWise, new double[][]{
+			new double[] {-1.000, 	 -1.000,     -1.000},
+			new double[] {-1.000, 	 -1.000,     -1.000},
+			new double[] { 0.000,     0.000,      0.000}
+		}));
+		
+		double[][] subColWise = MatUtils.scalarSubtract(data, operator, Axis.COL);
+		assertTrue(MatUtils.equalsExactly(subColWise, new double[][]{
+			new double[] {-1.000, 	 -2.000,    -3.000},
+			new double[] { 0.000,    -1.000,    -2.000},
+			new double[] { 2.000,     1.000,     0.000}
+		}));
+		
+
+		double[][] YM = MatUtils.fromVector(operator, 3, Axis.ROW);
+		assertTrue(MatUtils.equalsExactly(subRowWise, MatUtils.subtract(data, YM)));
+	}
 }

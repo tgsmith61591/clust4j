@@ -18,6 +18,10 @@ public class MatUtils {
 		ROW, COL
 	}
 	
+	static enum Operator {
+		ADD, DIV, MULT, SUB
+	}
+	
 	final static protected void checkDims(final double[][] a) {
 		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
 		
@@ -387,56 +391,119 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Scalar add a vector axis-wise to a matrix
+	 * @param data
+	 * @param vector
+	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @return the scalar-operated matrix
+	 */
+	public static double[][] scalarAdd(final double[][] data, final double[] vector, final Axis axis) {
+		return scalarOperate(data, vector, axis, Operator.ADD);
+	}
+	
 	public static double[][] scalarAdd(final double[][] data, final double scalar) {
-		checkDims(data);
-		
-		final double[][] copy = copyMatrix(data);
-		final int m=copy.length, n=copy[0].length;
-		
-		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
-				copy[i][j] += scalar;
-		
-		return copy;
+		return scalarOperate(data, scalar, Operator.ADD);
+	}
+	
+	/**
+	 * Scalar divide a vector axis-wise to a matrix
+	 * @param data
+	 * @param vector
+	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @return the scalar-operated matrix
+	 */
+	public static double[][] scalarDivide(final double[][] data, final double[] vector, final Axis axis) {
+		return scalarOperate(data, vector, axis, Operator.DIV);
 	}
 	
 	public static double[][] scalarDivide(final double[][] data, final double scalar) {
-		checkDims(data);
-		
-		final double[][] copy = copyMatrix(data);
-		final int m=copy.length, n=copy[0].length;
-		
-		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
-				copy[i][j] /= scalar;
-		
-		return copy;
+		return scalarOperate(data, scalar, Operator.DIV);
+	}
+	
+	/**
+	 * Scalar multiply a vector axis-wise to a matrix
+	 * @param data
+	 * @param vector
+	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @return the scalar-operated matrix
+	 */
+	public static double[][] scalarMultiply(final double[][] data, final double[] vector, final Axis axis) {
+		return scalarOperate(data, vector, axis, Operator.MULT);
 	}
 	
 	public static double[][] scalarMultiply(final double[][] data, final double scalar) {
+		return scalarOperate(data, scalar, Operator.MULT);
+	}
+	
+	private static double[][] scalarOperate(final double[][] data, final double[] vector, final Axis axis, Operator op) {
 		checkDims(data);
 		
-		final double[][] copy = copyMatrix(data);
-		final int m=copy.length, n=copy[0].length;
+		final int m = data.length, n = data[0].length;
+		
+		final double[][] out = new double[m][n];
+		final boolean row = axis.equals(Axis.ROW);
+		if(row) {
+			if(vector.length != m)
+				throw new DimensionMismatchException(vector.length, m);
+			
+			for(int i = 0; i < m; i++) {
+				for(int j = 0; j < n; j++) {
+					double scalar = vector[i];
+					out[i][j] = op.equals(Operator.ADD) ? data[i][j] + scalar :
+						op.equals(Operator.DIV) ? data[i][j] / scalar :
+							op.equals(Operator.MULT) ? data[i][j] * scalar :
+								data[i][j] - scalar;
+				}
+			}
+		} else {
+			if(vector.length != n)
+				throw new DimensionMismatchException(vector.length, n);
+			
+			for(int i = 0; i < m; i++) {
+				for(int j = 0; j < n; j++) {
+					double scalar = vector[j];
+					out[i][j] = op.equals(Operator.ADD) ? data[i][j] + scalar :
+						op.equals(Operator.DIV) ? data[i][j] / scalar :
+							op.equals(Operator.MULT) ? data[i][j] * scalar :
+								data[i][j] - scalar;
+				}
+			}
+		}
+		
+		return out;
+	}
+	
+	private static double[][] scalarOperate(final double[][] data, final double scalar, final Operator op) {
+		checkDims(data);
+		
+		final int m=data.length, n=data[0].length;
+		final double[][] copy = new double[m][n];
 		
 		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
-				copy[i][j] *= scalar;
+			for(int j = 0; j < n; j++) {
+				copy[i][j] = op.equals(Operator.ADD) ? data[i][j] + scalar :
+								op.equals(Operator.DIV) ? data[i][j] / scalar :
+									op.equals(Operator.MULT) ? data[i][j] * scalar :
+										data[i][j] - scalar;
+			}
 		
 		return copy;
 	}
 	
 	public static double[][] scalarSubtract(final double[][] data, final double scalar) {
-		checkDims(data);
-		
-		final double[][] copy = copyMatrix(data);
-		final int m=copy.length, n=copy[0].length;
-		
-		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
-				copy[i][j] -= scalar;
-		
-		return copy;
+		return scalarOperate(data, scalar, Operator.SUB);
+	}
+	
+	/**
+	 * Scalar subtract a vector axis-wise from a matrix
+	 * @param data
+	 * @param vector
+	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @return the scalar-operated matrix
+	 */
+	public static double[][] scalarSubtract(final double[][] data, final double[] vector, final Axis axis) {
+		return scalarOperate(data, vector, axis, Operator.SUB);
 	}
 	
 	public static void setColumnInPlace(final double[][] a, final int idx, final double[] v) {
