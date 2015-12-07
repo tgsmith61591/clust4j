@@ -15,6 +15,7 @@ import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
@@ -78,6 +79,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	/** Holds centroid indices */
 	private volatile ArrayList<Integer> centroidIndices = null;
+	
+	/** Holds the availability matrix */
+	volatile private double[][] cachedA;
+	
+	/** Holds the responsibility matrix */
+	volatile private double[][] cachedR;
 	
 	
 	
@@ -214,6 +221,22 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	@Override
 	public boolean didConverge() {
 		return converged;
+	}
+	
+	public double[][] getAvailabilityMatrix() {
+		try {
+			return MatUtils.copyMatrix(cachedA);
+		} catch(NullPointerException npe) {
+			throw new ModelNotFitException("model is not fit", npe);
+		}
+	}
+	
+	public double[][] getResponsibilityMatrix() {
+		try {
+			return MatUtils.copyMatrix(cachedR);
+		} catch(NullPointerException npe) {
+			throw new ModelNotFitException("model is not fit", npe);
+		}
 	}
 
 	@Override
@@ -608,6 +631,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			// Clean up
 			sim_mat = null;
+			
+			// Since cachedA/R are volatile, it's more expensive to make potentially hundreds(+)
+			// of writes to a volatile class member. To save this time, reassign A/R only once.
+			cachedA = A;
+			cachedR = R;
+			
 			return this;
 			
 		} // End synch
