@@ -393,14 +393,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					for(int j = 0; j < m; j++) tmp[i][j] = sim_mat[i][j] - Y[i];
 					tmp[ind][I[i]] = sim_mat[ind][I[i]] - Y2[ind++];
 					
-					// Perform damping
+					// Perform damping, then piecewise 
+					// calculate column sums
 					for(int j = 0; j < m; j++) {
 						tmp[i][j] *= (1 - damping);
 						R[i][j] = (R[i][j] * damping) + tmp[i][j];
-					}
-					
-					// Piecewise calculate column sums
-					for(int j = 0; j < m; j++) {
+
 						tmp[i][j] = FastMath.max(R[i][j], 0);
 						if(i != j) // Because we set diag after this outside j loop
 							columnSums[j] += tmp[i][j];
