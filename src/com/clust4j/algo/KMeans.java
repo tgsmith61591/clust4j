@@ -181,7 +181,6 @@ public class KMeans extends AbstractKCentroidClusterer {
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
 			
-			// If the SSE delta never converges, still need to set isTrained to true
 			return this;
 		} // End synchronized
 		
