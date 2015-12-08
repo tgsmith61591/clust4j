@@ -39,6 +39,7 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 		super(data, planner);
 		
 		if(verbose) info("Linkage="+linkage);
+		if(verbose) warn(getName()+" clustering has a runtime of O(N^2)");
 	}
 
 	@Override

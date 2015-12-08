@@ -146,7 +146,7 @@ public class SingleLinkageAgglomerativeFactory {
 			mergedClusterIndices = new EntryPair<Integer, Integer>(clusterNumbers.get(a), clusterNumbers.get(b));
 			clusterMap.put(currentCluster, mergedClusterIndices);
 			
-			if(verbose) clusterer.trace("merging clusters " + i + " & " + j + ", computing updated distance matrix (m="+m+")");
+			if(verbose) clusterer.info("merging clusters " + i + " & " + j + "; computing updated distance matrix (new m="+m+")");
 			
 			// Must remove `j` first to avoid left shift
 			clusters.remove(j);
@@ -161,7 +161,7 @@ public class SingleLinkageAgglomerativeFactory {
 			// Now remove i,j from dist matrix... rows AND cols
 			newM = m - 1;
 			newDataRef = new double[newM][newM];
-			int row=0; int col=0;
+			int row=0, col=0;
 			for(int k = 0; k < m; k++) {
 				if(k == i || k == j)
 					continue;
@@ -212,15 +212,8 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		//final int n = a.get(0).length;
 		final Cluster[] car = new Cluster[]{a, b};
-		
-		for(Cluster cl: car) {
-			/*for(double[] d: cl) {
-				double[] copy = new double[n];
-				System.arraycopy(d, 0, copy, 0, n);
-				merge.add(copy);
-			}*/
-			merge.addAll(cl);
-		}
+		for(Cluster cl: car)
+			merge.merge(cl);
 		
 		return merge;
 	}

@@ -4,7 +4,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.apache.commons.math3.exception.DimensionMismatchException;
+
 import com.clust4j.utils.Distance;
+import com.clust4j.utils.HaversineDistance.DistanceUnit;
 import com.clust4j.utils.MinkowskiDistance;
 
 public class TestDistanceEnums {
@@ -71,5 +73,26 @@ public class TestDistanceEnums {
 		final double[] b = new double[] {3d, 4d, Double.NaN};
 		assertTrue( Double.isNaN(Distance.MANHATTAN.getDistance(a, b)) );
 		assertTrue( Double.isNaN(Distance.EUCLIDEAN.getDistance(a, b)) );
+	}
+	
+	@Test
+	public void testHaversine1() {
+		final double[] a = new double[]{47.6788206, -122.3271205};
+		final double[] b = new double[]{47.6788206, -122.5271205};
+		
+		HaversineDistance km = new HaversineDistance(DistanceUnit.KM);
+		assertTrue(km.getDistance(a, b) == 14.97319048158622);
+		
+		HaversineDistance mi = new HaversineDistance();
+		assertTrue(mi.getDistance(a, b) == 9.304482988008138);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testHaversineFail() {
+		final double[] a = new double[]{47.6788206, -122.3271205, 0d};
+		final double[] b = new double[]{47.6788206, -122.5271205, 1d};
+		
+		HaversineDistance km = new HaversineDistance(DistanceUnit.KM);
+		km.getDistance(a, b);
 	}
 }
