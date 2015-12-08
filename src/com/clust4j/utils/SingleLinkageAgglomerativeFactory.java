@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.AgglomerativeClusterer;
+import com.clust4j.log.LogTimeFormatter;
 
 public class SingleLinkageAgglomerativeFactory {
 	public static HierarchicalClusterTree build(final double[][] data, final GeometricallySeparable dist, final AgglomerativeClusterer clusterer) {
@@ -64,6 +65,8 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		
 		int m = data.length;
+		final int m_cache = m;
+		
 		int currentCluster = (2 * m) - 1; // There will always be 2M-1 clusters at the end
 		if(m < 1) {
 			String e = "empty data";
@@ -128,6 +131,8 @@ public class SingleLinkageAgglomerativeFactory {
 		int i, j, newM;
 		double[] centroid;
 		double[][] newDataRef;
+		
+		long start = System.currentTimeMillis();
 		while(m > 1) {
 			
 			// Find the row/col indices that get merged next
@@ -188,6 +193,14 @@ public class SingleLinkageAgglomerativeFactory {
 		// Force GC to free up some space overhead
 		clusters = null;
 		newDataRef = null;
+		
+		
+		if(verbose) {
+			clusterer.info("cluster merges completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+			clusterer.info("avg merge iteration time: " + 
+				LogTimeFormatter.millis((long) ((long)(System.currentTimeMillis()-start)/(double)m_cache),false) );
+		}
 		
 		
 		return new HierarchicalClusterTree(clusterMap, data, clusterer);

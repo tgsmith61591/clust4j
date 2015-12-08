@@ -507,12 +507,15 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			// sklearn line: I = np.where(np.diag(A + R) > 0)[0]
 			final ArrayList<Integer> arWhereOver0 = new ArrayList<>();
-			double[] ar = MatUtils.diagFromSquare(MatUtils.add(A, R));
 			
-			for(int i = 0; i < ar.length; i++)
-				if(ar[i] > 0)
+			// Get diagonal of A + R and add to arWhereOver0 if > 0
+			// Could do this: MatUtils.diagFromSquare(MatUtils.add(A, R));
+			// But takes 3M time... this takes M
+			for(int i = 0; i < m; i++)
+				if(A[i][i] + R[i][i] > 0)
 					arWhereOver0.add(i);
 			
+			// Reassign to array, so whole thing takes 1M + K rather than 3M + K
 			I = new int[arWhereOver0.size()];
 			for(int j = 0; j < I.length; j++) I[j] = arWhereOver0.get(j);
 			
