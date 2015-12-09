@@ -5,7 +5,7 @@ package com.clust4j.utils;
  * @author Taylor G Smith
  *
  */
-public enum Linkage {
+public enum Linkage implements java.io.Serializable {
 	SINGLE
 	//TODO: more :-)
 }

@@ -38,6 +38,10 @@ import com.clust4j.utils.VecUtils;
 public class MeanShift 
 		extends AbstractDensityClusterer 
 		implements CentroidLearner, Convergeable, NoiseyClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4423672142693334046L;
 	final public static int DEF_MAX_ITER = 300;
 	final public static double DEF_MIN_CHANGE = 0d;
 	final public static int DEF_MIN_BIN_FREQ = 1;

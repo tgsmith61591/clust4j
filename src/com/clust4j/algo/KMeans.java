@@ -22,6 +22,10 @@ import com.clust4j.utils.GeometricallySeparable;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public class KMeans extends AbstractKCentroidClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	
 	public KMeans(final AbstractRealMatrix data, final int k) {

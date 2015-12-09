@@ -9,6 +9,10 @@ package com.clust4j.kernel;
  * @author Taylor G Smith
  */
 public class ExponentialKernel extends LaplacianKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4364593461130945118L;
 	public static final double DEFAULT_EXPONENTIAL	= 1;
 	public static final double DEFAULT_SIGMA_EXP	= 2;
 	public static final double DEFAULT_SIGMA_SCALAR	= 2;

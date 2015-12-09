@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 import com.clust4j.algo.AbstractHierarchicalClusterer;
 
-public class HierarchicalClusterTree extends AbstractBinaryTree<Integer> {
+public class HierarchicalClusterTree extends AbstractBinaryTree<Integer> implements java.io.Serializable {
 	private static final long serialVersionUID = -8450284575258068092L;
 	private final HierarchicalNode root;
 	
@@ -99,7 +99,7 @@ public class HierarchicalClusterTree extends AbstractBinaryTree<Integer> {
 	
 	
 	
-	public class HierarchicalNode extends AbstractBinaryTree.BaseBinaryTreeNode<Integer> {
+	public class HierarchicalNode extends AbstractBinaryTree.BaseBinaryTreeNode<Integer> implements java.io.Serializable {
 		private static final long serialVersionUID = -982952921431298127L;
 		
 		private final Integer value;

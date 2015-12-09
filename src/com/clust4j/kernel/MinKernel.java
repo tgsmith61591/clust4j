@@ -11,6 +11,11 @@ import com.clust4j.utils.VecUtils;
  */
 public class MinKernel extends Kernel {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6559633676695313938L;
+
 	public MinKernel() {
 		super();
 	}

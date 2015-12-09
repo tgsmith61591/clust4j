@@ -7,7 +7,9 @@ import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
 public abstract class Kernel implements SimilarityMetric {
-	
+	private static final long serialVersionUID = -630865804908845073L;
+
+
 	public Kernel() {}
 	
 	

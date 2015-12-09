@@ -3,6 +3,10 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8489725366968682469L;
 	final protected int k;
 	
 	public AbstractPartitionalClusterer(

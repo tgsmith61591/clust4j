@@ -33,6 +33,11 @@ import com.clust4j.utils.MatUtils.Axis;
  *
  */
 public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, Classifier, CentroidLearner {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1986169131867013043L;
+	
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
 	final public static int DEF_ITER_BREAK = 15;
 	final public static int DEF_MAX_ITER = 200;

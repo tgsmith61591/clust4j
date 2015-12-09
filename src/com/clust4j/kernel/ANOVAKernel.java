@@ -13,6 +13,10 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 public class ANOVAKernel extends RadialBasisKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2352083487381024145L;
 	final public static double DEFAULT_DEGREE = 1;
 	private final double degree;
 

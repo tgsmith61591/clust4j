@@ -2,7 +2,7 @@ package com.clust4j.utils;
 
 import org.apache.commons.math3.util.FastMath;
 
-public enum Distance implements GeometricallySeparable {
+public enum Distance implements GeometricallySeparable, java.io.Serializable {
 	MANHATTAN {
 		@Override 
 		public double getDistance(final double[] a, final double[] b) {

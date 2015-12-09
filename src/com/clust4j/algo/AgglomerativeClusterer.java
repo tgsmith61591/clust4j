@@ -27,6 +27,10 @@ import com.clust4j.utils.SingleLinkageAgglomerativeFactory;
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
 public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7563413590708853735L;
 	volatile private HierarchicalClusterTree tree = null;
 	
 	public AgglomerativeClusterer(AbstractRealMatrix data) {

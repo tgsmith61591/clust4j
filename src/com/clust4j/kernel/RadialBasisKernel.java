@@ -16,6 +16,10 @@ import org.apache.commons.math3.util.FastMath;
  * @author Taylor G Smith
  */
 public class RadialBasisKernel extends Kernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3281494130468137896L;
 	public final static double DEFAULT_SIGMA = 1;
 	private double sigma;
 	

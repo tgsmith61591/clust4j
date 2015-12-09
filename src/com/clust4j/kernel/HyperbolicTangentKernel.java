@@ -23,6 +23,11 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 public class HyperbolicTangentKernel extends ConstantKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2362070006438269124L;
+
 	public static final double DEFAULT_ALPHA = 1;
 	
 	private final double constant;

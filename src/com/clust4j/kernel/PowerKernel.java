@@ -11,6 +11,10 @@ import org.apache.commons.math3.util.FastMath;
  * @author Taylor G Smith
  */
 public class PowerKernel extends Kernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -861680950436032350L;
 	public static final double DEFAULT_DEGREE = 1;
 	private final double degree;
 	

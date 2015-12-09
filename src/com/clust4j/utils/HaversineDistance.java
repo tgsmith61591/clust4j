@@ -3,9 +3,10 @@ package com.clust4j.utils;
 import org.apache.commons.math3.util.FastMath;
 
 public class HaversineDistance implements GeometricallySeparable {
+	private static final long serialVersionUID = 9967023367578521L;
 	public static final int EARTH_RADIUS_KM = 6371;
 	public static final int EARTH_RADIUS_MI = 3959;
-	public static enum DistanceUnit { MI, KM }
+	public static enum DistanceUnit implements java.io.Serializable { MI, KM }
 	private final int radius;
 	
 	

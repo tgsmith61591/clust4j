@@ -11,6 +11,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public class LogKernel extends PowerKernel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1059869495129543995L;
+
 	public LogKernel() {
 		super();
 	}

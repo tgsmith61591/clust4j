@@ -378,8 +378,7 @@ public class ClustTests {
 		AgglomerativeClusterer agglom = new AgglomerativeClusterer(mat, 
 				new AgglomerativeClusterer.BaseHierarchicalPlanner()
 					.setScale(true)
-					.setVerbose(true));
-		agglom.fit();
+					.setVerbose(true)).fit();
 		
 		assertTrue(agglom.getTree().size() == mat.getRowDimension()*2-1);
 	}

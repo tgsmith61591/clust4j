@@ -21,6 +21,10 @@ public abstract class AbstractKCentroidClusterer
 		implements CentroidLearner, PredictableClassifier, Convergeable {
 	
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1134670154554006964L;
 	final public static int DEF_MAX_ITER = 100;
 	final public static double DEF_MIN_CHNG = 0.005;
 	
@@ -139,7 +143,11 @@ public abstract class AbstractKCentroidClusterer
 		return converged;
 	}
 	
-	public double getCostOfSystem() {
+	public double getCost() {
+		return cost;
+	}
+	
+	protected double getCostOfSystem() {
 		double cost = 0;
 		double[] oid;
 		ArrayList<Integer> medoid_members;

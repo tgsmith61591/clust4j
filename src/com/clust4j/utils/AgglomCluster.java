@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
  * 
  * @author Taylor G Smith
  */
-public class AgglomCluster extends ArrayList<double[]> {
+public class AgglomCluster extends ArrayList<double[]> implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 	private double[] cachedSums = null; // avoid calculating so many times...
 	private double[] cachedCentroid = null; // avoid recalculating so many times

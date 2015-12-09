@@ -13,6 +13,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public class SphericalKernel extends CircularKernel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4173771493103734665L;
+
 	public SphericalKernel() {
 		super();
 	}

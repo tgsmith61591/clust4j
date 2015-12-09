@@ -33,6 +33,11 @@ import com.clust4j.utils.Distance;
 public class KMedoids extends AbstractKCentroidClusterer {
 	
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4468316488158880820L;
+
+	/**
 	 * Stores the indices of the current medoids. Each index,
 	 * 0 thru k-1, corresponds to the class label for the cluster.
 	 */

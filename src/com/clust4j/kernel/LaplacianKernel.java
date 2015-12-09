@@ -11,6 +11,10 @@ import org.apache.commons.math3.util.FastMath;
  * @author Taylor G Smith
  */
 public class LaplacianKernel extends RadialBasisKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 46516715064245230L;
 	public static final double DEFAULT_EXPONENTIAL	= 1;
 	public static final double DEFAULT_SIGMA_EXP	= 1;
 	public static final double DEFAULT_SIGMA_SCALAR	= 1;

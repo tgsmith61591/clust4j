@@ -3,6 +3,7 @@ package com.clust4j.utils;
 import org.apache.commons.math3.util.FastMath;
 
 public class MinkowskiDistance implements GeometricallySeparable {
+	private static final long serialVersionUID = 6206826797866732365L;
 	final private double p;
 	
 	public MinkowskiDistance(final double p) {

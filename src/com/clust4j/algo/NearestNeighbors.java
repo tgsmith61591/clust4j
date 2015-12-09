@@ -41,6 +41,12 @@ import com.clust4j.utils.ModelNotFitException;
 public class NearestNeighbors extends AbstractClusterer {
 	
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1261837566319096096L;
+
+
+	/**
 	 * The mode in which to run the {@link NearestNeighbors} algorithm:
 	 * <p>
 	 * <b>K_NEAREST</b>: will find the K nearest neighbors for each record in the matrix. In the
@@ -53,7 +59,7 @@ public class NearestNeighbors extends AbstractClusterer {
 	 * 
 	 * @author Taylor G Smith
 	 */
-	public static enum RunMode {
+	public static enum RunMode implements java.io.Serializable {
 		/** Find K nearest neighbors*/
 		K_NEAREST,
 		

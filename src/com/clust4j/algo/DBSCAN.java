@@ -33,6 +33,10 @@ import com.clust4j.utils.VecUtils;
  *
  */
 public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6749407933012974992L;
 	final public static double DEF_EPS = 0.5;
 	final public static int DEF_MIN_PTS = 5;
 	final public static int NOISE_CLASS = -1;

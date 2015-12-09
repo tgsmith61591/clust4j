@@ -14,6 +14,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public class CircularKernel extends RadialBasisKernel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2111174336601201084L;
+
 	public CircularKernel() { super(); }
 	public CircularKernel(final double sigma) {
 		super(sigma);

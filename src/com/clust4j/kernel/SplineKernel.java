@@ -11,6 +11,11 @@ import com.clust4j.utils.VecUtils;
  */
 public class SplineKernel extends Kernel {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5313152223880747371L;
+
 	public SplineKernel() {
 		super();
 	}
