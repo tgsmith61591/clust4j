@@ -1,5 +1,5 @@
 ## clust4j
-A Java-based set of __unsupervised__ clustering algorithm implementations for __classification__. Built and tested under JDK 1.7.0_79
+A Java-based set of __unsupervised classification__ clustering algorithms. Built and tested under JDK 1.7.0_79
 
 ____
 ### Dependencies:
@@ -93,6 +93,7 @@ A number of separability metrics are available for use:
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
  - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
  - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
+ - [Haversine](https://en.wikipedia.org/wiki/Haversine_formula) __distance__ (for geospatial cluster analysis)
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
  - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)]
    
@@ -182,7 +183,7 @@ A number of separability metrics are available for use:
 
 
 ----
-Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface; if the method also implements `SimilarityMetric`, the algorithm will attempt to *maximize* similarity, where similarity is the negative distance, else it will try to *minimize* distance.  Classes implementing `SimilarityMetric` should define the `distance(double[], double[])` method to return `-similarity(double[], double[])`.
+Notice the differentiation between *similarity*-based and *distance*-based geometrically separable metrics. All the clustering algorithms are able to handle any metric implementing the `GeometricallySeparable` interface.  Since `SimilarityMetric`'s `getSimilarity(...)` method should return the negative of `getDistance(...)`, separability metrics implementing `SimilarityMetric` implicitly will attempt to *maximize* similarity (as all clustering algorithms will minimize distance).  Classes implementing `SimilarityMetric` should define the `getDistance(double[], double[])` method to return `-getSimilarity(double[], double[])`.
 
 
 ###### When to use similarity metrics over distance metrics?
