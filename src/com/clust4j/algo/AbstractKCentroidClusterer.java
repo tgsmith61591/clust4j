@@ -28,6 +28,8 @@ public abstract class AbstractKCentroidClusterer
 	final protected int maxIter;
 	final protected double minChange;
 	final protected int[] init_centroid_indices;
+	final protected int m;
+	
 	
 	volatile protected boolean converged = false;
 	volatile protected double cost;
@@ -35,11 +37,10 @@ public abstract class AbstractKCentroidClusterer
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
 	
-	final protected int m;
-	
 	/** Key is the group label, value is the corresponding centroid */
-	protected ArrayList<double[]> centroids = new ArrayList<double[]>();
-	protected TreeMap<Integer, ArrayList<Integer>> cent_to_record = null;
+	volatile protected ArrayList<double[]> centroids = new ArrayList<double[]>();
+	volatile protected TreeMap<Integer, ArrayList<Integer>> cent_to_record = null;
+	
 	
 	public AbstractKCentroidClusterer(AbstractRealMatrix data, 
 			AbstractKCentroidClusterer.BaseKCentroidPlanner planner) {

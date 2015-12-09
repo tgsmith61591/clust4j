@@ -45,7 +45,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 * This is only needed during training and then can safely be collected
 	 * to free up heap space.
 	 */
-	private double[][] dist_mat = null;
+	volatile private double[][] dist_mat = null;
 	
 	
 	
@@ -352,6 +352,8 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			seen_medoid_combos = null;
 			dist_mat = null;
 			
+			
+			reorderLabels();
 			return this;
 		} // End synchronized
 	} // End train
@@ -359,5 +361,36 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
+	}
+	
+	
+	final private void reorderLabels() {
+		// Assign medoid indices records to centroids
+		centroids = new ArrayList<>();
+		
+		
+		// Now rearrange labels in order... first get unique labels in order of appearance
+		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
+		for(int label: labels) {
+			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
+				orderOfLabels.add(label);
+		}
+		
+		
+		final int[] newLabels = new int[m];
+		final TreeMap<Integer, double[]> newCentroids = new TreeMap<>();
+		for(int i = 0; i < m; i++) {
+			final Integer idx = orderOfLabels.indexOf(labels[i]);
+			newLabels[i] = idx;
+			
+			if(!newCentroids.containsKey(idx))
+				newCentroids.put(idx, data.getRow(medoid_indices[labels[i]]) );
+		}
+		
+		
+		// Reassign labels...
+		labels = newLabels;
+		cent_to_record = null;
+		centroids = new ArrayList<>(newCentroids.values());
 	}
 }

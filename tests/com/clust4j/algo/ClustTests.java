@@ -69,6 +69,7 @@ public class ClustTests {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, 2).fit();
 		
+		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 		//km.info("testing the kmeans logger");
@@ -85,7 +86,8 @@ public class ClustTests {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true)).fit();
-		
+
+		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 	}
@@ -186,7 +188,8 @@ public class ClustTests {
 		assertTrue(km.getSeparabilityMetric().equals(Distance.MANHATTAN));
 		
 		km.fit();
-		
+
+		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 		//km.info("testing the k-medoids logger");
@@ -208,7 +211,8 @@ public class ClustTests {
 					.setScale(true)
 					.setVerbose(true));
 		km.fit();
-		
+
+		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1 && km.getLabels()[3] == 0);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] == km.getLabels()[3]);
 		assertTrue(km.didConverge());
@@ -230,7 +234,8 @@ public class ClustTests {
 					.setScale(false)
 					.setVerbose(true));
 		km.fit();
-		
+
+		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1 && km.getLabels()[3] == 2);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());

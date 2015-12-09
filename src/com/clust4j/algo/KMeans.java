@@ -167,6 +167,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 						
 						converged = true;
 						iter++; // Track iters used
+						reorderLabels();
 						return this;
 					} else {
 						oldCost = newCost;
@@ -181,6 +182,8 @@ public class KMeans extends AbstractKCentroidClusterer {
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 			}
 			
+			
+			reorderLabels();
 			return this;
 		} // End synchronized
 		
@@ -190,5 +193,29 @@ public class KMeans extends AbstractKCentroidClusterer {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
+	}
+	
+	final private void reorderLabels() {
+		// Now rearrange labels in order... first get unique labels in order of appearance
+		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
+		for(int label: labels) {
+			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
+				orderOfLabels.add(label);
+		}
+		
+		final int[] newLabels = new int[m];
+		final TreeMap<Integer, double[]> newCentroids = new TreeMap<>();
+		for(int i = 0; i < m; i++) {
+			final Integer idx = orderOfLabels.indexOf(labels[i]);
+			newLabels[i] = idx;
+			
+			if(!newCentroids.containsKey(idx))
+				newCentroids.put(idx, centroids.get(labels[i]));
+		}
+		
+		// Reassign labels...
+		labels = newLabels;
+		cent_to_record = null;
+		centroids = new ArrayList<>(newCentroids.values());
 	}
 }
