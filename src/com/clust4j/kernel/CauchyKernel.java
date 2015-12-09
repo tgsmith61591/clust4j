@@ -13,6 +13,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public class CauchyKernel extends RadialBasisKernel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7099384030117130226L;
+
 	public CauchyKernel() {
 		super();
 	}

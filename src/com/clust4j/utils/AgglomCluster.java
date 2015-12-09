@@ -7,7 +7,13 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
-public class Cluster extends ArrayList<double[]> {
+/**
+ * A collection class that holds type <tt>double[]</tt>. 
+ * For use in AgglomerativeClustering
+ * 
+ * @author Taylor G Smith
+ */
+public class AgglomCluster extends ArrayList<double[]> implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 	private double[] cachedSums = null; // avoid calculating so many times...
 	private double[] cachedCentroid = null; // avoid recalculating so many times
@@ -17,12 +23,12 @@ public class Cluster extends ArrayList<double[]> {
 	 */
 	private int n = -1;
 
-	public Cluster() {
+	public AgglomCluster() {
 		super();
 	}
 	
-	public Cluster copy() {
-		final Cluster copy = new Cluster();
+	public AgglomCluster copy() {
+		final AgglomCluster copy = new AgglomCluster();
 		
 		if(!this.isEmpty()) {
 			final int n = copy.get(0).length;
@@ -79,7 +85,9 @@ public class Cluster extends ArrayList<double[]> {
 	}
 	
 	/**
-	 * Only calls the check on the first iteration to save time
+	 * Only calls the check on the first iteration to save time; only
+	 * called from merge, which can only be called in a protected sense
+	 * from an Agglomerative context
 	 * @param d
 	 */
 	private void addAllTrusted(Collection<? extends double[]> d) {
@@ -132,13 +140,17 @@ public class Cluster extends ArrayList<double[]> {
 		super.clear();
 	}
 	
-	protected void merge(final Cluster other) {
+	protected void merge(final AgglomCluster other) {
 		if(other.isEmpty())
 			return;
 		if(this.isEmpty()) {
+			final double[] cs = null == other.cachedSums ? null : VecUtils.copy(other.cachedSums);
+			final double[] cc = null == other.cachedCentroid ? null : VecUtils.copy(other.cachedCentroid);
+			
 			addAllTrusted(other);
-			cachedSums = null == other.cachedSums ? null : VecUtils.copy(other.cachedSums);
-			cachedCentroid = null == other.cachedCentroid ? null : VecUtils.copy(other.cachedCentroid);
+			cachedSums = cs;
+			cachedCentroid = cc;
+			
 			return;
 		}
 		
@@ -149,6 +161,26 @@ public class Cluster extends ArrayList<double[]> {
 		
 		addAllTrusted(other);
 		cachedSums = newsumCache;
+	}
+	
+	protected static AgglomCluster merge(final AgglomCluster a, final AgglomCluster b) {
+		final boolean ae = a.isEmpty(), be = b.isEmpty();
+		if(ae && be)
+			return new AgglomCluster();
+		if(ae ^ be)
+			return ae ? b : a;
+		
+		
+		final double[] acs = a.cachedSums;
+		final double[] bcs = b.cachedSums;
+		final AgglomCluster out = new AgglomCluster();
+		out.addAllTrusted(a);
+		out.addAllTrusted(b);
+		
+		if(acs!=null && bcs!=null)
+			out.cachedSums = VecUtils.add(acs, bcs);
+		
+		return out;
 	}
 	
 	@Override

@@ -33,6 +33,11 @@ import com.clust4j.utils.Distance;
 public class KMedoids extends AbstractKCentroidClusterer {
 	
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4468316488158880820L;
+
+	/**
 	 * Stores the indices of the current medoids. Each index,
 	 * 0 thru k-1, corresponds to the class label for the cluster.
 	 */
@@ -45,7 +50,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 * This is only needed during training and then can safely be collected
 	 * to free up heap space.
 	 */
-	private double[][] dist_mat = null;
+	volatile private double[][] dist_mat = null;
 	
 	
 	
@@ -318,9 +323,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
 							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
 						info("Total system cost: " + oldCost);
-					
-						info("model " + getKey() + " completed in " + 
-								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 					}
 					
 					converged = true;
@@ -338,11 +340,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			} // End iter loop
 			
 			
-			if(verbose && !converged) { // KMedoids should always converge...
-				warn("algorithm did not converge");
+			if(verbose) {
+				if(!converged) // KMedoids should always converge...
+					warn("algorithm did not converge");
 				
 				info("model " + getKey() + " completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+						System.lineSeparator());
 			}
 			
 			
@@ -352,6 +356,8 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			seen_medoid_combos = null;
 			dist_mat = null;
 			
+			
+			reorderLabels();
 			return this;
 		} // End synchronized
 	} // End train
@@ -359,5 +365,36 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
+	}
+	
+	
+	final private void reorderLabels() {
+		// Assign medoid indices records to centroids
+		centroids = new ArrayList<>();
+		
+		
+		// Now rearrange labels in order... first get unique labels in order of appearance
+		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
+		for(int label: labels) {
+			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
+				orderOfLabels.add(label);
+		}
+		
+		
+		final int[] newLabels = new int[m];
+		final TreeMap<Integer, double[]> newCentroids = new TreeMap<>();
+		for(int i = 0; i < m; i++) {
+			final Integer idx = orderOfLabels.indexOf(labels[i]);
+			newLabels[i] = idx;
+			
+			if(!newCentroids.containsKey(idx))
+				newCentroids.put(idx, data.getRow(medoid_indices[labels[i]]) );
+		}
+		
+		
+		// Reassign labels...
+		labels = newLabels;
+		cent_to_record = null;
+		centroids = new ArrayList<>(newCentroids.values());
 	}
 }

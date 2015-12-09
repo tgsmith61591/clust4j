@@ -11,6 +11,10 @@ import org.apache.commons.math3.util.FastMath;
  * @author Taylor G Smith
  */
 public class RationalQuadraticKernel extends ConstantKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7063644380491570720L;
 	private final double constant;
 	
 	public RationalQuadraticKernel() { this(DEFAULT_CONSTANT); }

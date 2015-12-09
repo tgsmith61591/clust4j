@@ -9,6 +9,10 @@ import com.clust4j.utils.HierarchicalClusterTree;
 import com.clust4j.utils.Linkage;
 
 public abstract class AbstractHierarchicalClusterer extends AbstractClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2485741842587360171L;
 	public static final Linkage DEF_LINKAGE = Linkage.SINGLE;
 	protected final Linkage linkage;
 	

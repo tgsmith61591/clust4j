@@ -1,5 +1,10 @@
 package com.clust4j.algo;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Random;
 import java.util.UUID;
 
@@ -23,7 +28,8 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
  */
-public abstract class AbstractClusterer implements Loggable {
+public abstract class AbstractClusterer implements Loggable, java.io.Serializable {
+	private static final long serialVersionUID = -3623527903903305017L;
 	public static boolean DEF_VERBOSE = false;
 	public static boolean DEF_SCALE = false;
 	
@@ -256,5 +262,33 @@ public abstract class AbstractClusterer implements Loggable {
 	 */
 	public void meta(final String msg) {
 		info("[meta "+getName()+"] " + msg);
+	}
+	
+	/**
+	 * Load a model from a FileInputStream
+	 * @param fos
+	 * @return
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public static AbstractClusterer loadModel(final FileInputStream fis) throws IOException, ClassNotFoundException {
+		ObjectInputStream in = new ObjectInputStream(fis);
+        AbstractClusterer ac = (AbstractClusterer) in.readObject();
+        in.close();
+        fis.close();
+        
+        return ac;
+	}
+	
+	/**
+	 * Save a model to FileOutputStream
+	 * @param fos
+	 * @throws IOException
+	 */
+	public void saveModel(final FileOutputStream fos) throws IOException {
+		ObjectOutputStream out = new ObjectOutputStream(fos);
+		out.writeObject(this);
+		out.close();
+		fos.close();
 	}
 }

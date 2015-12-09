@@ -10,6 +10,10 @@ import org.apache.commons.math3.util.FastMath;
  * @author Taylor G Smith
  */
 public class MultiquadricKernel extends ConstantKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3023302397706144064L;
 	private final double constant;
 	
 	public MultiquadricKernel() { this(DEFAULT_CONSTANT); }

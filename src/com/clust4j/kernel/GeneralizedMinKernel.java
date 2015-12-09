@@ -14,6 +14,10 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 public class GeneralizedMinKernel extends MinKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3798280254415501176L;
 	private double alpha;
 	private double beta;
 	

@@ -5,6 +5,11 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.utils.SimilarityMetric;
 
 public abstract class AbstractDensityClusterer extends AbstractAutonomousClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5645721633522621894L;
+
 	public AbstractDensityClusterer(AbstractRealMatrix data, AbstractClusterer.BaseClustererPlanner planner) {
 		super(data, planner);
 		

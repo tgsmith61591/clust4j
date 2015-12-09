@@ -12,6 +12,10 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 public class PolynomialKernel extends ConstantKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7356583309481333635L;
 	public final static double DEFAULT_ALPHA = 1;
 	public final static double DEFAULT_DEGREE= 1;
 	

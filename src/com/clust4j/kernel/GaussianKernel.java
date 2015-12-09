@@ -15,6 +15,10 @@ package com.clust4j.kernel;
  * @author Taylor G Smith
  */
 public class GaussianKernel extends ExponentialKernel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3764791479335863828L;
 	public static final double DEF_EXP = 2;
 	
 	public GaussianKernel() {

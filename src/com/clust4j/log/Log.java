@@ -485,23 +485,25 @@ public abstract class Log {
 		org.apache.log4j.Logger l4j = getLog4jLogger();
 		
 		// If we don't have a logger yet, and we haven't created one, build one...
-		if((null == l4j) && !loggerCreateWasCalled) {
-			File dir;
-			
-			final URI root = com.clust4j.log.LogProperties.getRoot();
-			boolean windowsPath = root.toString().matches("^[a-zA-Z]:.*");
-			
-			if(windowsPath)
-				dir = new File(root.toString());
-			else if(root.getScheme() == null || "file".equals(root.getScheme()))
-				dir = new File(root.getPath());
-			else 
-				dir = new File(com.clust4j.log.LogProperties.DEFAULT_ROOT());
-			
-			loggerCreateWasCalled = true;
-			l4j = createLog4jLogger(dir.toString());
-			info(Algo.CLUST4J, "Logging at "+dir.toString());
-		}
+		//synchronized(Event.class) {
+			if((null == l4j) && !loggerCreateWasCalled) {
+				File dir;
+				
+				final URI root = com.clust4j.log.LogProperties.getRoot();
+				boolean windowsPath = root.toString().matches("^[a-zA-Z]:.*");
+				
+				if(windowsPath)
+					dir = new File(root.toString());
+				else if(root.getScheme() == null || "file".equals(root.getScheme()))
+					dir = new File(root.getPath());
+				else 
+					dir = new File(com.clust4j.log.LogProperties.DEFAULT_ROOT());
+				
+				loggerCreateWasCalled = true;
+				l4j = createLog4jLogger(dir.toString());
+				info(Algo.CLUST4J, "Logging at "+dir.toString());
+			}
+		//}
 		
 		
 		// Log if we can, or buffer

@@ -22,6 +22,10 @@ import com.clust4j.utils.GeometricallySeparable;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public class KMeans extends AbstractKCentroidClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	
 	public KMeans(final AbstractRealMatrix data, final int k) {
@@ -115,6 +119,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 			// Enclose in for loop to ensure completes in proper iterations
 			long iterStart = System.currentTimeMillis();
+			
+			
+			OuterLoop:
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				
@@ -159,15 +166,12 @@ public class KMeans extends AbstractKCentroidClusterer {
 						if(verbose) {
 							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
 									LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
-							info("Total system cost: " + cost);
-							
-							info("model " + getKey() + " completed in " + 
-								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 						}
 						
 						converged = true;
 						iter++; // Track iters used
-						return this;
+						
+						break OuterLoop;
 					} else {
 						oldCost = newCost;
 					}
@@ -176,11 +180,17 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 			
 			if(verbose) {
-				warn("algorithm did not converge. Total system cost: " + cost);
+				info("Total system cost: " + cost);
+				if(!converged)
+					warn("algorithm did not converge");
+				
 				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
 			}
 			
+			
+			reorderLabels();
 			return this;
 		} // End synchronized
 		
@@ -190,5 +200,29 @@ public class KMeans extends AbstractKCentroidClusterer {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
+	}
+	
+	final private void reorderLabels() {
+		// Now rearrange labels in order... first get unique labels in order of appearance
+		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
+		for(int label: labels) {
+			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
+				orderOfLabels.add(label);
+		}
+		
+		final int[] newLabels = new int[m];
+		final TreeMap<Integer, double[]> newCentroids = new TreeMap<>();
+		for(int i = 0; i < m; i++) {
+			final Integer idx = orderOfLabels.indexOf(labels[i]);
+			newLabels[i] = idx;
+			
+			if(!newCentroids.containsKey(idx))
+				newCentroids.put(idx, centroids.get(labels[i]));
+		}
+		
+		// Reassign labels...
+		labels = newLabels;
+		cent_to_record = null;
+		centroids = new ArrayList<>(newCentroids.values());
 	}
 }

@@ -4,7 +4,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.Linkage;
 import com.clust4j.utils.HierarchicalClusterTree;
 import com.clust4j.utils.SingleLinkageAgglomerativeFactory;
 
@@ -28,6 +27,10 @@ import com.clust4j.utils.SingleLinkageAgglomerativeFactory;
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
 public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7563413590708853735L;
 	volatile private HierarchicalClusterTree tree = null;
 	
 	public AgglomerativeClusterer(AbstractRealMatrix data) {
@@ -60,35 +63,35 @@ public class AgglomerativeClusterer extends AbstractHierarchicalClusterer {
 				return this;
 			
 			final long start = System.currentTimeMillis();
-			buildTree(linkage);
+			if(null == linkage) {
+				String e = "null linkage passed to planner";
+				if(verbose)
+					error(e);
+				throw new IllegalArgumentException(e);
+			}
 			
-			if(verbose) info("model " + getKey() + " completed in " + LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+			switch(linkage) {
+				case SINGLE:
+					if(verbose) info("single linkage selected -- building SingleLinkageACTree");
+					tree = SingleLinkageAgglomerativeFactory
+							.build(data.getData(), 
+									getSeparabilityMetric(), 
+									false, this);
+					break;
+				default:
+					if(verbose) error("unimplemented linkage method");
+					throw new IllegalArgumentException("unimplemented linkage method");
+			}
+			
+			if(verbose) 
+				info("model " + getKey() + " completed in " + 
+						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
+						System.lineSeparator());
 			return this;
 			
 		} // End synch
 	} // End train
 	
-	private void buildTree(Linkage link) {
-		if(null == link) {
-			String e = "null linkage passed to planner";
-			if(verbose)
-				error(e);
-			throw new IllegalArgumentException(e);
-		}
-		
-		switch(link) {
-			case SINGLE:
-				if(verbose) info("single linkage selected -- building SingleLinkageACTree");
-				tree = SingleLinkageAgglomerativeFactory
-						.build(data.getData(), 
-								getSeparabilityMetric(), 
-								false, this);
-				break;
-			default:
-				if(verbose) error("unimplemented linkage method");
-				throw new IllegalArgumentException("unimplemented linkage method");
-		}
-	}
 
 	@Override
 	public Algo getLoggerTag() {

@@ -8,10 +8,10 @@ public class ClustStructTests {
 
 	@Test
 	public void test1() {
-		Cluster a = new Cluster();
+		AgglomCluster a = new AgglomCluster();
 		a.add(new double[]{1d,2d,3d,4d});
 		
-		Cluster b = new Cluster();
+		AgglomCluster b = new AgglomCluster();
 		b.add(new double[]{1d,2d,3d,4d});
 		
 		assertFalse(a.equals(b));
@@ -19,7 +19,7 @@ public class ClustStructTests {
 	
 	@Test
 	public void test2() {
-		Cluster a = new Cluster();
+		AgglomCluster a = new AgglomCluster();
 		a.add(new double[]{1d,2d,3d,4d});
 		a.add(new double[]{3d,2d,6d,9d});
 		
