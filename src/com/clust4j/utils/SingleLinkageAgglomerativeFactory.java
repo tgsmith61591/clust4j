@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.AgglomerativeClusterer;
+import com.clust4j.log.LogTimeFormatter;
 
 public class SingleLinkageAgglomerativeFactory {
 	public static HierarchicalClusterTree build(final double[][] data, final GeometricallySeparable dist, final AgglomerativeClusterer clusterer) {
@@ -64,6 +65,8 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		
 		int m = data.length;
+		final int m_cache = m;
+		
 		int currentCluster = (2 * m) - 1; // There will always be 2M-1 clusters at the end
 		if(m < 1) {
 			String e = "empty data";
@@ -128,6 +131,8 @@ public class SingleLinkageAgglomerativeFactory {
 		int i, j, newM;
 		double[] centroid;
 		double[][] newDataRef;
+		
+		long start = System.currentTimeMillis();
 		while(m > 1) {
 			
 			// Find the row/col indices that get merged next
@@ -141,7 +146,7 @@ public class SingleLinkageAgglomerativeFactory {
 			mergedClusterIndices = new EntryPair<Integer, Integer>(clusterNumbers.get(a), clusterNumbers.get(b));
 			clusterMap.put(currentCluster, mergedClusterIndices);
 			
-			if(verbose) clusterer.trace("merging clusters " + i + " & " + j + ", computing updated distance matrix (m="+m+")");
+			if(verbose) clusterer.info("merging clusters " + i + " & " + j + "; computing updated distance matrix (new m="+m+")");
 			
 			// Must remove `j` first to avoid left shift
 			clusters.remove(j);
@@ -156,7 +161,7 @@ public class SingleLinkageAgglomerativeFactory {
 			// Now remove i,j from dist matrix... rows AND cols
 			newM = m - 1;
 			newDataRef = new double[newM][newM];
-			int row=0; int col=0;
+			int row=0, col=0;
 			for(int k = 0; k < m; k++) {
 				if(k == i || k == j)
 					continue;
@@ -190,6 +195,14 @@ public class SingleLinkageAgglomerativeFactory {
 		newDataRef = null;
 		
 		
+		if(verbose) {
+			clusterer.info("cluster merges completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+			clusterer.info("avg merge iteration time: " + 
+				LogTimeFormatter.millis((long) ((long)(System.currentTimeMillis()-start)/(double)m_cache),false) );
+		}
+		
+		
 		return new HierarchicalClusterTree(clusterMap, data, clusterer);
 	}
 
@@ -199,15 +212,8 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		//final int n = a.get(0).length;
 		final Cluster[] car = new Cluster[]{a, b};
-		
-		for(Cluster cl: car) {
-			/*for(double[] d: cl) {
-				double[] copy = new double[n];
-				System.arraycopy(d, 0, copy, 0, n);
-				merge.add(copy);
-			}*/
-			merge.addAll(cl);
-		}
+		for(Cluster cl: car)
+			merge.merge(cl);
 		
 		return merge;
 	}
