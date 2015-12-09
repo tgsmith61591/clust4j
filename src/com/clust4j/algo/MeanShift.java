@@ -400,7 +400,8 @@ public class MeanShift
 				
 				
 				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
 			}
 			
 			return this;

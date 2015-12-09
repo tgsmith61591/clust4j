@@ -333,7 +333,8 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 						" classified noise");
 				
 				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
 			}
 			
 			

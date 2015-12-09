@@ -138,10 +138,10 @@ public class HierarchicalClusterTree extends AbstractBinaryTree<Integer> {
 		 * Returns a copy of the records in this level of cluster
 		 * @return
 		 */
-		public Cluster getCluster() {
+		public AgglomCluster getCluster() {
 			Collection<Integer> leaves = new ArrayList<Integer>();
 			getLeafNodes(this, leaves);
-			Cluster c = new Cluster();
+			AgglomCluster c = new AgglomCluster();
 			
 			for(Integer leaf: leaves) {
 				final double[] row = HierarchicalClusterTree.this.data.get(leaf);

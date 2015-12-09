@@ -629,7 +629,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			if(verbose)
 				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
+					System.lineSeparator());
 			
 			
 			// Clean up

@@ -318,9 +318,6 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
 							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
 						info("Total system cost: " + oldCost);
-					
-						info("model " + getKey() + " completed in " + 
-								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 					}
 					
 					converged = true;
@@ -338,11 +335,13 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			} // End iter loop
 			
 			
-			if(verbose && !converged) { // KMedoids should always converge...
-				warn("algorithm did not converge");
+			if(verbose) {
+				if(!converged) // KMedoids should always converge...
+					warn("algorithm did not converge");
 				
 				info("model " + getKey() + " completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+						System.lineSeparator());
 			}
 			
 			

@@ -115,6 +115,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 			// Enclose in for loop to ensure completes in proper iterations
 			long iterStart = System.currentTimeMillis();
+			
+			
+			OuterLoop:
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				
@@ -159,16 +162,12 @@ public class KMeans extends AbstractKCentroidClusterer {
 						if(verbose) {
 							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
 									LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
-							info("Total system cost: " + cost);
-							
-							info("model " + getKey() + " completed in " + 
-								LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
 						}
 						
 						converged = true;
 						iter++; // Track iters used
-						reorderLabels();
-						return this;
+						
+						break OuterLoop;
 					} else {
 						oldCost = newCost;
 					}
@@ -177,9 +176,13 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 			
 			if(verbose) {
-				warn("algorithm did not converge. Total system cost: " + cost);
+				info("Total system cost: " + cost);
+				if(!converged)
+					warn("algorithm did not converge");
+				
 				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false));
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
 			}
 			
 			

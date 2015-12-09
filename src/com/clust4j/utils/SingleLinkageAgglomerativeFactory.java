@@ -78,7 +78,7 @@ public class SingleLinkageAgglomerativeFactory {
 		// The structure that will contain the cluster number mapped to the two clusters
 		// that make it up. If the value is null, then they are leaf clusters
 		TreeMap<Integer, EntryPair<Integer, Integer>> clusterMap = new TreeMap<>();
-		HashMap<Cluster, Integer> clusterNumbers = new HashMap<>();
+		HashMap<AgglomCluster, Integer> clusterNumbers = new HashMap<>();
 		
 		
 		// Log if necessary
@@ -87,10 +87,10 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		
 		// Create the N clusters of data...
-		Cluster c;
-		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+		AgglomCluster c;
+		ArrayList<AgglomCluster> clusters = new ArrayList<AgglomCluster>();
 		for(double[] d: data) {
-			c = new Cluster();
+			c = new AgglomCluster();
 			c.add(d);
 			clusters.add(c);
 
@@ -127,7 +127,7 @@ public class SingleLinkageAgglomerativeFactory {
 		
 		// While the distance matrix is not comprised of merely the last two clusters
 		EntryPair<Integer, Integer> closest, mergedClusterIndices;
-		Cluster a, b;
+		AgglomCluster a, b;
 		int i, j, newM;
 		double[] centroid;
 		double[][] newDataRef;
@@ -207,15 +207,8 @@ public class SingleLinkageAgglomerativeFactory {
 	}
 
 	
-	final private static Cluster merge(final Cluster a, final Cluster b) {
-		final Cluster merge = new Cluster();
-		
-		//final int n = a.get(0).length;
-		final Cluster[] car = new Cluster[]{a, b};
-		for(Cluster cl: car)
-			merge.merge(cl);
-		
-		return merge;
+	final private static AgglomCluster merge(final AgglomCluster a, final AgglomCluster b) {
+		return AgglomCluster.merge(a, b);
 	}
 	
 	final private static EntryPair<Integer, Integer> minDistInDistMatrix(final AbstractRealMatrix data) {
