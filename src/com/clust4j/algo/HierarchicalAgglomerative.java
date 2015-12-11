@@ -42,7 +42,7 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
-public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClusterer implements Classifier {
+public class HierarchicalAgglomerative extends AbstractPartitionalClusterer implements Classifier {
 	/**
 	 * 
 	 */
@@ -89,11 +89,11 @@ public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClust
 	
 	
 	
-	public HierarchicalAgglomerativeClusterer(AbstractRealMatrix data) {
+	public HierarchicalAgglomerative(AbstractRealMatrix data) {
 		this(data, new HierarchicalPlanner());
 	}
 
-	public HierarchicalAgglomerativeClusterer(AbstractRealMatrix data, 
+	public HierarchicalAgglomerative(AbstractRealMatrix data, 
 			HierarchicalPlanner planner) {
 		super(data, planner, planner.num_clusters);
 		
@@ -207,13 +207,13 @@ public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClust
 		public HierarchicalDendrogram() {
 			if(null == dist_mat)
 				throw new IllegalClusterStateException("null distance matrix");
-			ref = HierarchicalAgglomerativeClusterer.this;
-			dist = HierarchicalAgglomerativeClusterer.this.getSeparabilityMetric();
+			ref = HierarchicalAgglomerative.this;
+			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
 		}
 		
 		public void link(final double[] dists, final double[][] Z, final int n) {
 			int i, j, k, x = -1, y = -1, i_start, nx, ny, ni, id_x, id_y, id_i, c_idx;
-			boolean verbose = HierarchicalAgglomerativeClusterer.this.verbose;
+			boolean verbose = HierarchicalAgglomerative.this.verbose;
 			double current_min;
 			
 			// Inter cluster dists
@@ -481,11 +481,9 @@ public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClust
 	
 	/**
 	 * Heapifies an ArrayList in place. Adapted from Python's
-	 * <a href="https://github.com/python-git/python/blob/master/Lib/heapq.py">heapify</a>
+	 * <a href="https://github.com/python-git/python/blob/master/Lib/heapq.py">heapq</a>
 	 * priority queue.
-	 * 
 	 * @author Taylor G Smith
-	 *
 	 */
 	static protected class HeapUtils {
 		public static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
@@ -656,7 +654,7 @@ public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClust
 	}
 
 	@Override
-	public HierarchicalAgglomerativeClusterer fit() {
+	public HierarchicalAgglomerative fit() {
 		synchronized(this) { // synch because alters internal structs
 			
 			if(null != labels) // Then we've already fit this...
@@ -721,15 +719,18 @@ public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClust
 		} // End synch
 	} // End train
 	
-	private static int[] hcCut(final int n_clusters, final double[][] children, final int n_leaves) {
+	static int[] hcCut(final int n_clusters, final double[][] children, final int n_leaves) {
 		if(n_clusters > n_leaves)
 			throw new InternalError(n_clusters + " > " + n_leaves);
 		
+		// Init nodes
 		ArrayList<Integer> nodes = new ArrayList<>(Arrays.asList(new Integer[]{-((int)VecUtils.max(children[children.length-1]) + 1)}));
+
+		
 		for(int i = 0; i < n_clusters - 1; i++) {
 			int inner_idx = -nodes.get(0) - n_leaves;
 			if(inner_idx < 0)
-				inner_idx = nodes.size() + inner_idx;
+				inner_idx = children.length + inner_idx;
 			
 			double[] these_children = children[inner_idx];
 			HeapUtils.heapPush(nodes, -((int)these_children[0]));

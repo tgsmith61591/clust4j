@@ -18,6 +18,7 @@ import org.junit.Test;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
 
 public class SerializationTests {
 	private static Array2DRowRealMatrix matrix = ClustTests.getRandom(250, 10);
@@ -47,18 +48,18 @@ public class SerializationTests {
 	
 	@Test
 	public void testAgglomerative() throws FileNotFoundException, IOException, ClassNotFoundException {
-		AgglomerativeClusterer agglom = new AgglomerativeClusterer(matrix, 
-			new AgglomerativeClusterer.BaseHierarchicalPlanner()
-				.setScale(true)
-				.setVerbose(true)).fit();
+		HierarchicalAgglomerative agglom = 
+			new HierarchicalAgglomerative(matrix, 
+				new HierarchicalAgglomerative.HierarchicalPlanner()
+					.setScale(true)
+					.setVerbose(true)).fit();
 		
-		final boolean a = agglom.getTree().size() == matrix.getRowDimension()*2-1;
+		final int[] l = agglom.getLabels();
 		agglom.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		agglom = (AgglomerativeClusterer)AgglomerativeClusterer.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(agglom.getTree().size() == matrix.getRowDimension()*2-1 && a);
-		assertTrue(agglom.getTree().getRoot() != null);
+		agglom = (HierarchicalAgglomerative)HierarchicalAgglomerative.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(l, agglom.getLabels()));
 		Files.delete(path);
 	}
 	

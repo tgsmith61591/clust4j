@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.junit.Test;
-import com.clust4j.algo.HierarchicalAgglomerativeClusterer.HeapUtils;
+import com.clust4j.algo.HierarchicalAgglomerative.HeapUtils;
 
 public class HeapTesting {
 	

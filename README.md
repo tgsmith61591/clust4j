@@ -50,12 +50,11 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 
 
 - **Hierarchical algorithms**:
-  - [Agglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
+  - [HierarchicalAgglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
 
         ```java
-        AgglomerativeClusterer a = new AgglomerativeClusterer(mat, new BaseHierarchicalPlanner()).fit();
-        // Print the tree, where 1 is the root:
-        System.out.println(a); // Agglomerative clusterer: {1=<5, 2>, 2=<4, 3>, 3=null, 4=null, 5=null}
+        HierarchicalAgglomerative a = new HierarchicalAgglomerative(mat, new HierarchicalPlanner()).fit();
+        final int[] results = a.getLabels();
         ```
 
 - **Density-based algorithms**:
