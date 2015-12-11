@@ -42,7 +42,7 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
-public class HierarchicalAgglomerativeClusterer extends AbstractClusterer implements Classifier {
+public class HierarchicalAgglomerativeClusterer extends AbstractPartitionalClusterer implements Classifier {
 	/**
 	 * 
 	 */
@@ -95,7 +95,7 @@ public class HierarchicalAgglomerativeClusterer extends AbstractClusterer implem
 
 	public HierarchicalAgglomerativeClusterer(AbstractRealMatrix data, 
 			HierarchicalPlanner planner) {
-		super(data, planner);
+		super(data, planner, planner.num_clusters);
 		
 		this.linkage = planner.linkage;
 		if(null == linkage) {
@@ -104,23 +104,10 @@ public class HierarchicalAgglomerativeClusterer extends AbstractClusterer implem
 			throw new IllegalClusterStateException(e);
 		}
 		
+		
 		this.m = data.getRowDimension();
 		this.num_clusters = planner.num_clusters;
 		
-		
-		// Check num clusters
-		String err;
-		if(num_clusters > m) {
-			err = "num_clusters must not exceed num_samples";
-			if(verbose) error(err);
-			throw new IllegalArgumentException(err);
-		}
-		
-		if(num_clusters < 1) {
-			err = "num_clusters must be greater than zero";
-			if(verbose) error(err);
-			throw new IllegalArgumentException(err);
-		}
 		
 		if(verbose) meta("Linkage="+linkage);
 		if(verbose) meta("Num clusters="+num_clusters);
@@ -492,7 +479,15 @@ public class HierarchicalAgglomerativeClusterer extends AbstractClusterer implem
 		}
 	}
 	
-	static class HeapUtils {
+	/**
+	 * Heapifies an ArrayList in place. Adapted from Python's
+	 * <a href="https://github.com/python-git/python/blob/master/Lib/heapq.py">heapify</a>
+	 * priority queue.
+	 * 
+	 * @author Taylor G Smith
+	 *
+	 */
+	static protected class HeapUtils {
 		public static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
 			final int n = x.size();
 			final int n_2_floor = n / 2;
@@ -705,7 +700,6 @@ public class HierarchicalAgglomerativeClusterer extends AbstractClusterer implem
 			
 			
 			// Tree build
-			int k = -1; // proxy for local n_clusters
 			final TreeState ts = treeBuilder(); // calls tree builder
 			
 			final double[][] children = ts.Z;

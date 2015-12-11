@@ -15,6 +15,8 @@ public class HierTests {
 				new HierarchicalAgglomerativeClusterer
 					.HierarchicalPlanner().setVerbose(true));
 		hac.fit();
+		
+		assertTrue(true);
 	}
 
 }

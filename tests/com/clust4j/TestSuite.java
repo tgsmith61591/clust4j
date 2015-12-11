@@ -5,6 +5,7 @@ import org.junit.runners.Suite;
 
 import com.clust4j.algo.ClustTests;
 import com.clust4j.algo.HaversineTest;
+import com.clust4j.algo.HeapTesting;
 import com.clust4j.algo.KMedoidsProtectedTests;
 import com.clust4j.algo.SerializationTests;
 import com.clust4j.kernel.KernelTestCases;
@@ -29,7 +30,8 @@ import com.clust4j.utils.VectorTests;
 	TestUtils.class,
 	VectorTests.class,
 	HaversineTest.class,
-	SerializationTests.class
+	SerializationTests.class,
+	HeapTesting.class
 })
 
 public class TestSuite {/* Runs all the tests */}
