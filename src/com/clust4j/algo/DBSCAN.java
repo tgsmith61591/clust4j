@@ -14,6 +14,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
@@ -184,7 +185,13 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 	
 	@Override
 	public int[] getLabels() {
-		return labels;
+		try {
+			return VecUtils.copy(labels);
+		} catch(NullPointerException npe) {
+			String error = "model has not yet been fit";
+			if(verbose) error(error);
+			throw new ModelNotFitException(error);
+		}
 	}
 	
 	public int getMinPts() {

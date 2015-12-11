@@ -13,6 +13,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.utils.CentroidLearner;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.PredictableClassifier;
 import com.clust4j.utils.VecUtils;
 
@@ -170,9 +171,19 @@ public abstract class AbstractKCentroidClusterer
 		return maxIter;
 	}
 	
+	/**
+	 * Returns a copy of the classified labels
+	 */
 	@Override
 	public int[] getLabels() {
-		return labels;
+		try {
+			return VecUtils.copy(labels);
+			
+		} catch(NullPointerException npe) {
+			String error = "model has not yet been fit";
+			if(verbose) error(error);
+			throw new ModelNotFitException(error);
+		}
 	}
 	
 	/**

@@ -20,6 +20,7 @@ import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
@@ -416,16 +417,28 @@ public class MeanShift
 
 	@Override
 	public ArrayList<double[]> getCentroids() {
-		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids)
-			cent.add(VecUtils.copy(d));
-		
-		return cent;
+		try {
+			final ArrayList<double[]> cent = new ArrayList<double[]>();
+			for(double[] d : centroids)
+				cent.add(VecUtils.copy(d));
+			
+			return cent;
+		} catch(NullPointerException e) {
+			String error = "model has not yet been fit";
+			if(verbose) error(error);
+			throw new ModelNotFitException(error);
+		}
 	}
 
 	@Override
 	public int[] getLabels() {
-		return labels;
+		try {
+			return VecUtils.copy(labels);
+		} catch(NullPointerException npe) {
+			String error = "model has not yet been fit";
+			if(verbose) error(error);
+			throw new ModelNotFitException(error);
+		}
 	}
 	
 	private Integer[] getNeighbors(final double[] seed) {

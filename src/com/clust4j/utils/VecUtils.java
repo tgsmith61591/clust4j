@@ -1,5 +1,6 @@
 package com.clust4j.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 
@@ -145,6 +146,15 @@ public class VecUtils {
 	public static double[] copy(final double[] d) {
 		final double[] copy = new double[d.length];
 		System.arraycopy(d, 0, copy, 0, d.length);
+		return copy;
+	}
+	
+	public static ArrayList<Integer> copy(final ArrayList<Integer> a) {
+		final ArrayList<Integer> copy = new ArrayList<Integer>(a.size());
+		
+		for(Integer i: a)
+			copy.add(i);
+		
 		return copy;
 	}
 	

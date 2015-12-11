@@ -17,6 +17,7 @@ import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.utils.VecUtils;
 
 /**
  * A generalized {@link AbstractClusterer} that fits the nearest neighbor
@@ -230,7 +231,7 @@ public class NearestNeighbors extends AbstractClusterer {
 		
 		final double[][] d = new double[closest.size()][];
 		for(int i = 0; i < d.length; i++) {
-			d[i] = data.getRow(closest.get(i));
+			d[i] = VecUtils.copy(data.getRow(closest.get(i)));
 		}
 		
 		return d;
@@ -250,7 +251,20 @@ public class NearestNeighbors extends AbstractClusterer {
 	}
 	
 	public ArrayList<Integer>[] getNearest() {
-		return nearest;
+		try {
+			@SuppressWarnings("unchecked")
+			final ArrayList<Integer>[] copy = new ArrayList[nearest.length];
+			
+			int i = 0;
+			for(ArrayList<Integer> ai: nearest)
+				copy[i++] = VecUtils.copy(ai);
+			
+			return copy;
+		} catch(NullPointerException e) {
+			String error = "model has not yet been fit";
+			if(verbose) error(error);
+			throw new ModelNotFitException(error);
+		}
 	}
 
 	@Override
