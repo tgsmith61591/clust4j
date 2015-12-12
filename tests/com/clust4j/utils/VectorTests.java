@@ -191,4 +191,11 @@ public class VectorTests {
 	public void testArange2() {
 		VecUtils.arange(10,0,-3);
 	}
+	
+	@Test
+	public void testFloor() {
+		final double[] d = new double[]{-1,0,2};
+		final double[] b = VecUtils.floor(d, 0, 1);
+		assertTrue(VecUtils.equalsExactly(b, new double[]{1,0,2}));
+	}
 }

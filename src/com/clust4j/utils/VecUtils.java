@@ -218,6 +218,16 @@ public class VecUtils {
 		return true;
 	}
 	
+	public static double[] floor(final double[] a, final double min, final double floor) {
+		checkDims(a);
+		
+		final double[] b = new double[a.length];
+		for(int i = 0; i < b.length; i++)
+			b[i] = a[i] < min ? floor : a[i];
+		
+		return b;
+	}
+	
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
 		

@@ -34,6 +34,16 @@ public class MatUtils {
 		}
 	}
 	
+	public static final double[][] abs(final double[][] a) {
+		checkDims(a);
+		
+		final double[][] b = new double[a.length][];
+		for(int i = 0; i < b.length; i++)
+			b[i] = VecUtils.abs(a[i]);
+		
+		return b;
+	}
+	
 	public static final double[][] add(final double[][] a, final double[][] b) {
 		checkDims(a);
 		checkDims(b);
@@ -189,6 +199,23 @@ public class MatUtils {
 		}
 		
 		return out;
+	}
+	
+	/**
+	 * If a value in the matrix is less than min
+	 * @param a
+	 * @param min -- the value to compare to (less than this equals newMin)
+	 * @param newMin -- the replace value
+	 * @return
+	 */
+	public static double[][] floor(final double[][] a, final double min, final double newMin) {
+		checkDims(a);
+		
+		final double[][] b = new double[a.length][];
+		for(int i = 0; i < b.length; i++)
+			b[i] = VecUtils.floor(a[i], min, newMin);
+		
+		return b;
 	}
 	
 	/**

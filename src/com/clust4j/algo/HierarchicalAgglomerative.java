@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
-import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -17,6 +14,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
+import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
@@ -78,7 +76,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	 */
 	volatile private double[][] dist_mat = null;
 	volatile HierarchicalDendrogram tree = null;
-	volatile double[] dist_vec = null;
 	/** 
 	 * Volatile because if null will later change during build
 	 */
@@ -102,7 +99,13 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			String e = "null linkage passed to planner";
 			if(verbose) error(e);
 			throw new IllegalClusterStateException(e);
+		} else if(linkage.equals(Linkage.WARD) && !getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
+			if(verbose) warn("Ward's method implicitly requires Euclidean distance; overriding " + 
+				getSeparabilityMetric().getName());
+			super.setSeparabilityMetric(Distance.EUCLIDEAN);
+			if(verbose) meta("New distance metric: "+getSeparabilityMetric().getName());
 		}
+		
 		
 		
 		this.m = data.getRowDimension();
@@ -199,19 +202,43 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	
 	
 	
-	abstract public class HierarchicalDendrogram implements java.io.Serializable {
+	abstract class HierarchicalDendrogram implements java.io.Serializable {
 		private static final long serialVersionUID = 5295537901834851676L;
 		public final Loggable ref;
 		public final GeometricallySeparable dist;
+		public final boolean verbose;
+		public final int m;
+		private final double[] dist_vec;
 		
-		public HierarchicalDendrogram() {
+		HierarchicalDendrogram() {
 			if(null == dist_mat)
-				throw new IllegalClusterStateException("null distance matrix");
+				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+			
 			ref = HierarchicalAgglomerative.this;
 			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
+			verbose = HierarchicalAgglomerative.this.verbose;
+			m = HierarchicalAgglomerative.this.m;
+			
+			// Flatten upper triangular dist_mat
+			final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
+			dist_vec = new double[s];
+			for(int i = 0, r = 0; i < m - 1; i++)
+				for(int j = i + 1; j < m; j++, r++)
+					dist_vec[r] = dist_mat[i][j];
 		}
 		
-		public void link(final double[] dists, final double[][] Z, final int n) {
+		double[][] linkage() {
+			// Perform the linkage logic in the tree
+			double[] y = VecUtils.copy(dist_vec); // Copy the dist_vec
+			
+			double[][] Z = new double[m - 1][4];  // Holding matrix
+			link(y, Z, m); // Immutabily change Z
+			
+			// Final linkage tree out...
+			return MatUtils.getColumns(Z, new int[]{0,1});
+		}
+		
+		private void link(final double[] dists, final double[][] Z, final int n) {
 			int i, j, k, x = -1, y = -1, i_start, nx, ny, ni, id_x, id_y, id_i, c_idx;
 			boolean verbose = HierarchicalAgglomerative.this.verbose;
 			double current_min;
@@ -220,20 +247,25 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			double[] D = VecUtils.copy(dists);
 			
 			// Map the indices to node ids
-			if(verbose) ref.info("initializing node mappings");
+			if(verbose) ref.info("initializing node mappings ("+getClass().getName().split("\\$")[1]+")");
 			int[] id_map = new int[n];
 			for(i = 0; i < n; i++) 
 				id_map[i] = i;
 			
-			for(k = 0; i < n - 1; k++) {
+			int incrementor = n/5, pct = 1;
+			for(k = 0; k < n - 1; k++) {
+				if(verbose && incrementor>0 && k%incrementor == 0)
+					ref.info("node mapping progress - " + 20*pct++ + "%");
+				
 				// get two closest x, y
-				current_min = Double.MAX_VALUE;
+				current_min = Double.POSITIVE_INFINITY;
 				
 				for(i = 0; i < n - 1; i++) {
 					if(id_map[i] == -1)
 						continue;
 					
-					i_start = condensedIndex(n, i, i+1);
+					
+					i_start = condensedIndex(n, i, i + 1);
 					for(j = 0; j < n - i - 1; j++) {
 						if(D[i_start + j] < current_min) {
 							current_min = D[i_start + j];
@@ -279,7 +311,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			final double current_min, final int nx, final int ny, final int ni);
 	}
 	
-	public class WardTree extends HierarchicalDendrogram {
+	class WardTree extends HierarchicalDendrogram {
 		private static final long serialVersionUID = -2336170779406847047L;
 		
 		public WardTree() { super(); }
@@ -295,70 +327,16 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		}
 	}
 	
-	abstract public class LinkageTree extends HierarchicalDendrogram {
+	abstract class LinkageTree extends HierarchicalDendrogram {
 		private static final long serialVersionUID = -252115690411913842L;
 		public LinkageTree() { super(); }
-		
-		
-		
-		abstract public TreeMap<Integer, Double> merge
-			(TreeMap<Integer, Double> a, TreeMap<Integer, Double> b, 
-					boolean[] mask, float n_a, float n_b);
 	}
 	
-	public class AverageLinkageTree extends LinkageTree {
+	class AverageLinkageTree extends LinkageTree {
 		private static final long serialVersionUID = 5891407873391751152L;
 
 		public AverageLinkageTree() { super(); }
 		
-		
-
-		@Override public TreeMap<Integer, Double> merge(TreeMap<Integer, 
-				Double> a, TreeMap<Integer, Double> b, 
-				boolean[] mask, float n_a, float n_b) {
-			
-			TreeMap<Integer, Double> out = new TreeMap<Integer, Double>();
-			Iterator<Map.Entry<Integer, Double>> a_iterator = a.entrySet().iterator();
-			
-			Map.Entry<Integer, Double> entry;
-			Double value, n_out = (double)(n_a + n_b);
-			Integer key = null;
-			
-			// Copy a into out if not prevented by mask
-			while(a_iterator.hasNext()) {
-				entry = a_iterator.next();
-				key = entry.getKey();
-				if(mask[key])
-					out.put(key, entry.getValue());
-			}
-			
-			// Merge b into out
-			Iterator<Map.Entry<Integer, Double>> b_iterator = b.entrySet().iterator();
-			Double tmp_val;
-			key = null;
-			
-			while(b_iterator.hasNext()) {
-				entry = b_iterator.next();
-				key = entry.getKey();
-				value = entry.getValue();
-				if(mask[key]) {
-					tmp_val = out.get(key);
-					
-					// Find the key...
-					if(null == tmp_val) {
-						// Key not found
-						out.put(key, value);
-					} else {
-						out.put(key, (n_a*tmp_val + n_b*value)/n_out);
-					}
-				}
-			}
-			
-			return out;
-		}
-
-
-
 		@Override
 		protected double getDist(double dx, double dy, 
 			double current_min, int nx, int ny, int ni) {
@@ -366,116 +344,15 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		}
 	}
 	
-	public class CompleteLinkageTree extends LinkageTree {
+	class CompleteLinkageTree extends LinkageTree {
 		private static final long serialVersionUID = 7407993870975009576L;
 		
 		public CompleteLinkageTree() { super(); }
-		
-		
-		
-		@Override public TreeMap<Integer, Double> merge(TreeMap<Integer, 
-				Double> a, TreeMap<Integer, Double> b, 
-				boolean[] mask, float n_a, float n_b) {
-			
-			TreeMap<Integer, Double> out = new TreeMap<Integer, Double>();
-			Iterator<Map.Entry<Integer, Double>> a_iterator = a.entrySet().iterator();
-			
-			Map.Entry<Integer, Double> entry;
-			Integer key = null;
-			Double value;
-			
-			// Copy a into out if not prevented by mask
-			while(a_iterator.hasNext()) {
-				entry = a_iterator.next();
-				key = entry.getKey();
-				if(mask[key])
-					out.put(key, entry.getValue());
-			}
-			
-			// Merge b into out
-			Iterator<Map.Entry<Integer, Double>> b_iterator = b.entrySet().iterator();
-			Double tmp_val;
-			key = null;
-			
-			while(b_iterator.hasNext()) {
-				entry = b_iterator.next();
-				key = entry.getKey();
-				value = entry.getValue();
-				if(mask[key]) {
-					tmp_val = out.get(key);
-					
-					// Find the key...
-					if(null == tmp_val) {
-						// Key not found
-						out.put(key, value);
-					} else {
-						out.put(key, FastMath.max(value, tmp_val));
-					}
-				}
-			}
-			
-			return out;
-		}
-
-
 
 		@Override
 		protected double getDist(double dx, double dy, 
 			double current_min, int nx, int ny, int ni) {
 			return FastMath.max(dx, dy);
-		}
-	}
-
-	final static class WeightedEdge {
-		private Integer a;
-		private Integer b;
-		private Double weight;
-		
-		public WeightedEdge(Double weight, Integer a, Integer b) {
-			this.weight = weight;
-			this.a = a;
-			this.b = b;
-		}
-		
-		public boolean compareTo(WeightedEdge other, int op) {
-			/* 
-			 * This is a custom compareTo method adapted from
-			 * sklearn's hierarchical methods.
-			 * op is the comparison code:
-	         *   <   0
-	         *   ==  2
-	         *   >   4
-	         *   <=  1
-	         *   !=  3
-	         *   >=  5
-			 */
-			
-			switch(op) {
-				case 0:	return this.weight < other.weight;
-				case 1:	return this.weight <= other.weight;
-				case 2:	return this.weight == other.weight;
-				case 3:	return this.weight != other.weight;
-				case 4:	return this.weight > other.weight;
-				case 5:	return this.weight >= other.weight;
-				default:
-					throw new IllegalArgumentException(op + " must be in range 0 - 5");
-			}
-		}
-		
-		@Override public String toString() {
-			return "(weight="+weight+", a="+a+", b="+b+")";
-		}
-	}
-	
-	static final class TreeState {
-		final double[][] Z;
-		final int n_components;
-		final int n_leaves;
-		
-		public TreeState(final double[][] Z, final int a, final int b) {
-			this.Z = Z;
-			this.n_components = a;
-			this.n_leaves = b;
 		}
 	}
 	
@@ -485,7 +362,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	 * priority queue.
 	 * @author Taylor G Smith
 	 */
-	static protected class HeapUtils {
+	static class HeapUtils {
 		public static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
 			final int n = x.size();
 			final int n_2_floor = n / 2;
@@ -626,27 +503,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		throw new InternalError(i+", "+j);
 	}
 	
-	final TreeState treeBuilder() {
-
-		// Flatten upper triangular dist_mat
-		final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
-		dist_vec = new double[s];
-		for(int i = 0, r = 0; i < m - 1; i++)
-			for(int j = i + 1; j < m; j++, r++)
-				dist_vec[r] = dist_mat[i][j];
-		
-		
-		// Perform the linkage logic in the tree
-		double[] y = VecUtils.copy(dist_vec); // Copy the dist_vec
-		double[][] Z = new double[m - 1][m];  // Holding matrix
-		tree.link(y, Z, m); // Immutabily change Z
-		
-		// Final linkage tree out...
-		double[][] children = MatUtils.getColumns(Z, new int[]{0,1});
-		
-		return new TreeState(children, 1, m);
-	}
-	
 	
 	@Override
 	public String getName() {
@@ -698,13 +554,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			
 			
 			// Tree build
-			final TreeState ts = treeBuilder(); // calls tree builder
+			double[][] children = tree.linkage();
 			
-			final double[][] children = ts.Z;
-			final int n_components = ts.n_components, n_leaves = ts.n_leaves;
 			
 			// Cut the tree
-			labels = hcCut(num_clusters, children, n_leaves);
+			labels = hcCut(num_clusters, children,m);
+			reorderLabels();
 			
 			
 			if(verbose) 
@@ -712,7 +567,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
 						System.lineSeparator());
 			
-			dist_vec = null;
 			dist_mat = null;
 			return this;
 			
@@ -720,6 +574,11 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	} // End train
 	
 	static int[] hcCut(final int n_clusters, final double[][] children, final int n_leaves) {
+		/*
+		 * Leave children as a double[][] despite it
+		 * being ints. This will allow VecUtils to operate
+		 */
+		
 		if(n_clusters > n_leaves)
 			throw new InternalError(n_clusters + " > " + n_leaves);
 		
@@ -736,9 +595,9 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			HeapUtils.heapPush(nodes, -((int)these_children[0]));
 			HeapUtils.heapPushPop(nodes, -((int)these_children[1]));
 		}
-		
-		final int[] labels = new int[n_leaves];
+
 		int i = 0;
+		final int[] labels = new int[n_leaves];
 		for(Integer node: nodes) {
 			Integer[] descendants = hcGetDescendents(-node, children, n_leaves);
 			for(Integer desc: descendants)
@@ -750,16 +609,16 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		return labels;
 	}
 	
-	private static Integer[] hcGetDescendents(int node, double[][] children, int leaves) {
+	static Integer[] hcGetDescendents(int node, double[][] children, int leaves) {
 		final ArrayList<Integer> ind = new ArrayList<>(Arrays.asList(new Integer[]{node}));
 		if(node < leaves)
-			return ind.toArray(new Integer[1]);
+			return new Integer[]{node};
 		
 		final ArrayList<Integer> descendent = new ArrayList<>();
 		int i, n_indices = 1;
 		
 		while(n_indices > 0) {
-			i = HeapUtils.popInPlace(descendent);
+			i = HeapUtils.popInPlace(ind);
 			if(i < leaves) {
 				descendent.add(i);
 				n_indices--;
@@ -788,5 +647,21 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.AGGLOMERATIVE;
+	}
+	
+	final private void reorderLabels() {
+		// Now rearrange labels in order... first get unique labels in order of appearance
+		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
+		for(int label: labels) {
+			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
+				orderOfLabels.add(label);
+		}
+		
+		final int[] newLabels = new int[m];
+		for(int i = 0; i < m; i++)
+			newLabels[i] = orderOfLabels.indexOf(labels[i]);
+		
+		// Reassign labels...
+		labels = newLabels;
 	}
 }

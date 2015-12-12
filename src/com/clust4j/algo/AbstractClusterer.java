@@ -41,7 +41,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	/** Underlying data */
 	final protected AbstractRealMatrix data;
 	/** Similarity metric */
-	final private GeometricallySeparable dist;
+	private GeometricallySeparable dist;
 	/** Seed for any shuffles */
 	private final Random seed;
 	/** Verbose for heavily logging */
@@ -290,5 +290,9 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		out.writeObject(this);
 		out.close();
 		fos.close();
+	}
+	
+	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
+		this.dist = sep;
 	}
 }
