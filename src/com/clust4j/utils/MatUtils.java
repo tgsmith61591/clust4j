@@ -3,6 +3,7 @@ package com.clust4j.utils;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.util.Precision;
@@ -31,6 +32,18 @@ public class MatUtils {
 		} catch(NullPointerException npe) {
 			throw new IllegalArgumentException("matrix rows have been initialized, "
 					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
+	}
+	
+	final static protected void checkDims(final AbstractRealMatrix a) {
+		if(a.getRowDimension() < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.getRowDimension());
+	
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a.getRow(0));
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.getRowDimension()+"][]", npe);
 		}
 	}
 	
@@ -127,6 +140,20 @@ public class MatUtils {
 			out[i] = VecUtils.sum(getColumn(data, i));
 		
 		return out;
+	}
+	
+	public static boolean containsNaN(final AbstractRealMatrix mat) {
+		checkDims(mat);
+		
+		final int m = mat.getRowDimension(), n = mat.getColumnDimension();
+		final double[][] dr = mat.getData();
+		
+		for(int i = 0; i < m; i++)
+			for(int j = 0; j < n; j++)
+				if(Double.isNaN(dr[i][j]))
+					return true;
+		
+		return false;
 	}
 	
 	

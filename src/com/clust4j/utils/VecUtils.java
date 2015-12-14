@@ -52,6 +52,13 @@ public class VecUtils {
 		return ab;
 	}
 	
+	public static boolean anyIsNaN(final double[] a) {
+		for(double d: a)
+			if(Double.isNaN(d))
+				return true;
+		return false;
+	}
+	
 	
 	public static int[] arange(final int length) {
 		return arange(0, length, 1);
@@ -282,7 +289,7 @@ public class VecUtils {
 		return mean(a, sum(a));
 	}
 	
-	final public static double mean(final double[] a, final double sum) {
+	final protected static double mean(final double[] a, final double sum) {
 		return sum / a.length;
 	}
 	
@@ -318,6 +325,40 @@ public class VecUtils {
 			ab[i] = a[i] * b[i];
 		
 		return ab;
+	}
+	
+	public static int nanCount(final double[] a) {
+		int ct = 0;
+		for(double d: a)
+			if(Double.isNaN(d))
+				ct++;
+		
+		return ct;
+	}
+	
+	public static double nanMean(final double[] a) {
+		double sum = 0;
+		int count = 0;
+		for(double d: a) {
+			if(!Double.isNaN(d)) {
+				count++;
+				sum += d;
+			}
+		}
+		
+		if(count == a.length)
+			throw new NaNException("completely NaN vector");
+		
+		return sum / (double)count;
+	}
+	
+	public static double nanSum(final double[] a) {
+		double sum = 0;
+		for(double d: a)
+			if(!Double.isNaN(d))
+				sum += d;
+		
+		return sum;
 	}
 	
 	/**
@@ -445,7 +486,7 @@ public class VecUtils {
 		return stdDev(a, DEF_SUBTRACT_ONE_VAR);
 	}
 	
-	final public static double stdDev(final double[] a, final double mean) {
+	public final static double stdDev(final double[] a, final double mean) {
 		return stdDev(a, mean, DEF_SUBTRACT_ONE_VAR);
 	}
 	
@@ -453,7 +494,7 @@ public class VecUtils {
 		return stdDev(a, mean(a), n_minus_one);
 	}
 	
-	final public static double stdDev(final double[] a, final double mean, final boolean n_minus_one) {
+	final protected static double stdDev(final double[] a, final double mean, final boolean n_minus_one) {
 		return FastMath.sqrt(var(a, mean, n_minus_one));
 	}
 	
@@ -497,7 +538,7 @@ public class VecUtils {
 		return var(a, DEF_SUBTRACT_ONE_VAR);
 	}
 	
-	final public static double var(final double[] a, final double mean) {
+	final protected static double var(final double[] a, final double mean) {
 		return var(a, mean, DEF_SUBTRACT_ONE_VAR);
 	}
 	
@@ -505,7 +546,7 @@ public class VecUtils {
 		return var(a, mean(a), n_minus_one);
 	}
 	
-	final public static double var(final double[] a, final double mean, final boolean n_minus_one) {
+	final protected static double var(final double[] a, final double mean, final boolean n_minus_one) {
 		double sum = 0;
 		for(double x : a) {
 			double res = x - mean; // Want to avoid math.pow...

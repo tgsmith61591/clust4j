@@ -31,6 +31,9 @@ public abstract class Log {
 			CUSTOM			{ @Override public String toString(){return "CUSTOM ";} },
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
 			
+			/** Used for matrix imputations */
+			IMPUTE			{ @Override public String toString(){return "IMPUTE ";} },
+			
 			// No longer any plans to implement divisive (DIANA) clustering
 			/*DIVISIVE		{ @Override public String toString(){return "DIVISVE";} },*/
 			

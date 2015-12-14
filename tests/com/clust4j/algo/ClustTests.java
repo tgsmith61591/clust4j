@@ -15,6 +15,7 @@ import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighbors.RunMode;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
 public class ClustTests {
@@ -537,5 +538,17 @@ public class ClustTests {
 					.setRadius(radius)).fit();
 			System.out.println();
 		}
+	}
+	
+	@Test(expected=NaNException.class)
+	public void testNanException() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.0,  1.0,  2.0,  3.0},
+			new double[] {1.0,  2.3,  Double.NaN,  4.0},
+			new double[] {9.06, 12.6, 6.5,  9.0}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		new NearestNeighbors(mat);
 	}
 }

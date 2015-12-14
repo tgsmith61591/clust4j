@@ -69,7 +69,7 @@ public class NearestNeighbors extends AbstractClusterer {
 	}
 	
 	
-	final public static double DEF_NEIGHBORHOOD = DBSCAN.DEF_EPS;
+	final public static double DEF_EPS_RADIUS = DBSCAN.DEF_EPS;
 	final public static int DEF_K = 5;
 	final public static RunMode DEF_RUN_MODE = RunMode.K_NEAREST;
 	
@@ -131,7 +131,7 @@ public class NearestNeighbors extends AbstractClusterer {
 	public static class NearestNeighborsPlanner extends BaseClustererPlanner {
 		private RunMode runmode = DEF_RUN_MODE;
 		private int k = DEF_K;
-		private double neighborhood = DEF_NEIGHBORHOOD;
+		private double neighborhood = DEF_EPS_RADIUS;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private GeometricallySeparable dist	= DEF_DIST;
@@ -177,6 +177,11 @@ public class NearestNeighbors extends AbstractClusterer {
 		
 		public NearestNeighborsPlanner setRadius(final double d) {
 			this.neighborhood = d;
+			return this;
+		}
+		
+		public NearestNeighborsPlanner setRunMode(final RunMode mode) {
+			this.runmode = mode;
 			return this;
 		}
 

@@ -198,4 +198,13 @@ public class VectorTests {
 		final double[] b = VecUtils.floor(d, 0, 1);
 		assertTrue(VecUtils.equalsExactly(b, new double[]{1,0,2}));
 	}
+	
+	@Test
+	public void testNanOps() {
+		final double[] d = new double[]{-1,0,2,Double.NaN};
+		assertTrue(VecUtils.anyIsNaN(d));
+		assertTrue(VecUtils.nanCount(d) == 1);
+		assertTrue(VecUtils.nanMean(d) == 1d/3d);
+		assertTrue(VecUtils.nanSum(d) == 1);
+	}
 }

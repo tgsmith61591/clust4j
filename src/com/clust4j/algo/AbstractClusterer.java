@@ -15,6 +15,8 @@ import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.NaNException;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
@@ -91,6 +93,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		boolean similarity = this.dist instanceof SimilarityMetric; // Avoid later check
 		
 		// Handle data, now...
+		if(verbose) info("checking input data for NaNs");
 		handleData(data);
 		
 		// Log info
@@ -123,6 +126,12 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	final private void handleData(final AbstractRealMatrix data) {
 		if(data.getRowDimension() == 0)
 			throw new IllegalArgumentException("empty data");
+		
+		if(MatUtils.containsNaN(data)) {
+			String error = "NaN in input data. Select a matrix imputation method for incomplete records";
+			if(verbose) error(error);
+			throw new NaNException(error);
+		}
 	}
 	
 	
@@ -221,16 +230,16 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	}
 	
 	
-	/** Get the name of this model */
-	public abstract String getName();
-	/** Get the associated Log tag for this model */
-	public abstract com.clust4j.log.Log.Tag.Algo getLoggerTag();
+	
 	/** 
 	 * Fit the model.
 	 * In order to coalesce with the milieu of clust4j,
 	 * the execution of this method should be synchronized on 'this'
 	 */
-	public abstract AbstractClusterer fit();
+	abstract public AbstractClusterer fit();
+	/** Get the name of this model */
+	abstract public String getName();
+	
 	
 	
 	/* -- LOGGER METHODS --  */
