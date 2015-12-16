@@ -103,8 +103,10 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 					" x " + data.getColumnDimension() + " data matrix");
 			
 			
-			if(this.dist instanceof Kernel)
-				warn("running " + getName() + " in Kernel mode can be an expensive option");
+			if(this.dist instanceof Kernel) {
+				if (verbose) warn("running " + getName() + " in Kernel mode can be an expensive option");
+				else flagWarning();
+			}
 			
 			
 			info((similarity ? "similarity" : "distance") + 
@@ -166,6 +168,10 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		}
 		
 		return copy;
+	}
+	
+	protected void flagWarning() {
+		hasWarnings = true;
 	}
 
 	
@@ -248,7 +254,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	}
 	
 	@Override public void warn(String msg) {
-		hasWarnings = true;
+		flagWarning();
 		Log.warn(getLoggerTag(), msg);
 	}
 	

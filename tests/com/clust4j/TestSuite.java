@@ -9,6 +9,7 @@ import com.clust4j.algo.HeapTesting;
 import com.clust4j.algo.HierTests;
 import com.clust4j.algo.KMedoidsProtectedTests;
 import com.clust4j.algo.SerializationTests;
+import com.clust4j.algo.prep.ImputationTests;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
 import com.clust4j.utils.BinarySearchTreeTests;
@@ -31,7 +32,8 @@ import com.clust4j.utils.VectorTests;
 	HaversineTest.class,
 	SerializationTests.class,
 	HeapTesting.class,
-	HierTests.class
+	HierTests.class,
+	ImputationTests.class
 })
 
 public class TestSuite {/* Runs all the tests */}

@@ -79,14 +79,13 @@ public class MeanImputation extends MatrixImputation {
 
 			int nanCt = m - count;
 			double mean = sum / (double)count;
-			if(verbose) info(nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (mean="+mean+")");
-			
 			for(int row = 0; row < m; row++) {
 				if(Double.isNaN(copy[row][col])) {
 					copy[row][col] = mean;
-					if(verbose) info("imputing NaN (row " + row + ", column " + col + ") with mean=" + mean);
 				}
 			}
+			
+			if(verbose) info(nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (column mean="+mean+")");
 		}
 		
 		return copy;

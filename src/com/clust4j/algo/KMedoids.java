@@ -341,8 +341,10 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			
 			
 			if(verbose) {
-				if(!converged) // KMedoids should always converge...
-					warn("algorithm did not converge");
+				if(!converged) { // KMedoids should always converge...
+					if(verbose) warn("algorithm did not converge");
+					else flagWarning();
+				}
 				
 				info("model " + getKey() + " completed in " + 
 						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 

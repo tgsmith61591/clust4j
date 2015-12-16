@@ -106,9 +106,11 @@ public class NearestNeighbors extends AbstractClusterer {
 			meta("runmode="+runmode);
 			meta(radius_run?("radius="+neighborhood):("k="+k));
 			
-			if(this.k != planner.k && !radius_run)
-				warn("provided k (" + planner.k + ") is greater than the number of "
+			if(this.k != planner.k && !radius_run) {
+				if(verbose) warn("provided k (" + planner.k + ") is greater than the number of "
 						+ "rows in data. reducing k to " + this.k + " (m - 1)");
+				else flagWarning();
+			}
 		}
 		
 		
@@ -327,8 +329,11 @@ public class NearestNeighbors extends AbstractClusterer {
 				// Check how many weren't classified
 				int ct = 0;
 				for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
-				if(verbose && ct > 0) warn(ct + " record" + (ct!=1?"s have":" has") + 
-					" no records within radius=" + neighborhood);
+				if(ct > 0) {
+					if(verbose) warn(ct + " record" + (ct!=1?"s have":" has") + 
+						" no records within radius=" + neighborhood);
+					else flagWarning();
+				}
 			}
 			
 			

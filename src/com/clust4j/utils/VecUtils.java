@@ -144,6 +144,21 @@ public class VecUtils {
 		return copy;
 	}
 	
+	public static double[] completeCases(final double[] d) {
+		checkDims(d);
+		final ArrayList<Double> out = new ArrayList<>();
+		
+		for(double dub: d)
+			if(!Double.isNaN(dub))
+				out.add(dub);
+		
+		final double[] copy = new double[out.size()];
+		for(int i = 0; i < out.size(); i++)
+			copy[i] = out.get(i);
+		
+		return copy;
+	}
+	
 	public static int[] copy(final int[] i) {
 		final int[] copy = new int[i.length];
 		System.arraycopy(i, 0, copy, 0, i.length);
@@ -350,6 +365,10 @@ public class VecUtils {
 			throw new NaNException("completely NaN vector");
 		
 		return sum / (double)count;
+	}
+	
+	public static double nanMedian(final double[] a) {
+		return median(completeCases(a));
 	}
 	
 	public static double nanSum(final double[] a) {

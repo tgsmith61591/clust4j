@@ -102,6 +102,8 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		} else if(linkage.equals(Linkage.WARD) && !getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
 			if(verbose) warn("Ward's method implicitly requires Euclidean distance; overriding " + 
 				getSeparabilityMetric().getName());
+			else flagWarning();
+			
 			super.setSeparabilityMetric(Distance.EUCLIDEAN);
 			if(verbose) meta("New distance metric: "+getSeparabilityMetric().getName());
 		}
@@ -114,7 +116,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		
 		if(verbose) meta("Linkage="+linkage);
 		if(verbose) meta("Num clusters="+num_clusters);
-		if(verbose) warn(getName()+" clustering has a runtime of O(N^2)");
+		if(verbose) trace(getName()+" clustering has a runtime of O(N^2)");
 	}
 	
 	

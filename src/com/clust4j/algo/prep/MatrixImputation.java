@@ -12,6 +12,7 @@ public abstract class MatrixImputation implements Loggable {
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
 	protected final AbstractRealMatrix data;
 	protected boolean verbose = DEF_VERBOSE;
+	private boolean hasWarnings = false;
 	
 	
 	
@@ -61,20 +62,36 @@ public abstract class MatrixImputation implements Loggable {
 			throw new IllegalArgumentException("input data with null column space");
 		
 		// Now check column NaN level
+		boolean seenNaN = false;
 		final double[][] dataCopy = data.getData();
 		for(int col = 0; col < n; col++) {
 			Inner:
 			for(int row = 0; row < m; row++) {
-				if( !Double.isNaN(dataCopy[row][col]) )
-					break Inner;
-				else if(row == m - 1)
-					throw new NaNException("column " + col + " is entirely NaN");
+				boolean nan = Double.isNaN(dataCopy[row][col]);
+				if(nan) {
+					seenNaN =true;
+					if(row == m - 1)
+						throw new NaNException("column " + col + " is entirely NaN");
+				} else break Inner;
 			}
+		}
+		
+		if(!seenNaN) {
+			if(verbose) warn("no NaNs in matrix; imputation will not have any effect");
+			else flagWarning();
 		}
 		
 		// TODO?
 		
 		if(verbose) info("initializing matrix imputation method");
+	}
+	
+	public boolean hasWarnings() {
+		return hasWarnings;
+	}
+	
+	protected void flagWarning() {
+		hasWarnings = true;
 	}
 	
 	
@@ -84,6 +101,7 @@ public abstract class MatrixImputation implements Loggable {
 	}
 	
 	@Override public void warn(String msg) {
+		flagWarning();
 		Log.warn(getLoggerTag(), msg);
 	}
 	

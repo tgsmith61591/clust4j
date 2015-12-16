@@ -181,8 +181,10 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 			if(verbose) {
 				info("Total system cost: " + cost);
-				if(!converged)
-					warn("algorithm did not converge");
+				if(!converged) {
+					if(verbose) warn("algorithm did not converge");
+					else flagWarning();
+				}
 				
 				info("model " + getKey() + " completed in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 

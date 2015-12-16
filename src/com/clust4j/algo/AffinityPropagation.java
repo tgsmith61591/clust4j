@@ -124,7 +124,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			meta("minChange="+minChange);
 			meta("addNoise="+addNoise);
 			
-			if(!addNoise) warn("not scaling with Gaussian noise can cause the algorithm not to converge");
+			if(!addNoise) {
+				if(verbose) warn("not scaling with Gaussian noise can cause the algorithm not to converge");
+				else flagWarning();
+			}
 		}
 	}
 	
@@ -511,8 +514,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			} // End for
 
 			
-			if(!converged && verbose)
-				warn("algorithm did not converge");
+			if(!converged) {
+				if(verbose) warn("algorithm did not converge");
+				else flagWarning();
+			}
 			if(verbose) info("labeling clusters from availability and responsibility matrices");
 			
 			
