@@ -2,7 +2,6 @@ package com.clust4j.algo.prep;
 
 import static org.junit.Assert.*;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.algo.prep.BootstrapImputation.BootstrapImputationPlanner;
@@ -25,12 +24,11 @@ public class ImputationTests {
 			new double[]{2,			 2,          1}
 		};
 		
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(d);
-		final MeanImputation mean = new MeanImputation(mat, 
+		final MeanImputation mean = new MeanImputation(
 			new MeanImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = mean.impute();
+		final double[][] imputed = mean.process(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -49,11 +47,10 @@ public class ImputationTests {
 			new double[]{2,			 2,          1}
 		};
 		
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(d);
-		final MedianImputation median = new MedianImputation(mat, 
+		final MedianImputation median = new MedianImputation(
 			new MedianImputationPlanner());
 		
-		final double[][] imputed = median.impute();
+		final double[][] imputed = median.process(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -72,12 +69,11 @@ public class ImputationTests {
 			new double[]{3,			 5,			 Double.NaN}
 		};
 		
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(d);
-		final MedianImputation median = new MedianImputation(mat, 
+		final MedianImputation median = new MedianImputation(
 			new MedianImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = median.impute();
+		final double[][] imputed = median.process(d);
 		final double[][] res = new double[][]{
 			new double[]{2,		1, 		2},
 			new double[]{1, 	2, 		3},
@@ -86,7 +82,6 @@ public class ImputationTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(res, imputed));
-		assertTrue(new MedianImputation(imputed).hasWarnings());
 		System.out.println();
 	}
 	
@@ -103,19 +98,18 @@ public class ImputationTests {
 			new double[]{3,			 5,			 Double.NaN}
 		};
 		
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(d);
 		final CentralTendencyMethod[] ctm = CentralTendencyMethod.values();
 		final Bootstrapper[] strappers = Bootstrapper.values();
 		
 		double[][] res;
 		for(CentralTendencyMethod method: ctm) {
 			for(Bootstrapper strap: strappers) {
-				res = new BootstrapImputation(mat, 
+				res = new BootstrapImputation(
 					new BootstrapImputationPlanner()
 						.setBootstrapper(strap)
 						.setVerbose(true)
 						.setMethodOfCentralTendency(method))
-					.impute();
+					.process(d);
 				
 				BootstrapTest.printMatrix(res);
 			}

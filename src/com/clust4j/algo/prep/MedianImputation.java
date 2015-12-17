@@ -2,37 +2,18 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class MedianImputation extends MatrixImputation {
 	
-	
-	public MedianImputation(AbstractRealMatrix data) {
-		super(data);
+	public MedianImputation() {
+		this(new MedianImputationPlanner());
 	}
 	
-	public MedianImputation(final double[][] data) {
-		super(data);
-	}
-	
-	public MedianImputation(final AbstractRealMatrix data, final boolean copy) {
-		super(data, copy);
-	}
-	
-	public MedianImputation(AbstractRealMatrix data, MedianImputationPlanner planner) {
-		super(data, planner);
-	}
-	
-	public MedianImputation(final double[][] data, MedianImputationPlanner planner) {
-		super(data, planner);
-	}
-	
-	public MedianImputation(final AbstractRealMatrix data, final boolean copy, MedianImputationPlanner planner) {
-		super(data, copy, planner);
+	public MedianImputation(MedianImputationPlanner planner) {
+		super(planner);
 	}
 	
 
@@ -75,12 +56,19 @@ public class MedianImputation extends MatrixImputation {
 	public Algo getLoggerTag() {
 		return Algo.IMPUTE;
 	}
-
+	
 	@Override
-	public double[][] impute() {
-		final double[][] copy = data.getData();
-		final int m = data.getRowDimension(), n = data.getColumnDimension();
-		info("performing median imputation on " + m + " x " + n + " dataset");
+	public String getName() {
+		return "Median imputation";
+	}
+	
+	@Override
+	public double[][] process(final double[][] dat) {
+		checkMat(dat);
+		
+		final double[][] copy = MatUtils.copyMatrix(dat);
+		final int m = dat.length, n = dat[0].length;
+		info("(" + getName() + ") performing median imputation on " + m + " x " + n + " dataset");
 		
 		// Operates in 2M * N
 		for(int col = 0; col < n; col++) {
@@ -94,7 +82,7 @@ public class MedianImputation extends MatrixImputation {
 				}
 			}
 			
-			info(count + " NaN" + (count!=1?"s":"") + " identified in column " + col + " (column median="+median+")");
+			info("(" + getName() + ") " + count + " NaN" + (count!=1?"s":"") + " identified in column " + col + " (column median="+median+")");
 		}
 		
 		return copy;

@@ -17,6 +17,7 @@ import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
+import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
@@ -30,7 +31,7 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
  */
-public abstract class AbstractClusterer implements Loggable, java.io.Serializable {
+public abstract class AbstractClusterer implements Loggable, Named, java.io.Serializable {
 	private static final long serialVersionUID = -3623527903903305017L;
 	public static boolean DEF_VERBOSE = false;
 	public static boolean DEF_SCALE = false;
@@ -207,12 +208,6 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	}
 	
 	
-	@Override
-	public String toString() {
-		return getName() + " clusterer";
-	}
-	
-	
 	/**
 	 * Get the model key, the model's unique UUID
 	 * @return the model's unique UUID
@@ -238,8 +233,6 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	 * the execution of this method should be synchronized on 'this'
 	 */
 	abstract public AbstractClusterer fit();
-	/** Get the name of this model */
-	abstract public String getName();
 	
 	
 	

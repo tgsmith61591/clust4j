@@ -2,35 +2,17 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.utils.MatUtils;
 
 public class MeanImputation extends MatrixImputation {
 	
-	
-	public MeanImputation(AbstractRealMatrix data) {
-		super(data);
+	public MeanImputation() {
+		this(new MeanImputationPlanner());
 	}
 	
-	public MeanImputation(final double[][] data) {
-		super(data);
-	}
-	
-	public MeanImputation(final AbstractRealMatrix data, final boolean copy) {
-		super(data, copy);
-	}
-	
-	public MeanImputation(AbstractRealMatrix data, MeanImputationPlanner planner) {
-		super(data, planner);
-	}
-	
-	public MeanImputation(final double[][] data, MeanImputationPlanner planner) {
-		super(data, planner);
-	}
-	
-	public MeanImputation(final AbstractRealMatrix data, final boolean copy, MeanImputationPlanner planner) {
-		super(data, copy, planner);
+	public MeanImputation(MeanImputationPlanner planner) {
+		super(planner);
 	}
 	
 
@@ -73,12 +55,19 @@ public class MeanImputation extends MatrixImputation {
 	public Algo getLoggerTag() {
 		return Algo.IMPUTE;
 	}
-
+	
 	@Override
-	public double[][] impute() {
-		final double[][] copy = data.getData();
-		final int m = data.getRowDimension(), n = data.getColumnDimension();
-		info("performing mean imputation on " + m + " x " + n + " dataset");
+	public String getName() {
+		return "Mean imputation";
+	}
+	
+	@Override
+	public double[][] process(final double[][] dat) {
+		checkMat(dat);
+		
+		final double[][] copy = MatUtils.copyMatrix(dat);
+		final int m = dat.length, n = dat[0].length;
+		info("(" + getName() + ") performing mean imputation on " + m + " x " + n + " dataset");
 		
 		// Operates in 2M * N
 		for(int col = 0; col < n; col++) {
@@ -99,7 +88,7 @@ public class MeanImputation extends MatrixImputation {
 				}
 			}
 			
-			info(nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (column mean="+mean+")");
+			info("(" + getName() + ") " + nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (column mean="+mean+")");
 		}
 		
 		return copy;

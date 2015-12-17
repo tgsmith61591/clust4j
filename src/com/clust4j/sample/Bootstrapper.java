@@ -8,6 +8,10 @@ import com.clust4j.utils.VecUtils;
 public enum Bootstrapper implements Sampler {
 	
 	UNIFORM {
+		@Override public String getName() {
+			return "Uniform Bootstrapper";
+		}
+		
 		@Override public double[][] sample(final double[][] data, final int n) {
 			return sample(data, n, new Random());
 		}
@@ -22,9 +26,18 @@ public enum Bootstrapper implements Sampler {
 			
 			return out;
 		}
+		
+		@Override
+		public String toString() {
+			return getName();
+		}
 	},
 	
 	SMOOTH {
+		@Override public String getName() {
+			return "Smooth Bootstrapper";
+		}
+		
 		@Override public double[][] sample(final double[][] data, final int n) {
 			return sample(data, n, new Random());
 		}
@@ -40,7 +53,12 @@ public enum Bootstrapper implements Sampler {
 			
 			return out;
 		}
-	}
+		
+		@Override
+		public String toString() {
+			return getName();
+		}
+	},
 	
-	
+	//TODO BAYESIAN
 }

@@ -1,6 +1,6 @@
 package com.clust4j.utils;
 
-public interface GeometricallySeparable extends java.io.Serializable {
+public interface GeometricallySeparable extends java.io.Serializable, Named {
 	/**
 	 * Generally equal to negative {@link #getSimilarity(double[], double[])}
 	 * @param a
@@ -8,5 +8,4 @@ public interface GeometricallySeparable extends java.io.Serializable {
 	 * @return
 	 */
 	public double getDistance(final double[] a, final double[] b);
-	public String getName();
 }

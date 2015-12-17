@@ -2,46 +2,23 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
+import com.clust4j.utils.Named;
 
-public abstract class MatrixImputation implements Loggable {
+public abstract class MatrixImputation implements Loggable, Named, PreProcessor {
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
-	protected final AbstractRealMatrix data;
 	private boolean verbose = DEF_VERBOSE;
-	private boolean hasWarnings = false;
 	private Random seed = new Random();
 	
 	
 	
-	public MatrixImputation(final AbstractRealMatrix data) {
-		this(data, true);
-	}
+	public MatrixImputation() { }
 	
-	public MatrixImputation(final double[][] data) {
-		this(new Array2DRowRealMatrix(data), false);
-	}
-	
-	public MatrixImputation(final AbstractRealMatrix data, final boolean copy) {
-		this.data = copy ? (AbstractRealMatrix)data.copy() : data;
-		checkMat(data);
-	}
-	
-	public MatrixImputation(final AbstractRealMatrix data, final ImputationPlanner planner) {
-		this(data, true, planner);
-	}
-	
-	public MatrixImputation(final double[][] data, final ImputationPlanner planner) {
-		this(new Array2DRowRealMatrix(data), false, planner);
-	}
-	
-	public MatrixImputation(final AbstractRealMatrix data, final boolean copy, final ImputationPlanner planner) {
-		this(data, copy);
+	public MatrixImputation(final ImputationPlanner planner) {
 		this.verbose = planner.getVerbose();
 		this.seed = planner.getSeed();
 	}
@@ -60,16 +37,17 @@ public abstract class MatrixImputation implements Loggable {
 	
 	
 	
-	final void checkMat(final AbstractRealMatrix data) {
-		int m, n;
-		if((m = data.getRowDimension()) < 1)
-			throw new IllegalArgumentException("input data of length 0");
-		if((n = data.getColumnDimension()) < 1)
-			throw new IllegalArgumentException("input data with null column space");
+	/**
+	 * Call this prior to every process call!
+	 * @param data
+	 */
+	protected final void checkMat(final double[][] data) {
+		MatUtils.checkDims(data);
+		final int m = data.length, n = data[0].length;
 		
 		// Now check column NaN level
 		boolean seenNaN = false;
-		final double[][] dataCopy = data.getData();
+		final double[][] dataCopy = MatUtils.copyMatrix(data);
 		for(int col = 0; col < n; col++) {
 			Inner:
 			for(int row = 0; row < m; row++) {
@@ -82,26 +60,15 @@ public abstract class MatrixImputation implements Loggable {
 			}
 		}
 		
-		if(!seenNaN) {
-			if(verbose) warn("no NaNs in matrix; imputation will not have any effect");
-			else flagWarning();
-		}
+		if(!seenNaN) warn("no NaNs in matrix; imputation will not have any effect");
 		
 		// TODO?
 		
-		if(verbose) info("initializing matrix imputation method");
+		info("initializing matrix imputation method");
 	}
 	
 	public Random getSeed() {
 		return seed;
-	}
-	
-	public boolean hasWarnings() {
-		return hasWarnings;
-	}
-	
-	private void flagWarning() {
-		hasWarnings = true;
 	}
 	
 	
@@ -111,7 +78,6 @@ public abstract class MatrixImputation implements Loggable {
 	}
 	
 	@Override public void warn(String msg) {
-		flagWarning();
 		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
@@ -126,6 +92,4 @@ public abstract class MatrixImputation implements Loggable {
 	@Override public void debug(String msg) {
 		if(verbose) Log.debug(getLoggerTag(), msg);
 	}
-	
-	abstract public double[][] impute();
 }

@@ -2,10 +2,9 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.sample.Bootstrapper;
+import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
@@ -25,51 +24,30 @@ public class BootstrapImputation extends MatrixImputation {
 	}
 	
 	
-	public BootstrapImputation(AbstractRealMatrix data) {
-		super(data);
-		init();
+	
+	public BootstrapImputation() {
+		this(new BootstrapImputationPlanner());
 	}
 	
-	public BootstrapImputation(final double[][] data) {
-		super(data);
-		init();
-	}
-	
-	public BootstrapImputation(final AbstractRealMatrix data, final boolean copy) {
-		super(data, copy);
-		init();
-	}
-	
-	public BootstrapImputation(AbstractRealMatrix data, BootstrapImputationPlanner planner) {
-		super(data, planner);
+	public BootstrapImputation(BootstrapImputationPlanner planner) {
+		super(planner);
 		initFromPlanner(planner);
 	}
 	
-	public BootstrapImputation(final double[][] data, BootstrapImputationPlanner planner) {
-		super(data, planner);
-		initFromPlanner(planner);
-	}
-	
-	public BootstrapImputation(final AbstractRealMatrix data, final boolean copy, BootstrapImputationPlanner planner) {
-		super(data, copy, planner);
-		initFromPlanner(planner);
-	}
-	
-	
-	private void init() {
-		if(ratio < 0 || ratio > 1)
-			throw new IllegalArgumentException("ratio must be between 0 and 1");
-		
-		info("central tendency="+ctm);
-		info("bootstrapper="+strap);
-		info("sampling ratio="+ratio);
-	}
 	
 	private void initFromPlanner(BootstrapImputationPlanner planner) {
 		this.ctm = planner.method;
 		this.strap = planner.strap;
 		this.ratio = planner.ratio;
-		init();
+
+		if(ratio < 0 || ratio > 1)
+			throw new IllegalArgumentException("ratio must be between 0 and 1");
+		if(null == strap)
+			throw new IllegalClusterStateException("null bootstrapper");
+		
+		info("central tendency="+ctm);
+		info("bootstrapper="+strap);
+		info("sampling ratio="+ratio);
 	}
 	
 
@@ -130,29 +108,36 @@ public class BootstrapImputation extends MatrixImputation {
 	public Algo getLoggerTag() {
 		return Algo.IMPUTE;
 	}
-
+	
 	@Override
-	public double[][] impute() {
+	public String getName() {
+		return strap.getName() + " imputation";
+	}
+	
+	@Override
+	public double[][] process(final double[][] dat) {
+		checkMat(dat);
+		
 		final boolean mean = ctm.equals(CentralTendencyMethod.MEAN);
-		final double[][] complete = MatUtils.completeCases(data);
+		final double[][] complete = MatUtils.completeCases(dat);
 		
 		String error;
 		if(complete.length == 0) {
-			error = "no complete records in matrix";
+			error = "(" + getName() + ") no complete records in matrix";
 			error(error);
 			throw new NaNException(error);
 		}
 		
 		
-		final int m = data.getRowDimension(), n = data.getColumnDimension();
+		final int m = dat.length, n = dat[0].length;
 		final int mc = complete.length;
 		final int ms = (int)Math.ceil(ratio * mc);
 		final double[][] sampled = strap.sample(complete, ms, getSeed());
 
 		
-		info("performing bootstrap imputation on " + m + " x " + n + " dataset");
-		info(mc+" complete records found in matrix, "+ms+" records sampled for imputation");
-		final double[][] copy = data.getData();
+		info("(" + getName() + ") performing bootstrap imputation on " + m + " x " + n + " dataset");
+		info("(" + getName() + ") " + mc+" complete records found in matrix, "+ms+" records sampled for imputation");
+		final double[][] copy = MatUtils.copyMatrix(dat);
 		
 		
 		for(int col = 0; col < n; col++) {
@@ -176,7 +161,7 @@ public class BootstrapImputation extends MatrixImputation {
 				}
 			}
 			
-			info(nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (imputation value="+mean+")");
+			info("(" + getName() + ") " + nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (imputation value="+mean+")");
 		}
 		
 		return copy;
