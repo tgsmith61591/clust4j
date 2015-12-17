@@ -218,7 +218,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			if(null!=labels) // Already have fit this model
 				return this;
 			
-			if(verbose) info("beginning training segmentation for K = " + k);
+			info("beginning training segmentation for K = " + k);
 			final long start = System.currentTimeMillis();
 			
 			// Compute distance matrix, which is O(N^2) space, O(Nc2) time
@@ -231,11 +231,11 @@ public class KMedoids extends AbstractKCentroidClusterer {
 				.format(new Array2DRowRealMatrix(dist_mat, false)));*/
 			
 			
-			if(verbose) info("calculated " + 
-							dist_mat.length + " x " + 
-							dist_mat.length + 
-							" distance matrix in " + 
-							LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+			info("calculated " + 
+				dist_mat.length + " x " + 
+				dist_mat.length + 
+				" distance matrix in " + 
+				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 
 			// Clusters initialized with randoms already in super
 			// Initialize labels
@@ -250,12 +250,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			
 			// Worst case will store up to M choose K...
 			HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
-			
-
-			
-			if(verbose)  {
-				info("initial training system cost: " + oldCost );
-			}
+			info("initial training system cost: " + oldCost );
 			
 
 			long iterStart = System.currentTimeMillis();
@@ -272,9 +267,8 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					final int medoid_index = medoid_indices[i];
 					final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
 					
-					if(verbose)
-						info("optimizing medoid choice for cluster " + 
-							i + " (iter = " + (iter+1) + ") ");
+					info("optimizing medoid choice for cluster " + 
+						i + " (iter = " + (iter+1) + ") ");
 					
 					
 					// Track min for cluster
@@ -299,8 +293,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 						double simulated_cost = simulateSystemCost(copy_of_medoids, min_cost); // The simulated syst cost
 						if(simulated_cost < min_cost) {
 							min_cost = simulated_cost;
-							if(verbose)
-								trace("new cost-minimizing system found; current cost: " + simulated_cost );
+							trace("new cost-minimizing system found; current cost: " + simulated_cost );
 							
 							best_medoid_index = o;
 						}
@@ -319,18 +312,15 @@ public class KMedoids extends AbstractKCentroidClusterer {
 					// the OLD cost
 					oldCost = FastMath.min(oldCost, min_cost);
 					
-					if(verbose) {
-						info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
-							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
-						info("Total system cost: " + oldCost);
-					}
+					info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
+						LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
+					info("Total system cost: " + oldCost);
 					
 					converged = true;
 					iter++;
 					break;
 				} else { // can get better... reassign clusters to new medoids, keep going.
-					if(verbose)
-						info("algorithm has not converged yet; new min cost: " + min_cost);
+					info("algorithm has not converged yet; new min cost: " + min_cost);
 					
 					oldCost = min_cost;
 					cent_to_record = assignClustersAndLabels();
@@ -340,16 +330,12 @@ public class KMedoids extends AbstractKCentroidClusterer {
 			} // End iter loop
 			
 			
-			if(verbose) {
-				if(!converged) { // KMedoids should always converge...
-					if(verbose) warn("algorithm did not converge");
-					else flagWarning();
-				}
+				if(!converged) // KMedoids should always converge...
+					warn("algorithm did not converge");
 				
 				info("model " + getKey() + " completed in " + 
 						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
 						System.lineSeparator());
-			}
 			
 			
 			cost = oldCost;

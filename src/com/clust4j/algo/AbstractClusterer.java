@@ -47,7 +47,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	/** Seed for any shuffles */
 	private final Random seed;
 	/** Verbose for heavily logging */
-	final protected boolean verbose;
+	final private boolean verbose;
 	
 	
 	/** Have any warnings occurred -- volatile because can change */
@@ -93,32 +93,27 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		boolean similarity = this.dist instanceof SimilarityMetric; // Avoid later check
 		
 		// Handle data, now...
-		if(verbose) info("checking input data for NaNs");
+		info("checking input data for NaNs");
 		handleData(data);
 		
 		// Log info
-		if(verbose) {
-			info("initializing " + getName() + 
-					" clustering with " + data.getRowDimension() + 
-					" x " + data.getColumnDimension() + " data matrix");
-			
-			
-			if(this.dist instanceof Kernel) {
-				if (verbose) warn("running " + getName() + " in Kernel mode can be an expensive option");
-				else flagWarning();
-			}
-			
-			
-			info((similarity ? "similarity" : "distance") + 
-					" metric: " + dist.getName());
+		info("initializing " + getName() + 
+				" clustering with " + data.getRowDimension() + 
+				" x " + data.getColumnDimension() + " data matrix");
+		
+		if(this.dist instanceof Kernel) {
+			warn("running " + getName() + " in Kernel mode can be an expensive option");
 		}
+		
+		info((similarity ? "similarity" : "distance") + 
+				" metric: " + dist.getName());
 		
 		
 		// Scale if needed
 		if(!planner.getScale())
 			this.data = (AbstractRealMatrix) data.copy();
 		else {
-			if(verbose) info("normalizing matrix columns (centering and scaling)");
+			info("normalizing matrix columns (centering and scaling)");
 			this.data = scale(data, (AbstractRealMatrix) data.copy());
 		}
 	} // End constructor
@@ -131,7 +126,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		
 		if(MatUtils.containsNaN(data)) {
 			String error = "NaN in input data. Select a matrix imputation method for incomplete records";
-			if(verbose) error(error);
+			error(error);
 			throw new NaNException(error);
 		}
 	}
@@ -170,7 +165,7 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 		return copy;
 	}
 	
-	protected void flagWarning() {
+	private void flagWarning() {
 		hasWarnings = true;
 	}
 
@@ -250,24 +245,24 @@ public abstract class AbstractClusterer implements Loggable, java.io.Serializabl
 	
 	/* -- LOGGER METHODS --  */
 	@Override public void error(String msg) {
-		Log.err(getLoggerTag(), msg);
+		if(verbose) Log.err(getLoggerTag(), msg);
 	}
 	
 	@Override public void warn(String msg) {
 		flagWarning();
-		Log.warn(getLoggerTag(), msg);
+		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
 	@Override public void info(String msg) {
-		Log.info(getLoggerTag(), msg);
+		if(verbose) Log.info(getLoggerTag(), msg);
 	}
 	
 	@Override public void trace(String msg) {
-		Log.trace(getLoggerTag(), msg);
+		if(verbose) Log.trace(getLoggerTag(), msg);
 	}
 	
 	@Override public void debug(String msg) {
-		Log.debug(getLoggerTag(), msg);
+		if(verbose) Log.debug(getLoggerTag(), msg);
 	}
 	
 	/**

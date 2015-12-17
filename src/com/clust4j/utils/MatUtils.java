@@ -1,5 +1,6 @@
 package com.clust4j.utils;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -23,7 +24,7 @@ public class MatUtils {
 		ADD, DIV, MULT, SUB
 	}
 	
-	final static protected void checkDims(final double[][] a) {
+	final static public void checkDims(final double[][] a) {
 		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
@@ -35,7 +36,7 @@ public class MatUtils {
 		}
 	}
 	
-	final static protected void checkDims(final AbstractRealMatrix a) {
+	final static public void checkDims(final AbstractRealMatrix a) {
 		if(a.getRowDimension() < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.getRowDimension());
 	
 		// If you try it on a row-initialized matrix but not col-init
@@ -140,6 +141,25 @@ public class MatUtils {
 			out[i] = VecUtils.sum(getColumn(data, i));
 		
 		return out;
+	}
+	
+	public static double[][] completeCases(final double[][] data) {
+		checkDims(data);
+		
+		final ArrayList<double[]> rows = new ArrayList<>();
+		for(int i = 0; i < data.length; i++)
+			if(VecUtils.nanCount(data[i]) == 0)
+				rows.add(data[i]);
+		
+		final double[][] out = new double[rows.size()][];
+		for(int i =0; i < out.length; i++)
+			out[i] = rows.get(i);
+		
+		return out;
+	}
+	
+	public static double[][] completeCases(final AbstractRealMatrix data) {
+		return completeCases(data.getData());
 	}
 	
 	public static boolean containsNaN(final AbstractRealMatrix mat) {
@@ -429,8 +449,7 @@ public class MatUtils {
 		
 		final double[][] out = new double[m][n];
 		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
-				out[i][j] = seed.nextGaussian();
+			out[i] = VecUtils.randomGaussian(n, seed);
 		
 		return out;
 	}

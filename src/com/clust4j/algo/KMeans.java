@@ -111,7 +111,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 			
 
 			final long start = System.currentTimeMillis();
-			if(verbose) info("beginning training segmentation for K = " + k);
+			info("beginning training segmentation for K = " + k);
 				
 			
 			Double oldCost = null;
@@ -125,7 +125,7 @@ public class KMeans extends AbstractKCentroidClusterer {
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				
-				if(verbose && iter%10 == 0)  {
+				if(iter%10 == 0)  {
 					info("training iteration " + iter +
 							"; current system cost = " + 
 							oldCost ); //+ "; " + centroidsToString());
@@ -163,10 +163,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 					// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
 					// otherwise update new SSE and continue.
 					if( FastMath.abs(oldCost - newCost) < minChange ) {
-						if(verbose) {
-							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
-									LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
-						}
+						info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
+							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/
+								(double)(iter+1)), false) + ")");
 						
 						converged = true;
 						iter++; // Track iters used
@@ -179,17 +178,11 @@ public class KMeans extends AbstractKCentroidClusterer {
 			} // End iter for
 			
 			
-			if(verbose) {
-				info("Total system cost: " + cost);
-				if(!converged) {
-					if(verbose) warn("algorithm did not converge");
-					else flagWarning();
-				}
-				
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
-			}
+			info("Total system cost: " + cost);
+			if(!converged) warn("algorithm did not converge");
+			info("model " + getKey() + " completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+				System.lineSeparator());
 			
 			
 			reorderLabels();

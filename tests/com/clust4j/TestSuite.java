@@ -12,6 +12,7 @@ import com.clust4j.algo.SerializationTests;
 import com.clust4j.algo.prep.ImputationTests;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
+import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.TestDistanceEnums;
@@ -33,7 +34,8 @@ import com.clust4j.utils.VectorTests;
 	SerializationTests.class,
 	HeapTesting.class,
 	HierTests.class,
-	ImputationTests.class
+	ImputationTests.class,
+	BootstrapTest.class
 })
 
 public class TestSuite {/* Runs all the tests */}

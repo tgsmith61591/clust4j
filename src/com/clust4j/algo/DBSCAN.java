@@ -152,11 +152,8 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		super(data, builder);
 		
 		
-		if(verbose) {
-			meta("epsilon="+builder.eps);
-			meta("min_pts="+builder.minPts);
-		}
-		
+		meta("epsilon="+builder.eps);
+		meta("min_pts="+builder.minPts);
 		
 		this.minPts = builder.minPts;
 		this.eps 	= builder.eps;
@@ -166,13 +163,13 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		String e;
 		if(this.eps <= 0.0) {
 			e="eps must be greater than 0.0";
-			if(verbose) error(e);
+			error(e);
 			throw new IllegalArgumentException(e);
 		}
 		
 		if(this.minPts < 1) {
 			e="minPts must be greater than 0";
-			if(verbose) error(e);
+			error(e);
 			throw new IllegalArgumentException(e);
 		}
 	}
@@ -189,7 +186,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			return VecUtils.copy(labels);
 		} catch(NullPointerException npe) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}
@@ -218,19 +215,17 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			
 			
 			// Log info...
-			if(verbose) {
-				info("calculated " + 
-					m + " x " + m + 
-					" distance matrix in " + 
-					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
-				
-				info("computing density neighborhood for each point (eps=" + eps + ")");
-			}
+			info("calculated " + 
+				m + " x " + m + 
+				" distance matrix in " + 
+				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+			
+			info("computing density neighborhood for each point (eps=" + eps + ")");
 			
 			
 			
 			// Super verbose tracing but only for smaller matrices
-			if(verbose && m < 10)
+			if(m < 10)
 				trace("distance matrix:"+
 					new MatrixFormatter()
 						.format(new Array2DRowRealMatrix(dist_mat, false)));
@@ -274,13 +269,11 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			
 			
 			// Log checkpoint
-			if(verbose) {
-				final int numCorePts = VecUtils.sum(coreSamples);
-				info("completed density neighborhood calculations in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
-				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
-				info("identifying cluster labels");
-			}
+			final int numCorePts = VecUtils.sum(coreSamples);
+			info("completed density neighborhood calculations in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
+			info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
+			info("identifying cluster labels");
 			
 			
 			// Label the points...
@@ -315,7 +308,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 					
 					//System.out.println(stack);
 					if(stack.size() == 0) {
-						if(verbose) info("completed stack for clusterLabel " + nextLabel);
+						info("completed stack for clusterLabel " + nextLabel);
 						break;
 					}
 					
@@ -328,24 +321,22 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			
 			
 			// Wrap up...
-			if(verbose) {
-				info("completed cluster labeling in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-				
-				
-				// Count missing
-				numNoisey = 0;
-				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				
-				
-				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
-					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
-						" classified noise");
-				
-				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
-			}
+			info("completed cluster labeling in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+			
+			
+			// Count missing
+			numNoisey = 0;
+			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+			
+			
+			info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+				" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+					" classified noise");
+			
+			info("model "+getKey()+" completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+				System.lineSeparator());
 			
 			
 			return this;

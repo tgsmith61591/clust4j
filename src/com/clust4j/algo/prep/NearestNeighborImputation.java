@@ -1,5 +1,7 @@
 package com.clust4j.algo.prep;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors;
@@ -19,41 +21,35 @@ public class NearestNeighborImputation extends MatrixImputation {
 	private double radius = DEF_RADIUS;
 	private GeometricallySeparable sep = DEF_METRIC;
 	private RunMode mode = DEF_RUN_MODE;
-	private NearestNeighbors nnModel;
+	volatile private NearestNeighbors nnModel;
 	
 	
 
 	public NearestNeighborImputation(AbstractRealMatrix data) {
 		super(data);
-		initModel();
 	}
 	
 	public NearestNeighborImputation(final double[][] data) {
 		super(data);
-		initModel();
 	}
 	
 	public NearestNeighborImputation(final AbstractRealMatrix data, final boolean copy) {
 		super(data, copy);
-		initModel();
 	}
 	
 	public NearestNeighborImputation(AbstractRealMatrix data, NNImputationPlanner planner) {
 		super(data, planner);
 		initFromPlanner(planner);
-		initModel();
 	}
 	
 	public NearestNeighborImputation(final double[][] data, NNImputationPlanner planner) {
 		super(data, planner);
 		initFromPlanner(planner);
-		initModel();
 	}
 	
 	public NearestNeighborImputation(final AbstractRealMatrix data, final boolean copy, NNImputationPlanner planner) {
 		super(data, copy, planner);
 		initFromPlanner(planner);
-		initModel();
 	}
 	
 	
@@ -61,12 +57,18 @@ public class NearestNeighborImputation extends MatrixImputation {
 	public static class NNImputationPlanner extends ImputationPlanner {
 		private boolean verbose = DEF_VERBOSE;
 		private int k = DEF_K;
+		private Random seed = new Random();
 		private double radius = DEF_RADIUS;
 		private RunMode mode = DEF_RUN_MODE;
 		
 		public NNImputationPlanner() {}
 		public NNImputationPlanner(int k) {
 			this.k = k;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
 		}
 
 		@Override
@@ -88,6 +90,12 @@ public class NearestNeighborImputation extends MatrixImputation {
 			this.mode = mode;
 			return this;
 		}
+		
+		@Override
+		public NNImputationPlanner setSeed(final Random seed) {
+			this.seed = seed;
+			return this;
+		}
 
 		@Override
 		public NNImputationPlanner setVerbose(boolean b) {
@@ -105,28 +113,29 @@ public class NearestNeighborImputation extends MatrixImputation {
 		this.mode = planner.mode;
 	}
 	
-	final void initModel() {
-		if(verbose) 
-			info("fitting nearest neighbors model for " + 
-				(mode.equals(RunMode.K_NEAREST)?("k="+k):("radius="+radius)));
-		
-		// TODO something here about the NaNs present so we fit on complete data...
-		nnModel = new NearestNeighbors(data, 
-			new NearestNeighborsPlanner()
-				.setK(k)
-				.setRadius(radius)
-				.setSep(sep)
-				.setRunMode(mode)).fit();
-	}
-	
 	
 	
 	
 
 	@Override
 	public double[][] impute() {
-		// TODO Auto-generated method stub
-		return null;
+		synchronized(this) {
+			info("fitting nearest neighbors model for " + 
+				(mode.equals(RunMode.K_NEAREST)?("k="+k):("radius="+radius)));
+			
+			// TODO something here about the NaNs present so we fit on complete data...
+			nnModel = new NearestNeighbors(data, 
+				new NearestNeighborsPlanner()
+					.setK(k)
+					.setRadius(radius)
+					.setSep(sep)
+					.setRunMode(mode)).fit();
+			
+			// TODO Auto-generated method stub
+			
+			nnModel = null;
+			return null;
+		}
 	}
 
 	@Override

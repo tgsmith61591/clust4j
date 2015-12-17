@@ -3,6 +3,7 @@ package com.clust4j.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
@@ -451,6 +452,39 @@ public class VecUtils {
 		for(double d: a)
 			prod *= d;
 		return prod;
+	}
+	
+	public static double[] randomGaussian(final int n) {
+		return randomGaussian(n, new Random());
+	}
+	
+	
+	public static double[] randomGaussian(final int n, final Random seed) {
+		return randomGaussian(n,seed,1);
+	}
+	
+	public static double[] randomGaussian(final int n, final double scalar) {
+		return randomGaussian(n, new Random(), scalar);
+	}
+	
+	
+	public static double[] randomGaussian(final int n, final Random seed, final double scalar) {
+		if(n < 1)
+			throw new IllegalArgumentException("illegal dimensions");
+		
+		final double[] out = new double[n];
+		for(int i = 0; i < n; i++)
+			out[i] = seed.nextGaussian()*scalar;
+		
+		return out;
+	}
+	
+	public static double[] randomGaussianNoiseVector(final int n) {
+		return randomGaussian(n, new Random());
+	}
+	
+	public static double[] randomGaussianNoiseVector(final int n, final Random seed) {
+		return randomGaussian(n,seed,MatUtils.EPS);
 	}
 	
 	public static double[] scalarAdd(final double[] a, final double b) {

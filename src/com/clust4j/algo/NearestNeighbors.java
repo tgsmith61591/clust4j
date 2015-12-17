@@ -102,15 +102,12 @@ public class NearestNeighbors extends AbstractClusterer {
 			
 		this.neighborhood = planner.neighborhood;
 		
-		if(verbose) {
-			meta("runmode="+runmode);
-			meta(radius_run?("radius="+neighborhood):("k="+k));
-			
-			if(this.k != planner.k && !radius_run) {
-				if(verbose) warn("provided k (" + planner.k + ") is greater than the number of "
-						+ "rows in data. reducing k to " + this.k + " (m - 1)");
-				else flagWarning();
-			}
+		meta("runmode="+runmode);
+		meta(radius_run?("radius="+neighborhood):("k="+k));
+		
+		if(this.k != planner.k && !radius_run) {
+			warn("provided k (" + planner.k + ") is greater than the number of "
+				+ "rows in data. reducing k to " + this.k + " (m - 1)");
 		}
 		
 		
@@ -120,7 +117,7 @@ public class NearestNeighbors extends AbstractClusterer {
 		
 		
 		if(null == planner.dist_mat) {
-			if(verbose) info("computing distance matrix (" + m + "x" + m + ")");
+			info("computing distance matrix (" + m + "x" + m + ")");
 			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 		} else {
 			dist_mat = planner.dist_mat;
@@ -269,7 +266,7 @@ public class NearestNeighbors extends AbstractClusterer {
 			return copy;
 		} catch(NullPointerException e) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}
@@ -288,7 +285,7 @@ public class NearestNeighbors extends AbstractClusterer {
 			
 			
 			final boolean knn = runmode.equals(RunMode.K_NEAREST);
-			if(verbose) info("identifying " + (knn ? 
+			info("identifying " + (knn ? 
 				(k+" nearest record"+(k!=1?"s":"")+" for each point") : 
 					("neighborhoods for each record within radius="+neighborhood)));
 			
@@ -330,17 +327,15 @@ public class NearestNeighbors extends AbstractClusterer {
 				int ct = 0;
 				for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
 				if(ct > 0) {
-					if(verbose) warn(ct + " record" + (ct!=1?"s have":" has") + 
+					warn(ct + " record" + (ct!=1?"s have":" has") + 
 						" no records within radius=" + neighborhood);
-					else flagWarning();
 				}
 			}
 			
 			
-			if(verbose)
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
+			info("model " + getKey() + " completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+				System.lineSeparator());
 			
 			return this;
 		}

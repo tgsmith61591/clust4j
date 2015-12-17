@@ -109,20 +109,20 @@ public class MeanShift
 		if(null != planner.seeds) {
 			if(planner.seeds.length == 0) {
 				e = "seeds length must be greater than 0";
-				if(verbose) error(e);
+				error(e);
 				throw new IllegalArgumentException(e);
 			}
 			
 			if(planner.seeds[0].length != (n=data.getColumnDimension())) {
 				e = "seeds column dims do not match data column dims";
-				if(verbose) error(e);
+				error(e);
 				throw new DimensionMismatchException(planner.seeds[0].length, n);
 			}
 			
-			if(verbose) info("initializing kernels from given seeds");
+			info("initializing kernels from given seeds");
 			seeds = MatUtils.copyMatrix(planner.seeds);
 		} else { // Default = all
-			if(verbose) info("no seeds provided; defaulting to all datapoints");
+			info("no seeds provided; defaulting to all datapoints");
 			seeds = data.getData();
 			n = data.getColumnDimension();
 		}
@@ -145,11 +145,9 @@ public class MeanShift
 		*/
 		
 		
-		if(verbose) {
-			meta("bandwidth="+bandwidth);
-			meta("maxIter="+maxIter);
-			meta("minChange="+minChange);
-		}
+		meta("bandwidth="+bandwidth);
+		meta("maxIter="+maxIter);
+		meta("minChange="+minChange);
 	}
 	
 	
@@ -288,7 +286,7 @@ public class MeanShift
 			
 			if(null!=labels) // Already fit this model
 				return this;
-			if(verbose) info("identifying neighborhoods within bandwidth");
+			info("identifying neighborhoods within bandwidth");
 			
 			
 			// Init labels, centroids
@@ -300,7 +298,7 @@ public class MeanShift
 			
 			
 			// Now get single seed members
-			if(verbose) info("computing points within seed bandwidth radii");
+			info("computing points within seed bandwidth radii");
 			ArrayList<EntryPair<double[], Integer>> all_res = new ArrayList<>();
 			for(double[] seed: seeds)
 				all_res.add(meanShiftSingleSeed(seed));
@@ -317,14 +315,14 @@ public class MeanShift
 			if(center_intensity.isEmpty()) {
 				error = "No point was within bandwidth="+bandwidth+
 						" of any seed. Increase the bandwidth or try different seeds.";
-				if(verbose) error(error);
+				error(error);
 				throw new IllegalClusterStateException(error);
 			}
 			
 			
 			// Post-processing. Remove near duplicate seeds
 			// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
-			if(verbose) info("identifying most populated seeds, removing near-duplicates");
+			info("identifying most populated seeds, removing near-duplicates");
 			SortedSet<Map.Entry<double[], Integer>> sorted_by_intensity = 
 					ClustUtils.sortEntriesByValue(center_intensity, true);
 			
@@ -365,11 +363,9 @@ public class MeanShift
 				if(unique[i])
 					centroids.add(sorted_centers[i]);
 			
-			if(verbose) {
-				info((numClusters=centroids.size())+" optimal kernels identified");
-				info(redundant_ct + " nearly-identical kernel" + 
-						(redundant_ct!=1?"s":"") + " removed");
-			}
+			info((numClusters=centroids.size())+" optimal kernels identified");
+			info(redundant_ct + " nearly-identical kernel" + 
+					(redundant_ct!=1?"s":"") + " removed");
 			
 			
 			// Assign labels now
@@ -393,21 +389,19 @@ public class MeanShift
 			}
 			
 			// Wrap up...
-			if(verbose) {
-				// Count missing
-				numNoisey = 0;
-				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
-				
-				
-				info("completed cluster labeling in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-				
-				
-				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
-			}
+			// Count missing
+			numNoisey = 0;
+			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+			info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
+			
+			
+			info("completed cluster labeling in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+			
+			
+			info("model "+getKey()+" completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+				System.lineSeparator());
 			
 			return this;
 		} // End synch
@@ -425,7 +419,7 @@ public class MeanShift
 			return cent;
 		} catch(NullPointerException e) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}
@@ -436,7 +430,7 @@ public class MeanShift
 			return VecUtils.copy(labels);
 		} catch(NullPointerException npe) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}

@@ -97,15 +97,14 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		this.linkage = planner.linkage;
 		if(null == linkage) {
 			String e = "null linkage passed to planner";
-			if(verbose) error(e);
+			error(e);
 			throw new IllegalClusterStateException(e);
 		} else if(linkage.equals(Linkage.WARD) && !getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
-			if(verbose) warn("Ward's method implicitly requires Euclidean distance; overriding " + 
+			warn("Ward's method implicitly requires Euclidean distance; overriding " + 
 				getSeparabilityMetric().getName());
-			else flagWarning();
 			
 			super.setSeparabilityMetric(Distance.EUCLIDEAN);
-			if(verbose) meta("New distance metric: "+getSeparabilityMetric().getName());
+			meta("New distance metric: "+getSeparabilityMetric().getName());
 		}
 		
 		
@@ -114,9 +113,9 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		this.num_clusters = planner.num_clusters;
 		
 		
-		if(verbose) meta("Linkage="+linkage);
-		if(verbose) meta("Num clusters="+num_clusters);
-		if(verbose) trace(getName()+" clustering has a runtime of O(N^2)");
+		meta("Linkage="+linkage);
+		meta("Num clusters="+num_clusters);
+		trace(getName()+" clustering has a runtime of O(N^2)");
 	}
 	
 	
@@ -208,7 +207,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		private static final long serialVersionUID = 5295537901834851676L;
 		public final Loggable ref;
 		public final GeometricallySeparable dist;
-		public final boolean verbose;
 		public final int m;
 		private final double[] dist_vec;
 		
@@ -218,7 +216,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			
 			ref = HierarchicalAgglomerative.this;
 			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
-			verbose = HierarchicalAgglomerative.this.verbose;
 			m = HierarchicalAgglomerative.this.m;
 			
 			// Flatten upper triangular dist_mat
@@ -242,21 +239,20 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		
 		private void link(final double[] dists, final double[][] Z, final int n) {
 			int i, j, k, x = -1, y = -1, i_start, nx, ny, ni, id_x, id_y, id_i, c_idx;
-			boolean verbose = HierarchicalAgglomerative.this.verbose;
 			double current_min;
 			
 			// Inter cluster dists
 			double[] D = VecUtils.copy(dists);
 			
 			// Map the indices to node ids
-			if(verbose) ref.info("initializing node mappings ("+getClass().getName().split("\\$")[1]+")");
+			ref.info("initializing node mappings ("+getClass().getName().split("\\$")[1]+")");
 			int[] id_map = new int[n];
 			for(i = 0; i < n; i++) 
 				id_map[i] = i;
 			
 			int incrementor = n/5, pct = 1;
 			for(k = 0; k < n - 1; k++) {
-				if(verbose && incrementor>0 && k%incrementor == 0)
+				if(incrementor>0 && k%incrementor == 0)
 					ref.info("node mapping progress - " + 20*pct++ + "%");
 				
 				// get two closest x, y
@@ -524,11 +520,10 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 			
 			// Log info...
-			if(verbose)
-				info("calculated " + 
-					m + " x " + m + 
-					" distance matrix in " + 
-					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+			info("calculated " + 
+				m + " x " + m + 
+				" distance matrix in " + 
+				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 			
 			
 			
@@ -537,17 +532,17 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			switch(linkage) {
 				case WARD:
 					clz = WardTree.class;
-					if(verbose) info("constructing HierarchicalDendrogram: " + clz.getName());
+					info("constructing HierarchicalDendrogram: " + clz.getName());
 					tree = new WardTree();
 					break;
 				case AVERAGE:
 					clz = AverageLinkageTree.class;
-					if(verbose) info("constructing HierarchicalDendrogram: " + clz.getName());
+					info("constructing HierarchicalDendrogram: " + clz.getName());
 					tree = new AverageLinkageTree();
 					break;
 				case COMPLETE:
 					clz = CompleteLinkageTree.class;
-					if(verbose) info("constructing HierarchicalDendrogram: " + clz.getName());
+					info("constructing HierarchicalDendrogram: " + clz.getName());
 					tree = new CompleteLinkageTree();
 					break;
 				default:
@@ -564,10 +559,9 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			reorderLabels();
 			
 			
-			if(verbose) 
-				info("model " + getKey() + " completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
-						System.lineSeparator());
+			info("model " + getKey() + " completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
+					System.lineSeparator());
 			
 			dist_mat = null;
 			return this;
@@ -640,7 +634,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			return VecUtils.copy(labels);
 		} catch(NullPointerException e) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}

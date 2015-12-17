@@ -1,5 +1,7 @@
 package com.clust4j.algo.prep;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
@@ -11,8 +13,9 @@ import com.clust4j.utils.NaNException;
 public abstract class MatrixImputation implements Loggable {
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
 	protected final AbstractRealMatrix data;
-	protected boolean verbose = DEF_VERBOSE;
+	private boolean verbose = DEF_VERBOSE;
 	private boolean hasWarnings = false;
+	private Random seed = new Random();
 	
 	
 	
@@ -40,13 +43,16 @@ public abstract class MatrixImputation implements Loggable {
 	public MatrixImputation(final AbstractRealMatrix data, final boolean copy, final ImputationPlanner planner) {
 		this(data, copy);
 		this.verbose = planner.getVerbose();
+		this.seed = planner.getSeed();
 	}
 	
 	
 	
 	abstract static public class ImputationPlanner {
 		public ImputationPlanner(){}
+		abstract public Random getSeed();
 		abstract public boolean getVerbose();
+		abstract public ImputationPlanner setSeed(Random rand);
 		abstract public ImputationPlanner setVerbose(boolean b);
 	}
 	
@@ -86,35 +92,39 @@ public abstract class MatrixImputation implements Loggable {
 		if(verbose) info("initializing matrix imputation method");
 	}
 	
+	public Random getSeed() {
+		return seed;
+	}
+	
 	public boolean hasWarnings() {
 		return hasWarnings;
 	}
 	
-	protected void flagWarning() {
+	private void flagWarning() {
 		hasWarnings = true;
 	}
 	
 	
 	/* -- LOGGER METHODS --  */
 	@Override public void error(String msg) {
-		Log.err(getLoggerTag(), msg);
+		if(verbose) Log.err(getLoggerTag(), msg);
 	}
 	
 	@Override public void warn(String msg) {
 		flagWarning();
-		Log.warn(getLoggerTag(), msg);
+		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
 	@Override public void info(String msg) {
-		Log.info(getLoggerTag(), msg);
+		if(verbose) Log.info(getLoggerTag(), msg);
 	}
 	
 	@Override public void trace(String msg) {
-		Log.trace(getLoggerTag(), msg);
+		if(verbose) Log.trace(getLoggerTag(), msg);
 	}
 	
 	@Override public void debug(String msg) {
-		Log.debug(getLoggerTag(), msg);
+		if(verbose) Log.debug(getLoggerTag(), msg);
 	}
 	
 	abstract public double[][] impute();

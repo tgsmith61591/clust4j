@@ -1,5 +1,7 @@
 package com.clust4j.algo.prep;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.log.Log.Tag.Algo;
@@ -38,12 +40,24 @@ public class MedianImputation extends MatrixImputation {
 	
 	public static class MedianImputationPlanner extends ImputationPlanner {
 		private boolean verbose = DEF_VERBOSE;
+		private Random seed = new Random();
 		
 		public MedianImputationPlanner() {}
 
 		@Override
+		public Random getSeed() {
+			return seed;
+		}
+		
+		@Override
 		public boolean getVerbose() {
 			return verbose;
+		}
+		
+		@Override
+		public MedianImputationPlanner setSeed(final Random seed) {
+			this.seed = seed;
+			return this;
 		}
 
 		@Override
@@ -66,7 +80,7 @@ public class MedianImputation extends MatrixImputation {
 	public double[][] impute() {
 		final double[][] copy = data.getData();
 		final int m = data.getRowDimension(), n = data.getColumnDimension();
-		if(verbose) info("performing median imputation on " + m + " x " + n + " dataset");
+		info("performing median imputation on " + m + " x " + n + " dataset");
 		
 		// Operates in 2M * N
 		for(int col = 0; col < n; col++) {
@@ -80,7 +94,7 @@ public class MedianImputation extends MatrixImputation {
 				}
 			}
 			
-			if(verbose) info(count + " NaN" + (count!=1?"s":"") + " identified in column " + col + " (column median="+median+")");
+			info(count + " NaN" + (count!=1?"s":"") + " identified in column " + col + " (column median="+median+")");
 		}
 		
 		return copy;

@@ -181,7 +181,7 @@ public abstract class AbstractKCentroidClusterer
 			
 		} catch(NullPointerException npe) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}

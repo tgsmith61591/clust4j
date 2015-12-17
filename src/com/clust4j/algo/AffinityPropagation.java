@@ -106,7 +106,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		// Check some args
 		if(planner.damping < DEF_DAMPING || planner.damping >= 1) {
 			error = "damping must be between " + DEF_DAMPING + " and 1";
-			if(verbose) error(error);
+			error(error);
 			throw new IllegalArgumentException(error);
 		}
 		
@@ -118,16 +118,13 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		this.addNoise = planner.addNoise;
 		
 		
-		if(verbose) {
-			meta("damping="+damping);
-			meta("maxIter="+maxIter);
-			meta("minChange="+minChange);
-			meta("addNoise="+addNoise);
-			
-			if(!addNoise) {
-				if(verbose) warn("not scaling with Gaussian noise can cause the algorithm not to converge");
-				else flagWarning();
-			}
+		meta("damping="+damping);
+		meta("maxIter="+maxIter);
+		meta("minChange="+minChange);
+		meta("addNoise="+addNoise);
+		
+		if(!addNoise) {
+			warn("not scaling with Gaussian noise can cause the algorithm not to converge");
 		}
 	}
 	
@@ -227,7 +224,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			return VecUtils.copy(labels);
 		} catch(NullPointerException npe) {
 			String error = "model has not yet been fit";
-			if(verbose) error(error);
+			error(error);
 			throw new ModelNotFitException(error);
 		}
 	}
@@ -297,18 +294,18 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			// Calc sim mat to MAXIMIZE VALS
 			final long sim_time = System.currentTimeMillis();
 			if(getSeparabilityMetric() instanceof SimilarityMetric) {
-				if(verbose) info("computing similarity matrix");
+				info("computing similarity matrix");
 				sim_mat = ClustUtils.similarityFullMatrix(data, (SimilarityMetric)getSeparabilityMetric());
 			} else {
-				if(verbose) info("computing negative distance (pseudo similarity) matrix");
+				info("computing negative distance (pseudo similarity) matrix");
 				sim_mat = MatUtils.negative(ClustUtils.distanceFullMatrix(data, getSeparabilityMetric()));
 			}
-			if(verbose) info("completed similarity computations in " + LogTimeFormatter.millis(System.currentTimeMillis()-sim_time, false));
+			info("completed similarity computations in " + LogTimeFormatter.millis(System.currentTimeMillis()-sim_time, false));
 			
 			
 			
 			// Extract the upper triangular portion from sim mat, get the median as default pref 
-			if(verbose) info("computing initialization point");
+			info("computing initialization point");
 			int idx = 0, mChoose2 = ((m*m) - m) / 2;
 			final double[] vals = new double[mChoose2];
 			for(int i = 0; i < m - 1; i++)
@@ -316,10 +313,11 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					vals[idx++] = sim_mat[i][j];
 			
 			final double pref = VecUtils.median(vals);
-			if(verbose) info("pref = "+pref);
+			info("pref = "+pref);
+			
 			
 			// Place pref on diagonal of sim mat
-			if(verbose) info("refactoring similarity matrix diagonal vector");
+			info("refactoring similarity matrix diagonal vector");
 			for(int i = 0; i < m; i++)
 				sim_mat[i][i] = pref;
 			
@@ -337,23 +335,23 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[][] tiny_scaled = MatUtils.scalarMultiply(sim_mat, MatUtils.EPS);
 				tiny_scaled = MatUtils.scalarAdd(tiny_scaled, MatUtils.TINY*100);
 				
-				if(verbose) info("removing matrix degeneracies; scaling with minute Gaussian noise");
+				info("removing matrix degeneracies; scaling with minute Gaussian noise");
 				long gausStart = System.currentTimeMillis();
 				double[][] noise = MatUtils.randomGaussian(m, m, getSeed());
-				if(verbose) info("Gaussian noise matrix computed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-gausStart, false));
+				info("Gaussian noise matrix computed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-gausStart, false));
 				double[][] noiseMatrix = null;
 				
 				
 				try {
 					long multStart = System.currentTimeMillis();
-					if(verbose) info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
+					info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
 					noiseMatrix = MatUtils.multiply(tiny_scaled, noise);
-					if(verbose) info("matrix product computed in " + 
-							LogTimeFormatter.millis(System.currentTimeMillis()-multStart, false));
+					info("matrix product computed in " + 
+						LogTimeFormatter.millis(System.currentTimeMillis()-multStart, false));
 				} catch(DimensionMismatchException e) {
 					error = e.getMessage();
-					if(verbose) error(error);
+					error(error);
 					throw new InternalError("similarity matrix produced DimMismatch: "+ error); // Should NEVER happen
 				}
 				
@@ -506,7 +504,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					
 					if((converged && numClusters > 0) || iterCt == maxIter) {
 						iterCt++;
-						if(verbose) info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
+						info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
 							" (avg iteration time: " + LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
 						break;
 					} // Else did not converge...
@@ -514,11 +512,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			} // End for
 
 			
-			if(!converged) {
-				if(verbose) warn("algorithm did not converge");
-				else flagWarning();
-			}
-			if(verbose) info("labeling clusters from availability and responsibility matrices");
+			if(!converged) warn("algorithm did not converge");
+			info("labeling clusters from availability and responsibility matrices");
 			
 			
 			// sklearn line: I = np.where(np.diag(A + R) > 0)[0]
@@ -540,7 +535,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			
 			// Assign final K -- sklearn line: K = I.size  # Identify exemplars
 			numClusters = I.length;
-			if(verbose) info(numClusters+" cluster" + (numClusters!=1?"s":"") + " identified");
+			info(numClusters+" cluster" + (numClusters!=1?"s":"") + " identified");
 			
 			
 			
@@ -643,10 +638,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			}
 			
 			
-			if(verbose)
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
-					System.lineSeparator());
+			info("model " + getKey() + " completed in " + 
+				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
+				System.lineSeparator());
 			
 			
 			// Clean up
