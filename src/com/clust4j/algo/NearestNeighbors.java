@@ -359,6 +359,36 @@ public class NearestNeighbors extends AbstractClusterer {
 		return ClustUtils.sortEntriesByValue( rec_to_dist );
 	}
 	
+	
+	public static int[] getKNearest(final double[] record, 
+			final double[][] matrix, int k, final GeometricallySeparable sep) {
+		// TM container
+		TreeMap<Integer, Double> rec_to_dist = new TreeMap<>();
+		k = FastMath.min(k, matrix.length);
+		
+		
+		if(matrix.length == 0)
+			throw new IllegalArgumentException("empty matrix");
+		if(k < 1)
+			throw new IllegalArgumentException("illegal k value");
+		
+		
+		for(int i = 0; i < matrix.length; i++)
+			rec_to_dist.put(i, sep.getDistance(record, matrix[i]));
+		
+		
+		int rec = 0;
+		final int[] nrst = new int[k];
+		SortedSet<Map.Entry<Integer, Double>> ordered = ClustUtils.sortEntriesByValue(rec_to_dist);
+		for(Map.Entry<Integer, Double> entry: ordered) {
+			if(rec == k)
+				break;
+			nrst[rec++] = entry.getKey();
+		}
+		
+		return nrst;
+	}
+	
 
 	/**
 	 * For use with MeanShift so as not to create new model each iteration

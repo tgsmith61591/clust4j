@@ -160,6 +160,16 @@ public class VecUtils {
 		return copy;
 	}
 	
+	public static boolean containsNaN(final double[] a) {
+		checkDims(a);
+		
+		for(double b: a)
+			if(Double.isNaN(b))
+				return true;
+		
+		return false;
+	}
+	
 	public static int[] copy(final int[] i) {
 		final int[] copy = new int[i.length];
 		System.arraycopy(i, 0, copy, 0, i.length);

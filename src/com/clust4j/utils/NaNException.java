@@ -1,5 +1,11 @@
 package com.clust4j.utils;
 
+/**
+ * Generally thrown in the presence of a {@link Double#NaN}
+ * that cannot be handled appropriately.
+ * 
+ * @author Taylor G Smith
+ */
 public class NaNException extends RuntimeException {
 
 	/**

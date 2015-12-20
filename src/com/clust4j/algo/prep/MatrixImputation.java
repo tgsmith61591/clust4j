@@ -9,10 +9,25 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 
+/**
+ * {@link AbstractClusterer} algorithms are not capable of robustly handling
+ * missing values (or {@link Double#NaN} in clust4j). If an algorithm is invoked
+ * on missing data, a {@link NaNException} will be thrown. To rectify these missing
+ * values, this class and its children are designed to impute the missing values
+ * using different statistical metrics.
+ * 
+ * @author Taylor G Smith
+ */
 public abstract class MatrixImputation implements Loggable, Named, PreProcessor {
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
 	private boolean verbose = DEF_VERBOSE;
 	private Random seed = new Random();
+	
+	
+	public static enum CentralTendencyMethod {
+		MEAN, 
+		MEDIAN
+	}
 	
 	
 	

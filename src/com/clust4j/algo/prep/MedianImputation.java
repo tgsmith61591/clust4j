@@ -2,10 +2,18 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
+/**
+ * Imputes the missing values in a matrix with the column medians.
+ * 
+ * @author Taylor G Smith
+ */
 public class MedianImputation extends MatrixImputation {
 	
 	public MedianImputation() {
@@ -63,7 +71,12 @@ public class MedianImputation extends MatrixImputation {
 	}
 	
 	@Override
-	public double[][] process(final double[][] dat) {
+	public AbstractRealMatrix operate(final AbstractRealMatrix dat) {
+		return new Array2DRowRealMatrix(operate(dat.getData()), false);
+	}
+	
+	@Override
+	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
 		final double[][] copy = MatUtils.copyMatrix(dat);

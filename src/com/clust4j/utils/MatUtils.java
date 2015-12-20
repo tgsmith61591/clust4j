@@ -294,6 +294,16 @@ public class MatUtils {
 		return out;
 	}
 	
+	public static double[][] fromList(final ArrayList<double[]> a) {
+		final double[][] b = new double[a.size()][];
+		
+		int idx = 0;
+		for(double[] vec: a)
+			b[idx++] = vec;
+		
+		return b;
+	}
+	
 	public static double[] getColumn(final double[][] data, final int idx) {
 		checkDims(data);
 		

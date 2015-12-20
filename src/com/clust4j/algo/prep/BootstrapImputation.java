@@ -2,6 +2,9 @@ package com.clust4j.algo.prep;
 
 import java.util.Random;
 
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.sample.Bootstrapper;
 import com.clust4j.utils.IllegalClusterStateException;
@@ -9,6 +12,14 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
+/**
+ * The BootstrapImputation class will impute {@link Double#NaN}<tt>s</tt>
+ * in a matrix using either column means or medians from a bootstrapped
+ * sample of the input data. The {@link Bootstrapper} may be specified in
+ * the Planner class.
+ * 
+ * @author Taylor G Smith
+ */
 public class BootstrapImputation extends MatrixImputation {
 	final static public double DEF_RATIO = 0.67;
 	final static public Bootstrapper DEF_BOOTSTRAPPER = Bootstrapper.UNIFORM;
@@ -16,12 +27,6 @@ public class BootstrapImputation extends MatrixImputation {
 	private CentralTendencyMethod ctm = DEF_CENT_METHOD;
 	private Bootstrapper strap = DEF_BOOTSTRAPPER;
 	private double ratio = DEF_RATIO;
-	
-	
-	public static enum CentralTendencyMethod {
-		MEAN, 
-		MEDIAN
-	}
 	
 	
 	
@@ -40,8 +45,8 @@ public class BootstrapImputation extends MatrixImputation {
 		this.strap = planner.strap;
 		this.ratio = planner.ratio;
 
-		if(ratio < 0 || ratio > 1)
-			throw new IllegalArgumentException("ratio must be between 0 and 1");
+		if(ratio < 0 )
+			throw new IllegalArgumentException("ratio must be greater than 0");
 		if(null == strap)
 			throw new IllegalClusterStateException("null bootstrapper");
 		
@@ -115,7 +120,12 @@ public class BootstrapImputation extends MatrixImputation {
 	}
 	
 	@Override
-	public double[][] process(final double[][] dat) {
+	public AbstractRealMatrix operate(final AbstractRealMatrix dat) {
+		return new Array2DRowRealMatrix(operate(dat.getData()), false);
+	}
+	
+	@Override
+	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
 		final boolean mean = ctm.equals(CentralTendencyMethod.MEAN);

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.utils.MatUtils.Axis;
 
 public class MatTests {
@@ -245,5 +246,17 @@ public class MatTests {
 
 		double[][] YM = MatUtils.fromVector(operator, 3, Axis.ROW);
 		assertTrue(MatUtils.equalsExactly(subRowWise, MatUtils.subtract(data, YM)));
+	}
+	
+	@Test
+	public void testKNearestStatic() {
+		final double[][] mat = new double[][]{
+			new double[] {-1.000, 	 -1.000,     -1.000},
+			new double[] {10.000, 	 10.000,     10.000},
+			new double[] {90.000,    90.000,     90.000}
+		};
+		
+		final double[] record = new double[]{0,0,0};
+		assertTrue( NearestNeighbors.getKNearest(record, mat, 1, Distance.EUCLIDEAN)[0] == 0 );
 	}
 }

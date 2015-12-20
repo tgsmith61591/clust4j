@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.clust4j.algo.prep.BootstrapImputation.BootstrapImputationPlanner;
-import com.clust4j.algo.prep.BootstrapImputation.CentralTendencyMethod;
+import com.clust4j.algo.prep.MatrixImputation.CentralTendencyMethod;
 import com.clust4j.algo.prep.MeanImputation.MeanImputationPlanner;
 import com.clust4j.algo.prep.MedianImputation.MedianImputationPlanner;
 import com.clust4j.sample.BootstrapTest;
@@ -28,7 +28,7 @@ public class ImputationTests {
 			new MeanImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = mean.process(d);
+		final double[][] imputed = mean.operate(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -50,7 +50,7 @@ public class ImputationTests {
 		final MedianImputation median = new MedianImputation(
 			new MedianImputationPlanner());
 		
-		final double[][] imputed = median.process(d);
+		final double[][] imputed = median.operate(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -73,7 +73,7 @@ public class ImputationTests {
 			new MedianImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = median.process(d);
+		final double[][] imputed = median.operate(d);
 		final double[][] res = new double[][]{
 			new double[]{2,		1, 		2},
 			new double[]{1, 	2, 		3},
@@ -109,11 +109,36 @@ public class ImputationTests {
 						.setBootstrapper(strap)
 						.setVerbose(true)
 						.setMethodOfCentralTendency(method))
-					.process(d);
+					.operate(d);
 				
 				BootstrapTest.printMatrix(res);
 			}
 		}
+	}
+	
+	@Test
+	public void testKNNImputation() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 2},
+			new double[]{1, 		 Double.NaN, 3},
+			new double[]{8.5,		 7.9,        6},
+			new double[]{9,			 8,			 Double.NaN}
+		};
+		
+		final NearestNeighborImputation nni = new NearestNeighborImputation(
+			new NearestNeighborImputation.NNImputationPlanner()
+				.setK(1).setVerbose(true));
+		
+		final double[][] imputed = nni.operate(d);
+		final double[][] res = new double[][]{
+			new double[]{1,	 		 1, 		 2},
+			new double[]{1, 		 1, 		 3},
+			new double[]{8.5,		 7.9,        6},
+			new double[]{9,			 8,			 6}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(res, imputed));
+		System.out.println();
 	}
 
 }

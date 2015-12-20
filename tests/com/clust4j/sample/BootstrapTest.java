@@ -20,7 +20,7 @@ public class BootstrapTest {
 		System.out.println(formatter.format(toMatrix(d)));
 	}
 	
-	static void printArray(final double[] d) {
+	public static void printArray(final double[] d) {
 		System.out.println(Arrays.toString(d));
 	}
 
@@ -41,10 +41,12 @@ public class BootstrapTest {
 		final double[][] data = new double[][]{
 			new double[]{1,2,3,4,5},
 			new double[]{9,8,7,6,5},
-			new double[]{1,0,2,9,3}
+			new double[]{1,0,2,9,3},
+			new double[]{90,18,2,0.4,2}
 		};
 		
 		final double[][] sampled = Bootstrapper.SMOOTH.sample(data, 8);
+		printMatrix(sampled);
 		assertTrue(sampled.length == 8);
 	}
 
