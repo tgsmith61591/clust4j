@@ -529,29 +529,41 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			
 			// Get the tree class for logging...
 			Class<? extends HierarchicalDendrogram> clz = null;
-			switch(linkage) {
-				case WARD:
-					clz = WardTree.class;
-					info("constructing HierarchicalDendrogram: " + clz.getName());
-					tree = new WardTree();
-					break;
-				case AVERAGE:
-					clz = AverageLinkageTree.class;
-					info("constructing HierarchicalDendrogram: " + clz.getName());
-					tree = new AverageLinkageTree();
-					break;
-				case COMPLETE:
-					clz = CompleteLinkageTree.class;
-					info("constructing HierarchicalDendrogram: " + clz.getName());
-					tree = new CompleteLinkageTree();
-					break;
-				default:
-					throw new InternalError("illegal linkage");
+			try {
+				switch(linkage) {
+					case WARD:
+						clz = WardTree.class;
+						info("constructing HierarchicalDendrogram: " + clz.getName());
+						tree = new WardTree();
+						break;
+					case AVERAGE:
+						clz = AverageLinkageTree.class;
+						info("constructing HierarchicalDendrogram: " + clz.getName());
+						tree = new AverageLinkageTree();
+						break;
+					case COMPLETE:
+						clz = CompleteLinkageTree.class;
+						info("constructing HierarchicalDendrogram: " + clz.getName());
+						tree = new CompleteLinkageTree();
+						break;
+					default:
+						throw new InternalError("illegal linkage");
+				}
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error("ran out of memory during tree init; try adding heap space");
+				throw e;
 			}
 			
 			
 			// Tree build
-			double[][] children = tree.linkage();
+			double[][] children;
+			try {
+				children = tree.linkage();
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error("ran out of memory during tree linkage operation; try adding heap space");
+				throw e;
+			}
+			
 			
 			
 			// Cut the tree

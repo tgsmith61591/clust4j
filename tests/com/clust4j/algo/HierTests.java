@@ -121,6 +121,24 @@ public class HierTests {
 	}
 	
 	@Test
+	public void loadTest2() {
+		Array2DRowRealMatrix mat = ClustTests.getRandom(5000, 10);
+		boolean exception = false;
+		
+		try {
+			new HierarchicalAgglomerative(mat,
+				new HierarchicalAgglomerative
+					.HierarchicalPlanner()
+						.setLinkage(Linkage.AVERAGE)
+						.setVerbose(true)).fit().getLabels();
+		} catch(OutOfMemoryError | StackOverflowError e) {
+			exception = true;
+		}
+		
+		assertTrue(exception);
+	}
+	
+	@Test
 	public void loadTestKernel() {
 		Array2DRowRealMatrix mat = ClustTests.getRandom(2500, 10);
 		new HierarchicalAgglomerative(mat,
