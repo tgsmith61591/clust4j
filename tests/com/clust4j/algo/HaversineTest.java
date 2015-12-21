@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
-import com.clust4j.algo.AbstractKCentroidClusterer.BaseKCentroidPlanner;
+import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
 import com.clust4j.utils.HaversineDistance;
 import com.clust4j.utils.VecUtils;
@@ -26,8 +26,8 @@ public class HaversineTest {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
 		
-		AbstractKCentroidClusterer km = new KMeans(mat, 
-						new BaseKCentroidPlanner(2)
+		AbstractCentroidClusterer km = new KMeans(mat, 
+						new KMeansPlanner(2)
 								.setVerbose(true)
 								.setSep(new HaversineDistance())
 								.setVerbose(true)
@@ -42,6 +42,8 @@ public class HaversineTest {
 								.setSep(new HaversineDistance())
 								.setVerbose(true)
 								.setScale(false)).fit();
+		
+		kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);
 		assertTrue(kmlabels[1] != kmlabels[3] && kmlabels[3] == kmlabels[4]);
 		assertTrue(kmlabels[0] == 0 && kmlabels[1] == 0 && kmlabels[2] == 0);

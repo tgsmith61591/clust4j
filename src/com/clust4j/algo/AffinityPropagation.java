@@ -149,6 +149,25 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			this.addNoise = b;
 			return this;
 		}
+
+		@Override
+		public AffinityPropagation buildNewModelInstance(AbstractRealMatrix data) {
+			return new AffinityPropagation(data, this);
+		}
+		
+		@Override
+		public AffinityPropagationPlanner copy() {
+			return new AffinityPropagationPlanner()
+				.setDampingFactor(damping)
+				.setIterBreak(iterBreak)
+				.setMaxIter(maxIter)
+				.setMinChange(minChange)
+				.setScale(scale)
+				.setSeed(seed)
+				.setSep(dist)
+				.setVerbose(verbose)
+				.addGaussianNoise(addNoise);
+		}
 		
 		@Override
 		public GeometricallySeparable getSep() {

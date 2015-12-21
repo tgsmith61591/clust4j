@@ -169,8 +169,28 @@ public class MeanShift
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
 		
+		
 		public MeanShiftPlanner(final double bandwidth) {
 			this.bandwidth = bandwidth;
+		}
+		
+
+		
+		@Override
+		public MeanShift buildNewModelInstance(AbstractRealMatrix data) {
+			return new MeanShift(data, this);
+		}
+		
+		@Override
+		public MeanShiftPlanner copy() {
+			return new MeanShiftPlanner(bandwidth)
+				.setMaxIter(maxIter)
+				.setMinChange(minChange)
+				.setScale(scale)
+				.setSeed(seed)
+				.setSeeds(seeds)
+				.setSep(dist)
+				.setVerbose(verbose);
 		}
 		
 		@Override
@@ -216,7 +236,7 @@ public class MeanShift
 		}
 		
 		public MeanShiftPlanner setSeeds(final double[][] seeds) {
-			this.seeds = seeds;
+			this.seeds = null == seeds ? seeds : MatUtils.copyMatrix(seeds);
 			return this;
 		}
 		

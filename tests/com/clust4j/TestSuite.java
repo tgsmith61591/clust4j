@@ -9,7 +9,9 @@ import com.clust4j.algo.HeapTesting;
 import com.clust4j.algo.HierTests;
 import com.clust4j.algo.KMedoidsProtectedTests;
 import com.clust4j.algo.SerializationTests;
+import com.clust4j.algo.pipeline.PipelineTest;
 import com.clust4j.algo.prep.ImputationTests;
+import com.clust4j.algo.prep.PreProcessorTests;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
 import com.clust4j.sample.BootstrapTest;
@@ -35,7 +37,9 @@ import com.clust4j.utils.VectorTests;
 	HeapTesting.class,
 	HierTests.class,
 	ImputationTests.class,
-	BootstrapTest.class
+	BootstrapTest.class,
+	PreProcessorTests.class,
+	PipelineTest.class
 })
 
 public class TestSuite {/* Runs all the tests */}

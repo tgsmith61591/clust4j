@@ -107,6 +107,16 @@ public class BootstrapImputation extends MatrixImputation {
 	}
 
 
+	
+	@Override
+	public BootstrapImputation copy() {
+		return new BootstrapImputation(new BootstrapImputationPlanner()
+			.setBootstrapper(strap)
+			.setMethodOfCentralTendency(ctm)
+			.setRatio(ratio)
+			.setSeed(getSeed())
+			.setVerbose(verbose));
+	}
 
 
 	@Override

@@ -30,7 +30,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
         ```java
-        KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k)).fit();
+        KMeans km = new KMeans(mat, new KMeansPlanner(k)).fit();
         final int[] results = km.getLabels();
         ```
 

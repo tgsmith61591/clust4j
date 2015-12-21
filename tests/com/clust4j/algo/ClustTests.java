@@ -86,7 +86,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(true)).fit();
+		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(2).setScale(true)).fit();
 
 		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -105,7 +105,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(false)).fit();
+		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(3).setScale(false)).fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
@@ -123,7 +123,7 @@ public class ClustTests {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(3).setScale(true)).fit();
+		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(3).setScale(true)).fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
@@ -145,7 +145,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(1).setScale(b)).fit();
+			km = new KMeans(mat, new KMeans.KMeansPlanner(1).setScale(b)).fit();
 			assertTrue(km.didConverge());
 
 			if(b)
@@ -170,7 +170,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(2).setScale(b));
+			km = new KMeans(mat, new KMeans.KMeansPlanner(2).setScale(b));
 			km.fit();
 		}
 	}
@@ -291,7 +291,7 @@ public class ClustTests {
 		KMeans km = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				km = new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(b));
+				km = new KMeans(mat, new KMeans.KMeansPlanner(k).setScale(b));
 				km.fit();
 			}
 		}
@@ -318,7 +318,7 @@ public class ClustTests {
 	public void KMeansLoadTest2FullLogger() {
 		final Array2DRowRealMatrix mat = getRandom(5000, 10);
 		KMeans km = new KMeans(mat, new KMeans
-				.BaseKCentroidPlanner(5)
+				.KMeansPlanner(5)
 					.setScale(true)
 					.setVerbose(true)
 				);

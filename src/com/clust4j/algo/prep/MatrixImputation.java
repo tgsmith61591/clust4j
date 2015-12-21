@@ -20,7 +20,7 @@ import com.clust4j.utils.Named;
  */
 public abstract class MatrixImputation implements Loggable, Named, PreProcessor {
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
-	private boolean verbose = DEF_VERBOSE;
+	protected boolean verbose = DEF_VERBOSE;
 	private Random seed = new Random();
 	
 	
@@ -76,9 +76,6 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 		}
 		
 		if(!seenNaN) warn("no NaNs in matrix; imputation will not have any effect");
-		
-		// TODO?
-		
 		info("initializing matrix imputation method");
 	}
 	

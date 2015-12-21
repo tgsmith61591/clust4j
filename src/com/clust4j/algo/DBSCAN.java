@@ -81,7 +81,22 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		public DBSCANPlanner(final double eps) {
 			this.eps = eps;
 		}
+
 		
+		@Override
+		public DBSCAN buildNewModelInstance(AbstractRealMatrix data) {
+			return new DBSCAN(data, this);
+		}
+		
+		@Override
+		public DBSCANPlanner copy() {
+			return new DBSCANPlanner(eps)
+				.setMinPts(minPts)
+				.setScale(scale)
+				.setSep(dist)
+				.setSeed(seed)
+				.setVerbose(verbose);
+		}
 		
 		@Override
 		public GeometricallySeparable getSep() {

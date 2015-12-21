@@ -91,6 +91,16 @@ public class NearestNeighborImputation extends MatrixImputation {
 	
 
 	
+
+	@Override
+	public NearestNeighborImputation copy() {
+		return new NearestNeighborImputation(new NNImputationPlanner()
+			.setK(k)
+			.setMethodOfCentralTendency(cent)
+			.setSeed(getSeed())
+			.setVerbose(verbose));
+	}
+	
 	@Override
 	public AbstractRealMatrix operate(final AbstractRealMatrix dat) {
 		return new Array2DRowRealMatrix(operate(dat.getData()), false);

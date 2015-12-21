@@ -2,8 +2,11 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -11,6 +14,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
@@ -30,12 +34,18 @@ import com.clust4j.utils.Distance;
  * @see {@link AbstractPartitionalClusterer}
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
-public class KMedoids extends AbstractKCentroidClusterer {
+public class KMedoids extends AbstractCentroidClusterer {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -4468316488158880820L;
+	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
+	
+	final public static int DEF_MAX_ITER = 10;
+	final public static double DEF_MIN_CHNG = 0.005;
+	
+	final private int m;
 
 	/**
 	 * Stores the indices of the current medoids. Each index,
@@ -58,43 +68,110 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		this(data, new KMedoidsPlanner(k).setSep(Distance.MANHATTAN));
 	}
 	
-	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner builder) {
-		super(data, builder);
+	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner planner) {
+		super(data, planner);
+		
+		this.m = data.getRowDimension();
 	}
 	
 	
 	
-	public static class KMedoidsPlanner extends BaseKCentroidPlanner {
-		public final static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
-		public final static int DEF_MAX_ITER = 10; // Converges faster than KMeans, needs less
+	public static class KMedoidsPlanner extends CentroidClustererPlanner {
+		private int maxIter = DEF_MAX_ITER;
+		private double minChange = DEF_MIN_CHNG;
+		private GeometricallySeparable dist = DEF_DIST;
+		private boolean verbose = DEF_VERBOSE;
+		private boolean scale = DEF_SCALE;
+		private Random seed = DEF_SEED;
+		private int k;
 		
 		public KMedoidsPlanner(int k) {
-			super(k);
-			super.setSep(DEF_DIST); // BY DEFAULT
-			super.setMaxIter(DEF_MAX_ITER);
+			this.k = k;
+		}
+		
+		@Override
+		public KMedoids buildNewModelInstance(final AbstractRealMatrix data) {
+			return new KMedoids(data, this);
+		}
+		
+		@Override
+		public KMedoidsPlanner copy() {
+			return new KMedoidsPlanner(k)
+				.setMaxIter(maxIter)
+				.setMinChangeStoppingCriteria(minChange)
+				.setScale(scale)
+				.setSep(dist)
+				.setVerbose(verbose)
+				.setSeed(seed);
+		}
+		
+		@Override
+		public int getK() {
+			return k;
+		}
+		
+		@Override
+		public int getMaxIter() {
+			return maxIter;
+		}
+		
+		@Override
+		public double getMinChange() {
+			return minChange;
+		}
+		
+		@Override
+		public boolean getScale() {
+			return scale;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
+		}
+		
+		@Override
+		public GeometricallySeparable getSep() {
+			return dist;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
 		}
 		
 		@Override
 		public KMedoidsPlanner setSep(final GeometricallySeparable dist) {
-			return (KMedoidsPlanner) super.setSep(dist);
+			this.dist = dist;
+			return this;
 		}
 		
 		public KMedoidsPlanner setMaxIter(final int max) {
-			return (KMedoidsPlanner) super.setMaxIter(max);
+			this.maxIter = max;
+			return this;
 		}
 
 		public KMedoidsPlanner setMinChangeStoppingCriteria(final double min) {
-			return (KMedoidsPlanner) super.setMinChangeStoppingCriteria(min);
+			this.minChange = min;
+			return this;
 		}
 		
 		@Override
 		public KMedoidsPlanner setScale(final boolean scale) {
-			return (KMedoidsPlanner) super.setScale(scale);
+			this.scale = scale;
+			return this;
+		}
+		
+		@Override
+		public KMedoidsPlanner setSeed(final Random seed) {
+			this.seed = seed;
+			return this;
 		}
 		
 		@Override
 		public KMedoidsPlanner setVerbose(final boolean v) {
-			return (KMedoidsPlanner) super.setVerbose(v);
+			this.verbose = v;
+			return this;
 		}
 	}
 	
@@ -108,8 +185,7 @@ public class KMedoids extends AbstractKCentroidClusterer {
 	 * however KMedoids does <i>not</i>, as it internally uses the dist_mat for faster
 	 * distance look-ups. This means more, less-generalized code, but faster execution time.
 	 */
-	@Override
-	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+	final private TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
 		/* Key is the closest centroid, value is the records that belong to it */
 		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
 		
@@ -174,13 +250,26 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		return cst;
 	}
 	
+	@Override
+	public boolean didConverge() {
+		return converged;
+	}
+	
+	@Override
+	public ArrayList<double[]> getCentroids() {
+		final ArrayList<double[]> cent = new ArrayList<double[]>();
+		for(double[] d : centroids)
+			cent.add(VecUtils.copy(d));
+		
+		return cent;
+	}
+	
 	/**
 	 * Calculates the intracluster cost, only used in {@link #getCostOfSystem()}
 	 * @param inCluster
 	 * @return the sum of manhattan distances between vectors and the centroid
 	 */
-	@Override
-	final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
+	private final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
 		// Now calc the dissimilarity in the cluster
 		double sumI = 0;
 		for(Integer rec : inCluster) { // Row nums of belonging records
@@ -205,10 +294,19 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		return cost;
 	}
 	
+	@Override
+	public double getMinChange() {
+		return minChange;
+	}
 	
 	@Override
 	public String getName() {
 		return "KMedoids";
+	}
+	
+	@Override
+	public int itersElapsed() {
+		return iter;
 	}
 
 	@Override
@@ -350,11 +448,68 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		} // End synchronized
 	} // End train
 	
+	private double getCostOfSystem() {
+		double cost = 0;
+		double[] oid;
+		ArrayList<Integer> medoid_members;
+		for(Map.Entry<Integer, ArrayList<Integer>> medoid_entry : cent_to_record.entrySet()) {
+			oid = centroids.get(medoid_entry.getKey()); //cent-med-oid
+			medoid_members = medoid_entry.getValue();
+			cost += getCost(medoid_members, oid);
+		}
+		
+		return cost;
+	}
+	
+	/**
+	 * Returns a copy of the classified labels
+	 */
+	@Override
+	public int[] getLabels() {
+		try {
+			return VecUtils.copy(labels);
+			
+		} catch(NullPointerException npe) {
+			String error = "model has not yet been fit";
+			error(error);
+			throw new ModelNotFitException(error);
+		}
+	}
+	
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
 	}
 	
+	@Override
+	public int getMaxIter() {
+		return maxIter;
+	}
+	
+	@Override
+	public int predict(final double[] newRecord) {
+		int n;
+		if((n = newRecord.length) != data.getColumnDimension())
+			throw new DimensionMismatchException(n, data.getColumnDimension());
+		
+		
+		int nearestLabel = 0;
+		double shortestDist = Double.MAX_VALUE;
+		double[] cent;
+		for(int i = 0; i < k; i++) {
+			cent = centroids.get(i);
+			double dist = getSeparabilityMetric().getDistance(newRecord, cent);
+			
+			if(dist < shortestDist) {
+				shortestDist = dist;
+				nearestLabel = i;
+			}
+		}
+
+		// stdout takes so long, it slows down...
+		// if(verbose) info("Predicted class for new record " + Arrays.toString(newRecord) + " = " + nearestLabel);
+		return nearestLabel;
+	}
 	
 	final private void reorderLabels() {
 		// Assign medoid indices records to centroids
@@ -384,5 +539,9 @@ public class KMedoids extends AbstractKCentroidClusterer {
 		labels = newLabels;
 		cent_to_record = null;
 		centroids = new ArrayList<>(newCentroids.values());
+	}
+	
+	public double totalCost() {
+		return cost;
 	}
 }

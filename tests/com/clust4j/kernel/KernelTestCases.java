@@ -94,7 +94,7 @@ public class KernelTestCases {
 		
 		// Test with KMEANS
 		KMeans km = new KMeans(train, 
-				new KMeans.BaseKCentroidPlanner(2)
+				new KMeans.KMeansPlanner(2)
 					.setSep(kernel)
 					.setVerbose(true)
 				);
@@ -111,7 +111,7 @@ public class KernelTestCases {
 		KMeans km = null;
 		for(int k : ks) {
 			km = new KMeans(mat, new KMeans
-					.BaseKCentroidPlanner(k)
+					.KMeansPlanner(k)
 					.setSep(kernel)
 					.setVerbose(true)
 					.setScale(false));

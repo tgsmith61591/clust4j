@@ -137,7 +137,21 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			this.linkage = linkage;
 		}
 		
+
+		@Override
+		public HierarchicalAgglomerative buildNewModelInstance(AbstractRealMatrix data) {
+			return new HierarchicalAgglomerative(data, this);
+		}
 		
+		@Override
+		public HierarchicalPlanner copy() {
+			return new HierarchicalPlanner(linkage)
+				.setSep(dist)
+				.setScale(scale)
+				.setSeed(seed)
+				.setVerbose(verbose)
+				.setNumClusters(num_clusters);
+		}
 		
 		public Linkage getLinkage() {
 			return linkage;

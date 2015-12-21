@@ -122,7 +122,7 @@ public class HierTests {
 	
 	@Test
 	public void loadTest2() {
-		Array2DRowRealMatrix mat = ClustTests.getRandom(5000, 10);
+		Array2DRowRealMatrix mat = ClustTests.getRandom(50000, 10);
 		boolean exception = false;
 		
 		try {

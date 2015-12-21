@@ -59,6 +59,12 @@ public class MedianImputation extends MatrixImputation {
 
 
 
+	@Override
+	public MedianImputation copy() {
+		return new MedianImputation(new MedianImputationPlanner()
+			.setSeed(getSeed())
+			.setVerbose(verbose));
+	}
 
 	@Override
 	public Algo getLoggerTag() {

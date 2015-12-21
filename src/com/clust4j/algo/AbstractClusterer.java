@@ -10,16 +10,17 @@ import java.util.UUID;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.algo.prep.Normalize;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
+import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
-import com.clust4j.utils.VecUtils;
 
 /**
  * 
@@ -65,7 +66,9 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	 * 
 	 * @author Taylor G Smith
 	 */
-	abstract public static class BaseClustererPlanner {
+	abstract public static class BaseClustererPlanner implements DeepCloneable {
+		abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
+		abstract public BaseClustererPlanner copy();
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
 		abstract public Random getSeed();
@@ -106,8 +109,10 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			warn("running " + getName() + " in Kernel mode can be an expensive option");
 		}
 		
-		info((similarity ? "similarity" : "distance") + 
-				" metric: " + dist.getName());
+		meta("model key="+modelKey);
+		meta((similarity ? "similarity" : "distance") + 
+				" metric=" + dist.getName());
+		meta("scale="+planner.getScale());
 		
 		
 		// Scale if needed
@@ -115,7 +120,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			this.data = (AbstractRealMatrix) data.copy();
 		else {
 			info("normalizing matrix columns (centering and scaling)");
-			this.data = scale(data, (AbstractRealMatrix) data.copy());
+			this.data = Normalize.CENTER_SCALE.operate(data);
 		}
 	} // End constructor
 	
@@ -132,39 +137,6 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		}
 	}
 	
-	
-	
-	/**
-	 * Static method to scale a matrix
-	 * @param data
-	 * @return
-	 */
-	final static protected AbstractRealMatrix scale(AbstractRealMatrix data) {
-		return scale(data, (AbstractRealMatrix) data.copy());
-	}
-	
-	
-	/**
-	 * Static method to scale a matrix given a copy
-	 * @param data
-	 * @param copy
-	 * @return
-	 */
-	final static protected AbstractRealMatrix scale(AbstractRealMatrix data, AbstractRealMatrix copy) {
-		// Must iter by column
-		for(int col = 0; col < data.getColumnDimension(); col++) {
-			final double[] v = data.getColumn(col);
-			final double mean = VecUtils.mean(v);
-			final double sd = VecUtils.stdDev(v, mean);
-			
-			for(int row = 0; row < data.getRowDimension(); row++) {
-				final double new_val = (v[row] - mean) / sd;
-				copy.setEntry(row, col, new_val);
-			}
-		}
-		
-		return copy;
-	}
 	
 	private void flagWarning() {
 		hasWarnings = true;

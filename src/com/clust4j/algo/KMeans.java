@@ -1,8 +1,10 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -10,6 +12,8 @@ import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.utils.VecUtils;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
@@ -21,25 +25,133 @@ import com.clust4j.utils.GeometricallySeparable;
  * 
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
-public class KMeans extends AbstractKCentroidClusterer {
+public class KMeans extends AbstractCentroidClusterer {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	
+	final public static int DEF_MAX_ITER = 100;
+	final public static double DEF_MIN_CHNG = 0.005;
+	
+	final private int m;
+	
 	public KMeans(final AbstractRealMatrix data, final int k) {
-		this(data, new BaseKCentroidPlanner(k));
+		this(data, new KMeansPlanner(k));
 	}
 	
-	public KMeans(final AbstractRealMatrix data, final BaseKCentroidPlanner builder) {
-		super(data, builder);
+	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
+		super(data, planner);
+		
+		this.m = data.getRowDimension();
 	}
 	
 	
+	
+	public static class KMeansPlanner extends CentroidClustererPlanner {
+		private int maxIter = DEF_MAX_ITER;
+		private double minChange = DEF_MIN_CHNG;
+		private GeometricallySeparable dist = DEF_DIST;
+		private boolean verbose = DEF_VERBOSE;
+		private boolean scale = DEF_SCALE;
+		private Random seed = DEF_SEED;
+		private int k;
+		
+		public KMeansPlanner(int k) {
+			this.k = k;
+		}
+		
+		@Override
+		public KMeans buildNewModelInstance(final AbstractRealMatrix data) {
+			return new KMeans(data, this);
+		}
+		
+		@Override
+		public KMeansPlanner copy() {
+			return new KMeansPlanner(k)
+				.setMaxIter(maxIter)
+				.setMinChangeStoppingCriteria(minChange)
+				.setScale(scale)
+				.setSep(dist)
+				.setVerbose(verbose)
+				.setSeed(seed);
+		}
+		
+		@Override
+		public int getK() {
+			return k;
+		}
+		
+		@Override
+		public int getMaxIter() {
+			return maxIter;
+		}
+		
+		@Override
+		public double getMinChange() {
+			return minChange;
+		}
+		
+		@Override
+		public boolean getScale() {
+			return scale;
+		}
+		
+		@Override
+		public Random getSeed() {
+			return seed;
+		}
+		
+		@Override
+		public GeometricallySeparable getSep() {
+			return dist;
+		}
+		
+		@Override
+		public boolean getVerbose() {
+			return verbose;
+		}
+		
+		@Override
+		public KMeansPlanner setSep(final GeometricallySeparable dist) {
+			this.dist = dist;
+			return this;
+		}
+		
+		public KMeansPlanner setMaxIter(final int max) {
+			this.maxIter = max;
+			return this;
+		}
 
-	@Override
-	final protected TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+		public KMeansPlanner setMinChangeStoppingCriteria(final double min) {
+			this.minChange = min;
+			return this;
+		}
+		
+		@Override
+		public KMeansPlanner setScale(final boolean scale) {
+			this.scale = scale;
+			return this;
+		}
+		
+		@Override
+		public KMeansPlanner setSeed(final Random seed) {
+			this.seed = seed;
+			return this;
+		}
+		
+		@Override
+		public KMeansPlanner setVerbose(final boolean v) {
+			this.verbose = v;
+			return this;
+		}
+	}
+	
+	
+	
+	
+	final private TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
 		/* Key is the closest centroid, value is the records that belong to it */
 		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
 		
@@ -58,13 +170,13 @@ public class KMeans extends AbstractKCentroidClusterer {
 		return cent;
 	}
 	
+	
 	/**
 	 * Calculates the SSE within the provided cluster
 	 * @param inCluster
 	 * @return Sum of Squared Errors
 	 */
-	@Override
-	final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
+	private final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
 		// Now calc the SSE in cluster i
 		double sumI = 0;
 		final int n = newCentroid.length;
@@ -77,6 +189,26 @@ public class KMeans extends AbstractKCentroidClusterer {
 		}
 		
 		return sumI;
+	}
+	
+	/**
+	 * Returns a copy of the classified labels
+	 */
+	@Override
+	public int[] getLabels() {
+		try {
+			return VecUtils.copy(labels);
+			
+		} catch(NullPointerException npe) {
+			String error = "model has not yet been fit";
+			error(error);
+			throw new ModelNotFitException(error);
+		}
+	}
+	
+	@Override
+	public int getMaxIter() {
+		return maxIter;
 	}
 	
 	@Override
@@ -100,6 +232,30 @@ public class KMeans extends AbstractKCentroidClusterer {
 			newCentroid[j] /= (double) inCluster.size();
 		
 		return newCentroid;
+	}
+	
+	@Override
+	public boolean didConverge() {
+		return converged;
+	}
+	
+	@Override
+	public ArrayList<double[]> getCentroids() {
+		final ArrayList<double[]> cent = new ArrayList<double[]>();
+		for(double[] d : centroids)
+			cent.add(VecUtils.copy(d));
+		
+		return cent;
+	}
+	
+	@Override
+	public double getMinChange() {
+		return minChange;
+	}
+	
+	@Override
+	public int itersElapsed() {
+		return iter;
 	}
 	
 	@Override
@@ -197,6 +353,31 @@ public class KMeans extends AbstractKCentroidClusterer {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
 	
+	@Override
+	public int predict(final double[] newRecord) {
+		int n;
+		if((n = newRecord.length) != data.getColumnDimension())
+			throw new DimensionMismatchException(n, data.getColumnDimension());
+		
+		
+		int nearestLabel = 0;
+		double shortestDist = Double.MAX_VALUE;
+		double[] cent;
+		for(int i = 0; i < k; i++) {
+			cent = centroids.get(i);
+			double dist = getSeparabilityMetric().getDistance(newRecord, cent);
+			
+			if(dist < shortestDist) {
+				shortestDist = dist;
+				nearestLabel = i;
+			}
+		}
+
+		// stdout takes so long, it slows down...
+		// if(verbose) info("Predicted class for new record " + Arrays.toString(newRecord) + " = " + nearestLabel);
+		return nearestLabel;
+	}
+	
 	final private void reorderLabels() {
 		// Now rearrange labels in order... first get unique labels in order of appearance
 		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
@@ -219,5 +400,9 @@ public class KMeans extends AbstractKCentroidClusterer {
 		labels = newLabels;
 		cent_to_record = null;
 		centroids = new ArrayList<>(newCentroids.values());
+	}
+
+	public double totalCost() {
+		return cost;
 	}
 }

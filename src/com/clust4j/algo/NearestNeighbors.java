@@ -142,7 +142,24 @@ public class NearestNeighbors extends AbstractClusterer {
 		public NearestNeighborsPlanner(RunMode runmode) {
 			this.runmode = runmode;
 		}
+
 		
+		@Override
+		public NearestNeighbors buildNewModelInstance(AbstractRealMatrix data) {
+			return new NearestNeighbors(data, this);
+		}
+		
+		@Override
+		public NearestNeighborsPlanner copy() {
+			return new NearestNeighborsPlanner(runmode)
+				.setK(k)
+				.setRadius(neighborhood)
+				.setScale(scale)
+				.setSeed(seed)
+				.setSep(dist)
+				.setVerbose(verbose)
+				.setDistanceMatrix(dist_mat);
+		}
 
 		@Override
 		public GeometricallySeparable getSep() {
@@ -165,7 +182,7 @@ public class NearestNeighbors extends AbstractClusterer {
 		}
 		
 		public NearestNeighborsPlanner setDistanceMatrix(final double[][] dist_mat) {
-			this.dist_mat = MatUtils.copyMatrix(dist_mat);
+			this.dist_mat = null == dist_mat ? null : MatUtils.copyMatrix(dist_mat);
 			return this;
 		}
 		

@@ -87,16 +87,16 @@ public class SerializationTests {
 	@Test
 	public void testKMeans() throws FileNotFoundException, IOException, ClassNotFoundException {
 		KMeans km = new KMeans(matrix,
-			new KMeans.BaseKCentroidPlanner(3)
+			new KMeans.KMeansPlanner(3)
 				.setScale(true)
 				.setVerbose(true)).fit();
 		
-		final double c = km.getCost();
+		final double c = km.totalCost();
 		km.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
 		km = (KMeans)KMeans.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(km.getCost() == c);
+		assertTrue(km.totalCost() == c);
 		Files.delete(path);
 	}
 	
@@ -109,12 +109,12 @@ public class SerializationTests {
 				.setScale(true)
 				.setVerbose(true)).fit();
 		
-		final double c = km.getCost();
+		final double c = km.totalCost();
 		km.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
 		km = (KMedoids)KMedoids.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(km.getCost() == c);
+		assertTrue(km.totalCost() == c);
 		Files.delete(path);
 	}
 	

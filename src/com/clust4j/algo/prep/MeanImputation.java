@@ -57,7 +57,12 @@ public class MeanImputation extends MatrixImputation {
 	}
 
 
-
+	@Override
+	public MeanImputation copy() {
+		return new MeanImputation(new MeanImputationPlanner()
+			.setSeed(getSeed())
+			.setVerbose(verbose));
+	}
 
 	@Override
 	public Algo getLoggerTag() {
