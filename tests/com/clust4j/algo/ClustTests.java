@@ -152,8 +152,8 @@ public class ClustTests {
 				assertTrue(km.totalCost() == 9.0);
 		}
 		
-		// Test predict function
-		assertTrue(km.predict(new double[]{100d, 201d, 101d}) == km.getLabels()[3]);
+		// Test predict function -- no longer part of API
+		// assertTrue(km.predictCentroid(new double[]{100d, 201d, 101d}) == km.getLabels()[3]);
 	}
 	
 	// Make sure it won't break on a tie...

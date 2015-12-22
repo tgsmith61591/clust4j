@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -14,7 +13,6 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
 import com.clust4j.utils.Distance;
@@ -41,11 +39,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	 */
 	private static final long serialVersionUID = -4468316488158880820L;
 	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
-	
 	final public static int DEF_MAX_ITER = 10;
-	final public static double DEF_MIN_CHNG = 0.005;
-	
-	final private int m;
 
 	/**
 	 * Stores the indices of the current medoids. Each index,
@@ -64,14 +58,13 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	
+	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
 		this(data, new KMedoidsPlanner(k).setSep(Distance.MANHATTAN));
 	}
 	
 	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner planner) {
 		super(data, planner);
-		
-		this.m = data.getRowDimension();
 	}
 	
 	
@@ -185,7 +178,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	 * however KMedoids does <i>not</i>, as it internally uses the dist_mat for faster
 	 * distance look-ups. This means more, less-generalized code, but faster execution time.
 	 */
-	final private TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+	final TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace() {
 		/* Key is the closest centroid, value is the records that belong to it */
 		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
 		
@@ -250,20 +243,6 @@ public class KMedoids extends AbstractCentroidClusterer {
 		return cst;
 	}
 	
-	@Override
-	public boolean didConverge() {
-		return converged;
-	}
-	
-	@Override
-	public ArrayList<double[]> getCentroids() {
-		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids)
-			cent.add(VecUtils.copy(d));
-		
-		return cent;
-	}
-	
 	/**
 	 * Calculates the intracluster cost, only used in {@link #getCostOfSystem()}
 	 * @param inCluster
@@ -280,33 +259,9 @@ public class KMedoids extends AbstractCentroidClusterer {
 		return sumI; // The separability is never neg as returned by methods...
 	}
 	
-	/**
-	 * KMedoids-only hack to quickly get cost for cluster, 
-	 * as the matrix is already cached
-	 * @param indices
-	 * @param med_idx
-	 * @return
-	 */
-	protected double getCost(ArrayList<Integer> indices, final int med_idx) {
-		double cost = 0;
-		for(Integer idx: indices)
-			cost += dist_mat[FastMath.min(idx, med_idx)][FastMath.max(idx, med_idx)];
-		return cost;
-	}
-	
-	@Override
-	public double getMinChange() {
-		return minChange;
-	}
-	
 	@Override
 	public String getName() {
 		return "KMedoids";
-	}
-	
-	@Override
-	public int itersElapsed() {
-		return iter;
 	}
 
 	@Override
@@ -339,7 +294,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 			// Initialize labels
 			labels = new int[m];
 			medoid_indices = init_centroid_indices;
-			cent_to_record = assignClustersAndLabels();
+			cent_to_record = assignClustersAndLabelsInPlace();
 			
 			
 			// State vars...
@@ -421,7 +376,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 					info("algorithm has not converged yet; new min cost: " + min_cost);
 					
 					oldCost = min_cost;
-					cent_to_record = assignClustersAndLabels();
+					cent_to_record = assignClustersAndLabelsInPlace();
 				}
 				
 				
@@ -461,54 +416,9 @@ public class KMedoids extends AbstractCentroidClusterer {
 		return cost;
 	}
 	
-	/**
-	 * Returns a copy of the classified labels
-	 */
-	@Override
-	public int[] getLabels() {
-		try {
-			return VecUtils.copy(labels);
-			
-		} catch(NullPointerException npe) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
-	}
-	
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
-	}
-	
-	@Override
-	public int getMaxIter() {
-		return maxIter;
-	}
-	
-	@Override
-	public int predict(final double[] newRecord) {
-		int n;
-		if((n = newRecord.length) != data.getColumnDimension())
-			throw new DimensionMismatchException(n, data.getColumnDimension());
-		
-		
-		int nearestLabel = 0;
-		double shortestDist = Double.MAX_VALUE;
-		double[] cent;
-		for(int i = 0; i < k; i++) {
-			cent = centroids.get(i);
-			double dist = getSeparabilityMetric().getDistance(newRecord, cent);
-			
-			if(dist < shortestDist) {
-				shortestDist = dist;
-				nearestLabel = i;
-			}
-		}
-
-		// stdout takes so long, it slows down...
-		// if(verbose) info("Predicted class for new record " + Arrays.toString(newRecord) + " = " + nearestLabel);
-		return nearestLabel;
 	}
 	
 	final private void reorderLabels() {

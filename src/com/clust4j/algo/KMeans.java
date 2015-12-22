@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.TreeMap;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -12,8 +11,6 @@ import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.ModelNotFitException;
-import com.clust4j.utils.VecUtils;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
@@ -31,11 +28,9 @@ public class KMeans extends AbstractCentroidClusterer {
 	 */
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
-	
 	final public static int DEF_MAX_ITER = 100;
-	final public static double DEF_MIN_CHNG = 0.005;
 	
-	final private int m;
+	
 	
 	public KMeans(final AbstractRealMatrix data, final int k) {
 		this(data, new KMeansPlanner(k));
@@ -43,10 +38,7 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
 		super(data, planner);
-		
-		this.m = data.getRowDimension();
 	}
-	
 	
 	
 	public static class KMeansPlanner extends CentroidClustererPlanner {
@@ -151,14 +143,14 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	
 	
-	final private TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabels() {
+	final TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace() {
 		/* Key is the closest centroid, value is the records that belong to it */
 		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
 		
 		/* Loop over each record in the matrix */
 		for(int rec = 0; rec < m; rec++) {
 			final double[] record = data.getRow(rec);
-			int closest_cent = predict(record);
+			int closest_cent = predictCentroid(record);
 			
 			labels[rec] = closest_cent;
 			if(cent.get(closest_cent) == null)
@@ -191,26 +183,6 @@ public class KMeans extends AbstractCentroidClusterer {
 		return sumI;
 	}
 	
-	/**
-	 * Returns a copy of the classified labels
-	 */
-	@Override
-	public int[] getLabels() {
-		try {
-			return VecUtils.copy(labels);
-			
-		} catch(NullPointerException npe) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
-	}
-	
-	@Override
-	public int getMaxIter() {
-		return maxIter;
-	}
-	
 	@Override
 	public String getName() {
 		return "KMeans";
@@ -232,30 +204,6 @@ public class KMeans extends AbstractCentroidClusterer {
 			newCentroid[j] /= (double) inCluster.size();
 		
 		return newCentroid;
-	}
-	
-	@Override
-	public boolean didConverge() {
-		return converged;
-	}
-	
-	@Override
-	public ArrayList<double[]> getCentroids() {
-		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids)
-			cent.add(VecUtils.copy(d));
-		
-		return cent;
-	}
-	
-	@Override
-	public double getMinChange() {
-		return minChange;
-	}
-	
-	@Override
-	public int itersElapsed() {
-		return iter;
 	}
 	
 	@Override
@@ -289,7 +237,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				
 				/* Key is the closest centroid, value is the records that belong to it */
-				cent_to_record = assignClustersAndLabels();
+				cent_to_record = assignClustersAndLabelsInPlace();
 					
 				
 				
@@ -353,13 +301,7 @@ public class KMeans extends AbstractCentroidClusterer {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
 	
-	@Override
-	public int predict(final double[] newRecord) {
-		int n;
-		if((n = newRecord.length) != data.getColumnDimension())
-			throw new DimensionMismatchException(n, data.getColumnDimension());
-		
-		
+	private int predictCentroid(final double[] newRecord) {
 		int nearestLabel = 0;
 		double shortestDist = Double.MAX_VALUE;
 		double[] cent;
@@ -373,8 +315,6 @@ public class KMeans extends AbstractCentroidClusterer {
 			}
 		}
 
-		// stdout takes so long, it slows down...
-		// if(verbose) info("Predicted class for new record " + Arrays.toString(newRecord) + " = " + nearestLabel);
 		return nearestLabel;
 	}
 	
