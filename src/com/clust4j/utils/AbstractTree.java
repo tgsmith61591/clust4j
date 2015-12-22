@@ -41,4 +41,6 @@ public abstract class AbstractTree<T> implements java.io.Serializable {
 			return clazz_parts[1] + ": " + getValue();
 		}
 	}
+	
+	abstract public Collection<T> values();
 }

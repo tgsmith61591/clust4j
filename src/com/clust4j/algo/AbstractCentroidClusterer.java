@@ -97,7 +97,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 	@Override
-	public double getMinChange() {
+	public double getConvergenceTolerance() {
 		return minChange;
 	}
 	

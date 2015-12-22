@@ -3,13 +3,14 @@ package com.clust4j.algo.pipeline;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
+import com.clust4j.algo.AbstractClusterer.BaseClustererPlanner;
 import com.clust4j.algo.prep.PreProcessor;
 
-public class Pipeline<T extends AbstractClusterer> {
-	final private T.BaseClustererPlanner planner;
+public class Pipeline {
+	final private BaseClustererPlanner planner;
 	final private PreProcessor[] pipe;
 	
-	public Pipeline(final T.BaseClustererPlanner planner, final PreProcessor... pipe) {
+	public Pipeline(final BaseClustererPlanner planner, final PreProcessor... pipe) {
 		this.planner = planner.copy();
 		this.pipe = copyPipe(pipe);
 	}
@@ -24,8 +25,7 @@ public class Pipeline<T extends AbstractClusterer> {
 		return out;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public T fit(final AbstractRealMatrix data) {
+	public AbstractClusterer fit(final AbstractRealMatrix data) {
 		AbstractRealMatrix copy = (AbstractRealMatrix)data.copy();
 		
 		// Push through pipeline...
@@ -33,15 +33,9 @@ public class Pipeline<T extends AbstractClusterer> {
 			copy = pre.operate(copy);
 
 		// Build the model
-		final T model;
-		try {
-			model = (T) planner.buildNewModelInstance(copy);
-		} catch(ClassCastException t) {
-			throw new IllegalArgumentException("generic type T's "
-				+ "planner class does not match provided planner");
-		}
+		final AbstractClusterer model = planner.buildNewModelInstance(copy);
 		
 		// Fit the model
-		return (T) model.fit();
+		return model.fit();
 	}
 }

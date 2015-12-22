@@ -24,7 +24,7 @@ public interface Convergeable extends java.io.Serializable {
 	 * denote an iteration as having converged
 	 * @return the min change for convergence
 	 */
-	public double getMinChange();
+	public double getConvergenceTolerance();
 	
 	/**
 	 * 

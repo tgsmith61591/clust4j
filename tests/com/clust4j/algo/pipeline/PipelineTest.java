@@ -25,12 +25,12 @@ public class PipelineTest {
 		final KMeans.KMeansPlanner planner = new KMeans.KMeansPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline<KMeans> pipe = new Pipeline<>(planner, 
+		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
 				Normalize.CENTER_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
-		final KMeans km = pipe.fit(mat);
+		final KMeans km = (KMeans) pipe.fit(mat);
 		
 		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -39,7 +39,7 @@ public class PipelineTest {
 	}
 	
 	// Should cause a class cast exception...
-	@Test(expected=ClassCastException.class)
+	@Test
 	public void testB() {
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
@@ -51,13 +51,14 @@ public class PipelineTest {
 		final KMedoids.KMedoidsPlanner planner = new KMedoids.KMedoidsPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline<KMeans> pipe = new Pipeline<>(planner, 
+		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
 				Normalize.CENTER_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
 		@SuppressWarnings("unused")
-		KMeans km = (KMeans)pipe.fit(mat); // Thrown here...
+		KMedoids km = (KMedoids)pipe.fit(mat); // Thrown here...
+		System.out.println();
 	}
 }

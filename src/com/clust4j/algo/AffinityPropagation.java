@@ -275,7 +275,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	}
 
 	@Override
-	public double getMinChange() {
+	public double getConvergenceTolerance() {
 		return minChange;
 	}
 

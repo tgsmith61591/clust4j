@@ -30,7 +30,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
  */
 public class BinarySearchTree<T extends Comparable<? super T>> 
 		extends AbstractBinaryTree<T>
-		implements java.io.Serializable, Iterable<T>, MutableTree<T> {
+		implements java.io.Serializable, Iterable<T>, Collection<T> {
 	private static final long serialVersionUID = -478846685921837986L;
 	private int size = -1; // Used to cache size to avoid many searches...
 	

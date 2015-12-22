@@ -284,7 +284,7 @@ public class MeanShift
 		return maxIter;
 	}
 	
-	public double getMinChange() {
+	public double getConvergenceTolerance() {
 		return minChange;
 	}
 
