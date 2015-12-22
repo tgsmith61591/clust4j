@@ -205,12 +205,34 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 
 ----
 
+### Utilities
+- **Matrix imputation**:
+  - Mean imputation
+  - Median imputation
+  - Bootstrap (uniform or smooth) imputation
+  - KNN Imputation
+
+- **Pipeline**:
+  - Construct a pipeline of `PreProcessor`s through which to push new data, resulting in a cluster fit:
+        
+        ```java
+        final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
+        // Use of varargs for the PreProcessors is supported
+        final Pipeline pipe = new Pipeline(planner, Normalize.CENTER_SCALE /*, ... */);
+        // Push data through preprocessing pipeline and fit model
+        KMedoids km = (KMedoids) pipe.fit(mat);
+        ```
+
+
+
+----
+
 ### Things to note:
  - The default `AbstractClusterer.BaseClustererPlanner.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
     ```java
     // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
-    new KMeans(mat, new KMeans.BaseKCentroidPlanner(k).setScale(true));
+    new KMeans(mat, new KMeansPlanner(k).setScale(true));
     ```
 
  - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`.
