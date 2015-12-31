@@ -207,4 +207,35 @@ public class VectorTests {
 		assertTrue(VecUtils.nanMean(d) == 1d/3d);
 		assertTrue(VecUtils.nanSum(d) == 1);
 	}
+	
+	@Test
+	public void testDistributedSum() {
+		final double[] d = new double[]{0,1,2,3,4,5,6,7,8}; // Odd length
+		final double[] d2= new double[]{1,2,3,4,5,6,7,8};   // Even length
+		assertTrue(VecUtils.sumDistributed(d) == 36);
+		assertTrue(VecUtils.sumDistributed(d2) == 36);
+	}
+	
+	@Test
+	public void testDistAccuracy() {
+		final double[] d = VecUtils.randomGaussian(500000, 1);
+		final double distSum = VecUtils.sumDistributed(d);
+		final double sum = VecUtils.sum(d);
+		assertTrue(distSum == sum);
+	}
+	
+	@Test
+	public void testDistSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.sumDistributed(d);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.sum(d);
+		final long sumTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Dist: " + distTime + ", Normal: " + sumTime);
+	}
 }

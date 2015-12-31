@@ -268,138 +268,144 @@ public class KMedoids extends AbstractCentroidClusterer {
 	public KMedoids fit() {
 		synchronized(this) { // Synch because alters internal structs
 			
-			if(null!=labels) // Already have fit this model
-				return this;
-			
-			info("beginning training segmentation for K = " + k);
-			final long start = System.currentTimeMillis();
-			
-			// Compute distance matrix, which is O(N^2) space, O(Nc2) time
-			// We do this in KMedoids and not KMeans, because KMedoids uses
-			// real points as medoids and not means for centroids, thus
-			// the recomputation of distances is unnecessary with the dist mat
-			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-			
-			/*System.out.println(new MatrixFormatter()
-				.format(new Array2DRowRealMatrix(dist_mat, false)));*/
-			
-			
-			info("calculated " + 
-				dist_mat.length + " x " + 
-				dist_mat.length + 
-				" distance matrix in " + 
-				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
-
-			// Clusters initialized with randoms already in super
-			// Initialize labels
-			labels = new int[m];
-			medoid_indices = init_centroid_indices;
-			cent_to_record = assignClustersAndLabelsInPlace();
-			
-			
-			// State vars...
-			// Once this config is no longer changing, global min reached
-			double oldCost = getCostOfSystem(); // Tracks cost per iteration...
-			
-			// Worst case will store up to M choose K...
-			HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
-			info("initial training system cost: " + oldCost );
-			
-
-			long iterStart = System.currentTimeMillis();
-			for(iter = 0; iter < maxIter; iter++) {
-				// Use the PAM (partitioning around medoids) algorithm
-				// For each cluster in k...
-				// MUST BE DOUBLE MAX; if oldCost and no change, will
-				// automatically "converge" and exit...
-				double min_cost = oldCost; // The current minimum
-			
+			try {
+				if(null!=labels) // Already have fit this model
+					return this;
 				
-				for(int i = 0; i < k; i++) {
+				info("beginning training segmentation for K = " + k);
+				final long start = System.currentTimeMillis();
+				
+				// Compute distance matrix, which is O(N^2) space, O(Nc2) time
+				// We do this in KMedoids and not KMeans, because KMedoids uses
+				// real points as medoids and not means for centroids, thus
+				// the recomputation of distances is unnecessary with the dist mat
+				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+				
+				/*System.out.println(new MatrixFormatter()
+					.format(new Array2DRowRealMatrix(dist_mat, false)));*/
+				
+				
+				info("calculated " + 
+					dist_mat.length + " x " + 
+					dist_mat.length + 
+					" distance matrix in " + 
+					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+	
+				// Clusters initialized with randoms already in super
+				// Initialize labels
+				labels = new int[m];
+				medoid_indices = init_centroid_indices;
+				cent_to_record = assignClustersAndLabelsInPlace();
+				
+				
+				// State vars...
+				// Once this config is no longer changing, global min reached
+				double oldCost = getCostOfSystem(); // Tracks cost per iteration...
+				
+				// Worst case will store up to M choose K...
+				HashSet<SortedHashableIntSet> seen_medoid_combos = new HashSet<>();
+				info("initial training system cost: " + oldCost );
+				
+	
+				long iterStart = System.currentTimeMillis();
+				for(iter = 0; iter < maxIter; iter++) {
+					// Use the PAM (partitioning around medoids) algorithm
+					// For each cluster in k...
+					// MUST BE DOUBLE MAX; if oldCost and no change, will
+					// automatically "converge" and exit...
+					double min_cost = oldCost; // The current minimum
+				
 					
-					final int medoid_index = medoid_indices[i];
-					final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
-					
-					info("optimizing medoid choice for cluster " + 
-						i + " (iter = " + (iter+1) + ") ");
-					
-					
-					// Track min for cluster
-					int best_medoid_index = medoid_index;
-					for(Integer o : indices_in_cluster) {
-						if(o.intValue() == medoid_index) // Skip if it's the current medoid
-							continue;
+					for(int i = 0; i < k; i++) {
+						
+						final int medoid_index = medoid_indices[i];
+						final ArrayList<Integer> indices_in_cluster = cent_to_record.get(i);
+						
+						info("optimizing medoid choice for cluster " + 
+							i + " (iter = " + (iter+1) + ") ");
 						
 						
-						// Create copy of medoids, set this med_idx to o
-						final int[] copy_of_medoids = VecUtils.copy(medoid_indices);
-						copy_of_medoids[i] = o;
-						
-						
-						// Create the sorted int set, see if these medoid combos have been seen before
-						SortedHashableIntSet medoid_set = SortedHashableIntSet.fromArray(copy_of_medoids);
-						if(seen_medoid_combos.contains(medoid_set))
-							continue; // Micro hack!
-						
-						
-						// Simulate cost, see if better...
-						double simulated_cost = simulateSystemCost(copy_of_medoids, min_cost); // The simulated syst cost
-						if(simulated_cost < min_cost) {
-							min_cost = simulated_cost;
-							trace("new cost-minimizing system found; current cost: " + simulated_cost );
+						// Track min for cluster
+						int best_medoid_index = medoid_index;
+						for(Integer o : indices_in_cluster) {
+							if(o.intValue() == medoid_index) // Skip if it's the current medoid
+								continue;
 							
-							best_medoid_index = o;
+							
+							// Create copy of medoids, set this med_idx to o
+							final int[] copy_of_medoids = VecUtils.copy(medoid_indices);
+							copy_of_medoids[i] = o;
+							
+							
+							// Create the sorted int set, see if these medoid combos have been seen before
+							SortedHashableIntSet medoid_set = SortedHashableIntSet.fromArray(copy_of_medoids);
+							if(seen_medoid_combos.contains(medoid_set))
+								continue; // Micro hack!
+							
+							
+							// Simulate cost, see if better...
+							double simulated_cost = simulateSystemCost(copy_of_medoids, min_cost); // The simulated syst cost
+							if(simulated_cost < min_cost) {
+								min_cost = simulated_cost;
+								trace("new cost-minimizing system found; current cost: " + simulated_cost );
+								
+								best_medoid_index = o;
+							}
+							
+							seen_medoid_combos.add(medoid_set); // Keep track of simulated medoid combos
 						}
 						
-						seen_medoid_combos.add(medoid_set); // Keep track of simulated medoid combos
+						// Have found optimal medoid to minimize cost in cluster...
+						medoid_indices[i] = best_medoid_index;
+					}
+				
+					// Check for stopping condition
+					if( FastMath.abs(oldCost - min_cost) < minChange) { // convergence!
+						// new_cost may sometimes retain Double.MAX_VALUE if never reassigned
+						// in above loop, which means system hasn't changed and min is actually
+						// the OLD cost
+						oldCost = FastMath.min(oldCost, min_cost);
+						
+						info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
+							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
+						info("Total system cost: " + oldCost);
+						
+						converged = true;
+						iter++;
+						break;
+					} else { // can get better... reassign clusters to new medoids, keep going.
+						info("algorithm has not converged yet; new min cost: " + min_cost);
+						
+						oldCost = min_cost;
+						cent_to_record = assignClustersAndLabelsInPlace();
 					}
 					
-					// Have found optimal medoid to minimize cost in cluster...
-					medoid_indices[i] = best_medoid_index;
-				}
-			
-				// Check for stopping condition
-				if( FastMath.abs(oldCost - min_cost) < minChange) { // convergence!
-					// new_cost may sometimes retain Double.MAX_VALUE if never reassigned
-					// in above loop, which means system hasn't changed and min is actually
-					// the OLD cost
-					oldCost = FastMath.min(oldCost, min_cost);
 					
-					info("training reached convergence at iteration "+ (iter+1) + " (avg iteration time: " + 
-						LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)(iter+1)), false) + ")");
-					info("Total system cost: " + oldCost);
-					
-					converged = true;
-					iter++;
-					break;
-				} else { // can get better... reassign clusters to new medoids, keep going.
-					info("algorithm has not converged yet; new min cost: " + min_cost);
-					
-					oldCost = min_cost;
-					cent_to_record = assignClustersAndLabelsInPlace();
-				}
+				} // End iter loop
 				
 				
-			} // End iter loop
-			
-			
-				if(!converged) // KMedoids should always converge...
-					warn("algorithm did not converge");
+					if(!converged) // KMedoids should always converge...
+						warn("algorithm did not converge");
+					
+					info("model " + getKey() + " completed in " + 
+							LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+							System.lineSeparator());
 				
-				info("model " + getKey() + " completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-						System.lineSeparator());
+				
+				cost = oldCost;
+				
+				// Force GC to save space efficiency
+				seen_medoid_combos = null;
+				dist_mat = null;
+				
+				
+				reorderLabels();
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			}
 			
-			
-			cost = oldCost;
-			
-			// Force GC to save space efficiency
-			seen_medoid_combos = null;
-			dist_mat = null;
-			
-			
-			reorderLabels();
-			return this;
 		} // End synchronized
 	} // End train
 	

@@ -264,10 +264,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			for(i = 0; i < n; i++) 
 				id_map[i] = i;
 			
+			long start = System.currentTimeMillis();
 			int incrementor = n/5, pct = 1;
 			for(k = 0; k < n - 1; k++) {
 				if(incrementor>0 && k%incrementor == 0)
-					ref.info("node mapping progress - " + 20*pct++ + "%");
+					ref.info("node mapping progress - " + 20*pct++ + "% ("+
+						LogTimeFormatter.millis( System.currentTimeMillis()-start , false)+")");
 				
 				// get two closest x, y
 				current_min = Double.POSITIVE_INFINITY;
@@ -528,22 +530,21 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			if(null != labels) // Then we've already fit this...
 				return this;
 			
-			
-			final long start = System.currentTimeMillis();
-			labels = new int[m];
-			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-			
-			// Log info...
-			info("calculated " + 
-				m + " x " + m + 
-				" distance matrix in " + 
-				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
-			
-			
-			
-			// Get the tree class for logging...
-			Class<? extends HierarchicalDendrogram> clz = null;
 			try {
+				final long start = System.currentTimeMillis();
+				labels = new int[m];
+				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+				
+				// Log info...
+				info("calculated " + 
+					m + " x " + m + 
+					" distance matrix in " + 
+					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+				
+				
+				
+				// Get the tree class for logging...
+				Class<? extends HierarchicalDendrogram> clz = null;
 				switch(linkage) {
 					case WARD:
 						clz = WardTree.class;
@@ -563,34 +564,28 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 					default:
 						throw new InternalError("illegal linkage");
 				}
+				
+				
+				// Tree build
+				double[][] children = tree.linkage();
+				
+				
+				
+				// Cut the tree
+				labels = hcCut(num_clusters, children, m);
+				reorderLabels();
+				
+				
+				info("model " + getKey() + " completed in " + 
+						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
+						System.lineSeparator());
+				
+				dist_mat = null;
+				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
-				error("ran out of memory during tree init; try adding heap space");
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
 				throw e;
 			}
-			
-			
-			// Tree build
-			double[][] children;
-			try {
-				children = tree.linkage();
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error("ran out of memory during tree linkage operation; try adding heap space");
-				throw e;
-			}
-			
-			
-			
-			// Cut the tree
-			labels = hcCut(num_clusters, children,m);
-			reorderLabels();
-			
-			
-			info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
-					System.lineSeparator());
-			
-			dist_mat = null;
-			return this;
 			
 		} // End synch
 	} // End train

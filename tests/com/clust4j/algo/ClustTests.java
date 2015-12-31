@@ -392,6 +392,19 @@ public class ClustTests {
 	}
 	
 	@Test
+	public void DBSCANLoadTest() {
+		try {
+			final Array2DRowRealMatrix mat = getRandom(5000, 10);
+			new DBSCAN(mat, new DBSCAN
+				.DBSCANPlanner()
+					.setVerbose(true))
+				.fit();
+		} catch(OutOfMemoryError | StackOverflowError e) {
+			return; // Not enough heap space..
+		}
+	}
+	
+	@Test
 	public void MeanShiftTest1() {
 		final double[][] train_array = new double[][] {
 			new double[] {0.0,  1.0,  2.0,  3.0},

@@ -304,126 +304,132 @@ public class MeanShift
 	public MeanShift fit() {
 		synchronized(this) { // Synch because isTrained is a race condition
 			
-			if(null!=labels) // Already fit this model
+			try {
+				if(null!=labels) // Already fit this model
+					return this;
+				info("identifying neighborhoods within bandwidth");
+				
+				
+				// Init labels, centroids
+				converged = true; // Will reset to false in loop in needed
+				final long start = System.currentTimeMillis();
+				labels = new int[m];
+				centroids = new ArrayList<double[]>();
+				String error; // Hold any error msgs
+				
+				
+				// Now get single seed members
+				info("computing points within seed bandwidth radii");
+				ArrayList<EntryPair<double[], Integer>> all_res = new ArrayList<>();
+				for(double[] seed: seeds)
+					all_res.add(meanShiftSingleSeed(seed));
+				
+				
+				// Put the results into a Map (hash because tree imposes comparable casting)
+				HashMap<double[], Integer> center_intensity = new HashMap<>();
+				for(int i = 0; i < m; i++)
+					if(null != all_res.get(i))
+						center_intensity.put(all_res.get(i).getKey(), all_res.get(i).getValue());
+				
+				
+				// Check for points all too far from seeds
+				if(center_intensity.isEmpty()) {
+					error = "No point was within bandwidth="+bandwidth+
+							" of any seed. Increase the bandwidth or try different seeds.";
+					error(error);
+					throw new IllegalClusterStateException(error);
+				}
+				
+				
+				// Post-processing. Remove near duplicate seeds
+				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
+				info("identifying most populated seeds, removing near-duplicates");
+				SortedSet<Map.Entry<double[], Integer>> sorted_by_intensity = 
+						ClustUtils.sortEntriesByValue(center_intensity, true);
+				
+				
+				// Extract the centroids
+				int idx = 0;
+				final double[][] sorted_centers = new double[sorted_by_intensity.size()][];
+				for(Map.Entry<double[], Integer> entry: sorted_by_intensity)
+					sorted_centers[idx++] = entry.getKey();
+				
+				
+				// Create a boolean mask, init true
+				final boolean[] unique = new boolean[sorted_centers.length];
+				for(int i = 0; i < unique.length; i++) unique[i] = true;
+				
+				
+				
+				// Iterate over sorted centers
+				int redundant_ct = 0;
+				ArrayList<Integer> indcs;
+				final double[][] cent_dist_mat = ClustUtils.distanceUpperTriangMatrix(sorted_centers, getSeparabilityMetric());
+				for(int i = 0; i < sorted_centers.length; i++) {
+					if(unique[i]) {
+						indcs = NearestNeighbors.getNearestWithinRadius(bandwidth, cent_dist_mat, i);
+						
+						for(Integer id: indcs) {
+							unique[id] = false;
+							redundant_ct++;
+						}
+						
+						unique[i] = true; // Keep this as true
+					}
+				}
+				
+				
+				// Now assign the centroids...
+				for(int i = 0; i < unique.length; i++)
+					if(unique[i])
+						centroids.add(sorted_centers[i]);
+				
+				info((numClusters=centroids.size())+" optimal kernels identified");
+				info(redundant_ct + " nearly-identical kernel" + 
+						(redundant_ct!=1?"s":"") + " removed");
+				
+				
+				// Assign labels now
+				final long clustStart = System.currentTimeMillis();
+				for(int i = 0; i < unique.length; i++) {
+					final double[] record = data.getRow(i);
+					
+					int closest_cent = NOISE_CLASS;
+					double min_dist = Double.MAX_VALUE;
+					for(int j = 0; j < centroids.size(); j++) {
+						final double[] centroid = centroids.get(j);
+						double dist = getSeparabilityMetric().getDistance(record, centroid);
+						
+						if(dist < min_dist && dist <= bandwidth) {
+							closest_cent = j;
+							min_dist = dist;
+						}
+					}
+					
+					labels[i] = closest_cent;
+				}
+				
+				// Wrap up...
+				// Count missing
+				numNoisey = 0;
+				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
+				
+				
+				info("completed cluster labeling in " + 
+						LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				
+				
+				info("model "+getKey()+" completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
+				
 				return this;
-			info("identifying neighborhoods within bandwidth");
-			
-			
-			// Init labels, centroids
-			converged = true; // Will reset to false in loop in needed
-			final long start = System.currentTimeMillis();
-			labels = new int[m];
-			centroids = new ArrayList<double[]>();
-			String error; // Hold any error msgs
-			
-			
-			// Now get single seed members
-			info("computing points within seed bandwidth radii");
-			ArrayList<EntryPair<double[], Integer>> all_res = new ArrayList<>();
-			for(double[] seed: seeds)
-				all_res.add(meanShiftSingleSeed(seed));
-			
-			
-			// Put the results into a Map (hash because tree imposes comparable casting)
-			HashMap<double[], Integer> center_intensity = new HashMap<>();
-			for(int i = 0; i < m; i++)
-				if(null != all_res.get(i))
-					center_intensity.put(all_res.get(i).getKey(), all_res.get(i).getValue());
-			
-			
-			// Check for points all too far from seeds
-			if(center_intensity.isEmpty()) {
-				error = "No point was within bandwidth="+bandwidth+
-						" of any seed. Increase the bandwidth or try different seeds.";
-				error(error);
-				throw new IllegalClusterStateException(error);
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
 			}
 			
-			
-			// Post-processing. Remove near duplicate seeds
-			// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
-			info("identifying most populated seeds, removing near-duplicates");
-			SortedSet<Map.Entry<double[], Integer>> sorted_by_intensity = 
-					ClustUtils.sortEntriesByValue(center_intensity, true);
-			
-			
-			// Extract the centroids
-			int idx = 0;
-			final double[][] sorted_centers = new double[sorted_by_intensity.size()][];
-			for(Map.Entry<double[], Integer> entry: sorted_by_intensity)
-				sorted_centers[idx++] = entry.getKey();
-			
-			
-			// Create a boolean mask, init true
-			final boolean[] unique = new boolean[sorted_centers.length];
-			for(int i = 0; i < unique.length; i++) unique[i] = true;
-			
-			
-			
-			// Iterate over sorted centers
-			int redundant_ct = 0;
-			ArrayList<Integer> indcs;
-			final double[][] cent_dist_mat = ClustUtils.distanceUpperTriangMatrix(sorted_centers, getSeparabilityMetric());
-			for(int i = 0; i < sorted_centers.length; i++) {
-				if(unique[i]) {
-					indcs = NearestNeighbors.getNearestWithinRadius(bandwidth, cent_dist_mat, i);
-					
-					for(Integer id: indcs) {
-						unique[id] = false;
-						redundant_ct++;
-					}
-					
-					unique[i] = true; // Keep this as true
-				}
-			}
-			
-			
-			// Now assign the centroids...
-			for(int i = 0; i < unique.length; i++)
-				if(unique[i])
-					centroids.add(sorted_centers[i]);
-			
-			info((numClusters=centroids.size())+" optimal kernels identified");
-			info(redundant_ct + " nearly-identical kernel" + 
-					(redundant_ct!=1?"s":"") + " removed");
-			
-			
-			// Assign labels now
-			final long clustStart = System.currentTimeMillis();
-			for(int i = 0; i < unique.length; i++) {
-				final double[] record = data.getRow(i);
-				
-				int closest_cent = NOISE_CLASS;
-				double min_dist = Double.MAX_VALUE;
-				for(int j = 0; j < centroids.size(); j++) {
-					final double[] centroid = centroids.get(j);
-					double dist = getSeparabilityMetric().getDistance(record, centroid);
-					
-					if(dist < min_dist && dist <= bandwidth) {
-						closest_cent = j;
-						min_dist = dist;
-					}
-				}
-				
-				labels[i] = closest_cent;
-			}
-			
-			// Wrap up...
-			// Count missing
-			numNoisey = 0;
-			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-			info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
-			
-			
-			info("completed cluster labeling in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-			
-			
-			info("model "+getKey()+" completed in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-				System.lineSeparator());
-			
-			return this;
 		} // End synch
 		
 	} // End train

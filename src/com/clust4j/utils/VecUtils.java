@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Random;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
@@ -13,8 +15,64 @@ public class VecUtils {
 	/** Double.MIN_VALUE is not negative; this is */
 	public final static double SAFE_MIN = Double.NEGATIVE_INFINITY;
 	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
+	private final static int MAX_SUM_LEN = 10_000_000;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
+	
+	
+	
+	
+	
+	final static class ConcurrencyGlobals {
+	    final static ForkJoinPool fjPool = new ForkJoinPool();
+	}
+	
+	/**
+	 * A class for distributed summing of vectors
+	 * @author Taylor G Smith
+	 */
+	final private static class SumDistributor extends RecursiveTask<Double> {
+		private static final long serialVersionUID = -6086182277529660733L;
+		static final int SEQUENTIAL_THRESHOLD = 2_500_000;
+
+	    final int low;
+	    final int high;
+	    final double[] array;
+
+	    private SumDistributor(final double[] arr, int lo, int hi) {
+	        array = arr;
+	        low   = lo;
+	        high  = hi;
+	    }
+
+	    protected Double compute() {
+	        if(high - low <= SEQUENTIAL_THRESHOLD) {
+	            double sum = 0;
+	            for(int i=low; i < high; ++i) 
+	                sum += array[i];
+	            return sum;
+	         } else {
+	            int mid = low + (high - low) / 2;
+	            SumDistributor left  = new SumDistributor(array, low, mid);
+	            SumDistributor right = new SumDistributor(array, mid, high);
+	            left.fork();
+	            double rightAns = right.compute();
+	            double leftAns  = left.join();
+	            return leftAns + rightAns;
+	         }
+	     }
+
+	     public static double sum(final double[] array) {
+	    	 if(array.length == 0)
+	    		 return 0;
+	         return ConcurrencyGlobals.fjPool.invoke(new SumDistributor(array,0,array.length));
+	     }
+	}
+	
+	
+	
+	
+	
 	
 	final static public void checkDims(final double[] a) {
 		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
@@ -572,11 +630,20 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
+		if(null != a && a.length > MAX_SUM_LEN)
+			return sumDistributed(a);
+		
 		double sum = 0d;
 		for(double d : a)
 			sum += d;
 		return sum;
 	}
+	
+	public static double sumDistributed(final double[] a) {
+		return SumDistributor.sum(a);
+	}
+	
+	
 	
 	/**
 	 * Returns the count of <tt>true</tt> in a boolean vector
