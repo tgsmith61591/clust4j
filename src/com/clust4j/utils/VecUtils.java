@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Random;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -15,34 +14,195 @@ public class VecUtils {
 	/** Double.MIN_VALUE is not negative; this is */
 	public final static double SAFE_MIN = Double.NEGATIVE_INFINITY;
 	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
-	private final static int MAX_SUM_LEN = 10_000_000;
+	private final static int MAX_DIST_LEN = 10_000_000;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
+	/** If true and the size of the vector exceeds {@value #MAX_DIST_LEN}, 
+	 *  auto schedules parallel job for applicable operations */
+	public static boolean ALLOW_AUTO_PARALLELISM = true;
 	
 	
 	
 	
-	final static class ConcurrencyGlobals {
-	    final static ForkJoinPool fjPool = new ForkJoinPool();
+	
+	
+	// ================================== DISTRIBUTED CLASSES ================================
+	static abstract private class DistributedVectorTask<T> extends RecursiveTask<T> {
+		private static final long serialVersionUID = -7986981765361158408L;
+		static final int SEQUENTIAL_THRESHOLD = 2_500_000;
+
+	    final double[] array;
+		final int low;
+	    final int high;
+		
+		DistributedVectorTask(double[] arr, int lo, int hi) {
+			array = arr;
+			low = lo;
+			high = hi;
+		}
+	}
+	
+	/**
+	 * A class for distributed NaN checks
+	 * @author Taylor G Smith
+	 */
+	static private class NaNCheckDistributor extends DistributedVectorTask<Boolean> {
+		private static final long serialVersionUID = -4107497709587691394L;
+
+		NaNCheckDistributor(final double[] arr, int lo, int hi) {
+			super(arr, lo, hi);
+		}
+
+		@Override
+		protected Boolean compute() {
+			if(high - low <= SEQUENTIAL_THRESHOLD) {
+	            for(int i=low; i < high; ++i)
+	                if(Double.isNaN(array[i]))
+	            		return true;
+	            
+	            return false;
+	         } else {
+	            int mid = low + (high - low) / 2;
+	            NaNCheckDistributor left  = new NaNCheckDistributor(array, low, mid);
+	            NaNCheckDistributor right = new NaNCheckDistributor(array, mid, high);
+	            left.fork();
+	            boolean rightAns = right.compute();
+	            boolean leftAns  = left.join();
+	            return leftAns || rightAns;
+	         }
+		}
+		
+		public static boolean containsNaN(final double[] array) {
+			return ConcurrencyUtils.fjPool.invoke(new NaNCheckDistributor(array,0,array.length));
+		}
+	}
+	
+	/**
+	 * A base class for distributed vector operations
+	 * @author Taylor G Smith
+	 */
+	static abstract private class DistributedOperator extends DistributedVectorTask<Double> {
+		private static final long serialVersionUID = 704439933447978232L;
+		
+		DistributedOperator(final double[] arr, int lo, int hi) {
+	        super(arr, lo, hi);
+	    }
+	}
+	
+	final private static class NaNCountDistributor extends DistributedVectorTask<Integer> {
+		private static final long serialVersionUID = 5031788548523204436L;
+
+		private NaNCountDistributor(final double[] arr, int lo, int hi) {
+			super(arr, lo, hi);
+		}
+
+		@Override
+		protected Integer compute() {
+			if(high - low <= SEQUENTIAL_THRESHOLD) {
+	            int sum = 0;
+	            for(int i=low; i < high; ++i) 
+	                if(Double.isNaN(array[i]))
+	                	sum++;
+	            return sum;
+	         } else {
+	            int mid = low + (high - low) / 2;
+	            NaNCountDistributor left  = new NaNCountDistributor(array, low, mid);
+	            NaNCountDistributor right = new NaNCountDistributor(array, mid, high);
+	            left.fork();
+	            int rightAns = right.compute();
+	            int leftAns  = left.join();
+	            return leftAns + rightAns;
+	         }
+		}
+		
+		public static int nanCount(double[] array) {
+			if(array.length == 0)
+				return 0;
+			return ConcurrencyUtils.fjPool.invoke(new NaNCountDistributor(array,0,array.length));
+		}
+	}
+	
+	/**
+	 * A class for distributed products of vectors
+	 * @author Taylor G Smith
+	 */
+	final private static class ProdDistributor extends DistributedOperator {
+		private static final long serialVersionUID = -1038455192192012983L;
+
+		private ProdDistributor(final double[] arr, int lo, int hi) {
+			super(arr, lo, hi);
+		}
+		
+		@Override
+		protected Double compute() {
+			if(high - low <= SEQUENTIAL_THRESHOLD) {
+	            double prod = 1;
+	            for(int i=low; i < high; ++i) 
+	                prod *= array[i];
+	            return prod;
+	         } else {
+	            int mid = low + (high - low) / 2;
+	            ProdDistributor left  = new ProdDistributor(array, low, mid);
+	            ProdDistributor right = new ProdDistributor(array, mid, high);
+	            left.fork();
+	            double rightAns = right.compute();
+	            double leftAns  = left.join();
+	            return leftAns * rightAns;
+	         }
+		}
+		
+		public static double prod(final double[] array) {
+			checkDims(array);
+			return ConcurrencyUtils.fjPool.invoke(new ProdDistributor(array,0,array.length));
+		}
+	}
+	
+	/**
+	 * A class for distributed inner products of vectors
+	 * @author Taylor G Smith
+	 */
+	final private static class InnerProdDistributor extends DistributedOperator {
+		private static final long serialVersionUID = 9189105909360824409L;
+		final double[] array_b;
+
+	    private InnerProdDistributor(final double[] a, final double[] b, int lo, int hi) {
+	        super(a, lo, hi);
+	        array_b = b;
+	    }
+
+	    protected Double compute() {
+	        if(high - low <= SEQUENTIAL_THRESHOLD) {
+	            double sum = 0;
+	            for(int i=low; i < high; ++i) 
+	                sum += array[i] * array_b[i];
+	            return sum;
+	         } else {
+	            int mid = low + (high - low) / 2;
+	            InnerProdDistributor left  = new InnerProdDistributor(array, array_b, low, mid);
+	            InnerProdDistributor right = new InnerProdDistributor(array, array_b, mid, high);
+	            left.fork();
+	            double rightAns = right.compute();
+	            double leftAns  = left.join();
+	            return leftAns + rightAns;
+	         }
+	     }
+
+	     public static double innerProd(final double[] array, final double[] array_b) {
+	    	 checkDims(array, array_b);
+	         return ConcurrencyUtils.fjPool.invoke(new InnerProdDistributor(array,array_b,0,array.length));
+	     }
 	}
 	
 	/**
 	 * A class for distributed summing of vectors
 	 * @author Taylor G Smith
 	 */
-	final private static class SumDistributor extends RecursiveTask<Double> {
+	final private static class SumDistributor extends DistributedOperator {
 		private static final long serialVersionUID = -6086182277529660733L;
-		static final int SEQUENTIAL_THRESHOLD = 2_500_000;
-
-	    final int low;
-	    final int high;
-	    final double[] array;
 
 	    private SumDistributor(final double[] arr, int lo, int hi) {
-	        array = arr;
-	        low   = lo;
-	        high  = hi;
+	        super(arr, lo, hi);
 	    }
 
 	    protected Double compute() {
@@ -65,9 +225,12 @@ public class VecUtils {
 	     public static double sum(final double[] array) {
 	    	 if(array.length == 0)
 	    		 return 0;
-	         return ConcurrencyGlobals.fjPool.invoke(new SumDistributor(array,0,array.length));
+	         return ConcurrencyUtils.fjPool.invoke(new SumDistributor(array,0,array.length));
 	     }
 	}
+	// ===========================================================================================
+	
+	
 	
 	
 	
@@ -94,6 +257,8 @@ public class VecUtils {
 	
 	
 	
+	
+	
 	public static double[] abs(final double[] a) {
 		final double[] b= new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -109,13 +274,6 @@ public class VecUtils {
 			ab[i] = a[i] + b[i];
 		
 		return ab;
-	}
-	
-	public static boolean anyIsNaN(final double[] a) {
-		for(double d: a)
-			if(Double.isNaN(d))
-				return true;
-		return false;
 	}
 	
 	
@@ -219,13 +377,18 @@ public class VecUtils {
 	}
 	
 	public static boolean containsNaN(final double[] a) {
-		checkDims(a);
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN)
+			return containsNaNDistributed(a);
 		
 		for(double b: a)
 			if(Double.isNaN(b))
 				return true;
 		
 		return false;
+	}
+	
+	public static boolean containsNaNDistributed(final double[] a) {
+		return NaNCheckDistributor.containsNaN(a);
 	}
 	
 	public static int[] copy(final int[] i) {
@@ -321,12 +484,18 @@ public class VecUtils {
 	
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
+		if(ALLOW_AUTO_PARALLELISM && a.length>MAX_DIST_LEN)
+			return innerProductDistributed(a, b);
 		
 		double sum = 0d;
 		for(int i = 0; i < a.length; i++)
 			sum += a[i] * b[i];
 		
 		return sum;
+	}
+	
+	public static double innerProductDistributed(final double[] a, final double[] b) {
+		return InnerProdDistributor.innerProd(a, b);
 	}
 	
 	public static boolean isOrthogonalTo(final double[] a, final double[] b) {
@@ -412,12 +581,19 @@ public class VecUtils {
 	}
 	
 	public static int nanCount(final double[] a) {
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN)
+			return nanCountDistributed(a);
+		
 		int ct = 0;
 		for(double d: a)
 			if(Double.isNaN(d))
 				ct++;
 		
 		return ct;
+	}
+	
+	public static int nanCountDistributed(final double[] a) {
+		return NaNCountDistributor.nanCount(a);
 	}
 	
 	public static double nanMean(final double[] a) {
@@ -516,10 +692,17 @@ public class VecUtils {
 	
 	public static double prod(final double[] a) {
 		checkDims(a);
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN)
+			return prodDistributed(a);
+		
 		double prod = 1;
 		for(double d: a)
 			prod *= d;
 		return prod;
+	}
+	
+	public static double prodDistributed(final double[] a) {
+		return ProdDistributor.prod(a);
 	}
 	
 	public static double[] randomGaussian(final int n) {
@@ -630,7 +813,7 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		if(null != a && a.length > MAX_SUM_LEN)
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN)
 			return sumDistributed(a);
 		
 		double sum = 0d;

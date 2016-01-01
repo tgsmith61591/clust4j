@@ -120,7 +120,7 @@ public class HierTests {
 					.setVerbose(true)).fit().getLabels();
 	}
 	
-	@Test
+	//@Test // -- takes way too long..
 	public void loadTest2() {
 		Array2DRowRealMatrix mat = ClustTests.getRandom(50000, 10);
 		boolean exception = false;

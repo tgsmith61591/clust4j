@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
@@ -130,7 +131,17 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		if(data.getRowDimension() == 0)
 			throw new IllegalArgumentException("empty data");
 		
-		if(MatUtils.containsNaN(data)) {
+		
+		boolean containsNan = false;
+		try { // Try distributed job
+			containsNan = MatUtils.containsNaNDistributed(data);
+		} catch(RejectedExecutionException e) { // can't schedule parallel job
+			warn("parallel NaN check failed, reverting to serial check");
+			containsNan = MatUtils.containsNaN(data);
+		}
+		
+		
+		if(containsNan) {
 			String error = "NaN in input data. Select a matrix imputation method for incomplete records";
 			error(error);
 			throw new NaNException(error);
