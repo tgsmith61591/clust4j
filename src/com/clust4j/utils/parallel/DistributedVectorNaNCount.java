@@ -9,7 +9,7 @@ final public class DistributedVectorNaNCount extends DistributedVectorTask<Integ
 
 	@Override
 	protected Integer compute() {
-		if(high - low <= MAX_CHUNK_SIZE) {
+		if(high - low <= getChunkSize()) {
             int sum = 0;
             for(int i=low; i < high; ++i) 
                 if(Double.isNaN(array[i]))
@@ -29,6 +29,6 @@ final public class DistributedVectorNaNCount extends DistributedVectorTask<Integ
 	public static int nanCount(double[] array) {
 		if(array.length == 0)
 			return 0;
-		return ConcurrencyUtils.fjPool.invoke(new DistributedVectorNaNCount(array,0,array.length));
+		return getThreadPool().invoke(new DistributedVectorNaNCount(array,0,array.length));
 	}
 }

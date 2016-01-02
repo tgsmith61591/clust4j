@@ -16,7 +16,8 @@ import com.clust4j.utils.parallel.DistributedVectorNaNCount;
 import com.clust4j.utils.parallel.DistributedVectorProduct;
 import com.clust4j.utils.parallel.DistributedVectorSum;
 
-import static com.clust4j.utils.parallel.ConcurrencyUtils.MAX_DIST_LEN;
+import static com.clust4j.GlobalState.MAX_SERIAL_VECTOR_LEN;
+import static com.clust4j.GlobalState.ALLOW_PARALLELISM;
 
 public class VecUtils {
 	/** Double.MIN_VALUE is not negative; this is */
@@ -24,13 +25,6 @@ public class VecUtils {
 	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
-	
-	/** If true and the size of the vector exceeds 10,000,000, 
-	 *  auto schedules parallel job for applicable operations. This can slow
-	 *  things down on machines with a lower core count, but speed them up
-	 *  on machines with a higher core count. More heap space may be required. 
-	 *  Default value is true if availableProcessors is at least 8 */
-	public static boolean ALLOW_AUTO_PARALLELISM = Runtime.getRuntime().availableProcessors() >= 8;
 	
 	
 	
@@ -176,7 +170,7 @@ public class VecUtils {
 	}
 	
 	public static boolean containsNaN(final double[] a) {
-		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return containsNaNDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -286,7 +280,7 @@ public class VecUtils {
 	
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
-		if(ALLOW_AUTO_PARALLELISM && a.length>MAX_DIST_LEN) {
+		if(ALLOW_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return innerProductDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -386,7 +380,7 @@ public class VecUtils {
 	}
 	
 	public static int nanCount(final double[] a) {
-		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return nanCountDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -500,7 +494,7 @@ public class VecUtils {
 	
 	public static double prod(final double[] a) {
 		checkDims(a);
-		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return prodDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -624,7 +618,7 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return sumDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }

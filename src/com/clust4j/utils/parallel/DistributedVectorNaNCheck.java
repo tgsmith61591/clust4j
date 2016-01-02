@@ -13,7 +13,7 @@ public class DistributedVectorNaNCheck extends DistributedVectorTask<Boolean> {
 
 	@Override
 	protected Boolean compute() {
-		if(high - low <= MAX_CHUNK_SIZE) {
+		if(high - low <= getChunkSize()) {
             for(int i=low; i < high; ++i)
                 if(Double.isNaN(array[i]))
             		return true;
@@ -31,6 +31,6 @@ public class DistributedVectorNaNCheck extends DistributedVectorTask<Boolean> {
 	}
 	
 	public static boolean containsNaN(final double[] array) {
-		return ConcurrencyUtils.fjPool.invoke(new DistributedVectorNaNCheck(array,0,array.length));
+		return getThreadPool().invoke(new DistributedVectorNaNCheck(array,0,array.length));
 	}
 }

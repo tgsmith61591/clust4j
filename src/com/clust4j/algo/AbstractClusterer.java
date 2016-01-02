@@ -22,7 +22,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
-import com.clust4j.utils.VecUtils;
+
+import static com.clust4j.GlobalState.ALLOW_PARALLELISM;
 
 /**
  * 
@@ -38,7 +39,6 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	private static final long serialVersionUID = -3623527903903305017L;
 	public static boolean DEF_VERBOSE = false;
 	public static boolean DEF_SCALE = false;
-	public static boolean ALLOW_PARALLELISM = VecUtils.ALLOW_AUTO_PARALLELISM;
 	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;

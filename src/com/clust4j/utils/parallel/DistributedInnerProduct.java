@@ -17,7 +17,7 @@ final public class DistributedInnerProduct extends DistributedVectorOperator {
 
     @Override
     protected Double compute() {
-        if(high - low <= MAX_CHUNK_SIZE) {
+        if(high - low <= getChunkSize()) {
             double sum = 0;
             for(int i=low; i < high; ++i) 
                 sum += array[i] * array_b[i];
@@ -35,6 +35,6 @@ final public class DistributedInnerProduct extends DistributedVectorOperator {
 
      public static double innerProd(final double[] array, final double[] array_b) {
     	 VecUtils.checkDims(array, array_b);
-         return ConcurrencyUtils.fjPool.invoke(new DistributedInnerProduct(array,array_b,0,array.length));
+         return getThreadPool().invoke(new DistributedInnerProduct(array,array_b,0,array.length));
      }
 }

@@ -15,7 +15,7 @@ final public class DistributedVectorProduct extends DistributedVectorOperator {
 	
 	@Override
 	protected Double compute() {
-		if(high - low <= MAX_CHUNK_SIZE) {
+		if(high - low <= getChunkSize()) {
             double prod = 1;
             for(int i=low; i < high; ++i) 
                 prod *= array[i];
@@ -33,6 +33,6 @@ final public class DistributedVectorProduct extends DistributedVectorOperator {
 	
 	public static double prod(final double[] array) {
 		VecUtils.checkDims(array);
-		return ConcurrencyUtils.fjPool.invoke(new DistributedVectorProduct(array,0,array.length));
+		return getThreadPool().invoke(new DistributedVectorProduct(array,0,array.length));
 	}
 }

@@ -13,7 +13,7 @@ final public class DistributedVectorSum extends DistributedVectorOperator {
 
     @Override
     protected Double compute() {
-        if(high - low <= MAX_CHUNK_SIZE) {
+        if(high - low <= getChunkSize()) {
             double sum = 0;
             for(int i=low; i < high; ++i) 
                 sum += array[i];
@@ -32,6 +32,6 @@ final public class DistributedVectorSum extends DistributedVectorOperator {
      public static double sum(final double[] array) {
     	 if(array.length == 0)
     		 return 0;
-         return ConcurrencyUtils.fjPool.invoke(new DistributedVectorSum(array,0,array.length));
+         return getThreadPool().invoke(new DistributedVectorSum(array,0,array.length));
      }
 }
