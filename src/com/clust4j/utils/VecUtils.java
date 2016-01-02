@@ -4,10 +4,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
+
+import com.clust4j.utils.parallel.DistributedInnerProduct;
+import com.clust4j.utils.parallel.DistributedVectorNaNCheck;
+import com.clust4j.utils.parallel.DistributedVectorNaNCount;
+import com.clust4j.utils.parallel.DistributedVectorProduct;
+import com.clust4j.utils.parallel.DistributedVectorSum;
+
+import static com.clust4j.utils.parallel.ConcurrencyUtils.MAX_DIST_LEN;
 
 public class VecUtils {
 	/** Double.MIN_VALUE is not negative; this is */
@@ -15,6 +24,16 @@ public class VecUtils {
 	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
+	
+	/** If true and the size of the vector exceeds {@value #MAX_DIST_LEN}, 
+	 *  auto schedules parallel job for applicable operations. This can slow
+	 *  things down on machines with a lower core count, but speed them up
+	 *  on machines with a higher core count. More heap space may be required. */
+	public static boolean ALLOW_AUTO_PARALLELISM = false;
+	
+	
+	
+	
 	
 	final static public void checkDims(final double[] a) {
 		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
@@ -36,6 +55,8 @@ public class VecUtils {
 	
 	
 	
+	
+	
 	public static double[] abs(final double[] a) {
 		final double[] b= new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -51,13 +72,6 @@ public class VecUtils {
 			ab[i] = a[i] + b[i];
 		
 		return ab;
-	}
-	
-	public static boolean anyIsNaN(final double[] a) {
-		for(double d: a)
-			if(Double.isNaN(d))
-				return true;
-		return false;
 	}
 	
 	
@@ -161,13 +175,21 @@ public class VecUtils {
 	}
 	
 	public static boolean containsNaN(final double[] a) {
-		checkDims(a);
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+			try {
+				return containsNaNDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
 		for(double b: a)
 			if(Double.isNaN(b))
 				return true;
 		
 		return false;
+	}
+	
+	public static boolean containsNaNDistributed(final double[] a) {
+		return DistributedVectorNaNCheck.containsNaN(a);
 	}
 	
 	public static int[] copy(final int[] i) {
@@ -263,12 +285,21 @@ public class VecUtils {
 	
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
+		if(ALLOW_AUTO_PARALLELISM && a.length>MAX_DIST_LEN) {
+			try {
+				return innerProductDistributed(a, b);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
 		double sum = 0d;
 		for(int i = 0; i < a.length; i++)
 			sum += a[i] * b[i];
 		
 		return sum;
+	}
+	
+	public static double innerProductDistributed(final double[] a, final double[] b) {
+		return DistributedInnerProduct.innerProd(a, b);
 	}
 	
 	public static boolean isOrthogonalTo(final double[] a, final double[] b) {
@@ -354,12 +385,22 @@ public class VecUtils {
 	}
 	
 	public static int nanCount(final double[] a) {
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+			try {
+				return nanCountDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+		
 		int ct = 0;
 		for(double d: a)
 			if(Double.isNaN(d))
 				ct++;
 		
 		return ct;
+	}
+	
+	public static int nanCountDistributed(final double[] a) {
+		return DistributedVectorNaNCount.nanCount(a);
 	}
 	
 	public static double nanMean(final double[] a) {
@@ -458,10 +499,20 @@ public class VecUtils {
 	
 	public static double prod(final double[] a) {
 		checkDims(a);
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+			try {
+				return prodDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+		
 		double prod = 1;
 		for(double d: a)
 			prod *= d;
 		return prod;
+	}
+	
+	public static double prodDistributed(final double[] a) {
+		return DistributedVectorProduct.prod(a);
 	}
 	
 	public static double[] randomGaussian(final int n) {
@@ -572,11 +623,23 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
+		if(ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_DIST_LEN) {
+			try {
+				return sumDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+			
 		double sum = 0d;
 		for(double d : a)
 			sum += d;
 		return sum;
 	}
+	
+	public static double sumDistributed(final double[] a) {
+		return DistributedVectorSum.sum(a);
+	}
+	
+	
 	
 	/**
 	 * Returns the count of <tt>true</tt> in a boolean vector

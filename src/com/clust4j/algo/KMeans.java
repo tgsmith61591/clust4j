@@ -210,87 +210,93 @@ public class KMeans extends AbstractCentroidClusterer {
 	final public KMeans fit() {
 		synchronized(this) { // Must be synchronized because alters internal structs
 			
-			if(null!=labels) // Already have fit this model
-				return this;
-			
-
-			final long start = System.currentTimeMillis();
-			info("beginning training segmentation for K = " + k);
+			try {
+				if(null!=labels) // Already have fit this model
+					return this;
 				
-			
-			Double oldCost = null;
-			labels = new int[m];
-			
-			// Enclose in for loop to ensure completes in proper iterations
-			long iterStart = System.currentTimeMillis();
-			
-			
-			OuterLoop:
-			for(iter = 0; iter < maxIter; iter++) {
-				
-				
-				if(iter%10 == 0)  {
-					info("training iteration " + iter +
-							"; current system cost = " + 
-							oldCost ); //+ "; " + centroidsToString());
-				}
-				
-				
-				/* Key is the closest centroid, value is the records that belong to it */
-				cent_to_record = assignClustersAndLabelsInPlace();
+	
+				final long start = System.currentTimeMillis();
+				info("beginning training segmentation for K = " + k);
 					
 				
+				Double oldCost = null;
+				labels = new int[m];
 				
-				// Now reassign centroids based on records inside cluster
-				ArrayList<double[]> newCentroids = new ArrayList<double[]>();
-				double newCost = 0;
+				// Enclose in for loop to ensure completes in proper iterations
+				long iterStart = System.currentTimeMillis();
 				
-				/* Iterate over each centroid, calculate barycentric mean of
-				 * the points that belong in that cluster as the new centroid */
-				for(int i = 0; i < k; i++) {
+				
+				OuterLoop:
+				for(iter = 0; iter < maxIter; iter++) {
 					
-					/* The record numbers that belong to this cluster */
-					final ArrayList<Integer> inCluster = cent_to_record.get(i);
-					final double[] newCentroid = idNewCentroid(inCluster);
-					newCentroids.add(newCentroid);
-					newCost += getCost(inCluster, newCentroid);
-				}
-				
-				
-				// move current newSSE to oldSSE, check stopping condition...
-				centroids = newCentroids;
-				cost = newCost;
-				
-				if(null == oldCost) { // First iteration
-					oldCost = newCost;
-				} else { // At least second iteration, can check delta
-					// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
-					// otherwise update new SSE and continue.
-					if( FastMath.abs(oldCost - newCost) < minChange ) {
-						info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
-							LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/
-								(double)(iter+1)), false) + ")");
-						
-						converged = true;
-						iter++; // Track iters used
-						
-						break OuterLoop;
-					} else {
-						oldCost = newCost;
+					
+					if(iter%10 == 0)  {
+						info("training iteration " + iter +
+								"; current system cost = " + 
+								oldCost ); //+ "; " + centroidsToString());
 					}
-				}
-			} // End iter for
+					
+					
+					/* Key is the closest centroid, value is the records that belong to it */
+					cent_to_record = assignClustersAndLabelsInPlace();
+						
+					
+					
+					// Now reassign centroids based on records inside cluster
+					ArrayList<double[]> newCentroids = new ArrayList<double[]>();
+					double newCost = 0;
+					
+					/* Iterate over each centroid, calculate barycentric mean of
+					 * the points that belong in that cluster as the new centroid */
+					for(int i = 0; i < k; i++) {
+						
+						/* The record numbers that belong to this cluster */
+						final ArrayList<Integer> inCluster = cent_to_record.get(i);
+						final double[] newCentroid = idNewCentroid(inCluster);
+						newCentroids.add(newCentroid);
+						newCost += getCost(inCluster, newCentroid);
+					}
+					
+					
+					// move current newSSE to oldSSE, check stopping condition...
+					centroids = newCentroids;
+					cost = newCost;
+					
+					if(null == oldCost) { // First iteration
+						oldCost = newCost;
+					} else { // At least second iteration, can check delta
+						// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
+						// otherwise update new SSE and continue.
+						if( FastMath.abs(oldCost - newCost) < minChange ) {
+							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
+								LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/
+									(double)(iter+1)), false) + ")");
+							
+							converged = true;
+							iter++; // Track iters used
+							
+							break OuterLoop;
+						} else {
+							oldCost = newCost;
+						}
+					}
+				} // End iter for
+				
+				
+				info("Total system cost: " + cost);
+				if(!converged) warn("algorithm did not converge");
+				info("model " + getKey() + " completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
+				
+				
+				reorderLabels();
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			}
 			
-			
-			info("Total system cost: " + cost);
-			if(!converged) warn("algorithm did not converge");
-			info("model " + getKey() + " completed in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-				System.lineSeparator());
-			
-			
-			reorderLabels();
-			return this;
 		} // End synchronized
 		
 	} // End train

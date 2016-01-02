@@ -209,7 +209,7 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 - **Matrix imputation**:
   - Mean imputation
   - Median imputation
-  - Bootstrap (uniform or smooth) imputation
+  - Bootstrap (basic or smooth) imputation
   - KNN Imputation
 
 - **Pipeline**:

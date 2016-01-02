@@ -22,7 +22,7 @@ import com.clust4j.utils.VecUtils;
  */
 public class BootstrapImputation extends MatrixImputation {
 	final static public double DEF_RATIO = 0.67;
-	final static public Bootstrapper DEF_BOOTSTRAPPER = Bootstrapper.UNIFORM;
+	final static public Bootstrapper DEF_BOOTSTRAPPER = Bootstrapper.BASIC;
 	final static public CentralTendencyMethod DEF_CENT_METHOD = CentralTendencyMethod.MEAN;
 	private CentralTendencyMethod ctm = DEF_CENT_METHOD;
 	private Bootstrapper strap = DEF_BOOTSTRAPPER;

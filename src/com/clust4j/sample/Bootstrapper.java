@@ -23,7 +23,7 @@ public enum Bootstrapper implements Sampler {
 	/**
 	 * Performs uniformly random (or seeded) sampling across a matrix.
 	 */
-	UNIFORM {
+	BASIC {
 		@Override public String getName() {
 			return "Uniform Bootstrapper";
 		}

@@ -5,7 +5,6 @@ import java.util.Random;
 import java.util.Stack;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighbors.RunMode;
@@ -13,7 +12,6 @@ import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
@@ -219,142 +217,139 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 	final public DBSCAN fit() {
 		synchronized(this) { // synch because alters internal labels and structs
 			
-			if(null!=labels) // Then we've already fit this...
-				return this;
-			
-			
-			// First get the dist matrix
-			final long start = System.currentTimeMillis();
-			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-			final int m = dist_mat.length;
-			
-			
-			// Log info...
-			info("calculated " + 
-				m + " x " + m + 
-				" distance matrix in " + 
-				LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
-			
-			info("computing density neighborhood for each point (eps=" + eps + ")");
-			
-			
-			
-			// Super verbose tracing but only for smaller matrices
-			if(m < 10)
-				trace("distance matrix:"+
-					new MatrixFormatter()
-						.format(new Array2DRowRealMatrix(dist_mat, false)));
-			
-			
-			
-			// Do the neighborhood assignments, get sample weights, find core samples..
-			final long neighbStart = System.currentTimeMillis();
-			labels = new int[m]; // Initialize labels...
-			sampleWeights = new double[m]; // Init sample weights...
-			coreSamples = new boolean[m];
-			
-			
-			// Fit the nearest neighbor model...
-			final NearestNeighbors nnModel = new NearestNeighbors(data, 
-				new NearestNeighborsPlanner(RunMode.RADIUS)
-					.setRadius(eps)
-					.setDistanceMatrix(dist_mat)
-					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
-					.setSeed(getSeed())
-					.setSep(getSeparabilityMetric())
-					.setVerbose(false)) // Don't want nested verbosity logging...
-				.fit();
-			final ArrayList<Integer>[] nearest = nnModel.getNearest();
-			
-			
-			
-			ArrayList<Integer> ptNeighbs;
-			ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
-			for(int i = 0; i < m; i++) {
-				// Each label inits to -1 as noise
-				labels[i] = NOISE_CLASS;
-				ptNeighbs = nearest[i];
+			try {
+				if(null!=labels) // Then we've already fit this...
+					return this;
 				
-				// Add neighborhood...
-				int pts;
-				neighborhoods.add(ptNeighbs);
-				sampleWeights[i] = pts = ptNeighbs.size();
-				coreSamples[i] = pts >= minPts;
-			}
-			
-			
-			// Log checkpoint
-			final int numCorePts = VecUtils.sum(coreSamples);
-			info("completed density neighborhood calculations in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
-			info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
-			info("identifying cluster labels");
-			
-			
-			// Label the points...
-			int nextLabel = 0, v;
-			final long clustStart = System.currentTimeMillis();
-			final Stack<Integer> stack = new Stack<>();
-			ArrayList<Integer> neighb;
-			
-			
-			for(int i = 0; i < m; i++) {
-				// Want to look at unlabeled OR core points...
-				if(labels[i] != NOISE_CLASS || !coreSamples[i])
-					continue;
 				
-		        // Depth-first search starting from i, ending at the non-core points.
-		        // This is very similar to the classic algorithm for computing connected
-		        // components, the difference being that we label non-core points as
-		        // part of a cluster (component), but don't expand their neighborhoods.
-				while(true) {
-					if(labels[i] == -1) {
-						labels[i] = nextLabel;
-						if(coreSamples[i]) {
-							neighb = neighborhoods.get(i);
-							
-							for(i = 0; i < neighb.size(); i++) {
-								v = neighb.get(i);
-								if(labels[v] == NOISE_CLASS)
-									stack.push(v);
-							}
-						}
-					}
+				// First get the dist matrix
+				final long start = System.currentTimeMillis();
+				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+				final int m = dist_mat.length;
+				
+				
+				// Log info...
+				info("calculated " + 
+					m + " x " + m + 
+					" distance matrix in " + 
+					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+				
+				info("computing density neighborhood for each point (eps=" + eps + ")");
+				
+				// Do the neighborhood assignments, get sample weights, find core samples..
+				final long neighbStart = System.currentTimeMillis();
+				labels = new int[m]; // Initialize labels...
+				sampleWeights = new double[m]; // Init sample weights...
+				coreSamples = new boolean[m];
+				
+				
+				// Fit the nearest neighbor model...
+				info("fitting nearest neighbor density model");
+				final NearestNeighbors nnModel = new NearestNeighbors(data, 
+					new NearestNeighborsPlanner(RunMode.RADIUS)
+						.setRadius(eps)
+						.setDistanceMatrix(dist_mat)
+						.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
+						.setSeed(getSeed())
+						.setSep(getSeparabilityMetric())
+						.setVerbose(false)) // Don't want nested verbosity logging...
+					.fit();
+				final ArrayList<Integer>[] nearest = nnModel.getNearest();
+				
+				
+				
+				ArrayList<Integer> ptNeighbs;
+				ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
+				for(int i = 0; i < m; i++) {
+					// Each label inits to -1 as noise
+					labels[i] = NOISE_CLASS;
+					ptNeighbs = nearest[i];
 					
-					//System.out.println(stack);
-					if(stack.size() == 0) {
-						info("completed stack for clusterLabel " + nextLabel);
-						break;
-					}
-					
-					i = stack.pop();
+					// Add neighborhood...
+					int pts;
+					neighborhoods.add(ptNeighbs);
+					sampleWeights[i] = pts = ptNeighbs.size();
+					coreSamples[i] = pts >= minPts;
 				}
 				
-				nextLabel++;
-			}
+				
+				// Log checkpoint
+				final int numCorePts = VecUtils.sum(coreSamples);
+				info("completed density neighborhood calculations in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
+				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
+				info("identifying cluster labels");
+				
+				
+				// Label the points...
+				int nextLabel = 0, v;
+				final long clustStart = System.currentTimeMillis();
+				final Stack<Integer> stack = new Stack<>();
+				ArrayList<Integer> neighb;
+				
+				
+				for(int i = 0; i < m; i++) {
+					// Want to look at unlabeled OR core points...
+					if(labels[i] != NOISE_CLASS || !coreSamples[i])
+						continue;
+					
+			        // Depth-first search starting from i, ending at the non-core points.
+			        // This is very similar to the classic algorithm for computing connected
+			        // components, the difference being that we label non-core points as
+			        // part of a cluster (component), but don't expand their neighborhoods.
+					while(true) {
+						if(labels[i] == -1) {
+							labels[i] = nextLabel;
+							if(coreSamples[i]) {
+								neighb = neighborhoods.get(i);
+								
+								for(i = 0; i < neighb.size(); i++) {
+									v = neighb.get(i);
+									if(labels[v] == NOISE_CLASS)
+										stack.push(v);
+								}
+							}
+						}
+						
+						//System.out.println(stack);
+						if(stack.size() == 0) {
+							info("completed stack for clusterLabel " + nextLabel);
+							break;
+						}
+						
+						i = stack.pop();
+					}
+					
+					nextLabel++;
+				}
+				
+				
+				
+				// Wrap up...
+				info("completed cluster labeling in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				
+				
+				// Count missing
+				numNoisey = 0;
+				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				
+				
+				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+						" classified noise");
+				
+				info("model "+getKey()+" completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
+				
+				
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			} // end try/catch
 			
-			
-			
-			// Wrap up...
-			info("completed cluster labeling in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
-			
-			
-			// Count missing
-			numNoisey = 0;
-			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-			
-			
-			info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
-				" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
-					" classified noise");
-			
-			info("model "+getKey()+" completed in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-				System.lineSeparator());
-			
-			
-			return this;
 		} // End synch
 		
 	}// End train

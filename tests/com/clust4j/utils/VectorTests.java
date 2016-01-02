@@ -202,9 +202,163 @@ public class VectorTests {
 	@Test
 	public void testNanOps() {
 		final double[] d = new double[]{-1,0,2,Double.NaN};
-		assertTrue(VecUtils.anyIsNaN(d));
+		assertTrue(VecUtils.containsNaN(d));
 		assertTrue(VecUtils.nanCount(d) == 1);
 		assertTrue(VecUtils.nanMean(d) == 1d/3d);
 		assertTrue(VecUtils.nanSum(d) == 1);
+	}
+	
+	@Test
+	public void testDistributedInnerProd() {
+		final double[] d = new double[]{0,1};
+		final double[] d2= new double[]{1,2};
+		
+		assertTrue(VecUtils.innerProduct(d, d2) == 2);
+		assertTrue(VecUtils.innerProductDistributed(d, d2) == 2);
+	}
+	
+	@Test
+	public void testDistributedSum() {
+		final double[] d = new double[]{0,1,2,3,4,5,6,7,8}; // Odd length
+		final double[] d2= new double[]{1,2,3,4,5,6,7,8};   // Even length
+		assertTrue(VecUtils.sumDistributed(d) == 36);
+		assertTrue(VecUtils.sumDistributed(d2) == 36);
+	}
+	
+	@Test
+	public void testDistributedProd() {
+		final double[] d = new double[]{0,1};
+		final double[] d2= new double[]{1,2};
+		assertTrue(VecUtils.prodDistributed(d) == 0);
+		assertTrue(VecUtils.prodDistributed(d2) == 2);
+	}
+	
+	@Test
+	public void testDistributedNanCheck() {
+		final double[] d = new double[]{0,1,Double.NaN};
+		final double[] d2= new double[]{1,2};
+		assertTrue(VecUtils.containsNaN(d));
+		assertTrue(VecUtils.containsNaNDistributed(d));
+		
+		assertFalse(VecUtils.containsNaN(d2));
+		assertFalse(VecUtils.containsNaNDistributed(d2));
+	}
+	
+	@Test
+	public void testDistributedNanCount() {
+		final double[] d = new double[]{0,1,Double.NaN};
+		final double[] d2= new double[]{1,2};
+		assertTrue(VecUtils.nanCount(d) == 1);
+		assertTrue(VecUtils.nanCountDistributed(d) == 1);
+		
+		assertTrue(VecUtils.nanCount(d2) == 0);
+		assertTrue(VecUtils.nanCountDistributed(d2) == 0);
+	}
+	
+	@Test
+	public void testDistSumAccuracy() {
+		final double[] d = VecUtils.randomGaussian(500000, 1);
+		final double distSum = VecUtils.sumDistributed(d);
+		final double sum = VecUtils.sum(d);
+		assertTrue(distSum == sum);
+	}
+	
+	@Test
+	public void testDistInnerProductAccuracy() {
+		final double[] d = VecUtils.randomGaussian(500000, 1);
+		final double[] d2 = VecUtils.randomGaussian(500000, 1);
+		assertFalse(VecUtils.equalsExactly(d, d2));
+		
+		final double distInner = VecUtils.innerProductDistributed(d, d2);
+		final double inner = VecUtils.innerProduct(d, d2);
+		assertTrue(distInner == inner);
+	}
+	
+	@Test
+	public void testDistProdAccuracy() {
+		final double[] d = VecUtils.randomGaussian(500_000, 1);
+		final double distProd = VecUtils.prodDistributed(d);
+		final double prod = VecUtils.prod(d);
+		assertTrue(distProd == prod);
+	}
+	
+	@Test
+	public void testDistNanSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.nanCountDistributed(d);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.nanCount(d);
+		final long nanTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed NaN test:\tDist: " + distTime + ", Normal: " + nanTime);
+	}
+	
+	@Test
+	public void testDistSumSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.sumDistributed(d);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.sum(d);
+		final long sumTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed SUM test:\tDist: " + distTime + ", Normal: " + sumTime);
+	}
+	
+	@Test
+	public void testDistProdSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.prodDistributed(d);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.prod(d);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed PROD test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
+	
+	@Test
+	public void testDistInnerProdSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		final double[] d2 = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.innerProductDistributed(d,d2);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.innerProduct(d,d2);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed INNER test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
+	
+	@Test
+	public void loadTestDist() {
+		final int times= 50;
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		final double[] d2 = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		for(int i = 0; i < times; i++);
+			VecUtils.innerProductDistributed(d,d2);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		for(int i = 0; i < times; i++);
+			VecUtils.innerProduct(d,d2);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed LOAD test:\tDist: " + distTime + ", Normal: " + prodTime);
 	}
 }

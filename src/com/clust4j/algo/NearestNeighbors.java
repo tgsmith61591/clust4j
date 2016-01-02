@@ -297,66 +297,73 @@ public class NearestNeighbors extends AbstractClusterer {
 	@Override
 	public NearestNeighbors fit() {
 		synchronized(this) {
-			if(null != nearest) // synch condition
-				return this;
 			
-			
-			final boolean knn = runmode.equals(RunMode.K_NEAREST);
-			info("identifying " + (knn ? 
-				(k+" nearest record"+(k!=1?"s":"")+" for each point") : 
-					("neighborhoods for each record within radius="+neighborhood)));
-			
-			long start = System.currentTimeMillis();
-			nearest = new ArrayList[m];
-			
-			
-			if(knn) {
-				SortedSet<Map.Entry<Integer, Double>> ordered;
-				Iterator<Map.Entry<Integer, Double>> iter;
-				for(int i = 0; i < m; i++) {
-					nearest[i] = new ArrayList<Integer>();
-					ordered = getSortedNearest(i, dist_mat);
-					
-					int j = 0;
-					iter = ordered.iterator();
-					while(j++ < k)
-						nearest[i].add(iter.next().getKey());
-				}
+			try {
+				if(null != nearest) // synch condition
+					return this;
 				
-			} else {
-				for(int i = 0; i < m - 1; i++) {
-					if(null == nearest[i]) nearest[i] = new ArrayList<Integer>();
+				
+				final boolean knn = runmode.equals(RunMode.K_NEAREST);
+				info("identifying " + (knn ? 
+					(k+" nearest record"+(k!=1?"s":"")+" for each point") : 
+						("neighborhoods for each record within radius="+neighborhood)));
+				
+				long start = System.currentTimeMillis();
+				nearest = new ArrayList[m];
+				
+				
+				if(knn) {
+					SortedSet<Map.Entry<Integer, Double>> ordered;
+					Iterator<Map.Entry<Integer, Double>> iter;
+					for(int i = 0; i < m; i++) {
+						nearest[i] = new ArrayList<Integer>();
+						ordered = getSortedNearest(i, dist_mat);
+						
+						int j = 0;
+						iter = ordered.iterator();
+						while(j++ < k)
+							nearest[i].add(iter.next().getKey());
+					}
 					
-					for(int j = i + 1; j < m; j++) {
-						if(null == nearest[j]) nearest[j] = new ArrayList<Integer>();
+				} else {
+					for(int i = 0; i < m - 1; i++) {
+						if(null == nearest[i]) nearest[i] = new ArrayList<Integer>();
 						
-						int row = FastMath.min(i, j), col = FastMath.max(i, j);
-						final double val = FastMath.abs(dist_mat[row][col]);
-						
-						if(val <= neighborhood) { // Then both are within eachother's neighborhood...
-							nearest[i].add(j);
-							nearest[j].add(i);
+						for(int j = i + 1; j < m; j++) {
+							if(null == nearest[j]) nearest[j] = new ArrayList<Integer>();
+							
+							int row = FastMath.min(i, j), col = FastMath.max(i, j);
+							final double val = FastMath.abs(dist_mat[row][col]);
+							
+							if(val <= neighborhood) { // Then both are within eachother's neighborhood...
+								nearest[i].add(j);
+								nearest[j].add(i);
+							}
 						}
+					}
+					
+					// Check how many weren't classified
+					int ct = 0;
+					for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
+					if(ct > 0) {
+						warn(ct + " record" + (ct!=1?"s have":" has") + 
+							" no records within radius=" + neighborhood);
 					}
 				}
 				
-				// Check how many weren't classified
-				int ct = 0;
-				for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
-				if(ct > 0) {
-					warn(ct + " record" + (ct!=1?"s have":" has") + 
-						" no records within radius=" + neighborhood);
-				}
-			}
+				
+				info("model " + getKey() + " completed in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+					System.lineSeparator());
+				
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			} // end try/catch
 			
-			
-			info("model " + getKey() + " completed in " + 
-				LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-				System.lineSeparator());
-			
-			return this;
-		}
-	}
+		} // end synch
+	} // end fit
 	
 	private static SortedSet<Map.Entry<Integer, Double>> getSortedNearest(final int record, final double[][] dist_mat) {
 		// TM container

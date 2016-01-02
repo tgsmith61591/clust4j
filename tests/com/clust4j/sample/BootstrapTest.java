@@ -32,7 +32,7 @@ public class BootstrapTest {
 			new double[]{1,0,2,9,3}
 		};
 		
-		final double[][] sampled = Bootstrapper.UNIFORM.sample(data, 8);
+		final double[][] sampled = Bootstrapper.BASIC.sample(data, 8);
 		assertTrue(sampled.length == 8);
 	}
 	

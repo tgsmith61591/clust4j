@@ -176,6 +176,19 @@ public class MatUtils {
 		return false;
 	}
 	
+	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
+		checkDims(mat);
+		
+		final int m = mat.getRowDimension();
+		final double[][] dr = mat.getData();
+		
+		for(int i = 0; i < m; i++)
+			if(VecUtils.containsNaNDistributed(dr[i]))
+				return true;
+		
+		return false;
+	}
+	
 	
 	/**
 	 * Copy a 2d double array
