@@ -37,6 +37,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	private static final long serialVersionUID = -3623527903903305017L;
 	public static boolean DEF_VERBOSE = false;
 	public static boolean DEF_SCALE = false;
+	public static boolean ALLOW_PARALLELISM = true;
 	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
@@ -133,11 +134,15 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		
 		
 		boolean containsNan = false;
-		try { // Try distributed job
-			containsNan = MatUtils.containsNaNDistributed(data);
-		} catch(RejectedExecutionException e) { // can't schedule parallel job
-			warn("parallel NaN check failed, reverting to serial check");
+		if(!ALLOW_PARALLELISM) {
 			containsNan = MatUtils.containsNaN(data);
+		} else {
+			try { // Try distributed job
+				containsNan = MatUtils.containsNaNDistributed(data);
+			} catch(RejectedExecutionException | OutOfMemoryError e) { // can't schedule parallel job
+				warn("parallel NaN check failed, reverting to serial check");
+				containsNan = MatUtils.containsNaN(data);
+			}
 		}
 		
 		

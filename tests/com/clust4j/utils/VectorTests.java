@@ -294,7 +294,7 @@ public class VectorTests {
 		VecUtils.nanCount(d);
 		final long nanTime = System.currentTimeMillis() - start;
 		
-		System.out.println("Distributed NaN test:  Dist: " + distTime + ", Normal: " + nanTime);
+		System.out.println("Distributed NaN test:\tDist: " + distTime + ", Normal: " + nanTime);
 	}
 	
 	@Test
@@ -309,7 +309,7 @@ public class VectorTests {
 		VecUtils.sum(d);
 		final long sumTime = System.currentTimeMillis() - start;
 		
-		System.out.println("Distributed SUM test:  Dist: " + distTime + ", Normal: " + sumTime);
+		System.out.println("Distributed SUM test:\tDist: " + distTime + ", Normal: " + sumTime);
 	}
 	
 	@Test
@@ -324,6 +324,41 @@ public class VectorTests {
 		VecUtils.prod(d);
 		final long prodTime = System.currentTimeMillis() - start;
 		
-		System.out.println("Distributed PROD test: Dist: " + distTime + ", Normal: " + prodTime);
+		System.out.println("Distributed PROD test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
+	
+	@Test
+	public void testDistInnerProdSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		final double[] d2 = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.innerProductDistributed(d,d2);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.innerProduct(d,d2);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed INNER test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
+	
+	@Test
+	public void loadTestDist() {
+		final int times= 50;
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		final double[] d2 = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		for(int i = 0; i < times; i++);
+			VecUtils.innerProductDistributed(d,d2);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		for(int i = 0; i < times; i++);
+			VecUtils.innerProduct(d,d2);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed LOAD test:\tDist: " + distTime + ", Normal: " + prodTime);
 	}
 }

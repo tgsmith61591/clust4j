@@ -15,6 +15,7 @@ public class TestDistanceEnums {
 	public void testEuclidean() {
 		final double[] a = new double[] {0d, 0d};
 		final double[] b = new double[] {3d, 4d};
+		
 		assertTrue(Distance.EUCLIDEAN.getDistance(a, b) == 5.0);
 	}
 	
