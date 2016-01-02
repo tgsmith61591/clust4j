@@ -25,11 +25,12 @@ public class VecUtils {
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
-	/** If true and the size of the vector exceeds {@value #MAX_DIST_LEN}, 
+	/** If true and the size of the vector exceeds 10,000,000, 
 	 *  auto schedules parallel job for applicable operations. This can slow
 	 *  things down on machines with a lower core count, but speed them up
-	 *  on machines with a higher core count. More heap space may be required. */
-	public static boolean ALLOW_AUTO_PARALLELISM = false;
+	 *  on machines with a higher core count. More heap space may be required. 
+	 *  Default value is true if availableProcessors is at least 8 */
+	public static boolean ALLOW_AUTO_PARALLELISM = Runtime.getRuntime().availableProcessors() >= 8;
 	
 	
 	

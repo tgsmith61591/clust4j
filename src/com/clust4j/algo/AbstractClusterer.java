@@ -22,6 +22,7 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
+import com.clust4j.utils.VecUtils;
 
 /**
  * 
@@ -37,7 +38,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	private static final long serialVersionUID = -3623527903903305017L;
 	public static boolean DEF_VERBOSE = false;
 	public static boolean DEF_SCALE = false;
-	public static boolean ALLOW_PARALLELISM = true;
+	public static boolean ALLOW_PARALLELISM = VecUtils.ALLOW_AUTO_PARALLELISM;
 	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
@@ -99,7 +100,6 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		boolean similarity = this.dist instanceof SimilarityMetric; // Avoid later check
 		
 		// Handle data, now...
-		info("checking input data for NaNs");
 		handleData(data);
 		
 		// Log info
@@ -135,9 +135,11 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		
 		boolean containsNan = false;
 		if(!ALLOW_PARALLELISM) {
+			info("checking input data for NaNs");
 			containsNan = MatUtils.containsNaN(data);
 		} else {
 			try { // Try distributed job
+				info("checking input data for NaNs using core-distributed task");
 				containsNan = MatUtils.containsNaNDistributed(data);
 			} catch(RejectedExecutionException | OutOfMemoryError e) { // can't schedule parallel job
 				warn("parallel NaN check failed, reverting to serial check");
