@@ -117,6 +117,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		this.maxIter = planner.maxIter;
 		this.addNoise = planner.addNoise;
 		
+		if(maxIter < 0)	throw new IllegalArgumentException("maxIter must exceed 0");
+		if(minChange<0)	throw new IllegalArgumentException("minChange must exceed 0");
+		if(iterBreak<0)	throw new IllegalArgumentException("iterBreak must exceed 0");
+		
 		
 		meta("damping="+damping);
 		meta("maxIter="+maxIter);
