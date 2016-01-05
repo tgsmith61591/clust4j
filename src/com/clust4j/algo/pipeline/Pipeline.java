@@ -4,7 +4,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.AbstractClusterer.BaseClustererPlanner;
-import com.clust4j.algo.prep.PreProcessor;
+import com.clust4j.algo.preprocess.PreProcessor;
 
 public class Pipeline {
 	final private BaseClustererPlanner planner;

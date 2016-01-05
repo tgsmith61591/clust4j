@@ -7,6 +7,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
@@ -42,6 +43,7 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	
 	public static class KMeansPlanner extends CentroidClustererPlanner {
+		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_MIN_CHNG;
 		private GeometricallySeparable dist = DEF_DIST;
@@ -67,7 +69,8 @@ public class KMeans extends AbstractCentroidClusterer {
 				.setScale(scale)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setSeed(seed);
+				.setSeed(seed)
+				.setNormalizer(norm);
 		}
 		
 		@Override
@@ -136,6 +139,17 @@ public class KMeans extends AbstractCentroidClusterer {
 		@Override
 		public KMeansPlanner setVerbose(final boolean v) {
 			this.verbose = v;
+			return this;
+		}
+
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+
+		@Override
+		public KMeansPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

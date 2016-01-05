@@ -8,9 +8,9 @@ import org.junit.Test;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
-import com.clust4j.algo.prep.MeanImputation;
-import com.clust4j.algo.prep.PreProcessor;
-import com.clust4j.algo.prep.Normalize;
+import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.algo.preprocess.impute.MeanImputation;
 
 public class PipelineTest {
 
@@ -28,7 +28,7 @@ public class PipelineTest {
 		// Build the pipeline
 		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
-				Normalize.CENTER_SCALE, 
+				FeatureNormalization.CENTER_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		final KMeans km = (KMeans) pipe.fit(mat);
@@ -54,7 +54,7 @@ public class PipelineTest {
 		// Build the pipeline
 		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
-				Normalize.CENTER_SCALE, 
+				FeatureNormalization.CENTER_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
@@ -76,7 +76,7 @@ public class PipelineTest {
 		final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline pipe = new Pipeline(planner, Normalize.CENTER_SCALE);
+		final Pipeline pipe = new Pipeline(planner, FeatureNormalization.CENTER_SCALE);
 		
 		@SuppressWarnings("unused")
 		KMedoids km = (KMedoids)pipe.fit(mat);

@@ -9,6 +9,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
@@ -129,6 +130,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		private Linkage linkage = DEF_LINKAGE;
 		private boolean verbose = DEF_VERBOSE;
 		private int num_clusters = 2;
+		private FeatureNormalization norm = DEF_NORMALIZER;
 		
 		
 		public HierarchicalPlanner(){}
@@ -150,7 +152,8 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 				.setScale(scale)
 				.setSeed(seed)
 				.setVerbose(verbose)
-				.setNumClusters(num_clusters);
+				.setNumClusters(num_clusters)
+				.setNormalizer(norm);
 		}
 		
 		public Linkage getLinkage() {
@@ -208,6 +211,15 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		@Override
 		public HierarchicalPlanner setSep(GeometricallySeparable dist) {
 			this.dist = dist;
+			return this;
+		}
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+		@Override
+		public HierarchicalPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

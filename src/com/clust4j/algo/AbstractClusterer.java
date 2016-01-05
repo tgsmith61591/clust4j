@@ -11,7 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.prep.Normalize;
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
@@ -37,12 +37,22 @@ import static com.clust4j.GlobalState.ALLOW_PARALLELISM;
  */
 public abstract class AbstractClusterer implements Loggable, Named, java.io.Serializable {
 	private static final long serialVersionUID = -3623527903903305017L;
+	
+	
+	/** The default {@link FeatureNormalization} enum to use. 
+	 *  The default is {@link FeatureNormalization#CENTER_SCALE} */
+	public static FeatureNormalization DEF_NORMALIZER = FeatureNormalization.CENTER_SCALE;
+	
+	/** Whether algorithms should by default behave in a verbose manner */
 	public static boolean DEF_VERBOSE = false;
+	
+	/** Whether algorithms should by default normalize the columns */
 	public static boolean DEF_SCALE = false;
 	
 	final static public Random DEF_SEED = new Random();
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final private UUID modelKey;
+	
 	
 	
 	/** Underlying data */
@@ -53,6 +63,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	private final Random seed;
 	/** Verbose for heavily logging */
 	final private boolean verbose;
+	
 	
 	
 	/** Have any warnings occurred -- volatile because can change */
@@ -72,10 +83,12 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	abstract public static class BaseClustererPlanner implements DeepCloneable {
 		abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
 		abstract public BaseClustererPlanner copy();
+		abstract public FeatureNormalization getNormalizer();
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
 		abstract public Random getSeed();
 		abstract public boolean getVerbose();
+		abstract public BaseClustererPlanner setNormalizer(final FeatureNormalization norm);
 		abstract public BaseClustererPlanner setScale(final boolean b);
 		abstract public BaseClustererPlanner setSeed(final Random rand);
 		abstract public BaseClustererPlanner setVerbose(final boolean b);
@@ -122,9 +135,10 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			this.data = (AbstractRealMatrix) data.copy();
 		else {
 			info("normalizing matrix columns (centering and scaling)");
-			this.data = Normalize.CENTER_SCALE.operate(data);
+			this.data = planner.getNormalizer().operate(data);
 		}
 	} // End constructor
+	
 	
 	
 	
@@ -133,15 +147,16 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			throw new IllegalArgumentException("empty data");
 		
 		
+		// Check for nans in the matrix either serially or in parallel
 		boolean containsNan = false;
 		if(!ALLOW_PARALLELISM) {
-			info("checking input data for NaNs");
+			info("checking input data for NaNs serially");
 			containsNan = MatUtils.containsNaN(data);
 		} else {
 			try { // Try distributed job
 				info("checking input data for NaNs using core-distributed task");
 				containsNan = MatUtils.containsNaNDistributed(data);
-			} catch(RejectedExecutionException | OutOfMemoryError e) { // can't schedule parallel job
+			} catch(RejectedExecutionException | OutOfMemoryError e) { // can't schedule parallel job/HS error
 				warn("parallel NaN check failed, reverting to serial check");
 				containsNan = MatUtils.containsNaN(data);
 			}
@@ -154,6 +169,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			throw new NaNException(error);
 		}
 	}
+	
 	
 	
 	private void flagWarning() {

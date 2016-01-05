@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighbors.RunMode;
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
@@ -73,6 +74,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
 		private Random seed = DEF_SEED;
+		private FeatureNormalization norm = DEF_NORMALIZER;
 		
 		
 		public DBSCANPlanner() { }
@@ -93,7 +95,8 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 				.setScale(scale)
 				.setSep(dist)
 				.setSeed(seed)
-				.setVerbose(verbose);
+				.setVerbose(verbose)
+				.setNormalizer(norm);
 		}
 		
 		@Override
@@ -141,6 +144,15 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		
 		public DBSCANPlanner setVerbose(final boolean v) {
 			this.verbose = v;
+			return this;
+		}
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+		@Override
+		public DBSCANPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
@@ -130,6 +131,7 @@ public class NearestNeighbors extends AbstractClusterer {
 	public static class NearestNeighborsPlanner extends BaseClustererPlanner {
 		private RunMode runmode = DEF_RUN_MODE;
 		private int k = DEF_K;
+		private FeatureNormalization norm = DEF_NORMALIZER;
 		private double neighborhood = DEF_EPS_RADIUS;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
@@ -158,7 +160,8 @@ public class NearestNeighbors extends AbstractClusterer {
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setDistanceMatrix(dist_mat);
+				.setDistanceMatrix(dist_mat)
+				.setNormalizer(norm);
 		}
 
 		@Override
@@ -222,6 +225,16 @@ public class NearestNeighbors extends AbstractClusterer {
 		@Override
 		public NearestNeighborsPlanner setSep(GeometricallySeparable dist) {
 			this.dist = dist;
+			return this;
+		}
+		
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+		@Override
+		public NearestNeighborsPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

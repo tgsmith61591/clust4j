@@ -1,4 +1,4 @@
-package com.clust4j.algo.prep;
+package com.clust4j.algo.preprocess;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 

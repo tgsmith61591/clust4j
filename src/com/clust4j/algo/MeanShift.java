@@ -9,6 +9,7 @@ import java.util.SortedSet;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.log.LogTimeFormatter;
@@ -161,6 +162,7 @@ public class MeanShift
 	 */
 	final public static class MeanShiftPlanner extends AbstractClusterer.BaseClustererPlanner {
 		private double bandwidth;
+		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_MIN_CHANGE;
 		private boolean scale = DEF_SCALE;
@@ -190,7 +192,8 @@ public class MeanShift
 				.setSeed(seed)
 				.setSeeds(seeds)
 				.setSep(dist)
-				.setVerbose(verbose);
+				.setVerbose(verbose)
+				.setNormalizer(norm);
 		}
 		
 		@Override
@@ -249,6 +252,17 @@ public class MeanShift
 		@Override
 		public MeanShiftPlanner setVerbose(final boolean v) {
 			this.verbose = v;
+			return this;
+		}
+
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+
+		@Override
+		public MeanShiftPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

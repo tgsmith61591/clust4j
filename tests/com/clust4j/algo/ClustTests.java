@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -148,6 +149,8 @@ public class ClustTests {
 			km = new KMeans(mat, new KMeans.KMeansPlanner(1).setScale(b)).fit();
 			assertTrue(km.didConverge());
 
+			System.out.println(Arrays.toString(km.getLabels()));
+			System.out.println(km.totalCost());
 			if(b)
 				assertTrue(km.totalCost() == 9.0);
 		}

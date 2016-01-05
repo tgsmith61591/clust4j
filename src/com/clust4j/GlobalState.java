@@ -11,6 +11,12 @@ import java.util.concurrent.ForkJoinPool;
 public class GlobalState {
 	
 	/**
+	 * The minimum number of required cores to efficiently
+	 * allow parallel operations.
+	 */
+	public static final int MIN_PARALLEL_CORES_REQUIRED = 8;
+	
+	/**
 	 * The number of available cores on the machine. Used for determining
 	 * whether or not to use parallelism & how large parallel chunks should be. */
 	public static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
@@ -20,7 +26,7 @@ public class GlobalState {
 	 *  things down on machines with a lower core count, but speed them up
 	 *  on machines with a higher core count. More heap space may be required. 
 	 *  Default value is true if availableProcessors is at least 8 */
-	public static boolean ALLOW_PARALLELISM = NUM_CORES >= 8;
+	public static boolean ALLOW_PARALLELISM = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
 	
 	/**
 	 * The global ForkJoin thread pool for parallel recursive tasks. */

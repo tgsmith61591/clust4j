@@ -1,13 +1,17 @@
-package com.clust4j.algo.prep;
+package com.clust4j.algo.preprocess;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.clust4j.algo.prep.BootstrapImputation.BootstrapImputationPlanner;
-import com.clust4j.algo.prep.MatrixImputation.CentralTendencyMethod;
-import com.clust4j.algo.prep.MeanImputation.MeanImputationPlanner;
-import com.clust4j.algo.prep.MedianImputation.MedianImputationPlanner;
+import com.clust4j.algo.preprocess.impute.BootstrapImputation;
+import com.clust4j.algo.preprocess.impute.MeanImputation;
+import com.clust4j.algo.preprocess.impute.MedianImputation;
+import com.clust4j.algo.preprocess.impute.NearestNeighborImputation;
+import com.clust4j.algo.preprocess.impute.BootstrapImputation.BootstrapImputationPlanner;
+import com.clust4j.algo.preprocess.impute.MatrixImputation.CentralTendencyMethod;
+import com.clust4j.algo.preprocess.impute.MeanImputation.MeanImputationPlanner;
+import com.clust4j.algo.preprocess.impute.MedianImputation.MedianImputationPlanner;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.sample.Bootstrapper;
 import com.clust4j.utils.MatUtils;

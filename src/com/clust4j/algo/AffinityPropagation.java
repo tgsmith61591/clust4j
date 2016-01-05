@@ -7,6 +7,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.CentroidLearner;
@@ -146,6 +147,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
 		private boolean addNoise = DEF_ADD_GAUSSIAN_NOISE;
+		private FeatureNormalization norm = DEF_NORMALIZER;
 
 		public AffinityPropagationPlanner() { /* Default constructor */ }
 		
@@ -170,7 +172,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.addGaussianNoise(addNoise);
+				.addGaussianNoise(addNoise)
+				.setNormalizer(norm);
 		}
 		
 		@Override
@@ -234,6 +237,17 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		@Override
 		public AffinityPropagationPlanner setSep(GeometricallySeparable dist) {
 			this.dist = dist;
+			return this;
+		}
+
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
+		}
+
+		@Override
+		public AffinityPropagationPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 	}

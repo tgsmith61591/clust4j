@@ -1,8 +1,9 @@
-package com.clust4j.algo.prep;
+package com.clust4j.algo.preprocess.impute;
 
 import java.util.Random;
 
 import com.clust4j.algo.AbstractClusterer;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.MatUtils;

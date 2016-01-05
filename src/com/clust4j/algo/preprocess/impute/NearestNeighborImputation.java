@@ -1,4 +1,4 @@
-package com.clust4j.algo.prep;
+package com.clust4j.algo.preprocess.impute;
 
 import java.util.ArrayList;
 import java.util.Random;

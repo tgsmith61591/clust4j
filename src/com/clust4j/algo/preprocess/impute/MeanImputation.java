@@ -1,4 +1,4 @@
-package com.clust4j.algo.prep;
+package com.clust4j.algo.preprocess.impute;
 
 import java.util.Random;
 
@@ -7,31 +7,30 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.VecUtils;
 
 /**
- * Imputes the missing values in a matrix with the column medians.
+ * Imputes the missing values in a matrix with the column means.
  * 
  * @author Taylor G Smith
  */
-public class MedianImputation extends MatrixImputation {
+public class MeanImputation extends MatrixImputation {
 	
-	public MedianImputation() {
-		this(new MedianImputationPlanner());
+	public MeanImputation() {
+		this(new MeanImputationPlanner());
 	}
 	
-	public MedianImputation(MedianImputationPlanner planner) {
+	public MeanImputation(MeanImputationPlanner planner) {
 		super(planner);
 	}
 	
 
 	
 	
-	public static class MedianImputationPlanner extends ImputationPlanner {
+	public static class MeanImputationPlanner extends ImputationPlanner {
 		private boolean verbose = DEF_VERBOSE;
 		private Random seed = new Random();
 		
-		public MedianImputationPlanner() {}
+		public MeanImputationPlanner() {}
 
 		@Override
 		public Random getSeed() {
@@ -44,13 +43,13 @@ public class MedianImputation extends MatrixImputation {
 		}
 		
 		@Override
-		public MedianImputationPlanner setSeed(final Random seed) {
+		public MeanImputationPlanner setSeed(final Random seed) {
 			this.seed = seed;
 			return this;
 		}
 
 		@Override
-		public MedianImputationPlanner setVerbose(boolean b) {
+		public MeanImputationPlanner setVerbose(boolean b) {
 			this.verbose = b;
 			return this;
 		}
@@ -58,10 +57,9 @@ public class MedianImputation extends MatrixImputation {
 	}
 
 
-
 	@Override
-	public MedianImputation copy() {
-		return new MedianImputation(new MedianImputationPlanner()
+	public MeanImputation copy() {
+		return new MeanImputation(new MeanImputationPlanner()
 			.setSeed(getSeed())
 			.setVerbose(verbose));
 	}
@@ -73,7 +71,7 @@ public class MedianImputation extends MatrixImputation {
 	
 	@Override
 	public String getName() {
-		return "Median imputation";
+		return "Mean imputation";
 	}
 	
 	@Override
@@ -87,21 +85,28 @@ public class MedianImputation extends MatrixImputation {
 		
 		final double[][] copy = MatUtils.copyMatrix(dat);
 		final int m = dat.length, n = dat[0].length;
-		info("(" + getName() + ") performing median imputation on " + m + " x " + n + " dataset");
+		info("(" + getName() + ") performing mean imputation on " + m + " x " + n + " dataset");
 		
 		// Operates in 2M * N
 		for(int col = 0; col < n; col++) {
-			final double median = VecUtils.nanMedian(MatUtils.getColumn(copy, col));
-
 			int count = 0;
+			double sum = 0;
 			for(int row = 0; row < m; row++) {
-				if(Double.isNaN(copy[row][col])) {
-					copy[row][col] = median;
+				if(!Double.isNaN(copy[row][col])) {
+					sum += copy[row][col];
 					count++;
 				}
 			}
+
+			int nanCt = m - count;
+			double mean = sum / (double)count;
+			for(int row = 0; row < m; row++) {
+				if(Double.isNaN(copy[row][col])) {
+					copy[row][col] = mean;
+				}
+			}
 			
-			info("(" + getName() + ") " + count + " NaN" + (count!=1?"s":"") + " identified in column " + col + " (column median="+median+")");
+			info("(" + getName() + ") " + nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (column mean="+mean+")");
 		}
 		
 		return copy;
