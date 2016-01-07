@@ -12,8 +12,6 @@ import org.apache.commons.math3.util.Precision;
 public class MatUtils {
 	/** Size at which to use BlockRealMatrix for multiplication */
 	public final static int BLOCK_MAT_THRESH = 1000;
-	public final static double TINY = 2.2250738585072014e-308;
-	public final static double EPS = 2.2204460492503131e-16;
 	public final static int MIN_ACCEPTABLE_MAT_LEN = 1;
 	
 	public static enum Axis {

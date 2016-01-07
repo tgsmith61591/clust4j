@@ -471,7 +471,7 @@ public class ClustTests {
 			AffinityPropagation a = 
 					new AffinityPropagation(mat, new AffinityPropagation
 						.AffinityPropagationPlanner()
-							.addGaussianNoise(bool)
+							.useGaussianSmoothing(bool)
 							.setVerbose(true)
 							.setSeed(seed)).fit();
 					

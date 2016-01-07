@@ -11,6 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
@@ -23,7 +24,7 @@ import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
 
-import static com.clust4j.GlobalState.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
 
 /**
  * 
@@ -40,8 +41,8 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	
 	
 	/** The default {@link FeatureNormalization} enum to use. 
-	 *  The default is {@link FeatureNormalization#CENTER_SCALE} */
-	public static FeatureNormalization DEF_NORMALIZER = FeatureNormalization.CENTER_SCALE;
+	 *  The default is {@link FeatureNormalization#STANDARD_SCALE} */
+	public static FeatureNormalization DEF_NORMALIZER = FeatureNormalization.STANDARD_SCALE;
 	
 	/** Whether algorithms should by default behave in a verbose manner */
 	public static boolean DEF_VERBOSE = false;
@@ -49,7 +50,8 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	/** Whether algorithms should by default normalize the columns */
 	public static boolean DEF_SCALE = false;
 	
-	final static public Random DEF_SEED = new Random();
+	/** By default, uses the {@link GlobalState#DEFAULT_RANDOM_STATE} */
+	final static protected Random DEF_SEED = GlobalState.DEFAULT_RANDOM_STATE;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final private UUID modelKey;
 	
@@ -234,9 +236,9 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	
 	
 	/** 
-	 * Fit the model.
-	 * In order to coalesce with the milieu of clust4j,
-	 * the execution of this method should be synchronized on 'this'
+	 * Fits the model. In order to coalesce with the milieu of clust4j,
+	 * the execution of this method should be synchronized on 'this'. This
+	 * is due to the volatile nature of many of the instance class variables.
 	 */
 	abstract public AbstractClusterer fit();
 	

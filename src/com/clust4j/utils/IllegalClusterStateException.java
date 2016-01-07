@@ -1,6 +1,6 @@
 package com.clust4j.utils;
 
-public class IllegalClusterStateException extends RuntimeException {
+public class IllegalClusterStateException extends IllegalStateException {
 
 	private static final long serialVersionUID = -2379108879459786857L;
 

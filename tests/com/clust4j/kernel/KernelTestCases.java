@@ -185,7 +185,7 @@ public class KernelTestCases {
 			AffinityPropagation a = 
 					new AffinityPropagation(mat, new AffinityPropagation
 						.AffinityPropagationPlanner()
-							.addGaussianNoise(bool)
+							.useGaussianSmoothing(bool)
 							.setVerbose(true)
 							.setSep(new GaussianKernel())
 							.setSeed(seed)).fit();

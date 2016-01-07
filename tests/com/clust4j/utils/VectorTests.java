@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
+
 public class VectorTests {
 
 	@Test
@@ -163,7 +165,7 @@ public class VectorTests {
 	
 	@Test
 	public void testArgs() {
-		assertTrue(-5 > VecUtils.SAFE_MIN);
+		assertTrue(-5 > GlobalState.Mathematics.SIGNED_MIN);
 		
 		final double[] a = new double[]{0, 5};
 		assertTrue(VecUtils.argMax(a) == 1);

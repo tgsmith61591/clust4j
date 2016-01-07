@@ -28,7 +28,7 @@ public class PipelineTest {
 		// Build the pipeline
 		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
-				FeatureNormalization.CENTER_SCALE, 
+				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		final KMeans km = (KMeans) pipe.fit(mat);
@@ -54,7 +54,7 @@ public class PipelineTest {
 		// Build the pipeline
 		final Pipeline pipe = new Pipeline(planner, 
 			new PreProcessor[]{
-				FeatureNormalization.CENTER_SCALE, 
+				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
@@ -76,7 +76,7 @@ public class PipelineTest {
 		final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline pipe = new Pipeline(planner, FeatureNormalization.CENTER_SCALE);
+		final Pipeline pipe = new Pipeline(planner, FeatureNormalization.STANDARD_SCALE);
 		
 		@SuppressWarnings("unused")
 		KMedoids km = (KMedoids)pipe.fit(mat);

@@ -4,7 +4,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
 import com.clust4j.GlobalState;
-import static com.clust4j.GlobalState.MAX_PARALLEL_CHUNK_SIZE;
+import static com.clust4j.GlobalState.ParallelismConf.MAX_PARALLEL_CHUNK_SIZE;
 
 abstract class DistributedVectorTask<T> extends RecursiveTask<T> {
 	private static final long serialVersionUID = -7986981765361158408L;
@@ -24,6 +24,6 @@ abstract class DistributedVectorTask<T> extends RecursiveTask<T> {
 	}
 	
 	public static ForkJoinPool getThreadPool() {
-		return GlobalState.FJ_THREADPOOL;
+		return GlobalState.ParallelismConf.FJ_THREADPOOL;
 	}
 }

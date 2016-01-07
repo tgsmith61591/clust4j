@@ -7,22 +7,23 @@ import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import com.clust4j.GlobalState;
 import com.clust4j.utils.parallel.DistributedInnerProduct;
 import com.clust4j.utils.parallel.DistributedVectorNaNCheck;
 import com.clust4j.utils.parallel.DistributedVectorNaNCount;
 import com.clust4j.utils.parallel.DistributedVectorProduct;
 import com.clust4j.utils.parallel.DistributedVectorSum;
 
-import static com.clust4j.GlobalState.MAX_SERIAL_VECTOR_LEN;
-import static com.clust4j.GlobalState.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.Mathematics.SIGNED_MAX;
+import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
 public class VecUtils {
-	/** Double.MIN_VALUE is not negative; this is */
-	public final static double SAFE_MIN = Double.NEGATIVE_INFINITY;
-	public final static double SAFE_MAX = Double.POSITIVE_INFINITY;
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
@@ -111,7 +112,7 @@ public class VecUtils {
 	public static int argMax(final double[] v) {
 		checkDims(v);
 		
-		double max = SAFE_MIN;
+		double max = SIGNED_MIN;
 		int max_idx = -1;
 		
 		for(int i = 0; i < v.length; i++) {
@@ -128,7 +129,7 @@ public class VecUtils {
 	public static int argMin(final double[] v) {
 		checkDims(v);
 		
-		double min = SAFE_MAX;
+		double min = SIGNED_MAX;
 		int min_idx = -1;
 		
 		for(int i = 0; i < v.length; i++) {
@@ -297,9 +298,21 @@ public class VecUtils {
 		return DistributedInnerProduct.innerProd(a, b);
 	}
 	
+	public static double iqr(final double[] a) {
+		checkDims(a);
+		DescriptiveStatistics d = new DescriptiveStatistics(a);
+		return d.getPercentile(75) - d.getPercentile(25);
+	}
+	
 	public static boolean isOrthogonalTo(final double[] a, final double[] b) {
 		checkDims(a, b);
 		return Precision.equals(innerProduct(a, b), 0, Precision.EPSILON);
+	}
+	
+	public static double kurtosis(final double[] a) {
+		checkDims(a);
+		DescriptiveStatistics d = new DescriptiveStatistics(a);
+		return d.getKurtosis();
 	}
 	
 	public static double l1Norm(final double[] a) {
@@ -330,7 +343,7 @@ public class VecUtils {
 	}
 	
 	final public static double max(final double[] a) {
-		double max = SAFE_MIN;
+		double max = SIGNED_MIN;
 		for(double d : a)
 			if(d > max)
 				max = d;
@@ -362,7 +375,7 @@ public class VecUtils {
 	}
 	
 	final public static double min(final double[] a) {
-		double min = SAFE_MAX;
+		double min = SIGNED_MAX;
 		for(double d : a)
 			if(d < min)
 				min = d;
@@ -540,7 +553,7 @@ public class VecUtils {
 	}
 	
 	public static double[] randomGaussianNoiseVector(final int n, final Random seed) {
-		return randomGaussian(n,seed,MatUtils.EPS);
+		return randomGaussian(n,seed,GlobalState.Mathematics.EPS);
 	}
 	
 	public static double[] scalarAdd(final double[] a, final double b) {

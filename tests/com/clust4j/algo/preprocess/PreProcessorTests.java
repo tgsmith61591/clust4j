@@ -33,7 +33,7 @@ public class PreProcessorTests {
 			new double[] {4.1234,    0.27395,   1.8900002}
 		};
 		
-		final double[][] operated = FeatureNormalization.CENTER_SCALE.operate(data);
+		final double[][] operated = FeatureNormalization.STANDARD_SCALE.operate(data);
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, 1e-12));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, 1e-12));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, 1e-12));

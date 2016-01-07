@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.utils.MatUtils.Axis;
 
@@ -23,9 +24,9 @@ public class MatTests {
 
 	@Test
 	public void testTinyEps() {
-		assertTrue(MatUtils.TINY > 0);
-		assertTrue(MatUtils.EPS > 0);
-		assertTrue(MatUtils.TINY*100 > 0);
+		assertTrue(GlobalState.Mathematics.TINY > 0);
+		assertTrue(GlobalState.Mathematics.EPS > 0);
+		assertTrue(GlobalState.Mathematics.TINY*100 > 0);
 	}
 	
 	@Test

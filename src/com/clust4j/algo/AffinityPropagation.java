@@ -7,6 +7,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
@@ -44,6 +45,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	final public static int DEF_MAX_ITER = 200;
 	final public static double DEF_MIN_CHANGE = 0d;
 	final public static double DEF_DAMPING = 0.5;
+	/** By default uses minute Gaussian smoothing. It is recommended this remain
+	 *  true, but the {@link AffinityPropagationPlanner#useGaussianSmoothing(boolean)}
+	 *  method can disable this option */
 	final public static boolean DEF_ADD_GAUSSIAN_NOISE = true;
 	
 	
@@ -151,7 +155,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 		public AffinityPropagationPlanner() { /* Default constructor */ }
 		
-		public AffinityPropagationPlanner addGaussianNoise(boolean b) {
+		public AffinityPropagationPlanner useGaussianSmoothing(boolean b) {
 			this.addNoise = b;
 			return this;
 		}
@@ -172,7 +176,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.addGaussianNoise(addNoise)
+				.useGaussianSmoothing(addNoise)
 				.setNormalizer(norm);
 		}
 		
@@ -370,8 +374,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				if(addNoise) {
 					// Add some extremely small noise to the similarity matrix
-					double[][] tiny_scaled = MatUtils.scalarMultiply(sim_mat, MatUtils.EPS);
-					tiny_scaled = MatUtils.scalarAdd(tiny_scaled, MatUtils.TINY*100);
+					double[][] tiny_scaled = MatUtils.scalarMultiply(sim_mat, GlobalState.Mathematics.EPS);
+					tiny_scaled = MatUtils.scalarAdd(tiny_scaled, GlobalState.Mathematics.TINY*100);
 					
 					info("removing matrix degeneracies; scaling with minute Gaussian noise");
 					long gausStart = System.currentTimeMillis();
@@ -424,8 +428,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					Y = new double[m];
 					Y2 = new double[m]; // Second max for each row
 					for(int i = 0; i < m; i++) {
-						double runningMax = VecUtils.SAFE_MIN;
-						double secondMax = VecUtils.SAFE_MIN;
+						double runningMax = GlobalState.Mathematics.SIGNED_MIN;
+						double secondMax = GlobalState.Mathematics.SIGNED_MIN;
 						int runningMaxIdx = -1;			// Idx of max row element
 						for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
 							tmp[i][j] = A[i][j] + sim_mat[i][j];
