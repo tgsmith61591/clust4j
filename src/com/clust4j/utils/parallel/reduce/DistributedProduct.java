@@ -1,4 +1,4 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
 import com.clust4j.utils.VecUtils;
 
@@ -6,10 +6,10 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed products of vectors
  * @author Taylor G Smith
  */
-final public class DistributedVectorProduct extends DistributedVectorOperator {
+final public class DistributedProduct extends DistributedVectorOperator {
 	private static final long serialVersionUID = -1038455192192012983L;
 
-	private DistributedVectorProduct(final double[] arr, int lo, int hi) {
+	private DistributedProduct(final double[] arr, int lo, int hi) {
 		super(arr, lo, hi);
 	}
 	
@@ -22,8 +22,8 @@ final public class DistributedVectorProduct extends DistributedVectorOperator {
             return prod;
          } else {
             int mid = low + (high - low) / 2;
-            DistributedVectorProduct left  = new DistributedVectorProduct(array, low, mid);
-            DistributedVectorProduct right = new DistributedVectorProduct(array, mid, high);
+            DistributedProduct left  = new DistributedProduct(array, low, mid);
+            DistributedProduct right = new DistributedProduct(array, mid, high);
             left.fork();
             double rightAns = right.compute();
             double leftAns  = left.join();
@@ -33,6 +33,6 @@ final public class DistributedVectorProduct extends DistributedVectorOperator {
 	
 	public static double prod(final double[] array) {
 		VecUtils.checkDims(array);
-		return getThreadPool().invoke(new DistributedVectorProduct(array,0,array.length));
+		return getThreadPool().invoke(new DistributedProduct(array,0,array.length));
 	}
 }

@@ -1,4 +1,4 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
@@ -6,14 +6,14 @@ import java.util.concurrent.RecursiveTask;
 import com.clust4j.GlobalState;
 import static com.clust4j.GlobalState.ParallelismConf.MAX_PARALLEL_CHUNK_SIZE;
 
-abstract class DistributedVectorTask<T> extends RecursiveTask<T> {
+abstract class VectorReduceTask<T> extends RecursiveTask<T> {
 	private static final long serialVersionUID = -7986981765361158408L;
 
-    public final double[] array;
-	public final int low;
-    public final int high;
+    final double[] array;
+	final int low;
+    final int high;
 	
-	DistributedVectorTask(double[] arr, int lo, int hi) {
+	VectorReduceTask(double[] arr, int lo, int hi) {
 		array = arr;
 		low = lo;
 		high = hi;

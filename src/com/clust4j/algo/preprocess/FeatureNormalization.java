@@ -3,7 +3,7 @@ package com.clust4j.algo.preprocess;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
-import com.clust4j.GlobalState;
+import com.clust4j.GlobalState.FeatureNormalizationConf;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -39,12 +39,12 @@ public enum FeatureNormalization implements PreProcessor {
 	},
 	
 	/**
-	 * Fits the data into the range [0,1] by default. If {@link MIN_MAX_SCALE#RANGE_MIN} or
-	 * {@link MIN_MAX_SCALE#RANGE_MAX} is set differently, will fit into range [MIN, MAX]
+	 * Fits the data into the range [0,1] by default. If {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MIN} or
+	 * {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MAX} is set differently, will fit into range [MIN, MAX]
 	 */
 	MIN_MAX_SCALE {
-		int RANGE_MIN = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
-		int RANGE_MAX = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
+		int RANGE_MIN = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
+		int RANGE_MAX = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
 		
 		@Override
 		public PreProcessor copy() { return this; }
@@ -54,6 +54,10 @@ public enum FeatureNormalization implements PreProcessor {
 			return new Array2DRowRealMatrix(operate(data.getData()), false);
 		}
 		
+		/**
+		 * @throws IllegalStateException if {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MIN} is greater
+	     * than or equal to {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MAX}
+		 */
 		@Override
 		public double[][] operate(double[][] data) {
 			MatUtils.checkDims(data);
@@ -68,8 +72,8 @@ public enum FeatureNormalization implements PreProcessor {
 			
 			for(int col = 0; col < n; col++) {
 				final double[] v = MatUtils.getColumn(copy, col);
-				final double max = VecUtils.max(v);
-				final double min = VecUtils.min(v);
+				final double max = VecUtils.nanMax(v);
+				final double min = VecUtils.nanMin(v);
 				final double rng = (max - min);
 				
 				for(int row = 0; row < m; row++)
@@ -100,8 +104,8 @@ public enum FeatureNormalization implements PreProcessor {
 			
 			for(int col = 0; col < n; col++) {
 				final double[] v = MatUtils.getColumn(copy, col);
-				final double mean = VecUtils.mean(v);
-				final double sd = VecUtils.stdDev(v, mean);
+				final double mean = VecUtils.nanMean(v);
+				final double sd = VecUtils.nanStdDev(v, mean);
 				
 				for(int row = 0; row < m; row++) {
 					final double new_val = (v[row] - mean) / sd;

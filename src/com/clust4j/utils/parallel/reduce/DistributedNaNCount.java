@@ -1,9 +1,9 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
-final public class DistributedVectorNaNCount extends DistributedVectorTask<Integer> {
+final public class DistributedNaNCount extends VectorReduceTask<Integer> {
 	private static final long serialVersionUID = 5031788548523204436L;
 
-	private DistributedVectorNaNCount(final double[] arr, int lo, int hi) {
+	private DistributedNaNCount(final double[] arr, int lo, int hi) {
 		super(arr, lo, hi);
 	}
 
@@ -17,8 +17,8 @@ final public class DistributedVectorNaNCount extends DistributedVectorTask<Integ
             return sum;
          } else {
             int mid = low + (high - low) / 2;
-            DistributedVectorNaNCount left  = new DistributedVectorNaNCount(array, low, mid);
-            DistributedVectorNaNCount right = new DistributedVectorNaNCount(array, mid, high);
+            DistributedNaNCount left  = new DistributedNaNCount(array, low, mid);
+            DistributedNaNCount right = new DistributedNaNCount(array, mid, high);
             left.fork();
             int rightAns = right.compute();
             int leftAns  = left.join();
@@ -29,6 +29,6 @@ final public class DistributedVectorNaNCount extends DistributedVectorTask<Integ
 	public static int nanCount(double[] array) {
 		if(array.length == 0)
 			return 0;
-		return getThreadPool().invoke(new DistributedVectorNaNCount(array,0,array.length));
+		return getThreadPool().invoke(new DistributedNaNCount(array,0,array.length));
 	}
 }

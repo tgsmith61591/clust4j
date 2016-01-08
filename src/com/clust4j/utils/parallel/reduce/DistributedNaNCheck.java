@@ -1,13 +1,13 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
 /**
  * A class for distributed NaN checks
  * @author Taylor G Smith
  */
-public class DistributedVectorNaNCheck extends DistributedVectorTask<Boolean> {
+public class DistributedNaNCheck extends VectorReduceTask<Boolean> {
 	private static final long serialVersionUID = -4107497709587691394L;
 
-	private DistributedVectorNaNCheck(final double[] arr, int lo, int hi) {
+	private DistributedNaNCheck(final double[] arr, int lo, int hi) {
 		super(arr, lo, hi);
 	}
 
@@ -21,8 +21,8 @@ public class DistributedVectorNaNCheck extends DistributedVectorTask<Boolean> {
             return false;
          } else {
             int mid = low + (high - low) / 2;
-            DistributedVectorNaNCheck left  = new DistributedVectorNaNCheck(array, low, mid);
-            DistributedVectorNaNCheck right = new DistributedVectorNaNCheck(array, mid, high);
+            DistributedNaNCheck left  = new DistributedNaNCheck(array, low, mid);
+            DistributedNaNCheck right = new DistributedNaNCheck(array, mid, high);
             left.fork();
             boolean rightAns = right.compute();
             boolean leftAns  = left.join();
@@ -31,6 +31,6 @@ public class DistributedVectorNaNCheck extends DistributedVectorTask<Boolean> {
 	}
 	
 	public static boolean containsNaN(final double[] array) {
-		return getThreadPool().invoke(new DistributedVectorNaNCheck(array,0,array.length));
+		return getThreadPool().invoke(new DistributedNaNCheck(array,0,array.length));
 	}
 }

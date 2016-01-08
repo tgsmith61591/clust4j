@@ -12,15 +12,19 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
-import com.clust4j.utils.parallel.DistributedInnerProduct;
-import com.clust4j.utils.parallel.DistributedVectorNaNCheck;
-import com.clust4j.utils.parallel.DistributedVectorNaNCount;
-import com.clust4j.utils.parallel.DistributedVectorProduct;
-import com.clust4j.utils.parallel.DistributedVectorSum;
+import com.clust4j.utils.parallel.map.DistributedAbs;
+import com.clust4j.utils.parallel.map.DistributedAdd;
+import com.clust4j.utils.parallel.map.DistributedMultiply;
+import com.clust4j.utils.parallel.reduce.DistributedEqualityTest;
+import com.clust4j.utils.parallel.reduce.DistributedInnerProduct;
+import com.clust4j.utils.parallel.reduce.DistributedNaNCheck;
+import com.clust4j.utils.parallel.reduce.DistributedNaNCount;
+import com.clust4j.utils.parallel.reduce.DistributedProduct;
+import com.clust4j.utils.parallel.reduce.DistributedSum;
 
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
-import static com.clust4j.GlobalState.Mathematics.SIGNED_MAX;
+import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
 public class VecUtils {
@@ -53,22 +57,95 @@ public class VecUtils {
 	
 	
 	
+	/**
+	 * Calculate the absolute value of the values in the vector and return a copy.
+	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
+	 * or serial job.
+	 * @param a
+	 * @return absolute value of the vector
+	 */
 	public static double[] abs(final double[] a) {
+		checkDims(a);
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return absDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+		
+		return absForceSerial(a);
+	}
+	
+	
+	/**
+	 * Calculates the absolute value of the vector in a distributed fashion
+	 * @param a
+	 * @return absolute value of the vector
+	 */
+	public static double[] absDistributed(final double[] a) {
+		return DistributedAbs.operate(a);
+	}
+	
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @return
+	 */
+	protected static double[] absForceSerial(final double[] a) {
 		final double[] b= new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.abs(a[i]);
 		return b;
 	}
 	
+	
+	/**
+	 * Add two vectors and return a copy.
+	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
+	 * or serial job.
+	 * @param a
+	 * @param b
+	 * @return the result of adding two vectors
+	 */
 	public static double[] add(final double[] a, final double[] b) {
 		checkDims(a, b);
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return addDistributed(a, b);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
+		return addForceSerial(a, b);
+	}
+	
+	
+	/**
+	 * Add two vectors and return a copy in a parallel fashion
+	 * @param a
+	 * @param b
+	 * @return the result of adding two vectors
+	 */
+	public static double[] addDistributed(final double[] a, final double[] b) {
+		return DistributedAdd.operate(a, b);
+	}
+	
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	protected static double[] addForceSerial(final double[] a, final double[] b) {
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			ab[i] = a[i] + b[i];
 		
 		return ab;
 	}
+	
 	
 	
 	public static int[] arange(final int length) {
@@ -129,7 +206,7 @@ public class VecUtils {
 	public static int argMin(final double[] v) {
 		checkDims(v);
 		
-		double min = SIGNED_MAX;
+		double min = MAX;
 		int min_idx = -1;
 		
 		for(int i = 0; i < v.length; i++) {
@@ -170,6 +247,13 @@ public class VecUtils {
 		return copy;
 	}
 	
+	
+	/**
+	 * Identifies whether a vector contains any missing values. 
+	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
+	 * @param a
+	 * @return true if vector contains any NaNs
+	 */
 	public static boolean containsNaN(final double[] a) {
 		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
@@ -177,15 +261,34 @@ public class VecUtils {
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
 		}
 		
+		return containsNaNForceSerial(a);
+	}
+	
+	
+	/**
+	 * Identifies whether a vector contains any missing values
+	 * in a parallel fashion.
+	 * @param a
+	 * @return true if vector contains any NaNs
+	 */
+	public static boolean containsNaNDistributed(final double[] a) {
+		return DistributedNaNCheck.containsNaN(a);
+	}
+	
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean containsNaNForceSerial(final double[] a) {
 		for(double b: a)
 			if(Double.isNaN(b))
 				return true;
 		
 		return false;
-	}
-	
-	public static boolean containsNaNDistributed(final double[] a) {
-		return DistributedVectorNaNCheck.containsNaN(a);
 	}
 	
 	public static int[] copy(final int[] i) {
@@ -200,10 +303,17 @@ public class VecUtils {
 		return copy;
 	}
 	
-	public static ArrayList<Integer> copy(final ArrayList<Integer> a) {
-		final ArrayList<Integer> copy = new ArrayList<Integer>(a.size());
+	/**
+	 * Returns a shallow copy of the arg ArrayList. If the generic
+	 * type is immutable (an instance of Number, String, etc) will
+	 * act as a deep copy.
+	 * @param a
+	 * @return a shallow copy
+	 */
+	public static <T> ArrayList<T> copy(final ArrayList<T> a) {
+		final ArrayList<T> copy = new ArrayList<T>(a.size());
 		
-		for(Integer i: a)
+		for(T i: a)
 			copy.add(i);
 		
 		return copy;
@@ -239,29 +349,102 @@ public class VecUtils {
 	public static boolean equalsExactly(final int[] a, final int[] b) {
 		checkDims(a, b);
 		
+		
 		for(int i = 0; i < a.length; i++)
 			if(a[i] != b[i])
 				return false;
 		return true;
 	}
 	
+	/**
+	 * Checks whether two vectors are exactly equal.
+	 * Automatically assigns parallel or serial jobs depending 
+	 * on settings in {@link GlobalState}
+	 * @param a
+	 * @param b
+	 * @param eps
+	 * @return whether the two vectors are exactly equal
+	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
 		checkDims(a, b);
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return equalsExactlyDistributed(a, b);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
-		for(int i = 0; i < a.length; i++)
-			if(a[i] != b[i])
-				return false;
-		
-		return true;
+		return equalsWithToleranceForceSerial(a, b, 0);
 	}
 	
+	
+	/**
+	 * Checks whether two vectors are exactly equal 
+	 * in a distributed fashion
+	 * @param a
+	 * @param b
+	 * @param eps
+	 * @return whether the two vectors are exactly equal
+	 */
+	public static boolean equalsExactlyDistributed(final double[] a, final double[] b) {
+		return DistributedEqualityTest.equalsExactly(a, b);
+	}
+	
+	
+	/**
+	 * Checks whether two vectors are equal within a 
+	 * tolerance of {@link Precision#EPSILON}. Automatically assigns parallel
+	 * or serial jobs depending on settings in {@link GlobalState}
+	 * @param a
+	 * @param b
+	 * @param eps
+	 * @return whether the two vectors are equal within a certain tolerance
+	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b) {
 		return equalsWithTolerance(a, b, Precision.EPSILON);
 	}
 	
+	
+	/**
+	 * Checks whether two vectors are equal within a 
+	 * specified tolerance. Automatically assigns parallel
+	 * or serial jobs depending on settings in {@link GlobalState}
+	 * @param a
+	 * @param b
+	 * @param eps
+	 * @return whether the two vectors are equal within a certain tolerance
+	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
 		checkDims(a, b);
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return equalsWithToleranceDistributed(a, b, eps);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
+		return equalsWithToleranceForceSerial(a, b, eps);
+	}
+	
+	
+	/**
+	 * Checks whether two vectors are equal within a 
+	 * specified tolerance in a distributed fashion
+	 * @param a
+	 * @param b
+	 * @param eps
+	 * @return whether the two vectors are equal within a certain tolerance
+	 */
+	public static boolean equalsWithToleranceDistributed(final double[] a, final double[] b, final double eps) {
+		return DistributedEqualityTest.equalsWithTolerance(a, b, eps);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
 		for(int i = 0; i < a.length; i++)
 			if( !Precision.equals(a[i], b[i], eps) )
 				return false;
@@ -269,6 +452,14 @@ public class VecUtils {
 		return true;
 	}
 	
+	/**
+	 * Given a min value, <tt>min</tt>, any value in the input vector lower than the value
+	 * will be truncated to another floor value, <tt>floor</tt>
+	 * @param a
+	 * @param min
+	 * @param floor
+	 * @return the truncated vector
+	 */
 	public static double[] floor(final double[] a, final double min, final double floor) {
 		checkDims(a);
 		
@@ -279,6 +470,14 @@ public class VecUtils {
 		return b;
 	}
 	
+	/**
+	 * Calculate the inner product between two vectors. If {@link GlobalState} allows
+	 * for auto parallelism and the size of the vectors are greater than the max serial
+	 * value alotted in GlobalState, will automatically schedule a parallel job.
+	 * @param a
+	 * @param b
+	 * @return the inner product between a and b
+	 */
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
 		if(ALLOW_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
@@ -287,6 +486,17 @@ public class VecUtils {
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
 		}
 		
+		return innerProductForceSerial(a, b);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double innerProductForceSerial(final double[] a, final double[] b) {
 		double sum = 0d;
 		for(int i = 0; i < a.length; i++)
 			sum += a[i] * b[i];
@@ -294,6 +504,12 @@ public class VecUtils {
 		return sum;
 	}
 	
+	/**
+	 * Calculate the inner product between a and b in a distributed fashion
+	 * @param a
+	 * @param b
+	 * @return the inner product between a and b
+	 */
 	public static double innerProductDistributed(final double[] a, final double[] b) {
 		return DistributedInnerProduct.innerProd(a, b);
 	}
@@ -305,7 +521,7 @@ public class VecUtils {
 	}
 	
 	public static boolean isOrthogonalTo(final double[] a, final double[] b) {
-		checkDims(a, b);
+		// Will auto determine whether parallel is necessary or allowed...
 		return Precision.equals(innerProduct(a, b), 0, Precision.EPSILON);
 	}
 	
@@ -375,16 +591,53 @@ public class VecUtils {
 	}
 	
 	final public static double min(final double[] a) {
-		double min = SIGNED_MAX;
+		double min = MAX;
 		for(double d : a)
 			if(d < min)
 				min = d;
 		return min;
 	}
 	
+	
+	/**
+	 * Multiply each respective element from two vectors. Yields a vector of equal length.
+	 * Auto selects parallelism or serialism depending on parallel settings in {@link GlobalState}
+	 * @param a
+	 * @param b
+	 * @return the product of two vectors
+	 */
 	public static double[] multiply(final double[] a, final double[] b) {
 		checkDims(a, b);
+		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return multiplyDistributed(a, b);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
 		
+		return multiplyForceSerial(a, b);
+	}
+	
+	
+	/**
+	 * Multiply each respective element from two vectors in a parallel fashion. 
+	 * Yields a vector of equal length.
+	 * @param a
+	 * @param b
+	 * @return the product of two vectors
+	 */
+	public static double[] multiplyDistributed(final double[] a, final double[] b) {
+		return DistributedMultiply.operate(a, b);
+	}
+	
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double[] multiplyForceSerial(final double[] a, final double[] b) {
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			ab[i] = a[i] * b[i];
@@ -392,6 +645,13 @@ public class VecUtils {
 		return ab;
 	}
 	
+	
+	/**
+	 * Count the nans in a vector. Auto selects parallelism or serialism 
+	 * depending on parallel settings in {@link GlobalState}
+	 * @param a
+	 * @return the number of nans in the vector
+	 */
 	public static int nanCount(final double[] a) {
 		if(ALLOW_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN) {
 			try {
@@ -399,6 +659,26 @@ public class VecUtils {
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
 		}
 		
+		return nanCountForceSerial(a);
+	}
+	
+	/**
+	 * Count the nans in a vector in a parallel fashion
+	 * @param a
+	 * @return the number of nans in the vector
+	 */
+	public static int nanCountDistributed(final double[] a) {
+		return DistributedNaNCount.nanCount(a);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static int nanCountForceSerial(final double[] a) {
 		int ct = 0;
 		for(double d: a)
 			if(Double.isNaN(d))
@@ -407,8 +687,32 @@ public class VecUtils {
 		return ct;
 	}
 	
-	public static int nanCountDistributed(final double[] a) {
-		return DistributedVectorNaNCount.nanCount(a);
+	public static double nanMax(final double[] a) {
+		checkDims(a);
+		
+		double max = GlobalState.Mathematics.SIGNED_MIN;
+		for(double d: a) {
+			if(Double.isNaN(d))
+				continue;
+			if(d > max)
+				max = d;
+		}
+		
+		return max == GlobalState.Mathematics.SIGNED_MIN ? Double.NaN : max;
+	}
+	
+	public static double nanMin(final double[] a) {
+		checkDims(a);
+		
+		double min = GlobalState.Mathematics.MAX;
+		for(double d: a) {
+			if(Double.isNaN(d))
+				continue;
+			if(d < min)
+				min = d;
+		}
+		
+		return min == GlobalState.Mathematics.MAX ? Double.NaN : min;
 	}
 	
 	public static double nanMean(final double[] a) {
@@ -421,14 +725,27 @@ public class VecUtils {
 			}
 		}
 		
-		if(count == a.length)
-			throw new NaNException("completely NaN vector");
-		
-		return sum / (double)count;
+		return count == 0 ? Double.NaN : sum / (double)count;
 	}
 	
 	public static double nanMedian(final double[] a) {
 		return median(completeCases(a));
+	}
+	
+	final public static double nanStdDev(final double[] a) {
+		return nanStdDev(a, DEF_SUBTRACT_ONE_VAR);
+	}
+	
+	public final static double nanStdDev(final double[] a, final double mean) {
+		return nanStdDev(a, mean, DEF_SUBTRACT_ONE_VAR);
+	}
+	
+	final public static double nanStdDev(final double[] a, final boolean n_minus_one) {
+		return nanStdDev(a, nanMean(a), n_minus_one);
+	}
+	
+	final protected static double nanStdDev(final double[] a, final double mean, final boolean n_minus_one) {
+		return FastMath.sqrt(nanVar(a, mean, n_minus_one));
 	}
 	
 	public static double nanSum(final double[] a) {
@@ -438,6 +755,36 @@ public class VecUtils {
 				sum += d;
 		
 		return sum;
+	}
+	
+	final public static double nanVar(final double[] a) {
+		return nanVar(a, DEF_SUBTRACT_ONE_VAR);
+	}
+	
+	final protected static double nanVar(final double[] a, final double mean) {
+		return nanVar(a, mean, DEF_SUBTRACT_ONE_VAR);
+	}
+	
+	final public static double nanVar(final double[] a, final boolean n_minus_one) {
+		return nanVar(a, nanMean(a), n_minus_one);
+	}
+	
+	final protected static double nanVar(final double[] a, final double mean, final boolean n_minus_one) {
+		if(Double.isNaN(mean)) // Here we already know the whole thing is NaN
+			return mean;
+		
+		boolean seenNonNan = false;
+		double sum = 0;
+		for(double x : a) {
+			if(Double.isNaN(x))
+				continue;
+			
+			seenNonNan = true;
+			double res = x - mean; // Want to avoid math.pow...
+			sum += res * res;
+		}
+		
+		return !seenNonNan ? Double.NaN : sum / (a.length - (n_minus_one ? 1 : 0));
 	}
 	
 	/**
@@ -513,6 +860,17 @@ public class VecUtils {
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
 		}
 		
+		return prodForceSerial(a);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double prodForceSerial(final double[] a) {
 		double prod = 1;
 		for(double d: a)
 			prod *= d;
@@ -520,7 +878,7 @@ public class VecUtils {
 	}
 	
 	public static double prodDistributed(final double[] a) {
-		return DistributedVectorProduct.prod(a);
+		return DistributedProduct.prod(a);
 	}
 	
 	public static double[] randomGaussian(final int n) {
@@ -554,6 +912,21 @@ public class VecUtils {
 	
 	public static double[] randomGaussianNoiseVector(final int n, final Random seed) {
 		return randomGaussian(n,seed,GlobalState.Mathematics.EPS);
+	}
+	
+	/**
+	 * Create a vector of a repeated value
+	 * @param val
+	 * @param n
+	 * @return a vector of a repeated value
+	 */
+	public static double[] rep(final double val, final int n) {
+		if(n < 0)
+			throw new IllegalArgumentException(n+" must not be negative");
+		final double[] d = new double[n];
+		for(int i = 0; i < n; i++)
+			d[i] = val;
+		return d;
 	}
 	
 	public static double[] scalarAdd(final double[] a, final double b) {
@@ -637,6 +1010,17 @@ public class VecUtils {
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
 		}
 			
+		return sumForceSerial(a);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double sumForceSerial(final double[] a) {
 		double sum = 0d;
 		for(double d : a)
 			sum += d;
@@ -644,7 +1028,7 @@ public class VecUtils {
 	}
 	
 	public static double sumDistributed(final double[] a) {
-		return DistributedVectorSum.sum(a);
+		return DistributedSum.sum(a);
 	}
 	
 	

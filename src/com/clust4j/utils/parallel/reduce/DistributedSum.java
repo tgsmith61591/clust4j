@@ -1,13 +1,13 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
 /**
  * A class for distributed summing of vectors
  * @author Taylor G Smith
  */
-final public class DistributedVectorSum extends DistributedVectorOperator {
+final public class DistributedSum extends DistributedVectorOperator {
 	private static final long serialVersionUID = -6086182277529660733L;
 
-    private DistributedVectorSum(final double[] arr, int lo, int hi) {
+    private DistributedSum(final double[] arr, int lo, int hi) {
         super(arr, lo, hi);
     }
 
@@ -20,8 +20,8 @@ final public class DistributedVectorSum extends DistributedVectorOperator {
             return sum;
          } else {
             int mid = low + (high - low) / 2;
-            DistributedVectorSum left  = new DistributedVectorSum(array, low, mid);
-            DistributedVectorSum right = new DistributedVectorSum(array, mid, high);
+            DistributedSum left  = new DistributedSum(array, low, mid);
+            DistributedSum right = new DistributedSum(array, mid, high);
             left.fork();
             double rightAns = right.compute();
             double leftAns  = left.join();
@@ -32,6 +32,6 @@ final public class DistributedVectorSum extends DistributedVectorOperator {
      public static double sum(final double[] array) {
     	 if(array.length == 0)
     		 return 0;
-         return getThreadPool().invoke(new DistributedVectorSum(array,0,array.length));
+         return getThreadPool().invoke(new DistributedSum(array,0,array.length));
      }
 }

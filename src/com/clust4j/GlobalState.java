@@ -24,7 +24,7 @@ public class GlobalState {
 	public static final class Mathematics {
 		/** Double.MIN_VALUE is not negative; this is */
 		public final static double SIGNED_MIN = Double.NEGATIVE_INFINITY;
-		public final static double SIGNED_MAX = Double.POSITIVE_INFINITY;
+		public final static double MAX = Double.POSITIVE_INFINITY;
 		public final static double TINY = 2.2250738585072014e-308;
 		public final static double EPS = 2.2204460492503131e-16;
 	}

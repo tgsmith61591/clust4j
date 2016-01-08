@@ -1,4 +1,4 @@
-package com.clust4j.utils.parallel;
+package com.clust4j.utils.parallel.reduce;
 
 import com.clust4j.utils.VecUtils;
 

@@ -22,6 +22,8 @@ import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+
 /**
  * <a href="https://en.wikipedia.org/wiki/Affinity_propagation">Affinity Propagation</a> (AP) 
  * is a clustering algorithm based on the concept of "message passing" between data points. 
@@ -531,9 +533,17 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					// Set the mask in `e`
 					MatUtils.setColumnInPlace(e, iterCt % iterBreak, mask);
 					
-					// Get k
-					numClusters = (int)VecUtils.sum(mask);
+					
+					
+					
+					// Get k -- can use parallelism... 
+					numClusters = ALLOW_PARALLELISM ? 
+						(int)VecUtils.sum(mask) : // let sum internally check whether vec is long enough
+							(int)VecUtils.sumForceSerial(mask); // just force serial, save overhead of checks & try/catch
 	
+					
+					
+					
 					if(iterCt >= iterBreak) { // Time to check convergence criteria...
 						sum_e = MatUtils.rowSums(e);
 						
