@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
 import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;
 
 public class HierTests {
@@ -15,7 +16,7 @@ public class HierTests {
 	
 	@Test
 	public void testCondensedIdx() {
-		assertTrue(HierarchicalAgglomerative.condensedIndex(10, 3, 4) == 24);
+		assertTrue(ClustUtils.getIndexFromFlattenedVec(10, 3, 4) == 24);
 	}
 	
 	@Test

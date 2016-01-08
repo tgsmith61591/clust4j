@@ -43,8 +43,8 @@ public enum FeatureNormalization implements PreProcessor {
 	 * {@link MIN_MAX_SCALE#RANGE_MAX} is set differently, will fit into range [MIN, MAX]
 	 */
 	MIN_MAX_SCALE {
-		public int RANGE_MIN = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
-		public int RANGE_MAX = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
+		int RANGE_MIN = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
+		int RANGE_MAX = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
 		
 		@Override
 		public PreProcessor copy() { return this; }

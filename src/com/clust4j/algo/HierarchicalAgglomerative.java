@@ -73,9 +73,9 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	 */
 	volatile private int[] labels = null;
 	/**
-	 * The distance matrix. Set to null after fit
+	 * The flattened distance vector
 	 */
-	volatile private double[][] dist_mat = null;
+	volatile private double[] dist_vec = null;
 	volatile HierarchicalDendrogram tree = null;
 	/** 
 	 * Volatile because if null will later change during build
@@ -234,22 +234,14 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		public final Loggable ref;
 		public final GeometricallySeparable dist;
 		public final int m;
-		private final double[] dist_vec;
 		
 		HierarchicalDendrogram() {
-			if(null == dist_mat)
-				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+			if(null == dist_vec)
+				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
 			
 			ref = HierarchicalAgglomerative.this;
 			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
 			m = HierarchicalAgglomerative.this.m;
-			
-			// Flatten upper triangular dist_mat
-			final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
-			dist_vec = new double[s];
-			for(int i = 0, r = 0; i < m - 1; i++)
-				for(int j = i + 1; j < m; j++, r++)
-					dist_vec[r] = dist_mat[i][j];
 		}
 		
 		double[][] linkage() {
@@ -291,7 +283,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 						continue;
 					
 					
-					i_start = condensedIndex(n, i, i + 1);
+					i_start = ClustUtils.getIndexFromFlattenedVec(n, i, i + 1);
 					for(j = 0; j < n - i - 1; j++) {
 						if(D[i_start + j] < current_min) {
 							current_min = D[i_start + j];
@@ -323,12 +315,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 						continue;
 					
 					ni = id_i < n ? 1 : (int)Z[id_i - n][3];
-					c_idx = condensedIndex(n, i, y);
-					D[c_idx] = getDist(D[condensedIndex(n, i, x)],
+					c_idx = ClustUtils.getIndexFromFlattenedVec(n, i, y);
+					D[c_idx] = getDist(D[ClustUtils.getIndexFromFlattenedVec(n, i, x)],
 						D[c_idx], current_min, nx, ny, ni);
 					
 					if(i < x)
-						D[condensedIndex(n,i,x)] = Double.POSITIVE_INFINITY;
+						D[ClustUtils.getIndexFromFlattenedVec(n,i,x)] = Double.POSITIVE_INFINITY;
 				}
 			}
 		}
@@ -511,25 +503,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	
 	
 	
-
-	
-	/**
-	 * Get condensed index from 
-	 * collapsed upper triangular matrix
-	 * @param n
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	static int condensedIndex(int n, int i, int j) {
-		if(i < j)
-			return n * i - (i * (i + 1) / 2) + (j - i - 1);
-		else if(i > j)
-			return n * j - (j * (j + 1) / 2) + (i - j - 1);
-		throw new InternalError(i+", "+j);
-	}
-	
-	
 	@Override
 	public String getName() {
 		return "Agglomerative";
@@ -545,7 +518,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			try {
 				final long start = System.currentTimeMillis();
 				labels = new int[m];
-				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
 				
 				// Log info...
 				info("calculated " + 
@@ -592,7 +565,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
 						System.lineSeparator());
 				
-				dist_mat = null;
+				dist_vec = null;
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

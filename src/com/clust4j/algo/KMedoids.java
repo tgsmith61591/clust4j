@@ -300,8 +300,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				
 				
 				info("calculated " + 
-					dist_mat.length + " x " + 
-					dist_mat.length + 
+					m + " x " + m + 
 					" distance matrix in " + 
 					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
 	

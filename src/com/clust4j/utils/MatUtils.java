@@ -260,6 +260,28 @@ public class MatUtils {
 	}
 	
 	/**
+	 * Flattens an upper triangular matrix into a vector of M choose 2 length
+	 * @param mat - the square upper triangular matrix
+	 * @throws DimensionMismatchException if the matrix is not square
+	 * @return the upper triangular vector
+	 */
+	public static double[] flattenUpperTriangularMatrix(final double[][] mat) {
+		checkDims(mat);
+		
+		final int m = mat.length, n = mat[0].length;
+		if(m != n)
+			throw new DimensionMismatchException(m, n);
+		
+		final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
+		final double[] vec = new double[s];
+		for(int i = 0, r = 0; i < m - 1; i++)
+			for(int j = i + 1; j < m; j++, r++)
+				vec[r] = mat[i][j];
+		
+		return vec;
+	}
+	
+	/**
 	 * If a value in the matrix is less than min
 	 * @param a
 	 * @param min -- the value to compare to (less than this equals newMin)
