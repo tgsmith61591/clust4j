@@ -1,4 +1,5 @@
 package com.clust4j.utils.parallel.map;
+
 import com.clust4j.utils.parallel.VectorMRTask;
 
 abstract class VectorMapTask extends VectorMRTask<double[]> {

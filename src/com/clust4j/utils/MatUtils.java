@@ -1,13 +1,19 @@
 package com.clust4j.utils;
 
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
+
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.util.Precision;
+
+import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
 
 public class MatUtils {
 	/** Size at which to use BlockRealMatrix for multiplication */
@@ -20,6 +26,13 @@ public class MatUtils {
 	
 	static enum Operator {
 		ADD, DIV, MULT, SUB
+	}
+	
+	final static public void checkMultipliability(final double[][] a, final double[][] b) {
+		checkDims(a);
+		checkDims(b);
+		if(a[0].length != b.length)
+			throw new DimensionMismatchException(a[0].length, b.length);
 	}
 	
 	final static public void checkDims(final double[][] a) {
@@ -454,7 +467,42 @@ public class MatUtils {
 		return median;
 	}
 	
+	/**
+	 * Multiply two matrices. Auto selects either 
+	 * parallelization or serialization
+	 * @param a
+	 * @param b
+	 * @return the product A*B
+	 */
 	public static double[][] multiply(final double[][] a, final double[][] b) {
+		checkDims(a);
+		if(ALLOW_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return multiplyDistributed(a, b);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+		
+		return multiplyForceSerial(a, b);
+	}
+	
+	/**
+	 * Multiply two matrices in a distributed fashion
+	 * @param a
+	 * @param b
+	 * @return the product A*B
+	 */
+	public static double[][] multiplyDistributed(final double[][] a, final double[][] b) {
+		return DistributedMatrixMultiplication.operate(a, b);
+	}
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static double[][] multiplyForceSerial(final double[][] a, final double[][] b) {
 		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
 			final BlockRealMatrix aa = new BlockRealMatrix(a);
 			final BlockRealMatrix bb = new BlockRealMatrix(b);
@@ -494,6 +542,15 @@ public class MatUtils {
 		for(int i = 0; i < m; i++)
 			out[i] = VecUtils.randomGaussian(n, seed);
 		
+		return out;
+	}
+	
+	public static double[][] rep(final double val, final int m, final int n) {
+		if(m < 0 || n < 0)
+			throw new IllegalArgumentException("illegal dimension");
+		final double[][] out = new double[m][n];
+		for(int i = 0; i < m; i++)
+			out[i] = VecUtils.rep(val, n);
 		return out;
 	}
 	
@@ -663,5 +720,16 @@ public class MatUtils {
 			for(int j = 0; j < n; j++)
 				c[i][j] = a[i][j] - b[i][j];
 		return c;
+	}
+	
+	public static double[][] transpose(final double[][] a) {
+		checkDims(a);
+		
+		final int m = a.length, n = a[0].length;
+		final double[][] t = new double[n][m];
+		for(int i = 0; i < m; i++)
+			for(int j = 0; j < n; j++)
+				t[j][i] = a[i][j];
+		return t;
 	}
 }

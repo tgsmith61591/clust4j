@@ -390,7 +390,14 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					try {
 						long multStart = System.currentTimeMillis();
 						info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
-						noiseMatrix = MatUtils.multiply(tiny_scaled, noise);
+						
+						
+						noiseMatrix = ALLOW_PARALLELISM ? 
+								// It'll choose whether to run in parallel or not
+								MatUtils.multiply(tiny_scaled, noise) :
+									MatUtils.multiplyForceSerial(tiny_scaled, noise);
+						
+						
 						info("matrix product computed in " + 
 							LogTimeFormatter.millis(System.currentTimeMillis()-multStart, false));
 					} catch(DimensionMismatchException e) {

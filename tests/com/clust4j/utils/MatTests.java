@@ -2,6 +2,7 @@ package com.clust4j.utils;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
@@ -259,5 +260,34 @@ public class MatTests {
 		
 		final double[] record = new double[]{0,0,0};
 		assertTrue( NearestNeighbors.getKNearest(record, mat, 1, Distance.EUCLIDEAN)[0] == 0 );
+	}
+	
+	@Test
+	public void testTrans() {
+		final double[][] mat = new double[][]{
+			new double[] {-1.000, 	 -1.000,     -1.000},
+			new double[] {10.000, 	 10.000,     10.000},
+			new double[] {90.000,    90.000,     90.000}
+		};
+		
+		Array2DRowRealMatrix matrix = new Array2DRowRealMatrix(mat);
+		assertTrue(MatUtils.equalsExactly(MatUtils.transpose(mat), matrix.transpose().getData()));
+	}
+	
+	@Test
+	public void testMult() {
+		final double[][] a = MatUtils.randomGaussian(1000, 20);
+		final double[][] b = MatUtils.randomGaussian(20, 6000);
+		
+		long start = System.currentTimeMillis();
+		final double[][] ca = MatUtils.multiplyForceSerial(a, b);
+		long serialTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		final double[][] cb = MatUtils.multiplyDistributed(a, b);
+		long paraTime = System.currentTimeMillis() - start;
+		
+		assertTrue(MatUtils.equalsExactly(ca, cb));
+		System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
 	}
 }

@@ -7,14 +7,14 @@ package com.clust4j.utils.parallel.map;
  * thrown.
  * @author Taylor G Smith
  */
-abstract class DualMapTaskOperator extends DualVectorMapTask {
+abstract class DualVectorMapTaskOperator extends DualVectorMapTask {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6003468790911249385L;
 
-	DualMapTaskOperator(double[] arr, double[] arr_b, double[] result, int lo,
+	DualVectorMapTaskOperator(double[] arr, double[] arr_b, double[] result, int lo,
 			int hi) {
 		super(arr, arr_b, result, lo, hi);
 	}
@@ -27,8 +27,8 @@ abstract class DualMapTaskOperator extends DualVectorMapTask {
             return array_c;
          } else {
             int mid = low + (high - low) / 2;
-            DualMapTaskOperator left  = newInstance(array, array_b, array_c, low, mid);
-            DualMapTaskOperator right = newInstance(array, array_b, array_c, mid, high);
+            DualVectorMapTaskOperator left  = newInstance(array, array_b, array_c, low, mid);
+            DualVectorMapTaskOperator right = newInstance(array, array_b, array_c, mid, high);
             left.fork();
             right.compute();
             left.join();
@@ -53,5 +53,5 @@ abstract class DualMapTaskOperator extends DualVectorMapTask {
      * @param high
      * @return
      */
-    abstract protected DualMapTaskOperator newInstance(final double[] a, final double[] b, final double[] c, final int low, final int high);
+    abstract protected DualVectorMapTaskOperator newInstance(final double[] a, final double[] b, final double[] c, final int low, final int high);
 }

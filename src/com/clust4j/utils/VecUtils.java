@@ -591,10 +591,20 @@ public class VecUtils {
 		return FastMath.pow(sum(pow(abs(a), p)), power);
 	}
 	
+	/**
+	 * Calculates the l2 norm of the vector
+	 * @param a
+	 * @return the vector magnitude
+	 */
 	public static double magnitude(final double[] a) {
 		return l2Norm(a);
 	}
 	
+	/**
+	 * Identify the max value in the vector
+	 * @param a
+	 * @return the max in the vector
+	 */
 	final public static double max(final double[] a) {
 		double max = SIGNED_MIN;
 		for(double d : a)
@@ -603,14 +613,30 @@ public class VecUtils {
 		return max;
 	}
 	
+	/**
+	 * Calculate the mean of the vector
+	 * @param a
+	 * @return the mean of the vector
+	 */
 	final public static double mean(final double[] a) {
 		return mean(a, sum(a));
 	}
 	
+	/**
+	 * Calculate the mean of the vector, given its sum
+	 * @param a
+	 * @param sum
+	 * @return the mean of the vector
+	 */
 	final protected static double mean(final double[] a, final double sum) {
 		return sum / a.length;
 	}
 	
+	/**
+	 * Calculate the median of the vector
+	 * @param a
+	 * @return the vector median
+	 */
 	public static double median(final double[] a) {
 		checkDims(a);
 		if(a.length == 1)
@@ -627,6 +653,11 @@ public class VecUtils {
 		return (copy[mid-1]+copy[mid])/2d;
 	}
 	
+	/**
+	 * Identify the min value in the vector
+	 * @param a
+	 * @return the min in the vector
+	 */
 	final public static double min(final double[] a) {
 		double min = MAX;
 		for(double d : a)
@@ -724,6 +755,11 @@ public class VecUtils {
 		return ct;
 	}
 	
+	/**
+	 * Identify the max value in the vector, excluding NaNs
+	 * @param a
+	 * @return the max in the vector
+	 */
 	public static double nanMax(final double[] a) {
 		checkDims(a);
 		
@@ -738,6 +774,11 @@ public class VecUtils {
 		return max == GlobalState.Mathematics.SIGNED_MIN ? Double.NaN : max;
 	}
 	
+	/**
+	 * Identify the min value in the vector, excluding NaNs
+	 * @param a
+	 * @return the min in the vector
+	 */
 	public static double nanMin(final double[] a) {
 		checkDims(a);
 		
@@ -752,6 +793,11 @@ public class VecUtils {
 		return min == GlobalState.Mathematics.MAX ? Double.NaN : min;
 	}
 	
+	/**
+	 * Calculate the mean of the vector, excluding NaNs
+	 * @param a
+	 * @return the mean of the vector
+	 */
 	public static double nanMean(final double[] a) {
 		double sum = 0;
 		int count = 0;
@@ -765,10 +811,20 @@ public class VecUtils {
 		return count == 0 ? Double.NaN : sum / (double)count;
 	}
 	
+	/**
+	 * Calculate the median of the vector, excluding NaNs
+	 * @param a
+	 * @return the median of the vector
+	 */
 	public static double nanMedian(final double[] a) {
 		return median(completeCases(a));
 	}
 	
+	/**
+	 * Calculate the standard deviation of the vector, excluding NaNs
+	 * @param a
+	 * @return the std dev of the vector
+	 */
 	final public static double nanStdDev(final double[] a) {
 		return nanStdDev(a, DEF_SUBTRACT_ONE_VAR);
 	}

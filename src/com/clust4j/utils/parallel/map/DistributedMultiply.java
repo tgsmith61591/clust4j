@@ -6,7 +6,7 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed summing of vectors
  * @author Taylor G Smith
  */
-final public class DistributedMultiply extends DualMapTaskOperator {
+final public class DistributedMultiply extends DualVectorMapTaskOperator {
 	private static final long serialVersionUID = -6086182277529660733L;
 
     private DistributedMultiply(final double[] arr, final double[] arr_b, final double[] arr_c, int lo, int hi) {
