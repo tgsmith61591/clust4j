@@ -1,29 +1,23 @@
 package com.clust4j.utils.parallel.reduce;
+import com.clust4j.utils.parallel.VectorMRTask;
 
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
-
-import com.clust4j.GlobalState;
-import static com.clust4j.GlobalState.ParallelismConf.MAX_PARALLEL_CHUNK_SIZE;
-
-abstract class VectorReduceTask<T> extends RecursiveTask<T> {
+abstract class VectorReduceTask<T> extends VectorMRTask<T> {
 	private static final long serialVersionUID = -7986981765361158408L;
-
-    final double[] array;
-	final int low;
-    final int high;
 	
 	VectorReduceTask(double[] arr, int lo, int hi) {
-		array = arr;
-		low = lo;
-		high = hi;
+		super(arr, lo, hi);
 	}
-	
-	public static int getChunkSize() {
-		return MAX_PARALLEL_CHUNK_SIZE;
-	}
-	
-	public static ForkJoinPool getThreadPool() {
-		return GlobalState.ParallelismConf.FJ_THREADPOOL;
-	}
+    
+    /**
+     * How to join two values in the result
+     */
+    protected abstract T joinSides(final T left, final T right);
+
+    /**
+     * Must be overridden by subclasses
+     * @param a
+     * @param b
+     * @return
+     */
+    abstract protected T operate(final int lo, final int hi);
 }

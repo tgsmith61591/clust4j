@@ -6,33 +6,33 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed products of vectors
  * @author Taylor G Smith
  */
-final public class DistributedProduct extends DistributedVectorOperator {
+final public class DistributedProduct extends ReduceTaskOperator<Double> {
 	private static final long serialVersionUID = -1038455192192012983L;
 
 	private DistributedProduct(final double[] arr, int lo, int hi) {
 		super(arr, lo, hi);
 	}
 	
-	@Override
-	protected Double compute() {
-		if(high - low <= getChunkSize()) {
-            double prod = 1;
-            for(int i=low; i < high; ++i) 
-                prod *= array[i];
-            return prod;
-         } else {
-            int mid = low + (high - low) / 2;
-            DistributedProduct left  = new DistributedProduct(array, low, mid);
-            DistributedProduct right = new DistributedProduct(array, mid, high);
-            left.fork();
-            double rightAns = right.compute();
-            double leftAns  = left.join();
-            return leftAns * rightAns;
-         }
-	}
-	
-	public static double prod(final double[] array) {
+	public static double operate(final double[] array) {
 		VecUtils.checkDims(array);
 		return getThreadPool().invoke(new DistributedProduct(array,0,array.length));
+	}
+
+	@Override
+	protected Double joinSides(Double left, Double right) {
+		return left * right; // Product
+	}
+
+	@Override
+	protected Double operate(int lo, int hi) {
+		double prod = 1;
+        for(int i=lo; i < hi; ++i) 
+            prod *= array[i];
+        return prod;
+	}
+
+	@Override
+	protected DistributedProduct newInstance(double[] array, int low, int high) {
+		return new DistributedProduct(array, low, high);
 	}
 }

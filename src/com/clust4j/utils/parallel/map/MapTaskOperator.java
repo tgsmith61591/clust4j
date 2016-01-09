@@ -1,5 +1,7 @@
 package com.clust4j.utils.parallel.map;
 
+import com.clust4j.utils.VecUtils;
+
 abstract class MapTaskOperator extends VectorMapTask {
 
 	/**
@@ -8,7 +10,7 @@ abstract class MapTaskOperator extends VectorMapTask {
 	private static final long serialVersionUID = -8398439421996975256L;
 
 	MapTaskOperator(double[] arr, int lo, int hi) {
-		super(arr, lo, hi);
+		super(VecUtils.copy(arr), lo, hi);
 	}
 
     @Override

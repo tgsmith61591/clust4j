@@ -14,6 +14,7 @@ import org.apache.commons.math3.util.Precision;
 import com.clust4j.GlobalState;
 import com.clust4j.utils.parallel.map.DistributedAbs;
 import com.clust4j.utils.parallel.map.DistributedAdd;
+import com.clust4j.utils.parallel.map.DistributedLog;
 import com.clust4j.utils.parallel.map.DistributedMultiply;
 import com.clust4j.utils.parallel.reduce.DistributedEqualityTest;
 import com.clust4j.utils.parallel.reduce.DistributedInnerProduct;
@@ -272,7 +273,7 @@ public class VecUtils {
 	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaNDistributed(final double[] a) {
-		return DistributedNaNCheck.containsNaN(a);
+		return DistributedNaNCheck.operate(a);
 	}
 	
 	
@@ -386,7 +387,7 @@ public class VecUtils {
 	 * @return whether the two vectors are exactly equal
 	 */
 	public static boolean equalsExactlyDistributed(final double[] a, final double[] b) {
-		return DistributedEqualityTest.equalsExactly(a, b);
+		return DistributedEqualityTest.operate(a, b, 0);
 	}
 	
 	
@@ -434,7 +435,7 @@ public class VecUtils {
 	 * @return whether the two vectors are equal within a certain tolerance
 	 */
 	public static boolean equalsWithToleranceDistributed(final double[] a, final double[] b, final double eps) {
-		return DistributedEqualityTest.equalsWithTolerance(a, b, eps);
+		return DistributedEqualityTest.operate(a, b, eps);
 	}
 	
 	/**
@@ -490,6 +491,16 @@ public class VecUtils {
 	}
 	
 	/**
+	 * Calculate the inner product between a and b in a distributed fashion
+	 * @param a
+	 * @param b
+	 * @return the inner product between a and b
+	 */
+	public static double innerProductDistributed(final double[] a, final double[] b) {
+		return DistributedInnerProduct.operate(a, b);
+	}
+	
+	/**
 	 * If another parallelized operation is calling this one, we should force this
 	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
 	 * @param a
@@ -502,16 +513,6 @@ public class VecUtils {
 			sum += a[i] * b[i];
 		
 		return sum;
-	}
-	
-	/**
-	 * Calculate the inner product between a and b in a distributed fashion
-	 * @param a
-	 * @param b
-	 * @return the inner product between a and b
-	 */
-	public static double innerProductDistributed(final double[] a, final double[] b) {
-		return DistributedInnerProduct.innerProd(a, b);
 	}
 	
 	public static double iqr(final double[] a) {
@@ -539,12 +540,48 @@ public class VecUtils {
 		return FastMath.sqrt(innerProduct(a, a));
 	}
 	
+	/**
+	 * Calculate the log of the vector. If {@link GlobalState} allows
+	 * for auto parallelism and the size of the vectors are greater than the max serial
+	 * value alotted in GlobalState, will automatically schedule a parallel job.
+	 * @param a
+	 * @return the log of the vector
+	 */
 	public static double[] log(final double[] a) {
+		checkDims(a);
+		if(ALLOW_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
+			try {
+				return logDistributed(a);
+			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		}
+		
+		return logForceSerial(a);
+	}
+	
+	
+	/**
+	 * Calculate the log of the vector in a parallel fashion
+	 * @param a
+	 * @return the log of the vector
+	 */
+	public static double[] logDistributed(final double[] a) {
+		return DistributedLog.operate(a);
+	}
+	
+	
+	/**
+	 * If another parallelized operation is calling this one, we should force this
+	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * @param a
+	 * @return
+	 */
+	public static double[] logForceSerial(final double[] a) {
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.log(a[i]);
 		return b;
 	}
+	
 	
 	public static double lpNorm(final double[] a, final double p) {
 		if(p == 1) return l1Norm(a);
@@ -668,7 +705,7 @@ public class VecUtils {
 	 * @return the number of nans in the vector
 	 */
 	public static int nanCountDistributed(final double[] a) {
-		return DistributedNaNCount.nanCount(a);
+		return DistributedNaNCount.operate(a);
 	}
 	
 	/**
@@ -878,7 +915,7 @@ public class VecUtils {
 	}
 	
 	public static double prodDistributed(final double[] a) {
-		return DistributedProduct.prod(a);
+		return DistributedProduct.operate(a);
 	}
 	
 	public static double[] randomGaussian(final int n) {
@@ -1028,7 +1065,7 @@ public class VecUtils {
 	}
 	
 	public static double sumDistributed(final double[] a) {
-		return DistributedSum.sum(a);
+		return DistributedSum.operate(a);
 	}
 	
 	

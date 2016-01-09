@@ -4,34 +4,34 @@ package com.clust4j.utils.parallel.reduce;
  * A class for distributed summing of vectors
  * @author Taylor G Smith
  */
-final public class DistributedSum extends DistributedVectorOperator {
+final public class DistributedSum extends ReduceTaskOperator<Double> {
 	private static final long serialVersionUID = -6086182277529660733L;
 
     private DistributedSum(final double[] arr, int lo, int hi) {
         super(arr, lo, hi);
     }
 
-    @Override
-    protected Double compute() {
-        if(high - low <= getChunkSize()) {
-            double sum = 0;
-            for(int i=low; i < high; ++i) 
-                sum += array[i];
-            return sum;
-         } else {
-            int mid = low + (high - low) / 2;
-            DistributedSum left  = new DistributedSum(array, low, mid);
-            DistributedSum right = new DistributedSum(array, mid, high);
-            left.fork();
-            double rightAns = right.compute();
-            double leftAns  = left.join();
-            return leftAns + rightAns;
-         }
-     }
+	@Override
+	protected DistributedSum newInstance(double[] array, int low, int high) {
+		return new DistributedSum(array, low, high);
+	}
 
-     public static double sum(final double[] array) {
-    	 if(array.length == 0)
-    		 return 0;
-         return getThreadPool().invoke(new DistributedSum(array,0,array.length));
-     }
+	@Override
+	protected Double joinSides(Double left, Double right) {
+		return left + right; // Sum
+	}
+
+	@Override
+	protected Double operate(int lo, int hi) {
+		double sum = 0;
+		for(int i = lo; i < hi; i++)
+			sum += array[i];
+		return sum;
+	}
+
+    public static double operate(final double[] array) {
+    	if(array.length == 0)
+    		return 0;
+        return getThreadPool().invoke(new DistributedSum(array,0,array.length));
+    }
 }

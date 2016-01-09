@@ -463,4 +463,25 @@ public class VectorTests {
 		
 		System.out.println("Distributed MULT test:\tDist: " + distTime + ", Normal: " + prodTime);
 	}
+	
+	@Test
+	public void testDistributedLog() {
+		final double[] a = new double[]{2, 2, 9,25, 8};
+		assertTrue( VecUtils.equalsExactly(VecUtils.logDistributed(a), VecUtils.logForceSerial(a)) );
+	}
+	
+	@Test
+	public void testDistLogSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.logDistributed(d);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.logForceSerial(d);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed LOG test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
 }

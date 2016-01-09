@@ -2,8 +2,6 @@ package com.clust4j.utils.parallel.map;
 
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.utils.VecUtils;
-
 /**
  * A class for distributed summing of vectors
  * @author Taylor G Smith
@@ -20,12 +18,12 @@ final public class DistributedAbs extends MapTaskOperator {
     	return FastMath.abs(a);
     }
 	
-	public static double[] operate(final double[] array) {
-		return getThreadPool().invoke(new DistributedAbs(VecUtils.copy(array), 0, array.length));
-    }
-	
 	@Override
 	protected DistributedAbs newInstance(final double[] array, final int low, final int high) {
 		return new DistributedAbs(array, low, high);
 	}
+	
+	public static double[] operate(final double[] array) {
+		return getThreadPool().invoke(new DistributedAbs(array, 0, array.length));
+    }
 }
