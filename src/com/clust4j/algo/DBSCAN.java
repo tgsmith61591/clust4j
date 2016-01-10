@@ -43,6 +43,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 	
 	final private int minPts;
 	final private double eps;
+	final private FeatureNormalization normer;
 	
 	
 	// Race conditions exist in retrieving either one of these...
@@ -173,15 +174,16 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 	 * @param builder
 	 * @param data
 	 */
-	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner builder) {
-		super(data, builder);
+	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
+		super(data, planner);
 		
 		
-		meta("epsilon="+builder.eps);
-		meta("min_pts="+builder.minPts);
+		meta("epsilon="+planner.eps);
+		meta("min_pts="+planner.minPts);
 		
-		this.minPts = builder.minPts;
-		this.eps 	= builder.eps;
+		this.minPts = planner.minPts;
+		this.eps 	= planner.eps;
+		this.normer = planner.getNormalizer();
 		
 		
 		// Error handle...
@@ -264,6 +266,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 						.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 						.setSeed(getSeed())
 						.setSep(getSeparabilityMetric())
+						.setNormalizer(normer)
 						.setVerbose(false)) // Don't want nested verbosity logging...
 					.fit();
 				final ArrayList<Integer>[] nearest = nnModel.getNearest();
@@ -272,6 +275,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 				
 				ArrayList<Integer> ptNeighbs;
 				ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
+				int numCorePts = 0;
 				for(int i = 0; i < m; i++) {
 					// Each label inits to -1 as noise
 					labels[i] = NOISE_CLASS;
@@ -282,11 +286,13 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 					neighborhoods.add(ptNeighbs);
 					sampleWeights[i] = pts = ptNeighbs.size();
 					coreSamples[i] = pts >= minPts;
+					
+					if(coreSamples[i]) 
+						numCorePts++;
 				}
 				
 				
 				// Log checkpoint
-				final int numCorePts = VecUtils.sum(coreSamples);
 				info("completed density neighborhood calculations in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
 				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");

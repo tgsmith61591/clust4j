@@ -24,7 +24,7 @@ import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
 
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 
 /**
  * 
@@ -130,6 +130,8 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		meta((similarity ? "similarity" : "distance") + 
 				" metric=" + dist.getName());
 		meta("scale="+planner.getScale());
+		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM);
+		meta("allow_auto_parallelism="+GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM);
 		
 		
 		// Scale if needed
@@ -151,7 +153,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		
 		// Check for nans in the matrix either serially or in parallel
 		boolean containsNan = false;
-		if(!ALLOW_PARALLELISM) {
+		if(!ALLOW_AUTO_PARALLELISM) {
 			info("checking input data for NaNs serially");
 			containsNan = MatUtils.containsNaN(data);
 		} else {

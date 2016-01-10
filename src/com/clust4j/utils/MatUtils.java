@@ -1,6 +1,6 @@
 package com.clust4j.utils;
 
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 
 import java.util.ArrayList;
@@ -476,7 +476,7 @@ public class MatUtils {
 	 */
 	public static double[][] multiply(final double[][] a, final double[][] b) {
 		checkDims(a);
-		if(ALLOW_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
+		if(ALLOW_AUTO_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
 			try {
 				return multiplyDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }

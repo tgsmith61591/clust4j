@@ -328,6 +328,7 @@ public class NearestNeighbors extends AbstractClusterer {
 				if(knn) {
 					SortedSet<Map.Entry<Integer, Double>> ordered;
 					Iterator<Map.Entry<Integer, Double>> iter;
+					
 					for(int i = 0; i < m; i++) {
 						nearest[i] = new ArrayList<Integer>();
 						ordered = getSortedNearest(i, dist_mat);

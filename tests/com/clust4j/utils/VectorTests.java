@@ -484,4 +484,30 @@ public class VectorTests {
 		
 		System.out.println("Distributed LOG test:\tDist: " + distTime + ", Normal: " + prodTime);
 	}
+	
+	@Test
+	public void testDistributedSub() {
+		final double[] a = new double[]{2, 1, 3 ,5, 1};
+		final double[] b = new double[]{1, 2, 3, 5, 8};
+		final double[] c = new double[]{1,-1, 0, 0,-7};
+		final double[] d = VecUtils.copy(a);
+		assertTrue( VecUtils.equalsExactly(VecUtils.subtractDistributed(a, b), c) );
+		assertTrue( VecUtils.equalsExactly(a, d) ); // Test mutability here, make sure add didn't change anything in original...
+	}
+	
+	@Test
+	public void testDistSubSpeed() {
+		final double[] d = VecUtils.randomGaussian(9_000_000, 1);
+		final double[] d2 = VecUtils.randomGaussian(9_000_000, 1);
+		
+		long start = System.currentTimeMillis();
+		VecUtils.multiplyDistributed(d,d2);
+		final long distTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		VecUtils.multiplyForceSerial(d,d2);
+		final long prodTime = System.currentTimeMillis() - start;
+		
+		System.out.println("Distributed SUB test:\tDist: " + distTime + ", Normal: " + prodTime);
+	}
 }

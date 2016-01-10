@@ -20,6 +20,10 @@ import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
 public class ClustTests {
+	{
+		//com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM = true;
+	}
+	
 	private static boolean print = false;
 	private static final MatrixFormatter formatter = new MatrixFormatter();
 	public static Array2DRowRealMatrix getRandom(final int rows, final int cols) {

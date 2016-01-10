@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -22,7 +23,8 @@ import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/Affinity_propagation">Affinity Propagation</a> (AP) 
@@ -392,12 +394,22 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
 						
 						
-						noiseMatrix = ALLOW_PARALLELISM ? 
-								// It'll choose whether to run in parallel or not
-								MatUtils.multiply(tiny_scaled, noise) :
-									MatUtils.multiplyForceSerial(tiny_scaled, noise);
+						// Compute noise matrix, force parallel if necessary
+						if(FORCE_PARALLELISM) {
+							try {
+								noiseMatrix = MatUtils.multiplyDistributed(tiny_scaled, noise);
+							} catch(RejectedExecutionException rej) {
+								noiseMatrix = MatUtils.multiplyForceSerial(tiny_scaled, noise);
+							}
+						} else {
+							noiseMatrix = ALLOW_AUTO_PARALLELISM ? 
+									// It'll choose whether to run in parallel or not
+									MatUtils.multiply(tiny_scaled, noise) :
+										MatUtils.multiplyForceSerial(tiny_scaled, noise);
+						}
 						
-						
+								
+						// Update
 						info("matrix product computed in " + 
 							LogTimeFormatter.millis(System.currentTimeMillis()-multStart, false));
 					} catch(DimensionMismatchException e) {
@@ -544,9 +556,17 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					
 					
 					// Get k -- can use parallelism... 
-					numClusters = ALLOW_PARALLELISM ? 
-						(int)VecUtils.sum(mask) : // let sum internally check whether vec is long enough
-							(int)VecUtils.sumForceSerial(mask); // just force serial, save overhead of checks & try/catch
+					if(FORCE_PARALLELISM) {
+						try {
+							numClusters = (int)VecUtils.sumDistributed(mask);
+						} catch(RejectedExecutionException rej) {
+							numClusters = (int)VecUtils.sumForceSerial(mask);
+						}
+					} else {
+						numClusters = ALLOW_AUTO_PARALLELISM ? 
+							(int)VecUtils.sum(mask) : // let sum internally check whether vec is long enough
+								(int)VecUtils.sumForceSerial(mask); // just force serial, save overhead of checks & try/catch
+					}
 	
 					
 					

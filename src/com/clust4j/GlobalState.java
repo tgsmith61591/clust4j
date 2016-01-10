@@ -52,7 +52,14 @@ public class GlobalState {
 		 *  things down on machines with a lower core count, but speed them up
 		 *  on machines with a higher core count. More heap space may be required. 
 		 *  Default value is true if availableProcessors is at least 8 */
-		public static boolean ALLOW_PARALLELISM = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
+		public static boolean ALLOW_AUTO_PARALLELISM = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
+		
+		/**
+		 * If true, will try to force parallelism whenever possible. On a machine
+		 * with fewer cores, can dramatically slow down some processes. Use with
+		 * caution!
+		 */
+		public static boolean FORCE_PARALLELISM = false;
 		
 		/**
 		 * The global ForkJoin thread pool for parallel recursive tasks. */

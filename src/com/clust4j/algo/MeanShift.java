@@ -8,6 +8,7 @@ import java.util.SortedSet;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.RadialBasisKernel;
@@ -24,7 +25,6 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
-
 
 /**
  * Mean shift is a procedure for locating the maxima of a density function given discrete 
@@ -359,7 +359,7 @@ public class MeanShift
 				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
 				info("identifying most populated seeds, removing near-duplicates");
 				SortedSet<Map.Entry<double[], Integer>> sorted_by_intensity = 
-						ClustUtils.sortEntriesByValue(center_intensity, true);
+					ClustUtils.sortEntriesByValue(center_intensity, true);
 				
 				
 				// Extract the centroids
@@ -486,8 +486,10 @@ public class MeanShift
 	}
 	
 	private EntryPair<double[], Integer> meanShiftSingleSeed(double[] seed) {
-		
+
+		double norm, diff;
 		int completed_iterations = 0;
+		
 		while(true) {
 			// Keep track of max iterations elapsed
 			if(completed_iterations > itersElapsed)
@@ -515,14 +517,20 @@ public class MeanShift
 			}
 			
 			// Set newSeed to means
-			for(int j = 0; j < n; j++)
+			// Also calculate running norm to avoid 2N extra passes
+			norm = 0; diff = 0;
+			for(int j = 0; j < n; j++) {
 				newSeed[j] /= (double) i_nbrs.length;
+				diff = newSeed[j] - oldSeed[j];
+				norm += diff * diff;
+			}
 			
 			// Assign the new seed
 			seed = newSeed;
+			norm = FastMath.sqrt(norm);
 			
-			// Check norm dist
-			if( VecUtils.l2Norm(VecUtils.subtract(seed, oldSeed)) < minChange || 
+			// Check stopping criteria
+			if( norm < minChange || 
 					completed_iterations == maxIter )
 				return new EntryPair<double[], Integer>(seed, i_nbrs.length);
 			completed_iterations++;
