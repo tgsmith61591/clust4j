@@ -20,6 +20,7 @@ import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
 public class KernelTestCases {
+	
 	final static MatrixFormatter formatter = new MatrixFormatter();
 	final static Random rand = new Random();
 	

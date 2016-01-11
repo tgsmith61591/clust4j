@@ -30,7 +30,7 @@ public class LinearKernel extends ConstantKernel {
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		return VecUtils.innerProduct(a, b) + getConstant();
+		return VecUtils.innerProductForceSerial(a, b) + getConstant();
 	}
 	
 	@Override

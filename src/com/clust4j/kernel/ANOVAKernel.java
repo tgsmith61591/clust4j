@@ -45,7 +45,7 @@ public class ANOVAKernel extends RadialBasisKernel {
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		final double[] xMinY2 = VecUtils.pow( VecUtils.subtract(a, b), 2 );
+		final double[] xMinY2 = VecUtils.pow( VecUtils.subtractForceSerial(a, b), 2 );
 		final double[] sigmaXY2 = VecUtils.scalarMultiply(xMinY2, -getSigma());
 		
 		double sum = 0;

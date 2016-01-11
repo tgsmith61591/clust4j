@@ -58,7 +58,7 @@ public class HDBSCAN extends AbstractDBSCAN implements Hierarchical {
 	
 	/**
 	 * A builder class to provide an easier constructing
-	 * interface to set custom parameters for DBSCAN
+	 * interface to set custom parameters for HDBSCAN
 	 * @author Taylor G Smith
 	 */
 	final public static class HDBSCANPlanner extends AbstractDBSCANPlanner implements Hierarchical {
@@ -85,6 +85,7 @@ public class HDBSCAN extends AbstractDBSCAN implements Hierarchical {
 		@Override
 		public HDBSCANPlanner copy() {
 			return new HDBSCANPlanner(minPts)
+				.setLinkage(linkage)
 				.setScale(scale)
 				.setSep(dist)
 				.setSeed(seed)
@@ -155,10 +156,12 @@ public class HDBSCAN extends AbstractDBSCAN implements Hierarchical {
 			this.verbose = v;
 			return this;
 		}
+		
 		@Override
 		public FeatureNormalization getNormalizer() {
 			return norm;
 		}
+		
 		@Override
 		public HDBSCANPlanner setNormalizer(FeatureNormalization norm) {
 			this.norm = norm;

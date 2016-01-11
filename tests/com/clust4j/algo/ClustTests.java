@@ -20,8 +20,8 @@ import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
 public class ClustTests {
-	{
-		//com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM = true;
+	{ // initializer
+		com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
 	}
 	
 	private static boolean print = false;

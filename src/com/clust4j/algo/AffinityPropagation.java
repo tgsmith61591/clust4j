@@ -24,7 +24,7 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
-import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/Affinity_propagation">Affinity Propagation</a> (AP) 
@@ -395,7 +395,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 						
 						// Compute noise matrix, force parallel if necessary
-						if(FORCE_PARALLELISM) {
+						if(FORCE_PARALLELISM_WHERE_POSSIBLE) {
 							try {
 								noiseMatrix = MatUtils.multiplyDistributed(tiny_scaled, noise);
 							} catch(RejectedExecutionException rej) {
@@ -556,7 +556,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					
 					
 					// Get k -- can use parallelism... 
-					if(FORCE_PARALLELISM) {
+					if(FORCE_PARALLELISM_WHERE_POSSIBLE) {
 						try {
 							numClusters = (int)VecUtils.sumDistributed(mask);
 						} catch(RejectedExecutionException rej) {

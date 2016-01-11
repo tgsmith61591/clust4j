@@ -26,7 +26,7 @@ import com.clust4j.utils.parallel.reduce.DistributedSum;
 
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
-import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM;
+import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
@@ -69,7 +69,7 @@ public class VecUtils {
 	 */
 	public static double[] abs(final double[] a) {
 		checkDims(a);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -115,7 +115,7 @@ public class VecUtils {
 	 */
 	public static double[] add(final double[] a, final double[] b) {
 		checkDims(a, b);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -145,7 +145,7 @@ public class VecUtils {
 	 * @param b
 	 * @return
 	 */
-	protected static double[] addForceSerial(final double[] a, final double[] b) {
+	public static double[] addForceSerial(final double[] a, final double[] b) {
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			ab[i] = a[i] + b[i];
@@ -262,7 +262,7 @@ public class VecUtils {
 	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaN(final double[] a) {
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -375,7 +375,7 @@ public class VecUtils {
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
 		checkDims(a, b);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -425,7 +425,7 @@ public class VecUtils {
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
 		checkDims(a, b);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -492,7 +492,7 @@ public class VecUtils {
 	 */
 	public static double innerProduct(final double[] a, final double[] b) {
 		checkDims(a, b);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && 
 				 a.length>MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -562,7 +562,7 @@ public class VecUtils {
 	 */
 	public static double[] log(final double[] a) {
 		checkDims(a);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && 
 				 a.length>MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -691,7 +691,7 @@ public class VecUtils {
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
 		checkDims(a, b);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -738,7 +738,7 @@ public class VecUtils {
 	 * @return the number of nans in the vector
 	 */
 	public static int nanCount(final double[] a) {
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -966,7 +966,7 @@ public class VecUtils {
 	
 	public static double prod(final double[] a) {
 		checkDims(a);
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -1109,7 +1109,7 @@ public class VecUtils {
 	
 	
 	public static double[] subtract(final double[] from, final double[] subtractor) {
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=from && 
 				 from.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {
@@ -1143,7 +1143,7 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		if(FORCE_PARALLELISM || 
+		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
 			try {

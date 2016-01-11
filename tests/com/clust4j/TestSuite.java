@@ -42,4 +42,5 @@ import com.clust4j.utils.VectorTests;
 	PipelineTest.class
 })
 
-public class TestSuite {/* Runs all the tests */}
+/* Runs all the tests */
+public class TestSuite {}

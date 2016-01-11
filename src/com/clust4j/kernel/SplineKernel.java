@@ -1,5 +1,7 @@
 package com.clust4j.kernel;
 
+import org.apache.commons.math3.util.FastMath;
+
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -35,22 +37,32 @@ public class SplineKernel extends Kernel {
 		 */
 		
 		// Parallel min
+		VecUtils.checkDims(a,b);
+		final int n = a.length;
 		final double[] minV = VecUtils.pmin(a, b);
 		
 		// Get front
-		final double[] front = VecUtils.multiply(VecUtils.multiply(a, b), VecUtils.scalarAdd(minV, 1d));
+		// Originally: 
+		//
+		// final double[] front = VecUtils.multiply(VecUtils.multiply(a, b), VecUtils.scalarAdd(minV, 1d));
+		// final double[] mid1 = VecUtils.scalarDivide(VecUtils.add(a, b), 2);
+		// final double[] mid2 = VecUtils.pow(minV, 2);
+		// final double[] mid = VecUtils.multiplyForceSerial(mid1, mid2);
+		// final double[] back = VecUtils.scalarDivide(VecUtils.pow(minV, 3), 3);
+		// final double[] res = VecUtils.addForceSerial(VecUtils.subtractForceSerial(VecUtils.scalarAdd(front, 1), mid), back);
+		// return VecUtils.prod(res);
+		//
+		// but this takes 12n (13n total!!)... can do it uglier, but much more elegantly in 1n (2n total):
+		double[] front = new double[n], mid = new double[n], back = new double[n];
+		double prod = 1;
+		for(int i = 0; i < n; i++) {
+			front[i] = a[i]*b[i] * (minV[i]+1);
+			mid[i] = ((a[i]+b[i]) / 2) * (minV[i] * minV[i]);
+			back[i] = FastMath.pow(minV[i], 3) / 3d;
+			prod *= ( ((front[i]+1)-mid[i])+back[i] );
+		}
 		
-		// Get mid
-		final double[] mid1 = VecUtils.scalarDivide(VecUtils.add(a, b), 2);
-		final double[] mid2 = VecUtils.pow(minV, 2);
-		final double[] mid = VecUtils.multiply(mid1, mid2);
-		
-		// Get back
-		final double[] back = VecUtils.scalarDivide(VecUtils.pow(minV, 3), 3);
-		
-		// Calc res
-		final double[] res = VecUtils.add(VecUtils.subtract(VecUtils.scalarAdd(front, 1), mid), back);
-		return VecUtils.prod(res);
+		return prod;
 	}
 
 	@Override

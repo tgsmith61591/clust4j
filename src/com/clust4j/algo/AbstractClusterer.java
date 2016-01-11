@@ -130,7 +130,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		meta((similarity ? "similarity" : "distance") + 
 				" metric=" + dist.getName());
 		meta("scale="+planner.getScale());
-		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM);
+		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE);
 		meta("allow_auto_parallelism="+GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM);
 		
 		

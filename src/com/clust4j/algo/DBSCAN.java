@@ -37,9 +37,6 @@ public class DBSCAN extends AbstractDBSCAN {
 	 */
 	private static final long serialVersionUID = 6749407933012974992L;
 	
-	final private double eps;
-	final private FeatureNormalization normer;
-	
 	// Race conditions exist in retrieving either one of these...
 	private volatile int[] labels = null;
 	private volatile double[] sampleWeights = null;
@@ -147,10 +144,12 @@ public class DBSCAN extends AbstractDBSCAN {
 			this.verbose = v;
 			return this;
 		}
+		
 		@Override
 		public FeatureNormalization getNormalizer() {
 			return norm;
 		}
+		
 		@Override
 		public DBSCANPlanner setNormalizer(FeatureNormalization norm) {
 			this.norm = norm;
@@ -177,12 +176,11 @@ public class DBSCAN extends AbstractDBSCAN {
 	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
 		super(data, planner);
 		
+
+		this.eps = planner.eps;
+		meta("epsilon="+eps);
+		meta("min_pts="+minPts);
 		
-		meta("epsilon="+planner.eps);
-		meta("min_pts="+planner.minPts);
-		
-		this.eps 	= planner.eps;
-		this.normer = planner.getNormalizer();
 		
 		
 		// Error handle...
@@ -227,6 +225,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				// First get the dist matrix
 				final long start = System.currentTimeMillis();
+				info("fitting model");
 				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 				final int m = dist_mat.length;
 				
