@@ -14,7 +14,6 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.ModelNotFitException;
-import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
 
@@ -32,19 +31,14 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn implementation by Lars Buitinck
  *
  */
-public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer {
+public class DBSCAN extends AbstractDBSCAN {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6749407933012974992L;
-	final public static double DEF_EPS = 0.5;
-	final public static int DEF_MIN_PTS = 5;
-	final public static int NOISE_CLASS = -1;
 	
-	final private int minPts;
 	final private double eps;
 	final private FeatureNormalization normer;
-	
 	
 	// Race conditions exist in retrieving either one of these...
 	private volatile int[] labels = null;
@@ -68,7 +62,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 	 * interface to set custom parameters for DBSCAN
 	 * @author Taylor G Smith
 	 */
-	final public static class DBSCANPlanner extends AbstractClusterer.BaseClustererPlanner {
+	final public static class DBSCANPlanner extends AbstractDBSCANPlanner {
 		private double eps = DEF_EPS;
 		private int minPts = DEF_MIN_PTS;
 		private boolean scale = DEF_SCALE;
@@ -99,6 +93,11 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 				.setVerbose(verbose)
 				.setNormalizer(norm);
 		}
+
+		@Override
+		public int getMinPts() {
+			return minPts;
+		}
 		
 		@Override
 		public GeometricallySeparable getSep() {
@@ -120,6 +119,7 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			return verbose;
 		}
 		
+		@Override
 		public DBSCANPlanner setMinPts(final int minPts) {
 			this.minPts = minPts;
 			return this;
@@ -181,7 +181,6 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		meta("epsilon="+planner.eps);
 		meta("min_pts="+planner.minPts);
 		
-		this.minPts = planner.minPts;
 		this.eps 	= planner.eps;
 		this.normer = planner.getNormalizer();
 		
@@ -190,12 +189,6 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 		String e;
 		if(this.eps <= 0.0) {
 			e="eps must be greater than 0.0";
-			error(e);
-			throw new IllegalArgumentException(e);
-		}
-		
-		if(this.minPts < 1) {
-			e="minPts must be greater than 0";
 			error(e);
 			throw new IllegalArgumentException(e);
 		}
@@ -216,10 +209,6 @@ public class DBSCAN extends AbstractDensityClusterer implements NoiseyClusterer 
 			error(error);
 			throw new ModelNotFitException(error);
 		}
-	}
-	
-	public int getMinPts() {
-		return minPts;
 	}
 	
 	@Override

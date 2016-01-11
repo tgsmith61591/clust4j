@@ -30,6 +30,7 @@ public abstract class Log {
 			/** To be used with any custom user cluster algo extensions... */
 			CUSTOM			{ @Override public String toString(){return "CUSTOM ";} },
 			DBSCAN 			{ @Override public String toString(){return "DBSCAN ";} },
+			HDBSCAN 		{ @Override public String toString(){return "HDBSCAN";} },
 			
 			/** Used for matrix imputations */
 			IMPUTE			{ @Override public String toString(){return "IMPUTE ";} },

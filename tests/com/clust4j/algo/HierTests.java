@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
-import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
+import com.clust4j.algo.HierarchicalClusterer.Linkage;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;

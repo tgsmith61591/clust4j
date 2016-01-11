@@ -13,11 +13,8 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
@@ -41,31 +38,17 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
-public class HierarchicalAgglomerative extends AbstractPartitionalClusterer implements Classifier {
+public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7563413590708853735L;
-	public static final Linkage DEF_LINKAGE = Linkage.WARD;
 	
-	/**
-	 * Which {@link Linkage} to use for the clustering algorithm
-	 */
-	final private Linkage linkage;
 	/**
 	 * The number of rows in the matrix
 	 */
 	final private int m;
 	
-	
-	/**
-	 * The linkages for agglomerative clustering. 
-	 * @author Taylor G Smith
-	 *
-	 */
-	public enum Linkage implements java.io.Serializable {
-		AVERAGE, COMPLETE, WARD
-	}
 	
 	
 	/**
@@ -95,24 +78,8 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			HierarchicalPlanner planner) {
 		super(data, planner, planner.num_clusters);
 		
-		this.linkage = planner.linkage;
-		if(null == linkage) {
-			String e = "null linkage passed to planner";
-			error(e);
-			throw new IllegalClusterStateException(e);
-		} else if(linkage.equals(Linkage.WARD) && !getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
-			warn("Ward's method implicitly requires Euclidean distance; overriding " + 
-				getSeparabilityMetric().getName());
-			
-			super.setSeparabilityMetric(Distance.EUCLIDEAN);
-			meta("New distance metric: "+getSeparabilityMetric().getName());
-		}
-		
-		
-		
 		this.m = data.getRowDimension();
 		this.num_clusters = planner.num_clusters;
-		
 		
 		meta("Linkage="+linkage);
 		meta("Num clusters="+num_clusters);
@@ -123,7 +90,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	
 	
 	
-	public static class HierarchicalPlanner extends AbstractClusterer.BaseClustererPlanner {
+	public static class HierarchicalPlanner extends BaseHierarchicalPlanner {
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
@@ -156,6 +123,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 				.setNormalizer(norm);
 		}
 		
+		@Override
 		public Linkage getLinkage() {
 			return linkage;
 		}
@@ -180,6 +148,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			return seed;
 		}
 		
+		@Override
 		public HierarchicalPlanner setLinkage(Linkage l) {
 			this.linkage = l;
 			return this;
@@ -635,6 +604,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		return descendent.toArray(new Integer[descendent.size()]);
 	}
 	
+	@Override
 	public int[] getLabels() {
 		try {
 			return VecUtils.copy(labels);
