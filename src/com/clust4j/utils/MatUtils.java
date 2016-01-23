@@ -4,6 +4,7 @@ import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -24,6 +25,53 @@ public class MatUtils {
 		ROW, COL
 	}
 	
+	
+	/**
+	 * Create a boolean matrix
+	 * @author Taylor G Smith
+	 */
+	public static class MatSeries extends Series<boolean[][]> {
+		final boolean[][] mat;
+		final int m, n;
+		
+		private MatSeries(double[][] x) {
+			checkDims(x);
+			m = x.length;
+			n = x[0].length;
+			mat = new boolean[m][n];
+		}
+		
+		public MatSeries(double[][] x, Inequality in, double val) {
+			this(x);
+			
+			for(int i = 0; i < m; i++)
+				for(int j = 0; j < n; j++)
+					mat[i][j] = eval(x[i][j], in, val);
+		}
+		
+		public MatSeries(double[] a, Inequality in, double[][] x) {
+			this(x);
+			
+			if(a.length != n)
+				throw new DimensionMismatchException(a.length, n);
+			for(int i = 0; i < m; i++)
+				for(int j = 0; j < n; j++)
+					mat[i][j] = eval(a[j], in, x[i][j]);
+		}
+		
+		@Override
+		public boolean[][] get() {
+			return copy(mat);
+		}
+		
+		@Override
+		public boolean[][] getRef() {
+			return mat;
+		}
+	}
+	
+	
+	
 	static enum Operator {
 		ADD, DIV, MULT, SUB
 	}
@@ -33,6 +81,18 @@ public class MatUtils {
 		checkDims(b);
 		if(a[0].length != b.length)
 			throw new DimensionMismatchException(a[0].length, b.length);
+	}
+	
+	final static public void checkDims(final boolean[][] a) {
+		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
 	}
 	
 	final static public void checkDims(final double[][] a) {
@@ -47,16 +107,34 @@ public class MatUtils {
 		}
 	}
 	
-	final static public void checkDims(final AbstractRealMatrix a) {
-		if(a.getRowDimension() < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.getRowDimension());
-	
+	final static public void checkDims(final int[][] a) {
+		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
+		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
-			VecUtils.checkDims(a.getRow(0));
+			VecUtils.checkDims(a[0]);
 		} catch(NullPointerException npe) {
 			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.getRowDimension()+"][]", npe);
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
 		}
+	}
+	
+	final static public void checkDims(final double[][] a, final double[][] b) {
+		checkDims(a);
+		checkDims(b);
+		
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		if(a[0].length != b[0].length)
+			throw new DimensionMismatchException(a[0].length, b[0].length);
+	}
+	
+	final static public void checkDims(final AbstractRealMatrix a) {
+		checkDims(a.getData());
+	}
+	
+	final static public void checkDims(final AbstractRealMatrix a, final AbstractRealMatrix b) {
+		checkDims(a.getData(), b.getData());
 	}
 	
 	public static final double[][] abs(final double[][] a) {
@@ -206,8 +284,24 @@ public class MatUtils {
 	 * @param data
 	 * @return
 	 */
-	public static final double[][] copyMatrix(final double[][] data) {
+	public static final double[][] copy(final double[][] data) {
 		final double[][] copy = new double[data.length][];
+		
+		if(data.length != 0) {
+			for(int i = 0; i < copy.length; i++)
+				copy[i] = VecUtils.copy(data[i]);
+		}
+		
+		return copy;
+	}
+	
+	/**
+	 * Copy a 2d boolean array
+	 * @param data
+	 * @return
+	 */
+	public static final boolean[][] copy(final boolean[][] data) {
+		final boolean[][] copy = new boolean[data.length][];
 		
 		if(data.length != 0) {
 			for(int i = 0; i < copy.length; i++)
@@ -358,6 +452,20 @@ public class MatUtils {
 			throw new IndexOutOfBoundsException(idx+"");
 		
 		final double[] col = new double[m];
+		for(int i = 0; i < m; i++)
+			col[i] = data[i][idx];
+		
+		return col;
+	}
+	
+	public static int[] getColumn(final int[][] data, final int idx) {
+		checkDims(data);
+		
+		final int m=data.length, n=data[0].length;
+		if(idx >= n || idx < 0)
+			throw new IndexOutOfBoundsException(idx+"");
+		
+		final int[] col = new int[m];
 		for(int i = 0; i < m; i++)
 			col[i] = data[i][idx];
 		
@@ -521,13 +629,51 @@ public class MatUtils {
 	 * @return
 	 */
 	public static double[][] negative(final double[][] data) {
-		final double[][] copy = MatUtils.copyMatrix(data);
+		final double[][] copy = MatUtils.copy(data);
 		for(int i = 0; i < copy.length; i++)
 			for(int j = 0; j < copy[i].length; j++)
 				copy[i][j] = -copy[i][j];
 		return copy;
 	}
 	
+	public static double[][] partitionByRow(final double[][] a, final int kth) {
+		checkDims(a);
+		
+		final int n = a.length;
+		if(kth >= n || kth < 0)
+			throw new IllegalArgumentException(kth+" is out of bounds");
+		
+		final double[] val = a[kth];
+		final String strVl = Arrays.toString(val);
+		
+		String[] b = new String[n];
+		for(int i = 0; i < n; i++)
+			b[i] = Arrays.toString(a[i]);
+		
+		double[][] c = new double[n][];
+		
+		int idx = -1;
+		Arrays.sort(b);
+		for(int i = 0; i < n; i++) {
+			if(b[i].equals(strVl)) {
+				idx = i;
+				break;
+			}	
+		}
+		
+		c[idx] = val;
+		for(int i = 0, nextLow = 0, nextHigh = idx+1; i < n; i++) {
+			if(i == kth) // This is the pivot point
+				continue;
+			if(Arrays.toString(a[i]).compareTo(strVl) < 0)
+				c[nextLow++] = a[i];
+			else {
+				c[nextHigh++] = a[i];
+			}
+		}
+		
+		return c;
+	}
 	
 	public static double[][] randomGaussian(final int m, final int n) {
 		return randomGaussian(m, n, new Random());
@@ -545,12 +691,49 @@ public class MatUtils {
 		return out;
 	}
 	
+	public static double[][] reorder(final double[][] data, final int[] order) {
+		VecUtils.checkDims(order);
+		
+		final int n = order.length;
+		final double[][] out = new double[n][];
+		
+		int idx = 0;
+		for(int i: order)
+			out[idx++] = VecUtils.copy(data[i]);
+		
+		return out;
+	}
+	
+	public static int[][] reorder(final int[][] data, final int[] order) {
+		VecUtils.checkDims(order);
+		
+		final int n = order.length;
+		final int[][] out = new int[n][];
+		
+		int idx = 0;
+		for(int i: order)
+			out[idx++] = VecUtils.copy(data[i]);
+		
+		return out;
+	}
+	
 	public static double[][] rep(final double val, final int m, final int n) {
 		if(m < 0 || n < 0)
 			throw new IllegalArgumentException("illegal dimension");
 		final double[][] out = new double[m][n];
 		for(int i = 0; i < m; i++)
 			out[i] = VecUtils.rep(val, n);
+		return out;
+	}
+	
+	public static double[][] rep(final double[] vec, final int m) {
+		VecUtils.checkDims(vec);
+		
+		if(m < 0)
+			throw new IllegalArgumentException("illegal dimension");
+		final double[][] out = new double[m][vec.length];
+		for(int i = 0; i < m; i++)
+			out[i] = VecUtils.copy(vec);
 		return out;
 	}
 	
@@ -705,6 +888,18 @@ public class MatUtils {
 			a[idx][i] = v[i];
 	}
 	
+	public static double[][] sortAscByCol(final double[][] data, final int col) {
+		checkDims(data);
+		int[] sortedArgs = VecUtils.argSort(MatUtils.getColumn(data, col));
+		return MatUtils.reorder(data, sortedArgs);
+	}
+	
+	public static int[][] sortAscByCol(final int[][] data, final int col) {
+		checkDims(data);
+		int[] sortedArgs = VecUtils.argSort(MatUtils.getColumn(data, col));
+		return MatUtils.reorder(data, sortedArgs);
+	}
+	
 	public static final double[][] subtract(final double[][] a, final double[][] b) {
 		checkDims(a);
 		checkDims(b);
@@ -731,5 +926,49 @@ public class MatUtils {
 			for(int j = 0; j < n; j++)
 				t[j][i] = a[i][j];
 		return t;
+	}
+	
+	public static double[][] transpose(final double[] a) {
+		VecUtils.checkDims(a);
+		
+		final int m = a.length;
+		final double[][] r = new double[m][1];
+		for(int i = 0; i < m; i++)
+			r[i][0] = a[i];
+		
+		return r;
+	}
+
+	public static double[][] where(final MatSeries series, double[][] x, double[][] y) {
+		checkDims(x, y);
+		
+		final int m = x.length, n = x[0].length;
+		final boolean[][] ser = series.get();
+		
+		checkDims(ser);
+		if(ser.length != m)
+			throw new DimensionMismatchException(ser.length, m);
+		if(ser[0].length != n)
+			throw new DimensionMismatchException(ser[0].length, n);
+		
+		final double[][] result = new double[m][n];
+		for(int row = 0; row < m; row++)
+			for(int i = 0; i < n; i++)
+				result[row][i] = ser[row][i] ? x[row][i] : y[row][i];
+				
+		return result;
+	}
+	
+	public static double[][] where(final MatSeries series, double[] x, double[][] y) {
+		return where(series, rep(x, series.get().length), y);
+	}
+	
+	public static double[][] where(final MatSeries series, double[][] x, double[] y) {
+		return where(series, x, rep(y, series.get().length));
+	}
+	
+	public static double[][] where(final MatSeries series, double[] x, double[] y) {
+		VecUtils.checkDims(x,y);
+		return where(series, rep(x, series.get().length), rep(y, series.get().length));
 	}
 }

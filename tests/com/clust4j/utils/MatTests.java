@@ -6,8 +6,10 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
+import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.utils.MatUtils.Axis;
+import com.clust4j.utils.MatUtils.MatSeries;
 
 public class MatTests {
 
@@ -275,19 +277,97 @@ public class MatTests {
 	}
 	
 	@Test
-	public void testMult() {
-		final double[][] a = MatUtils.randomGaussian(1000, 20);
-		final double[][] b = MatUtils.randomGaussian(20, 6000);
+	public void testPartition() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,0,1},
+			new double[]{0,0,0}
+		};
 		
-		long start = System.currentTimeMillis();
-		final double[][] ca = MatUtils.multiplyForceSerial(a, b);
-		long serialTime = System.currentTimeMillis() - start;
+		final double[][] b = new double[][]{
+			new double[]{0,0,0},
+			new double[]{0,1,2},
+			new double[]{0,0,1}
+		};
 		
-		start = System.currentTimeMillis();
-		final double[][] cb = MatUtils.multiplyDistributed(a, b);
-		long paraTime = System.currentTimeMillis() - start;
+		final double[][] c = MatUtils.copy(a);
+		System.out.println(TestSuite.formatter.format(new Array2DRowRealMatrix(MatUtils.partitionByRow(a, 2))));
+		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 2), b) );
+		assertTrue( MatUtils.equalsExactly(a, c) );
+	}
+	
+	@Test
+	public void testWhere() {
+		final double[][] a = new double[][]{
+			new double[]{6, 0},
+			new double[]{7, 8}
+		};
 		
-		assertTrue(MatUtils.equalsExactly(ca, cb));
-		System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
+		final MatSeries ser = new MatSeries(a, Inequality.GT, 5);
+		final double[][] b = new double[][]{
+			new double[]{1,2},
+			new double[]{3,4}
+		};
+		
+		final double[][] c = new double[][]{
+			new double[]{9,8},
+			new double[]{7,6}
+		};
+		
+		final double[][] d = new double[][]{
+			new double[]{1,8},
+			new double[]{3,4}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(d, MatUtils.where(ser, b, c)));
+	}
+	
+	@Test
+	public void testTransposeVector() {
+		final double[] a = new double[]{1,2,3};
+		final double[][] b = new double[][]{
+			new double[]{1},
+			new double[]{2},
+			new double[]{3}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(b, MatUtils.transpose(a)));
+	}
+	
+	@Test
+	public void testFromVec() {
+		final double[] a = new double[]{1,2,3};
+		final double[][] b = new double[][]{
+			new double[]{1,2,3},
+			new double[]{1,2,3},
+			new double[]{1,2,3}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(b, MatUtils.rep(a,3)));
+	}
+	
+	@Test
+	public void testWhere2() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,1},
+			new double[]{1,0,1},
+			new double[]{0,0,1}
+		};
+		
+		MatSeries ser = new MatSeries(a, Inequality.ET, 1);
+		final double[] b = new double[]{2,3,4};
+		final double[][] c = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6},
+			new double[]{7,8,9}
+		};
+		
+		final double[][] d = new double[][]{
+			new double[]{1,3,4},
+			new double[]{2,5,4},
+			new double[]{7,8,4}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(d, MatUtils.where(ser, b, c)));
 	}
 }

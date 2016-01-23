@@ -3,7 +3,9 @@ package com.clust4j.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -36,7 +38,55 @@ public class VecUtils {
 	
 	
 	
+	/**
+	 * Create a boolean vector
+	 * @author Taylor G Smith
+	 */
+	public static class VecSeries extends Series<boolean[]> {
+		final boolean[] vec;
+		final int n;
+		
+		
+		private VecSeries(double[] v) {
+			checkDims(v);
+			this.n = v.length;
+			this.vec = new boolean[n];
+		}
+		
+		public VecSeries(double[] v, Inequality in, double val) {
+			this(v);
+			for(int j = 0; j < n; j++)
+				vec[j] = eval(v[j], in, val);
+		}
+		
+		public VecSeries(double[] a, Inequality in, double[] b) {
+			this(a);
+			if(n != b.length)
+				throw new DimensionMismatchException(n, b.length);
+			
+			for(int i = 0; i < n; i++)
+				vec[i] = eval(a[i], in, b[i]);
+		}
+		
+		@Override
+		public boolean[] getRef() {
+			return vec;
+		}
+		
+		@Override
+		public boolean[] get() {
+			return copy(vec);
+		}
+	}
 	
+	
+	
+	
+	
+	
+	final static public void checkDims(final boolean[] a) {
+		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
+	}
 	
 	final static public void checkDims(final double[] a) {
 		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
@@ -97,7 +147,7 @@ public class VecUtils {
 	 * @param a
 	 * @return
 	 */
-	protected static double[] absForceSerial(final double[] a) {
+	public static double[] absForceSerial(final double[] a) {
 		final double[] b= new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.abs(a[i]);
@@ -227,6 +277,66 @@ public class VecUtils {
 		return min_idx;
 	}
 	
+	public static int[] argSort(final double[] a) {
+		checkDims(a);
+		
+		final int n = a.length;
+		final TreeMap<Double, Integer> map = new TreeMap<>();
+		for(int i = 0; i < n; i++)
+			map.put(a[i], i);
+		
+		int idx = 0;
+		final int[] res = new int[n];
+		for(Map.Entry<Double,Integer> entry: map.entrySet())
+			res[idx++] = entry.getValue();
+		
+		return res;
+	}
+	
+	public static int[] argSort(final int[] a) {
+		checkDims(a);
+		
+		final int n = a.length;
+		final TreeMap<Integer, Integer> map = new TreeMap<>();
+		for(int i = 0; i < n; i++)
+			map.put(a[i], i);
+		
+		int idx = 0;
+		final int[] res = new int[n];
+		for(Map.Entry<Integer,Integer> entry: map.entrySet())
+			res[idx++] = entry.getValue();
+		
+		return res;
+	}
+	
+	public static double[] asDouble(final int[] a) {
+		checkDims(a);
+		final int n = a.length;
+		final double[] d = new double[n];
+		
+		for(int i = 0; i < n; i++)
+			d[i] = (double)a[i];
+		
+		return d;
+	}
+	
+	final public static int[] cat(final int[] a, final int[] b) {
+		checkDims(a);
+		checkDims(b);
+		
+		final int na = a.length, nb = b.length, n = na+nb;
+		if(na == 0) return copy(b);
+		if(nb == 0) return copy(a);
+		
+		final int[] res = new int[n];
+		for(int i = 0; i < na; i++)
+			res[i] = a[i];
+		for(int i = 0; i < nb; i++)
+			res[i+na] = b[i];
+		
+		return res;
+	}
+	
 	final public static double[] center(final double[] a) {
 		return center(a, mean(a));
 	}
@@ -298,6 +408,12 @@ public class VecUtils {
 				return true;
 		
 		return false;
+	}
+	
+	public static boolean[] copy(final boolean[] b) {
+		final boolean[] copy = new boolean[b.length];
+		System.arraycopy(b, 0, copy, 0, b.length);
+		return copy;
 	}
 	
 	public static int[] copy(final int[] i) {
@@ -926,6 +1042,50 @@ public class VecUtils {
 	}
 	
 	/**
+	 * Adapted from Numpy's partition method.
+	 * Creates a copy of the array with its elements 
+	 * rearranged in such a way that the value of the 
+	 * element in kth position is in the position it would 
+	 * be in a sorted array. All elements smaller than the 
+	 * kth element are moved before this element and all equal 
+	 * or greater are moved behind it. The ordering of the elements 
+	 * in the two partitions is undefined.
+	 * @param a
+	 * @param kth
+	 * @return
+	 */
+	public static double[] partition(final double[] a, final int kth) {
+		checkDims(a);
+		final int n = a.length;
+		if(kth >= n || kth < 0)
+			throw new IllegalArgumentException(kth+" is out of bounds");
+		
+		final double val = a[kth];
+		double[] b = VecUtils.copy(a);
+		double[] c = new double[n];
+		
+		int idx = -1;
+		Arrays.sort(b);
+		for(int i = 0; i < n; i++) {
+			if(b[i] == val) {
+				idx = i;
+				break;
+			}	
+		}
+		
+		c[idx] = val;
+		for(int i = 0, nextLow = 0, nextHigh = idx+1; i < n; i++) {
+			if(i == kth) // This is the pivot point
+				continue;
+			if(a[i] < val)
+				c[nextLow++] = a[i];
+			else c[nextHigh++] = a[i];
+		}
+		
+		return c;
+	}
+	
+	/**
 	 * Returns a vector of the max parallel elements in each respective vector
 	 * @param a
 	 * @param b
@@ -1038,6 +1198,21 @@ public class VecUtils {
 		if(n < 0)
 			throw new IllegalArgumentException(n+" must not be negative");
 		final double[] d = new double[n];
+		for(int i = 0; i < n; i++)
+			d[i] = val;
+		return d;
+	}
+	
+	/**
+	 * Create a vector of a repeated value
+	 * @param val
+	 * @param n
+	 * @return a vector of a repeated value
+	 */
+	public static int[] repInt(final int val, final int n) {
+		if(n < 0)
+			throw new IllegalArgumentException(n+" must not be negative");
+		final int[] d = new int[n];
 		for(int i = 0; i < n; i++)
 			d[i] = val;
 		return d;
@@ -1212,5 +1387,56 @@ public class VecUtils {
 			sum += res * res;
 		}
 		return sum / (a.length - (n_minus_one ? 1 : 0));
+	}
+	
+	public static double[][] vstack(final double[] a, final double[] b) {
+		checkDims(a,b);
+		
+		final int n = a.length;
+		final double[][] out = new double[2][n];
+		
+		out[0] = copy(a);
+		out[1] = copy(b);
+		
+		return out;
+	}
+	
+	public static int[][] vstack(final int[] a, final int[] b) {
+		checkDims(a,b);
+		
+		final int n = a.length;
+		final int[][] out = new int[2][n];
+		
+		out[0] = copy(a);
+		out[1] = copy(b);
+		
+		return out;
+	}
+	
+	public static double[] where(final VecSeries series, final double[] x, final double[] y) {
+		checkDims(x,y);
+		
+		final int n = x.length;
+		final boolean[] ser = series.get();
+		if(ser.length != n)
+			throw new DimensionMismatchException(ser.length, n);
+			
+		final double[] result = new double[n];
+		for(int i = 0; i < n; i++)
+			result[i] = ser[i] ? x[i] : y[i];
+			
+		return result;
+	}
+	
+	public static double[] where(final VecSeries series, final double x, final double[] y) {
+		return where(series, rep(x, series.get().length), y);
+	}
+	
+	public static double[] where(final VecSeries series, final double[] x, final double y) {
+		return where(series, x, rep(y, series.get().length));
+	}
+	
+	public static double[] where(final VecSeries series, final double x, final double y) {
+		return where(series, rep(x,series.get().length), rep(y,series.get().length));
 	}
 }

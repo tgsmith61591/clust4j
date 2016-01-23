@@ -185,7 +185,7 @@ public class NearestNeighbors extends AbstractClusterer {
 		}
 		
 		public NearestNeighborsPlanner setDistanceMatrix(final double[][] dist_mat) {
-			this.dist_mat = null == dist_mat ? null : MatUtils.copyMatrix(dist_mat);
+			this.dist_mat = null == dist_mat ? null : MatUtils.copy(dist_mat);
 			return this;
 		}
 		

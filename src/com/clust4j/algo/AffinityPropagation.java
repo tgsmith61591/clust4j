@@ -281,7 +281,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	public double[][] getAvailabilityMatrix() {
 		try {
-			return MatUtils.copyMatrix(cachedA);
+			return MatUtils.copy(cachedA);
 		} catch(NullPointerException npe) {
 			throw new ModelNotFitException("model is not fit", npe);
 		}
@@ -289,7 +289,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	public double[][] getResponsibilityMatrix() {
 		try {
-			return MatUtils.copyMatrix(cachedR);
+			return MatUtils.copy(cachedR);
 		} catch(NullPointerException npe) {
 			throw new ModelNotFitException("model is not fit", npe);
 		}

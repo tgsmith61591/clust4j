@@ -96,4 +96,11 @@ public class TestDistanceEnums {
 		HaversineDistance km = new HaversineDistance(DistanceUnit.KM);
 		km.getDistance(a, b);
 	}
+	
+	@Test
+	public void testCheb() {
+		final double[] a = new double[]{0,1,2,3};
+		final double[] b = new double[]{10,9,8,7};
+		assertTrue(Distance.CHEBYSHEV.getDistance(a, b) == 10);
+	}
 }

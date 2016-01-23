@@ -63,7 +63,7 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 		
 		// Now check column NaN level
 		boolean seenNaN = false;
-		final double[][] dataCopy = MatUtils.copyMatrix(data);
+		final double[][] dataCopy = MatUtils.copy(data);
 		for(int col = 0; col < n; col++) {
 			Inner:
 			for(int row = 0; row < m; row++) {

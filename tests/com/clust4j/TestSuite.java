@@ -4,6 +4,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import com.clust4j.algo.ClustTests;
+import com.clust4j.algo.HDBSCANTests;
 import com.clust4j.algo.HaversineTest;
 import com.clust4j.algo.HeapTesting;
 import com.clust4j.algo.HierTests;
@@ -17,9 +18,11 @@ import com.clust4j.log.LogTest;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.MatTests;
+import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.TestDistanceEnums;
 import com.clust4j.utils.TestUtils;
 import com.clust4j.utils.VectorTests;
+import com.clust4j.utils.parallel.ParallelTests;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -39,8 +42,12 @@ import com.clust4j.utils.VectorTests;
 	ImputationTests.class,
 	BootstrapTest.class,
 	PreProcessorTests.class,
-	PipelineTest.class
+	PipelineTest.class,
+	ParallelTests.class,
+	HDBSCANTests.class
 })
 
 /* Runs all the tests */
-public class TestSuite {}
+public class TestSuite {
+	public static final MatrixFormatter formatter = new MatrixFormatter();
+}

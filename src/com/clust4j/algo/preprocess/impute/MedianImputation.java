@@ -85,7 +85,7 @@ public class MedianImputation extends MatrixImputation {
 	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
-		final double[][] copy = MatUtils.copyMatrix(dat);
+		final double[][] copy = MatUtils.copy(dat);
 		final int m = dat.length, n = dat[0].length;
 		info("(" + getName() + ") performing median imputation on " + m + " x " + n + " dataset");
 		

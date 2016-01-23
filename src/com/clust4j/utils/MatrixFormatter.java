@@ -4,6 +4,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import static com.clust4j.utils.TableFormatter.ColumnAlignment.RIGHT;
 
@@ -29,6 +30,14 @@ public class MatrixFormatter extends TableFormatter {
 					 final String rowSep, final String colSep,
 					 final int whiteSpace, final NumberFormat format) {
     	super(pref, suff, rowPref, rowSuff, rowSep, colSep, whiteSpace, format);
+    }
+    
+    public String format(double[][] mat) {
+    	return format(new Array2DRowRealMatrix(mat, false));
+    }
+    
+    public String format(double[][] mat, int numRows) {
+    	return format(new Array2DRowRealMatrix(mat, false), numRows);
     }
     
     public String format(AbstractRealMatrix matrix) {

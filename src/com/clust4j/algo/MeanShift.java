@@ -121,7 +121,7 @@ public class MeanShift
 			}
 			
 			info("initializing kernels from given seeds");
-			seeds = MatUtils.copyMatrix(planner.seeds);
+			seeds = MatUtils.copy(planner.seeds);
 		} else { // Default = all
 			info("no seeds provided; defaulting to all datapoints");
 			seeds = data.getData();
@@ -239,7 +239,7 @@ public class MeanShift
 		}
 		
 		public MeanShiftPlanner setSeeds(final double[][] seeds) {
-			this.seeds = null == seeds ? seeds : MatUtils.copyMatrix(seeds);
+			this.seeds = null == seeds ? seeds : MatUtils.copy(seeds);
 			return this;
 		}
 		
@@ -291,7 +291,7 @@ public class MeanShift
 	 * @return
 	 */
 	public double[][] getKernelSeeds() {
-		return MatUtils.copyMatrix(seeds);
+		return MatUtils.copy(seeds);
 	}
 	
 	public int getMaxIter() {

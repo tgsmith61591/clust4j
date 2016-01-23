@@ -25,7 +25,7 @@ public enum FeatureNormalization implements PreProcessor {
 		@Override
 		public double[][] operate(double[][] data) {
 			MatUtils.checkDims(data);
-			final double[][] copy = MatUtils.copyMatrix(data);
+			final double[][] copy = MatUtils.copy(data);
 			final int n = data[0].length;
 			
 			for(int col = 0; col < n; col++) {
@@ -67,7 +67,7 @@ public enum FeatureNormalization implements PreProcessor {
 				throw new IllegalStateException("RANGE_MIN ("+RANGE_MIN+
 						") must be lower than RANGE_MAX ("+RANGE_MAX+")");
 			
-			final double[][] copy = MatUtils.copyMatrix(data);
+			final double[][] copy = MatUtils.copy(data);
 			final int m = data.length, n = data[0].length;
 			
 			for(int col = 0; col < n; col++) {
@@ -99,7 +99,7 @@ public enum FeatureNormalization implements PreProcessor {
 		@Override
 		public double[][] operate(double[][] data) {
 			MatUtils.checkDims(data);
-			final double[][] copy = MatUtils.copyMatrix(data);
+			final double[][] copy = MatUtils.copy(data);
 			final int m = data.length, n = data[0].length;
 			
 			for(int col = 0; col < n; col++) {

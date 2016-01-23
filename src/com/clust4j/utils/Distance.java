@@ -47,5 +47,30 @@ public enum Distance implements GeometricallySeparable, java.io.Serializable {
 		public String getName() {
 			return "Euclidean";
 		}
+	},
+	
+	
+	
+	CHEBYSHEV {
+		
+		@Override
+		public double getDistance(final double[] a, final double[] b) {
+			VecUtils.checkDims(a, b);
+			
+			final int n = a.length;
+			double max = 0;
+			for(int i = 0; i < n; i++) {
+				double abs = FastMath.abs(a[i] - b[i]);
+				if(abs > max)
+					max = abs;
+			}
+			
+			return max;
+		}
+		
+		@Override
+		public String getName() {
+			return "Chebyshev";
+		}
 	}
 }

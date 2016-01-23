@@ -111,7 +111,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 		checkMat(dat);
 		
 		final int m = dat.length, n = dat[0].length, nc;
-		final double[][] copy = MatUtils.copyMatrix(dat);
+		final double[][] copy = MatUtils.copy(dat);
 		
 		final ArrayList<Integer> incompleteIndices = new ArrayList<>();
 		final ArrayList<double[]> completeRecords = new ArrayList<>();

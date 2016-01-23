@@ -157,7 +157,7 @@ public class BootstrapImputation extends MatrixImputation {
 		
 		info("(" + getName() + ") performing bootstrap imputation on " + m + " x " + n + " dataset");
 		info("(" + getName() + ") " + mc+" complete records found in matrix, "+ms+" records sampled for imputation");
-		final double[][] copy = MatUtils.copyMatrix(dat);
+		final double[][] copy = MatUtils.copy(dat);
 		
 		
 		for(int col = 0; col < n; col++) {
