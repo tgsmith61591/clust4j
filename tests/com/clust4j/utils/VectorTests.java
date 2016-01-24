@@ -262,4 +262,11 @@ public class VectorTests {
 		int[] exp = new int[]{1,2,3,0};
 		assertTrue(VecUtils.equalsExactly(exp, VecUtils.argSort(a)));
 	}
+	
+	@Test
+	public void testSlice() {
+		final double[] a = new double[]{0,1,2,3};
+		final double[] b = new double[]{1,2};
+		assertTrue(VecUtils.equalsExactly(b, VecUtils.slice(a, 1, 3)));
+	}
 }

@@ -2,18 +2,21 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
 import com.clust4j.algo.HDBSCAN.HList;
-import com.clust4j.algo.HDBSCAN.QuadTup;
+import com.clust4j.algo.HDBSCAN.NodeHeap;
 import com.clust4j.algo.HDBSCAN.UnifyFind;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
+import com.clust4j.utils.QuadTup;
 
 public class HDBSCANTests {
 
@@ -129,4 +132,49 @@ public class HDBSCANTests {
 		assertTrue(labels[2] == -1);
 	}
 
+	@Test
+	public void testGenericRun() {
+		final double[][] x = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 1).fit();
+		System.out.println(Arrays.toString(model.getLabels()));
+	}
+	
+	@Test
+	public void testFindNodeSplitDim() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		assertTrue(HDBSCAN.BinaryTree.findNodeSplitDim(a, new int[]{0,1,2}) == 2);
+	}
+	
+	@Test
+	public void testPartition() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		int idx_end = a.length, idx_start = 0;
+		int n = a[0].length, n_points = idx_end - idx_start;
+		int n_mid = n_points / 2;
+		int[] indcs = new int[]{0,1,2};
+		
+		int i_max = HDBSCAN.BinaryTree.findNodeSplitDim(a, indcs);
+		//HDBSCAN.BinaryTree.partitionNodeIndices(a, indcs, i_max, n_mid, n, n_points);
+	}
+	
+	@Test
+	public void testNodeHeap() {
+		NodeHeap nh = new NodeHeap(10);
+		System.out.println(nh);
+	}
 }

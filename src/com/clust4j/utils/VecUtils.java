@@ -1258,6 +1258,36 @@ public class VecUtils {
 		return ab;
 	}
 	
+	public static double[] slice(final double[] a, final int startInc, final int endExc) {
+		checkDims(a);
+		
+		if(endExc > a.length)
+			throw new ArrayIndexOutOfBoundsException(endExc);
+		if(startInc < 0 || startInc > a.length || startInc >= endExc)
+			throw new ArrayIndexOutOfBoundsException(startInc);
+		
+		final double[] out = new double[endExc - startInc];
+		for(int i = startInc, j = 0; i < endExc; i++, j++)
+			out[j] = a[i];
+		
+		return out;
+	}
+	
+	public static int[] slice(final int[] a, final int startInc, final int endExc) {
+		checkDims(a);
+		
+		if(endExc > a.length)
+			throw new ArrayIndexOutOfBoundsException(endExc);
+		if(startInc < 0 || startInc > a.length || startInc >= endExc)
+			throw new ArrayIndexOutOfBoundsException(startInc);
+		
+		final int[] out = new int[endExc - startInc];
+		for(int i = startInc, j = 0; i < endExc; i++, j++)
+			out[j] = a[i];
+		
+		return out;
+	}
+	
 	public static double[] sqrt(final double[] a) {
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
