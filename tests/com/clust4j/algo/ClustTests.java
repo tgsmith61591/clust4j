@@ -21,7 +21,7 @@ import com.clust4j.utils.VecUtils;
 
 public class ClustTests {
 	{ // initializer
-		com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
+		com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
 	}
 	
 	private static boolean print = false;

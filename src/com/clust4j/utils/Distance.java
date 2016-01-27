@@ -2,7 +2,7 @@ package com.clust4j.utils;
 
 import org.apache.commons.math3.util.FastMath;
 
-public enum Distance implements GeometricallySeparable, java.io.Serializable {
+public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	HAMMING {
 		
