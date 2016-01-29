@@ -737,6 +737,46 @@ public class MatUtils {
 		return out;
 	}
 	
+	public static double[][] reshape(final double[][] matrix, final int mNew, final int nNew) {
+		checkDims(matrix);
+		
+		final int mOld = matrix.length, nOld = matrix[0].length;
+		
+		if(mOld*nOld != mNew*nNew)
+			throw new IllegalArgumentException("total matrix size cannot change");
+		if(mNew < 0 || nNew < 0) // either they both are, or neither is or it wouldn't make it to this check...
+			throw new IllegalArgumentException("m, n must be greater than 0");
+		
+		final double[][] out = new double[mNew][nNew];
+		
+		int idx = 0;
+		for(int i = 0; i < mNew; i++)
+			for(int j = 0; j < nNew; j++)
+				out[i][j] = matrix[idx / nOld][idx++ % nOld];
+		
+		return out;
+	}
+	
+	public static int[][] reshape(final int[][] matrix, final int mNew, final int nNew) {
+		checkDims(matrix);
+		
+		final int mOld = matrix.length, nOld = matrix[0].length;
+		
+		if(mOld*nOld != mNew*nNew)
+			throw new IllegalArgumentException("total matrix size cannot change");
+		if(mNew < 0 || nNew < 0) // either they both are, or neither is or it wouldn't make it to this check...
+			throw new IllegalArgumentException("m, n must be greater than 0");
+		
+		final int[][] out = new int[mNew][nNew];
+		
+		int idx = 0;
+		for(int i = 0; i < mNew; i++)
+			for(int j = 0; j < nNew; j++)
+				out[i][j] = matrix[idx / nOld][idx++ % nOld];
+		
+		return out;
+	}
+	
 	public static double[] rowSums(final double[][] data) {
 		checkDims(data);
 		

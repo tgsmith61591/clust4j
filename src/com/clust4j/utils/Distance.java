@@ -20,6 +20,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "Hamming";
 		}
@@ -41,6 +56,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return 1;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "Manhattan";
 		}
@@ -52,6 +82,16 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override 
 		public double getDistance(final double[] a, final double[] b) {
+			return reducedDistanceToDistance(a, b);
+		}
+		
+		@Override
+		final public double getP() {
+			return 2;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			
 			double sum = 0;
@@ -61,7 +101,12 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 				sum += diff * diff;
 			}
 			
-			return FastMath.sqrt(sum);
+			return sum;
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return FastMath.sqrt(getReducedDistance(a, b));
 		}
 		
 		@Override
@@ -88,6 +133,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "BrayCurtis";
 		}
@@ -108,6 +168,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			}
 			
 			return sum;
+		}
+		
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
 		}
 		
 		@Override
@@ -136,6 +211,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return Double.POSITIVE_INFINITY;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "Chebyshev";
 		}
@@ -150,6 +240,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 				BooleanCorrespondence.correspondFtTfTt(a, b);
 			double nft_sum = corr.one, ntf_sum = corr.two, ntt_sum = corr.three;
 			return (ntf_sum + nft_sum) / (2.0 * ntt_sum + ntf_sum + nft_sum);
+		}
+		
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
 		}
 		
 		@Override
@@ -173,6 +278,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "Kulsinski";
 		}
@@ -192,6 +312,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "RogersTanimoto";
 		}
@@ -205,6 +340,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			final double ip = VecUtils.innerProduct(a, b);
 			final int n = a.length;
 			return (n - ip) / n;
+		}
+		
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
 		}
 		
 		@Override
@@ -230,6 +380,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
 		public String getName() {
 			return "SokalSneath";
 		}
@@ -246,6 +411,21 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 				   ntf_sum = correspondence.three, ntt_sum = correspondence.four;
 			
 			return (2.0 * ntf_sum * nft_sum) / (ntt_sum * nff_sum + ntf_sum * nft_sum);
+		}
+		
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getReducedDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double reducedDistanceToDistance(double[] a, double[] b) {
+			return getDistance(a, b);
 		}
 		
 		@Override

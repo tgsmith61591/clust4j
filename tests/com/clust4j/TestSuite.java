@@ -19,6 +19,7 @@ import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.NNHSTests;
 import com.clust4j.utils.TestDistanceEnums;
 import com.clust4j.utils.TestUtils;
 import com.clust4j.utils.VectorTests;
@@ -44,7 +45,8 @@ import com.clust4j.utils.parallel.ParallelTests;
 	PreProcessorTests.class,
 	PipelineTest.class,
 	ParallelTests.class,
-	HDBSCANTests.class
+	HDBSCANTests.class,
+	NNHSTests.class
 })
 
 /* Runs all the tests */

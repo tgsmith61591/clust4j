@@ -42,6 +42,21 @@ public class HaversineDistance implements DistanceMetric {
 		return c * radius;
 	}
 	
+	@Override
+	final public double getP() {
+		return DEFAULT_P;
+	}
+	
+	@Override
+	public double getReducedDistance(final double[] a, final double[] b) {
+		return getDistance(a, b);
+	}
+	
+	@Override
+	public double reducedDistanceToDistance(double[] a, double[] b) {
+		return getDistance(a, b);
+	}
+	
 	
 	private static double haversine(double val) {
 		return FastMath.pow(FastMath.sin(val / 2d), 2);

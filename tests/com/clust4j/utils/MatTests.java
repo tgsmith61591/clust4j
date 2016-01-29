@@ -291,7 +291,7 @@ public class MatTests {
 		};
 		
 		final double[][] c = MatUtils.copy(a);
-		System.out.println(TestSuite.formatter.format(new Array2DRowRealMatrix(MatUtils.partitionByRow(a, 2))));
+		//System.out.println(TestSuite.formatter.format(new Array2DRowRealMatrix(MatUtils.partitionByRow(a, 2))));
 		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 2), b) );
 		assertTrue( MatUtils.equalsExactly(a, c) );
 	}
@@ -369,5 +369,21 @@ public class MatTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(d, MatUtils.where(ser, b, c)));
+	}
+	
+	@Test
+	public void testReshape() {
+		final double[][] a = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6},
+			new double[]{7,8,9},
+			new double[]{10,11,12},
+			new double[]{13,14,15}
+		};
+		
+		final double[][] b = MatUtils.reshape(a, 3, 5);
+		System.out.println(TestSuite.formatter.format(b));
+		assertTrue(b.length == 3);
+		assertTrue(b[0].length == 5);
 	}
 }
