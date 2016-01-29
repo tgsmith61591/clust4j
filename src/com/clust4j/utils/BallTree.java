@@ -2,6 +2,7 @@ package com.clust4j.utils;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Loggable;
 
@@ -112,8 +113,10 @@ public class BallTree extends NearestNeighborHeapSearch {
 	}
 
 	@Override
-	double minMaxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt, double lb, double ub) {
-		// TODO Auto-generated method stub
-		return 0;
+	void minMaxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt, MutableDouble minDist, MutableDouble maxDist) {
+		double dist_pt = tree.dist(pt, tree.node_bounds[0][i_node]);
+		double rad = tree.node_data[i_node].radius;
+		minDist.value = FastMath.max(0, dist_pt - rad);
+		maxDist.value = dist_pt + rad;
 	}
 }

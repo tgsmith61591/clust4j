@@ -109,9 +109,22 @@ public class KDTree extends NearestNeighborHeapSearch {
 	}
 
 	@Override
-	double minRDist(NearestNeighborHeapSearch tree, int i_node, double[] a) {
-		// TODO Auto-generated method stub
-		return 0;
+	double minRDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
+		double d_lo, d_hi, d, rdist = 0.0;
+		
+		for(int j = 0; j < N_FEATURES; j++) {
+			d_lo = tree.node_bounds[0][i_node][j] - pt[j];
+			d_hi = pt[j] - tree.node_bounds[1][i_node][j];
+			d = (d_lo + FastMath.abs(d_lo)) + (d_hi	+ FastMath.abs(d_hi));
+			
+			if(tree.dist_metric.getP() == Double.POSITIVE_INFINITY) {
+				rdist = FastMath.max(rdist, 0.5 * d);
+			} else {
+				rdist += FastMath.pow(0.5 * d, tree.dist_metric.getP());
+			}
+		}
+		
+		return rdist;
 	}
 
 	@Override
@@ -123,9 +136,23 @@ public class KDTree extends NearestNeighborHeapSearch {
 	}
 
 	@Override
-	double maxRDist(NearestNeighborHeapSearch tree, int i_node, double[] a) {
-		// TODO Auto-generated method stub
-		return 0;
+	double maxRDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
+		double d_lo, d_hi, rdist = 0.0;
+		
+		if(tree.dist_metric.getP() == Double.POSITIVE_INFINITY) {
+			for(int j = 0; j < N_FEATURES; j++) {
+				rdist = FastMath.max(rdist, FastMath.abs(pt[j] - tree.node_bounds[0][i_node][j]));
+				rdist = FastMath.max(rdist, FastMath.abs(pt[j] - tree.node_bounds[1][i_node][j]));
+			}
+		} else {
+			for(int j = 0; j < N_FEATURES; j++) {
+				d_lo = FastMath.abs(pt[j] - tree.node_bounds[0][i_node][j]);
+				d_hi = FastMath.abs(pt[j] - tree.node_bounds[1][i_node][j]);
+				rdist += FastMath.pow(FastMath.max(d_lo, d_hi), tree.dist_metric.getP());
+			}
+		}
+		
+		return rdist;
 	}
 
 	@Override
@@ -136,19 +163,45 @@ public class KDTree extends NearestNeighborHeapSearch {
 
 	@Override
 	double maxDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
-		// TODO Auto-generated method stub
-		return 0;
+		return tree1.dist_metric.partialDistanceToDistance(maxRDistDual(tree1, iNode1, tree2, iNode2));
 	}
 
 	@Override
 	double minDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
-		// TODO Auto-generated method stub
-		return 0;
+		return tree1.dist_metric.partialDistanceToDistance(minRDistDual(tree1, iNode1, tree2, iNode2));
 	}
 
 	@Override
-	double minMaxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt, double lb, double ub) {
-		// TODO Auto-generated method stub
-		return 0;
+	void minMaxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt, MutableDouble minDist, MutableDouble maxDist) {
+		double d, d_lo, d_hi;
+		int j;
+		
+		minDist.value = 0.0;
+		maxDist.value = 0.0;
+		
+		if(tree.dist_metric.getP() == Double.POSITIVE_INFINITY) {
+			for(j = 0; j < N_FEATURES; j++) {
+				d_lo = tree.node_bounds[0][i_node][j] - pt[j];
+				d_hi = pt[j] - tree.node_bounds[1][i_node][j];
+				d = (d_lo + FastMath.abs(d_lo)) + (d_hi + FastMath.abs(d_hi));
+				
+				minDist.value = FastMath.max(minDist.value, 0.5 * d);
+				maxDist.value = FastMath.max(maxDist.value, FastMath.abs(pt[j] - tree.node_bounds[0][i_node][j]));
+				maxDist.value = FastMath.max(maxDist.value, FastMath.abs(pt[j] - tree.node_bounds[1][i_node][j]));
+			}
+		} else {
+			for(j = 0; j < N_FEATURES; j++) {
+				d_lo = tree.node_bounds[0][i_node][j] - pt[j];
+				d_hi = pt[j] - tree.node_bounds[1][i_node][j];
+				d = (d_lo + FastMath.abs(d_lo)) + (d_hi + FastMath.abs(d_hi));
+				
+				minDist.value = FastMath.pow(0.5 * d, tree.dist_metric.getP());
+				maxDist.value = FastMath.pow(FastMath.max(FastMath.abs(d_lo), FastMath.abs(d_hi)), tree.dist_metric.getP());
+			}
+			
+			double pow = 1.0 / tree.dist_metric.getP();
+			minDist.value = FastMath.pow(minDist.value, pow);
+			maxDist.value = FastMath.pow(maxDist.value, pow);
+		} // end if/else
 	}
 }

@@ -580,6 +580,17 @@ public class VecUtils {
 		return true;
 	}
 	
+	public static double[] exp(final double[] a) {
+		checkDims(a);
+		
+		final int n = a.length;
+		final double[] out = new double[n];
+		for(int i = 0; i < n; i++)
+			out[i] = FastMath.exp(a[i]);
+		
+		return out;
+	}
+	
 	/**
 	 * Given a min value, <tt>min</tt>, any value in the input vector lower than the value
 	 * will be truncated to another floor value, <tt>floor</tt>

@@ -25,13 +25,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -61,13 +66,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
-		
+
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -80,9 +90,14 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	EUCLIDEAN {
 		
+		@Override
+		public double distanceToPartialDistance(final double d) {
+			return d * d;
+		}
+		
 		@Override 
 		public double getDistance(final double[] a, final double[] b) {
-			return reducedDistanceToDistance(a, b);
+			return FastMath.sqrt(getPartialDistance(a, b));
 		}
 		
 		@Override
@@ -91,7 +106,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			
 			double sum = 0;
@@ -105,8 +120,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return FastMath.sqrt(getReducedDistance(a, b));
+		public double partialDistanceToDistance(double d) {
+			return FastMath.sqrt(d);
 		}
 		
 		@Override
@@ -138,13 +153,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -176,13 +196,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -216,13 +241,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -248,13 +278,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -283,13 +318,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -317,13 +357,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -348,13 +393,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -385,13 +435,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override
@@ -419,13 +474,18 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getReducedDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			return getDistance(a, b);
 		}
 		
 		@Override
-		public double reducedDistanceToDistance(double[] a, double[] b) {
-			return getDistance(a, b);
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
 		}
 		
 		@Override

@@ -48,13 +48,18 @@ public class HaversineDistance implements DistanceMetric {
 	}
 	
 	@Override
-	public double getReducedDistance(final double[] a, final double[] b) {
+	public double getPartialDistance(final double[] a, final double[] b) {
 		return getDistance(a, b);
 	}
 	
 	@Override
-	public double reducedDistanceToDistance(double[] a, double[] b) {
-		return getDistance(a, b);
+	public double partialDistanceToDistance(double d) {
+		return d;
+	}
+
+	@Override
+	public double distanceToPartialDistance(double d) {
+		return d;
 	}
 	
 	

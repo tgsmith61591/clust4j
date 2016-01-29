@@ -14,7 +14,7 @@ public class MinkowskiDistance implements DistanceMetric {
 
 	@Override
 	public double getDistance(double[] a, double[] b) {
-		return reducedDistanceToDistance(a, b);
+		return partialDistanceToDistance(getPartialDistance(a, b));
 	}
 	
 	@Override
@@ -23,7 +23,7 @@ public class MinkowskiDistance implements DistanceMetric {
 	}
 	
 	@Override
-	public double getReducedDistance(final double[] a, final double[] b) {
+	public double getPartialDistance(final double[] a, final double[] b) {
 		VecUtils.checkDims(a,b);
 		
 		double sum = 0;
@@ -37,8 +37,13 @@ public class MinkowskiDistance implements DistanceMetric {
 	}
 	
 	@Override
-	public double reducedDistanceToDistance(double[] a, double[] b) {
-		return FastMath.pow(getReducedDistance(a,b), 1d/p);
+	public double partialDistanceToDistance(double d) {
+		return FastMath.pow(d, 1.0/p);
+	}
+	
+	@Override
+	public double distanceToPartialDistance(double d) {
+		return FastMath.pow(d, this.p);
 	}
 	
 	@Override

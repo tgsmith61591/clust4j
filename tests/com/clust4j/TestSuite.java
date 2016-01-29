@@ -46,7 +46,8 @@ import com.clust4j.utils.parallel.ParallelTests;
 	PipelineTest.class,
 	ParallelTests.class,
 	HDBSCANTests.class,
-	NNHSTests.class
+	NNHSTests.class,
+	TestGlobals.class
 })
 
 /* Runs all the tests */
