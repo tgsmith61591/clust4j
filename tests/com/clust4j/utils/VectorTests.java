@@ -269,4 +269,11 @@ public class VectorTests {
 		final double[] b = new double[]{1,2};
 		assertTrue(VecUtils.equalsExactly(b, VecUtils.slice(a, 1, 3)));
 	}
+	
+	@Test
+	public void testReorder() {
+		double[] a = new double[]{5,1,3,4};
+		double[] ordered = VecUtils.reorder(a, new int[]{0,1,0,1});
+		assertTrue(VecUtils.equalsExactly(ordered, new double[]{5,1,5,1}));
+	}
 }

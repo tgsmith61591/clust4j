@@ -1360,6 +1360,137 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 	}
 	
+	int[] twoPointCorrelation(double[][] X, double[] r) {
+		return twoPointCorrelation(X, r, false);
+	}
+	
+	int[] twoPointCorrelation(double[][] X, double[] r, boolean dual) {
+		int i;
+		
+		MatUtils.checkDims(X);
+		if(X[0].length != N_FEATURES)
+			throw new DimensionMismatchException(X[0].length, N_FEATURES);
+	
+		double[][] Xarr = MatUtils.copy(X);
+		int[] i_rsort = VecUtils.argSort(r);
+		double[] rarr = VecUtils.reorder(r, i_rsort);
+		
+		// count array
+		int[] carr = new int[r.length];
+		
+		if(dual) {
+			NearestNeighborHeapSearch other = newInstance(Xarr, leaf_size, dist_metric, logger);
+			this.twoPointDual(0, other, 0, rarr, carr, 0, rarr.length);
+		} else {
+			for(i = 0; i < Xarr.length; i++) {
+				this.twoPointSingle(0, Xarr[i], rarr, carr, 0, rarr.length);
+			}
+		}
+		
+		return carr;
+	}
+	
+	void twoPointDual(int i_node1, NearestNeighborHeapSearch other, int i_node2,
+			double[] r, int[] count, int i_min, int i_max) {
+		
+		double[][] data1 = this.data_arr;
+		double[][] data2 = other.data_arr;
+		int[] idx_array1 = this.idx_array;
+		int[] idx_array2 = other.idx_array;
+		NodeData nodeInfo1 = this.node_data[i_node1];
+		NodeData nodeInfo2 = other.node_data[i_node2];
+		
+		int i1, i2, j, Npts;
+		double dist_pt;
+		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
+		
+		dist_LB.value = minDistDual(this, i_node1, other, i_node2);
+		dist_UB.value = maxDistDual(this, i_node1, other, i_node2);
+		
+		// Check for cuts
+		while(i_min < i_max) {
+			if(dist_LB.value > r[i_min])
+				i_min++;
+			else break;
+		}
+		
+		while(i_max > i_min) {
+			Npts = ((nodeInfo1.idx_end - nodeInfo1.idx_start) 
+					* (nodeInfo2.idx_end - nodeInfo2.idx_start));
+			if(dist_UB.value <= r[i_max - 1]) {
+				count[i_max - 1] += Npts;
+				i_max--;
+			} else break;
+		}
+		
+		if(i_min < i_max) {
+			if(nodeInfo1.is_leaf && nodeInfo2.is_leaf) {
+				for(i1 = nodeInfo1.idx_start; i1 < nodeInfo1.idx_end; i1++) {
+					for(i2 = nodeInfo2.idx_start; i2 < nodeInfo2.idx_end; i2++) {
+						dist_pt = this.dist(data1[idx_array1[i1]], data2[idx_array2[i2]]);
+						j = i_max - 1;
+						
+						while(j >= i_min && dist_pt <= r[j])
+							count[j--]++;
+					}
+				}
+				
+			} else if(nodeInfo1.is_leaf) {
+				for(i2 = 2 * i_node2 + 1; i2 < 2 * i_node2 + 3; i2++)
+					this.twoPointDual(i_node1, other, i2, r, count, i_min, i_max);
+				
+			} else if(nodeInfo2.is_leaf) {
+				for(i1 = 2 * i_node1 + 1; i1 < 2 * i_node1 + 3; i1++)
+					this.twoPointDual(i1, other, i_node2, r, count, i_min, i_max);
+				
+			} else {
+				for(i1 = 2 * i_node1 + 1; i1 < 2 * i_node1 + 3; i1++)
+					for(i2 = 2 * i_node2 + 1; i2 < 2 * i_node2 + 3; i2++)
+						this.twoPointDual(i1, other, i2, r, count, i_min, i_max);
+			}
+		}
+	}
+	
+	void twoPointSingle(int i_node, double[] pt, double[] r, int[] count, int i_min, int i_max) {
+		double[][] data = this.data_arr;
+		NodeData nodeInfo = node_data[i_node];
+		
+		int i, j, Npts;
+		double dist_pt;
+		
+		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
+		minMaxDist(this, i_node, pt, dist_LB, dist_UB);
+		
+		while(i_min < i_max) {
+			if(dist_LB.value > r[i_min])
+				i_min++;
+			else break;
+		}
+		
+		while(i_max > i_min) {
+			Npts = nodeInfo.idx_end - nodeInfo.idx_start;
+			if(dist_UB.value <= r[i_max - 1]) {
+				count[i_max - 1] += Npts;
+				i_max--;
+			} else break;
+			
+		}
+		
+		if(i_min < i_max) {
+			if(nodeInfo.is_leaf) {
+				for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
+					dist_pt = this.dist(pt, data[idx_array[i]]);
+					j = i_max - 1;
+					while(j >= i_min && dist_pt <= r[j])
+						count[j--]++;
+				}
+			} else {
+				this.twoPointSingle(2 * i_node + 1, pt, r, count, i_min, i_max);
+				this.twoPointSingle(2 * i_node + 2, pt, r, count, i_min, i_max);
+			}
+		}
+	}
+	
 	
 
 	// Init functions

@@ -1199,6 +1199,34 @@ public class VecUtils {
 		return randomGaussian(n,seed,GlobalState.Mathematics.EPS);
 	}
 	
+	public static double[] reorder(final double[] data, final int[] order) {
+		VecUtils.checkDims(order);
+		VecUtils.checkDims(data);
+		
+		final int n = order.length;
+		final double[] out = new double[n];
+		
+		int idx = 0;
+		for(int i: order)
+			out[idx++] = data[i];
+		
+		return out;
+	}
+	
+	public static int[] reorder(final int[] data, final int[] order) {
+		VecUtils.checkDims(order);
+		VecUtils.checkDims(data);
+		
+		final int n = order.length;
+		final int[] out = new int[n];
+		
+		int idx = 0;
+		for(int i: order)
+			out[idx++] = data[i];
+		
+		return out;
+	}
+	
 	/**
 	 * Create a vector of a repeated value
 	 * @param val

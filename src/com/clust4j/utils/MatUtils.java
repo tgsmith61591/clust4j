@@ -693,6 +693,7 @@ public class MatUtils {
 	
 	public static double[][] reorder(final double[][] data, final int[] order) {
 		VecUtils.checkDims(order);
+		checkDims(data);
 		
 		final int n = order.length;
 		final double[][] out = new double[n][];
@@ -706,6 +707,7 @@ public class MatUtils {
 	
 	public static int[][] reorder(final int[][] data, final int[] order) {
 		VecUtils.checkDims(order);
+		checkDims(data);
 		
 		final int n = order.length;
 		final int[][] out = new int[n][];

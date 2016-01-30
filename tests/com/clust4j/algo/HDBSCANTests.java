@@ -154,21 +154,4 @@ public class HDBSCANTests {
 		
 		assertTrue(NearestNeighborHeapSearch.findNodeSplitDim(a, new int[]{0,1,2}) == 2);
 	}
-	
-	@Test
-	public void testPartition() {
-		final double[][] a = new double[][]{
-			new double[]{0,1,0,2},
-			new double[]{0,0,1,2},
-			new double[]{5,6,7,4}
-		};
-		
-		int idx_end = a.length, idx_start = 0;
-		int n = a[0].length, n_points = idx_end - idx_start;
-		int n_mid = n_points / 2;
-		int[] indcs = new int[]{0,1,2};
-		
-		int i_max = NearestNeighborHeapSearch.findNodeSplitDim(a, indcs);
-		//HDBSCAN.BinaryTree.partitionNodeIndices(a, indcs, i_max, n_mid, n, n_points);
-	}
 }
