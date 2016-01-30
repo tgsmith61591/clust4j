@@ -96,8 +96,21 @@ public class KDTree extends NearestNeighborHeapSearch {
 
 	@Override
 	double minRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
-		// TODO Auto-generated method stub
-		return 0;
+		double d, d1, d2, rdist = 0.0;
+		int j;
+		
+		for(j = 0; j < N_FEATURES; j++) {
+			d1 = tree1.node_bounds[0][iNode1][j] - tree2.node_bounds[1][iNode2][j];
+			d2 = tree2.node_bounds[0][iNode2][j] - tree1.node_bounds[1][iNode1][j];
+			d = (d1 + FastMath.abs(d1)) + (d2 + FastMath.abs(d2));
+			
+			if(tree1.dist_metric.getP() == Double.POSITIVE_INFINITY)
+				rdist = FastMath.max(rdist, 0.5 * d);
+			else
+				rdist += FastMath.pow(0.5 * d, tree1.dist_metric.getP());
+		}
+		
+		return rdist;
 	}
 	
 	@Override
@@ -117,11 +130,10 @@ public class KDTree extends NearestNeighborHeapSearch {
 			d_hi = pt[j] - tree.node_bounds[1][i_node][j];
 			d = (d_lo + FastMath.abs(d_lo)) + (d_hi	+ FastMath.abs(d_hi));
 			
-			if(tree.dist_metric.getP() == Double.POSITIVE_INFINITY) {
+			if(tree.dist_metric.getP() == Double.POSITIVE_INFINITY)
 				rdist = FastMath.max(rdist, 0.5 * d);
-			} else {
+			else
 				rdist += FastMath.pow(0.5 * d, tree.dist_metric.getP());
-			}
 		}
 		
 		return rdist;
@@ -157,8 +169,29 @@ public class KDTree extends NearestNeighborHeapSearch {
 
 	@Override
 	double maxRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
-		// TODO Auto-generated method stub
-		return 0;
+		double d1, d2, rdist = 0.0;
+		int j;
+		
+		if(tree1.dist_metric.getP() == Double.POSITIVE_INFINITY) {
+			for(j = 0; j < N_FEATURES; j++) {
+				rdist = FastMath.max(rdist, 
+					FastMath.abs(tree1.node_bounds[0][iNode1][j]
+								- tree2.node_bounds[1][iNode2][j]));
+				rdist = FastMath.max(rdist, 
+						FastMath.abs(tree1.node_bounds[1][iNode1][j]
+								- tree2.node_bounds[0][iNode2][j]));
+			}
+		} else {
+			for(j = 0; j < N_FEATURES; j++) {
+				d1 = FastMath.abs(tree1.node_bounds[0][iNode1][j]
+								- tree2.node_bounds[1][iNode2][j]);
+				d2 = FastMath.abs(tree1.node_bounds[1][iNode1][j]
+								- tree2.node_bounds[0][iNode2][j]);
+				rdist += FastMath.pow(FastMath.max(d1, d2), tree1.dist_metric.getP());
+			}
+		}
+		
+		return rdist;
 	}
 
 	@Override

@@ -1372,8 +1372,8 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	abstract double maxDistDual	(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract double minDistDual	(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract void minMaxDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt, MutableDouble minDist, MutableDouble maxDist);
-	abstract double maxRDist	(NearestNeighborHeapSearch tree, int i_node, double[] a);
-	abstract double minRDist	(NearestNeighborHeapSearch tree, int i_node, double[] a);
+	abstract double maxRDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt);
+	abstract double minRDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt);
 	abstract double maxRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract double minRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	
