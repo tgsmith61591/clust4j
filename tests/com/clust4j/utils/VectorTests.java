@@ -276,4 +276,11 @@ public class VectorTests {
 		double[] ordered = VecUtils.reorder(a, new int[]{0,1,0,1});
 		assertTrue(VecUtils.equalsExactly(ordered, new double[]{5,1,5,1}));
 	}
+	
+	@Test
+	public void testReverse() {
+		final int[] a = new int[]{0,1,2,3};
+		final int[] b = new int[]{3,2,1,0};
+		assertTrue(VecUtils.equalsExactly(b, VecUtils.reverseSeries(a)));
+	}
 }

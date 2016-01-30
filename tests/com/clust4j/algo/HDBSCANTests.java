@@ -2,33 +2,40 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
+import com.clust4j.algo.HDBSCAN.Algorithm;
+import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
 import com.clust4j.algo.HDBSCAN.HList;
+import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.UnifyFind;
+import com.clust4j.utils.Distance;
+import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
+import com.clust4j.utils.KDTree;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NearestNeighborHeapSearch;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
+import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
 
 public class HDBSCANTests {
+	final static MatrixFormatter formatter = TestSuite.formatter;
+	final static double[][] dist_mat = new double[][]{
+		new double[]{1,2,3},
+		new double[]{4,5,6},
+		new double[]{7,8,9}
+	};
 
 	
 	@Test
 	public void testHDBSCANGenericMutualReachability() {
-		final double[][] dist_mat = new double[][]{
-			new double[]{1,2,3},
-			new double[]{4,5,6},
-			new double[]{7,8,9}
-		};
-		
 		final int m = dist_mat.length, minPts = 3;
 		
 		final int min_points = FastMath.min(m - 1, minPts);
@@ -140,8 +147,11 @@ public class HDBSCANTests {
 			new double[]{5,6,7,4}
 		};
 		
-		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 1).fit();
-		System.out.println(Arrays.toString(model.getLabels()));
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
+				new HDBSCANPlanner(1)
+				.setVerbose(true)).fit();
+		int[] labels = model.getLabels();
+		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
 	}
 	
 	@Test
@@ -153,5 +163,58 @@ public class HDBSCANTests {
 		};
 		
 		assertTrue(NearestNeighborHeapSearch.findNodeSplitDim(a, new int[]{0,1,2}) == 2);
+	}
+	
+	
+	@Test
+	public void testPrimKD() {
+		double m = dist_mat.length;
+		int min_points = (int)FastMath.min(m - 1, 5);
+		Array2DRowRealMatrix X = new Array2DRowRealMatrix(dist_mat);
+		
+		KDTree tree = new KDTree(X, HDBSCAN.DEF_LEAF_SIZE, Distance.EUCLIDEAN);
+		EntryPair<double[][], int[][]> query = tree.query(dist_mat, min_points, true, true, true);
+		double[][] dists = query.getKey();
+		double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
+		
+		// Needs to equal this:
+		// [ 5.19615242,  5.19615242,  5.19615242]
+		assertTrue(VecUtils.equalsExactly(coreDistances, new double[]{
+			5.196152422706632, 5.196152422706632, 5.196152422706632
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(query.getValue(), new int[][]{
+			new int[]{0,1},
+			new int[]{1,0},
+			new int[]{2,1}
+		}));
+		
+		
+		double[][] minSpanningTree = LinkageTreeUtils
+				.mstLinkageCore_cdist(dist_mat, coreDistances, 
+						Distance.EUCLIDEAN, HDBSCAN.DEF_ALPHA);
+		
+		double[][] expected = new double[][]{
+			new double[]{0.0, 1.0, 5.196152422706632},
+			new double[]{1.0, 2.0, 5.196152422706632}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(minSpanningTree, expected));
+	}
+	
+	@Test
+	public void testPrimKDRun() {
+		final double[][] x = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
+				new HDBSCANPlanner(1)
+					.setAlgo(Algorithm.PRIMS_KD_TREE)
+					.setVerbose(true)).fit();
+		int[] labels = model.getLabels();
+		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
 	}
 }

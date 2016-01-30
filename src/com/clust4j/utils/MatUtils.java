@@ -349,6 +349,18 @@ public class MatUtils {
 		return true;
 	}
 	
+	public static boolean equalsExactly(final int[][] a, final int[][] b) {
+		if(a.length != b.length)
+			return false;
+		if(a.length == 0) // Both are empty
+			return true;
+		
+		for(int i = 0; i < a.length; i++)
+			if(!VecUtils.equalsExactly(a[i], b[i]))
+				return false;
+		return true;
+	}
+	
 	public static double[] flatten(final double[][] a) {
 		checkDims(a);
 		

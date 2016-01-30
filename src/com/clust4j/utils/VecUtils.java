@@ -1257,6 +1257,28 @@ public class VecUtils {
 		return d;
 	}
 	
+	public static double[] reverseSeries(final double[] a) {
+		checkDims(a);
+		
+		final int n = a.length;
+		final double[] out = new double[n];
+		for(int i = n - 1, j = 0; i >= 0; i--, j++)
+			out[j] = a[i];
+		
+		return out;
+	}
+	
+	public static int[] reverseSeries(final int[] a) {
+		checkDims(a);
+		
+		final int n = a.length;
+		final int[] out = new int[n];
+		for(int i = n - 1, j = 0; i >= 0; i--, j++)
+			out[j] = a[i];
+		
+		return out;
+	}
+	
 	public static double[] scalarAdd(final double[] a, final double b) {
 		checkDims(a);
 		

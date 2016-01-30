@@ -550,6 +550,13 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return dist_metric.partialDistanceToDistance(d);
 	}
 	
+	private void rDistToDistInPlace(final double[][] d) {
+		final int m = d.length, n = d[0].length;
+		for(int i = 0; i < m; i++)
+			for(int j = 0; j < n; j++)
+				d[i][j] = rDistToDist(d[i][j]);
+	}
+	
 	/**
 	 * For this record, split nodes updating the bounds until
 	 * the bounds are within the absolute tolerance and relative tolerance.
@@ -972,7 +979,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	}
 	
 	
-	public int[][] query(double[][] X, int k, boolean dualTree, boolean breadthFirst, boolean sort) {
+	public EntryPair<double[][], int[][]> query(double[][] X, int k, boolean dualTree, boolean breadthFirst, boolean sort) {
 		MatUtils.checkDims(X);
 		
 		final int n = data_arr[0].length, m = data_arr.length;
@@ -1027,9 +1034,13 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		
 		EntryPair<double[][], int[][]> distances_indices = heap.getArrays(sort);
 		int[][] indices = distances_indices.getValue();
+		double[][] distances = distances_indices.getKey();
+		rDistToDistInPlace(distances); // set back to dist
 		
 		
-		return MatUtils.reshape(indices, X.length, k);
+		return new EntryPair<double[][], int[][]>(
+				MatUtils.reshape(distances, X.length, k), 
+				MatUtils.reshape(indices,   X.length, k));
 	}
 	
 	private void queryDualBreadthFirst(NearestNeighborHeapSearch other,
