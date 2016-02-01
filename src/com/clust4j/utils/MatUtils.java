@@ -17,6 +17,8 @@ import org.apache.commons.math3.util.Precision;
 import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
 
 public class MatUtils {
+	final static String MAT_DIM_ERR_MSG = "illegal mat dim: ";
+	
 	/** Size at which to use BlockRealMatrix for multiplication */
 	public final static int BLOCK_MAT_THRESH = 1000;
 	public final static int MIN_ACCEPTABLE_MAT_LEN = 1;
@@ -84,7 +86,7 @@ public class MatUtils {
 	}
 	
 	final static public void checkDims(final boolean[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
+		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -96,7 +98,7 @@ public class MatUtils {
 	}
 	
 	final static public void checkDims(final double[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
+		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -108,7 +110,7 @@ public class MatUtils {
 	}
 	
 	final static public void checkDims(final int[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException("illegal mat row dim:" + a.length);
+		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -130,11 +132,23 @@ public class MatUtils {
 	}
 	
 	final static public void checkDims(final AbstractRealMatrix a) {
-		checkDims(a.getData());
+		int m = a.getRowDimension(), n = a.getColumnDimension();
+		
+		if(m < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + m);
+		if(n < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + n);
 	}
 	
 	final static public void checkDims(final AbstractRealMatrix a, final AbstractRealMatrix b) {
-		checkDims(a.getData(), b.getData());
+		checkDims(a);
+		checkDims(b);
+		
+		int m1 = a.getRowDimension(), m2 = b.getRowDimension();
+		int n1 = a.getColumnDimension(), n2 = b.getColumnDimension();
+		
+		if(m1 != m2)
+			throw new DimensionMismatchException(m1, m2);
+		if(n1 != n2)
+			throw new DimensionMismatchException(n1, n2);
 	}
 	
 	public static final double[][] abs(final double[][] a) {
@@ -251,31 +265,35 @@ public class MatUtils {
 		return completeCases(data.getData());
 	}
 	
-	public static boolean containsNaN(final AbstractRealMatrix mat) {
+	public static boolean containsNaN(final double[][] mat) {
 		checkDims(mat);
 		
-		final int m = mat.getRowDimension(), n = mat.getColumnDimension();
-		final double[][] dr = mat.getData();
-		
+		final int m = mat.length, n = mat[0].length;
 		for(int i = 0; i < m; i++)
 			for(int j = 0; j < n; j++)
-				if(Double.isNaN(dr[i][j]))
+				if(Double.isNaN(mat[i][j]))
 					return true;
 		
 		return false;
 	}
 	
-	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
+	public static boolean containsNaNDistributed(final double[][] mat) {
 		checkDims(mat);
 		
-		final int m = mat.getRowDimension();
-		final double[][] dr = mat.getData();
-		
+		final int m = mat.length;
 		for(int i = 0; i < m; i++)
-			if(VecUtils.containsNaNDistributed(dr[i]))
+			if(VecUtils.containsNaNDistributed(mat[i]))
 				return true;
 		
 		return false;
+	}
+	
+	public static boolean containsNaN(final AbstractRealMatrix mat) {
+		return containsNaN(mat.getData());
+	}
+	
+	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
+		return containsNaNDistributed(mat.getData());
 	}
 	
 	

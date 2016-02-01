@@ -9,6 +9,12 @@ import com.clust4j.utils.NearestNeighborHeapSearch.Heap.NodeHeapData;
 
 import static com.clust4j.GlobalState.Mathematics.*;
 
+
+/**
+ * 
+ * @author Taylor G Smith
+ * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/neighbors/binary_tree.pxi">sklearn BinaryTree</a>
+ */
 abstract public class NearestNeighborHeapSearch implements java.io.Serializable {
 	private static final long serialVersionUID = -5617532034886067210L;
 	
@@ -117,7 +123,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * that are faster and simpler than the {@link Kernel} class methods.
 	 * @author Taylor G Smith
 	 */
-	static enum PartialKernelDensity implements Density {
+	public static enum PartialKernelDensity implements Density {
 		LOG_COSINE {
 			@Override
 			public double getDensity(double dist, double h) {
@@ -207,7 +213,8 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * leans heavily on passing pointers.
 	 * @author Taylor G Smith
 	 */
-	static class MutableDouble implements Comparable<Double> {
+	public static class MutableDouble implements Comparable<Double>, java.io.Serializable {
+		private static final long serialVersionUID = -4636023903600763877L;
 		Double value = new Double(0);
 		
 		MutableDouble() { }
@@ -225,13 +232,14 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * Node data container
 	 * @author Taylor G Smith
 	 */
-	static class NodeData {
+	public static class NodeData implements DeepCloneable, java.io.Serializable {
+		private static final long serialVersionUID = -2469826821608908612L;
 		int idx_start, idx_end;
 		boolean is_leaf;
 		double radius;
 		
-		NodeData() { }
-		NodeData(int st, int ed, boolean is, double rad) {
+		public NodeData() { }
+		public NodeData(int st, int ed, boolean is, double rad) {
 			idx_start = st;
 			idx_end = ed;
 			is_leaf = is;
@@ -243,6 +251,27 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			return "NodeData: ["+idx_start+", "+
 				idx_end+", "+is_leaf+", "+radius+"]";
 		}
+		
+		@Override
+		public NodeData copy() {
+			return new NodeData(idx_start, idx_end, is_leaf, radius);
+		}
+		
+		public boolean isLeaf() {
+			return is_leaf;
+		}
+		
+		public int end() {
+			return idx_end;
+		}
+		
+		public double radius() {
+			return radius;
+		}
+		
+		public int start() {
+			return idx_start;
+		}
 	}
 	
 	/**
@@ -250,7 +279,9 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * NeighborHeap classes
 	 * @author Taylor G Smith
 	 */
-	abstract static class Heap {
+	abstract static class Heap implements java.io.Serializable {
+		private static final long serialVersionUID = 1L;
+
 		/** Node class. */
 		static class NodeHeapData {
 			double val;
@@ -292,6 +323,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/neighbors/binary_tree.pxi">sklearn NodeHeap</a>
 	 */
 	static class NeighborsHeap extends Heap {
+		private static final long serialVersionUID = 3065531260075044616L;
 		double[][] distances;
 		int[][] indices;
 		
@@ -433,6 +465,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/neighbors/binary_tree.pxi">sklearn NodeHeap</a>
 	 */
 	static class NodeHeap extends Heap {
+		private static final long serialVersionUID = 5621403002445703132L;
 		NodeHeapData[] data;
 		int n;
 		
@@ -535,6 +568,49 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	
 	
 	
+	
+	
+	// ========================== Getters ==========================
+	public double[][] getData() {
+		return MatUtils.copy(data_arr);
+	}
+	
+	public double[][] getDataRef() {
+		return data_arr;
+	}
+	
+	public double[][][] getNodeBounds() {
+		int m = node_bounds.length;
+		
+		double[][][] out = new double[m][][];
+		for(int i = 0; i < m; i++)
+			out[i] = MatUtils.copy(node_bounds[i]);
+		
+		return out;
+	}
+	
+	public double[][][] getNodeBoundsRef() {
+		return node_bounds;
+	}
+	
+	public int[] getIndexArray() {
+		return VecUtils.copy(idx_array);
+	}
+	
+	public int[] getIndexArrayRef() {
+		return idx_array;
+	}
+	
+	public NodeData[] getNodeData() {
+		NodeData[] copy = new NodeData[node_data.length];
+		for(int i = 0; i < copy.length; i++)
+			copy[i] = node_data[i].copy();
+		return copy;
+	}
+	
+	public NodeData[] getNodeDataRef() {
+		return node_data;
+	}
 	
 	
 	// ========================== Instance methods ==========================

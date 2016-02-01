@@ -14,6 +14,7 @@ import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
 import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.UnifyFind;
+import com.clust4j.utils.BallTree;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
@@ -67,7 +68,7 @@ public class HDBSCANTests {
 		
 		final int m = X.length;
 		
-		double[][] result = HDBSCAN.LinkageTreeUtils.mstLinkageCore(X, m);
+		double[][] result = HDBSCAN.LinkageTreeUtils.minSpanTreeLinkageCore(X, m);
 		
 		final double[][] expected = new double[][]{
 			new double[]{0.0, 2.0, 0.3},
@@ -152,6 +153,7 @@ public class HDBSCANTests {
 				.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
+		System.out.println();
 	}
 	
 	@Test
@@ -191,7 +193,7 @@ public class HDBSCANTests {
 		
 		
 		double[][] minSpanningTree = LinkageTreeUtils
-				.mstLinkageCore_cdist(dist_mat, coreDistances, 
+				.minSpanTreeLinkageCore_cdist(dist_mat, coreDistances, 
 						Distance.EUCLIDEAN, HDBSCAN.DEF_ALPHA);
 		
 		double[][] expected = new double[][]{
@@ -212,9 +214,97 @@ public class HDBSCANTests {
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
 				new HDBSCANPlanner(1)
-					.setAlgo(Algorithm.PRIMS_KD_TREE)
+					.setAlgo(Algorithm.PRIMS_KDTREE)
 					.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
+		System.out.println();
 	}
+	
+	@Test
+	public void testPrimBall() {
+		double m = dist_mat.length;
+		int min_points = (int)FastMath.min(m - 1, 5);
+		Array2DRowRealMatrix X = new Array2DRowRealMatrix(dist_mat);
+		
+		BallTree tree = new BallTree(X, HDBSCAN.DEF_LEAF_SIZE, Distance.EUCLIDEAN);
+		EntryPair<double[][], int[][]> query = tree.query(dist_mat, min_points, true, true, true);
+		double[][] dists = query.getKey();
+		double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
+		
+		// Needs to equal this:
+		// [ 5.19615242,  5.19615242,  5.19615242]
+		assertTrue(VecUtils.equalsExactly(coreDistances, new double[]{
+			5.196152422706632, 5.196152422706632, 5.196152422706632
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(query.getValue(), new int[][]{
+			new int[]{0,1},
+			new int[]{1,0},
+			new int[]{2,1}
+		}));
+		
+		
+		double[][] minSpanningTree = LinkageTreeUtils
+				.minSpanTreeLinkageCore_cdist(dist_mat, coreDistances, 
+						Distance.EUCLIDEAN, HDBSCAN.DEF_ALPHA);
+		
+		double[][] expected = new double[][]{
+			new double[]{0.0, 1.0, 5.196152422706632},
+			new double[]{1.0, 2.0, 5.196152422706632}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(minSpanningTree, expected));
+	}
+	
+	@Test
+	public void testPrimBallRun() {
+		final double[][] x = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
+				new HDBSCANPlanner(1)
+					.setAlgo(Algorithm.PRIMS_BALLTREE)
+					.setVerbose(true)).fit();
+		int[] labels = model.getLabels();
+		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
+		System.out.println();
+	}
+	
+	/*@Test
+	public void testBoruvkaKDRun() {
+		final double[][] x = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
+				new HDBSCANPlanner(1)
+					.setAlgo(Algorithm.BORUVKA_KDTREE)
+					.setVerbose(true)).fit();
+		int[] labels = model.getLabels();
+		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
+		System.out.println();
+	}
+	
+	@Test
+	public void testBoruvkaBallRun() {
+		final double[][] x = new double[][]{
+			new double[]{0,1,0,2},
+			new double[]{0,0,1,2},
+			new double[]{5,6,7,4}
+		};
+		
+		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
+				new HDBSCANPlanner(1)
+					.setAlgo(Algorithm.BORUVKA_BALLTREE)
+					.setVerbose(true)).fit();
+		int[] labels = model.getLabels();
+		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
+		System.out.println();
+	}*/
 }

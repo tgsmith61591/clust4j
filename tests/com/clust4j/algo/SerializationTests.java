@@ -153,4 +153,22 @@ public class SerializationTests {
 		assertTrue(nn.getNearest()[0].equals(c));
 		Files.delete(path);
 	}
+	
+	//@Test
+	public void testHDBSCAN() throws FileNotFoundException, IOException, ClassNotFoundException {
+		matrix = new Array2DRowRealMatrix(HDBSCANTests.dist_mat);
+		
+		HDBSCAN hd = new HDBSCAN(matrix, 
+			new HDBSCAN.HDBSCANPlanner(1)
+				.setVerbose(true)
+				.setScale(true)).fit();
+		System.out.println("blah");
+		final int[] labels = hd.getLabels();
+		hd.saveModel(new FileOutputStream(tmpSerPath));
+		assertTrue(file.exists());
+		
+		hd = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(hd.getLabels(), labels));
+		Files.delete(path);
+	}
 }

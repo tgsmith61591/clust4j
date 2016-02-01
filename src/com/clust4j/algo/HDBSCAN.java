@@ -16,17 +16,21 @@ import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.utils.BallTree;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.HaversineDistance;
+import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.KDTree;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MinkowskiDistance;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.utils.NearestNeighborHeapSearch;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.VecUtils.VecSeries;
 
@@ -56,7 +60,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	private final boolean approxMinSpanTree;
 	private final int min_cluster_size;
 	private final int leafSize;
-	//private final boolean genMinSpanTree;
+	//private final boolean genMinSpanTree; // NEVER
 
 	private volatile HDBSCANLinkageTree tree = null;
 	private volatile double[][] dist_mat = null;
@@ -67,22 +71,32 @@ public class HDBSCAN extends AbstractDBSCAN {
 	
 	public static enum Algorithm {
 		GENERIC,
-		PRIMS_KD_TREE,
+		PRIMS_KDTREE,
 		PRIMS_BALLTREE,
-		BORUVKA_KDTREE,
-		BORUVKA_BALLTREE
+		//BORUVKA_KDTREE,
+		//BORUVKA_BALLTREE
 	}
 	
 	
 	
 	public final static ArrayList<Class<? extends GeometricallySeparable>> ValidKDMetrics;
+	public final static ArrayList<Class<? extends GeometricallySeparable>> ValidBallMetrics;
 	static {
 		ValidKDMetrics = new ArrayList<>();
 		ValidKDMetrics.add(Distance.EUCLIDEAN.getClass());
 		ValidKDMetrics.add(Distance.MANHATTAN.getClass());
 		ValidKDMetrics.add(MinkowskiDistance.class);
 		ValidKDMetrics.add(Distance.CHEBYSHEV.getClass());
+		
+		
+		ValidBallMetrics = new ArrayList<>();
+		for(DistanceMetric dm: Distance.values())
+			ValidBallMetrics.add(dm.getClass());
+		ValidBallMetrics.add(MinkowskiDistance.class);
+		ValidBallMetrics.add(HaversineDistance.class);
 	}
+	
+	
 	
 	
 	/**
@@ -326,7 +340,17 @@ public class HDBSCAN extends AbstractDBSCAN {
 	/** Classes that will explicitly need to define 
 	 *  reachability will have to implement this interface */
 	interface ExplicitMutualReachability { double[][] mutualReachability(); }
-	interface Boruvka extends ExplicitMutualReachability {}
+	/**
+	 * Mutual reachability is implicit when using 
+	 * {@link BoruvkaAlgorithm},
+	 * thus we don't need these classes to implement 
+	 * {@link ExplicitMutualReachability#mutualReachability()} */
+	interface Boruvka {}
+	/**
+	 * Mutual reachability is implicit when using 
+	 * {@link LinkageTreeUtils#mstLinkageCore_cdist},
+	 * thus we don't need these classes to implement 
+	 * {@link ExplicitMutualReachability#mutualReachability()} */
 	interface Prim {}
 	
 	
@@ -572,7 +596,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		 * @param m
 		 * @return
 		 */
-		static double[][] mstLinkageCore(final double[][] X, final int m) { // Tested: passing
+		static double[][] minSpanTreeLinkageCore(final double[][] X, final int m) { // Tested: passing
 			int[] node_labels, current_labels, tmp_labels; 
 			double[] current_distances, left, right;
 			boolean[] label_filter;
@@ -638,7 +662,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			return result;
 		}
 		
-		static double[][] mstLinkageCore_cdist(final double[][] raw, final double[] coreDistances, GeometricallySeparable sep, final double alpha) {
+		static double[][] minSpanTreeLinkageCore_cdist(final double[][] raw, final double[] coreDistances, GeometricallySeparable sep, final double alpha) {
 			double[] currentDists;
 			int[] inTreeArr;
 			double[][] resultArr;
@@ -713,7 +737,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 			return resultArr;
 		}
 		
-
 		
 		/**
 		 * The index may be -1; this will return 
@@ -737,6 +760,11 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
+	
+	/**
+	 * The top level class for all HDBSCAN linkage trees.
+	 * @author Taylor G Smith
+	 */
 	abstract class HDBSCANLinkageTree {
 		final HDBSCAN model;
 		final GeometricallySeparable metric;
@@ -747,58 +775,156 @@ public class HDBSCAN extends AbstractDBSCAN {
 			metric = model.getSeparabilityMetric();
 			m = model.data.getRowDimension();
 			n = model.data.getColumnDimension();
-			
-			// Can only happen if this class is instantiated
-			// from an already-trained HDBSCAN instance
-			// if(null == dist_mat)
-			//	  throw new IllegalStateException("null distance matrix");
 		}
 		
 		abstract double[][] link();
 	}
 	
-	abstract class KDTreeAlgorithm extends HDBSCANLinkageTree {
+	
+	/**
+	 * Algorithms that utilize {@link NearestNeighborHeapSearch} 
+	 * algorithms for mutual reachability
+	 * @author Taylor G Smith
+	 */
+	abstract class HeapSearchAlgorithm extends HDBSCANLinkageTree {
 		int leafSize;
 		
-		KDTreeAlgorithm(int leafSize) {
+		HeapSearchAlgorithm(int leafSize, ArrayList<Class<? extends GeometricallySeparable>> clzs) {
 			super();
 			
 			this.leafSize = leafSize;
-			Class<? extends GeometricallySeparable> clz = 
-				model.getSeparabilityMetric().getClass();
-			if( !ValidKDMetrics.contains(clz) ) {
-				warn(clz+" is not a valid distance metric for KDTrees. Valid metrics: " + ValidKDMetrics);
+			Class<? extends GeometricallySeparable> clz = metric.getClass();
+			if( !clzs.contains(clz) ) {
+				warn(clz+" is not a valid distance metric for "+getTreeName()+"Trees. "
+						+ "Valid metrics: " + clzs);
 				warn("falling back to default metric: " + AbstractClusterer.DEF_DIST);
 				model.setSeparabilityMetric(AbstractClusterer.DEF_DIST);
 			}
 		}
-	}
-	
-	abstract class BallTreeAlgorithm extends HDBSCANLinkageTree {
-		BallTreeAlgorithm() {
-			super();
+
+		abstract NearestNeighborHeapSearch getTree(double[][] X);
+		abstract String getTreeName();
+		
+		/**
+		 * The linkage function to be used for any classes
+		 * implementing the {@link Prim} interface.
+		 * @param dt
+		 * @return
+		 */
+		final double[][] primTreeLinkageFunction(double[][] dt) {
+			final int min_points = FastMath.min(m - 1, minPts);
+			
+			long strt = System.currentTimeMillis();
+			model.info("building " + getTreeName() + " search tree...");
+			NearestNeighborHeapSearch tree = getTree(dt);
+			model.info("completed NearestNeighborHeapSearch construction in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-strt, false) + 
+					System.lineSeparator());
+			
+			
+			// Query for dists to k nearest neighbors
+			EntryPair<double[][], int[][]> query = tree.query(dt, min_points, true, true, true);
+			double[][] dists = query.getKey();
+			double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
+			
+			double[][] minSpanningTree = LinkageTreeUtils
+					.minSpanTreeLinkageCore_cdist(dt, coreDistances, 
+						metric, alpha);
+			
+			System.out.println(TestSuite.formatter.format(minSpanningTree));
+			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
+		}
+		
+		/**
+		 * The linkage function to be used for any classes
+		 * implementing the {@link Boruvka} interface.
+		 * @param dt
+		 * @return
+		 */
+		final double[][] boruvkaTreeLinkageFunction(double[][] dt) {
+			final int min_points = FastMath.min(m - 1, minPts);
+			if(leafSize < 3)
+				leafSize = 3;
+
+			long strt = System.currentTimeMillis();
+			model.info("building " + getTreeName() + " search tree...");
+			NearestNeighborHeapSearch tree = getTree(dt);
+			model.info("completed NearestNeighborHeapSearch construction in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-strt, false) + 
+					System.lineSeparator());
+			
+			// We can safely cast the metric to DistanceMetric at this point
+			final BoruvkaAlgorithm alg = new BoruvkaAlgorithm(tree, min_points, 
+					(DistanceMetric)metric, leafSize / 3, approxMinSpanTree, 
+					alpha, model);
+			
+			double[][] minSpanningTree = alg.spanningTree();
+			System.out.println(TestSuite.formatter.format(minSpanningTree));
+			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
 		}
 	}
 	
 	/**
-	 * Generic single linkage tree
+	 * A class for HDBSCAN algorithms that utilize {@link KDTree}
+	 * search spaces for segmenting nearest neighbors
+	 * @author Taylor G Smith
+	 */
+	abstract class KDTreeAlgorithm extends HeapSearchAlgorithm {
+		KDTreeAlgorithm(int leafSize) {
+			super(leafSize, ValidKDMetrics);
+		}
+		
+		@Override String getTreeName() { return "KD"; }
+		@Override final KDTree getTree(double[][] X) {
+			// We can safely cast the sep metric as DistanceMetric
+			// after the check in the constructor
+			return new KDTree(data, leafSize, 
+				(DistanceMetric)metric, model);
+		}
+	}
+	
+	/**
+	 * A class for HDBSCAN algorithms that utilize {@link BallTree}
+	 * search spaces for segmenting nearest neighbors
+	 * @author Taylor G Smith
+	 */
+	abstract class BallTreeAlgorithm extends HeapSearchAlgorithm {
+		BallTreeAlgorithm(int leafSize) {
+			super(leafSize, ValidBallMetrics);
+		}
+		
+		@Override String getTreeName() { return "Ball"; }
+		@Override final BallTree getTree(double[][] X) {
+			// We can safely cast the sep metric as DistanceMetric
+			// after the check in the constructor
+			return new BallTree(data, leafSize, 
+				(DistanceMetric)metric, model);
+		}
+	}
+	
+	/**
+	 * Generic single linkage tree that uses an 
+	 * upper triangular distance matrix to compute
+	 * mutual reachability
 	 * @author Taylor G Smith
 	 */
 	class GenericTree extends HDBSCANLinkageTree implements ExplicitMutualReachability {
 		GenericTree() {
 			super();
-		}
-		
-		@Override
-		double[][] link() {
 			long s = System.currentTimeMillis();
+			
+			// The generic implementation requires the computation of an UT dist mat
 			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 			info("completed distance matrix computation in " + 
 					LogTimeFormatter.millis(System.currentTimeMillis()-s, false) + 
 					System.lineSeparator());
-			
+		}
+		
+		@Override
+		double[][] link() {
 			final double[][] mutual_reachability = mutualReachability();
-			double[][] min_spanning_tree = LinkageTreeUtils.mstLinkageCore(mutual_reachability, m);
+			double[][] min_spanning_tree = LinkageTreeUtils
+					.minSpanTreeLinkageCore(mutual_reachability, m);
 			
 			// Sort edges of the min_spanning_tree by weight
 			min_spanning_tree = MatUtils.sortAscByCol(min_spanning_tree, 2);
@@ -807,6 +933,12 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public double[][] mutualReachability() { // Tested: passing
+			if(null == dist_mat)
+				throw new IllegalClusterStateException("dist matrix is null; "
+					+ "this only can happen when the model attempts to invoke "
+					+ "mutualReachability on a tree without proper initialization "
+					+ "or after the model has already been fit.");
+			
 			final int min_points = FastMath.min(m - 1, minPts);
 			final double[] core_distances = MatUtils
 				.partitionByRow(dist_mat, min_points)[min_points];
@@ -827,10 +959,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	/**
-	 * Mutual reachability is implicit when using 
-	 * {@link LinkageTreeUtils#mstLinkageCore_cdist},
-	 * thus we don't need this class to implement 
-	 * {@link ExplicitMutualReachability#mutualReachability()}
+	 * An implementation of HDBSCAN using the {@link Prim} algorithm
+	 * and leveraging {@link KDTree} search spaces
+	 * @author Taylor G Smith
 	 */
 	class PrimsKDTree extends KDTreeAlgorithm implements Prim {
 		PrimsKDTree(int leafSize) {
@@ -839,42 +970,23 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		double[][] link() {
-			final int min_points = FastMath.min(m - 1, minPts);
-			final double[][] dt = data.getData();
-			
-			// We can safely cast the sep metric as DistanceMetric
-			// after the check in the constructor
-			KDTree tree = new KDTree(data, leafSize, 
-				(DistanceMetric)model.getSeparabilityMetric(), model);
-			
-			// Query for dists to k nearest neighbors
-			EntryPair<double[][], int[][]> query = tree.query(dt, min_points, true, true, true);
-			double[][] dists = query.getKey();
-			double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
-			
-			double[][] minSpanningTree = LinkageTreeUtils
-					.mstLinkageCore_cdist(dt, coreDistances, 
-							getSeparabilityMetric(), alpha);
-			
-			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
+			return primTreeLinkageFunction(data.getData());
 		}
 	}
 	
 	/**
-	 * Mutual reachability is implicit when using 
-	 * {@link LinkageTreeUtils#mstLinkageCore_cdist},
-	 * thus we don't need this class to implement 
-	 * {@link ExplicitMutualReachability#mutualReachability()}
+	 * An implementation of HDBSCAN using the {@link Prim} algorithm
+	 * and leveraging {@link BallTree} search spaces
+	 * @author Taylor G Smith
 	 */
 	class PrimsBallTree extends BallTreeAlgorithm implements Prim {
-		PrimsBallTree() {
-			super();
+		PrimsBallTree(int leafSize) {
+			super(leafSize);
 		}
 
 		@Override
 		double[][] link() {
-			// TODO Auto-generated method stub
-			return null;
+			return primTreeLinkageFunction(data.getData());
 		}
 	}
 	
@@ -885,32 +997,18 @@ public class HDBSCAN extends AbstractDBSCAN {
 
 		@Override
 		double[][] link() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public double[][] mutualReachability() {
-			// TODO Auto-generated method stub
-			return null;
+			return boruvkaTreeLinkageFunction(data.getData());
 		}
 	}
 	
 	class BoruvkaBallTree extends BallTreeAlgorithm implements Boruvka {
-		BoruvkaBallTree() {
-			super();
+		BoruvkaBallTree(int leafSize) {
+			super(leafSize);
 		}
 
 		@Override
 		double[][] link() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public double[][] mutualReachability() {
-			// TODO Auto-generated method stub
-			return null;
+			return boruvkaTreeLinkageFunction(data.getData());
 		}
 	}
 	
@@ -1098,7 +1196,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 				
 				// First get the dist matrix
 				final long start = System.currentTimeMillis();
-				info("fitting model");
+				
+				// We don't build the dist mat, because only needed for some algos
 				//dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 				
 				
@@ -1111,11 +1210,31 @@ public class HDBSCAN extends AbstractDBSCAN {
 						info(msg + clz.getName());
 						tree = new GenericTree();
 						break;
-					case PRIMS_KD_TREE:
+						
+					case PRIMS_KDTREE:
 						clz = PrimsKDTree.class;
 						info(msg + clz.getName());
 						tree = new PrimsKDTree(leafSize);
 						break;
+						
+					case PRIMS_BALLTREE:
+						clz = PrimsBallTree.class;
+						info(msg + clz.getName());
+						tree = new PrimsBallTree(leafSize);
+						break;
+					/*	
+					case BORUVKA_KDTREE:
+						clz = BoruvkaKDTree.class;
+						info(msg + clz.getName());
+						tree = new BoruvkaKDTree(leafSize);
+						break;
+						
+					case BORUVKA_BALLTREE:
+						clz = BoruvkaBallTree.class;
+						info(msg + clz.getName());
+						tree = new BoruvkaBallTree(leafSize);
+						break;
+					*/	
 					default:
 						throw new InternalError("illegal algorithm");
 				}
@@ -1278,7 +1397,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 		result = new double[m][n+1];
 		UnifyFind U = new UnifyFind(N);
 		
-		
 		for(index = 0; index < m; index++) {
 			
 			a = (int)tree[index][0];
@@ -1295,12 +1413,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			U.union(aa, bb);
 		}
+		System.out.println("blah");
 		
 		return result;
 	}
 	
 	protected static double[][] singleLinkage(final double[][] dists) {
-		final double[][] hierarchy = LinkageTreeUtils.mstLinkageCore(dists, dists.length);
+		final double[][] hierarchy = LinkageTreeUtils.minSpanTreeLinkageCore(dists, dists.length);
 		return label(MatUtils.sortAscByCol(hierarchy, 2));
 	}
 	

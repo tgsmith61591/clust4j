@@ -126,12 +126,14 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 			warn("running " + getName() + " in Kernel mode can be an expensive option");
 		}
 		
-		meta("model key="+modelKey);
+		
+		String clzNm = "AbstractClusterer";
+		meta("model key="+modelKey, clzNm);
 		meta((similarity ? "similarity" : "distance") + 
-				" metric=" + dist.getName());
-		meta("scale="+planner.getScale());
-		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE);
-		meta("allow_auto_parallelism="+GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM);
+				" metric=" + dist.getName(), clzNm);
+		meta("scale="+planner.getScale(), clzNm);
+		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE, clzNm);
+		meta("allow_auto_parallelism="+GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM, clzNm);
 		
 		
 		// Scale if needed
@@ -274,7 +276,11 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	 * @param msg
 	 */
 	public void meta(final String msg) {
-		info("[meta "+getName()+"] " + msg);
+		meta(msg, getName());
+	}
+	
+	public void meta(final String msg, final String nm) {
+		info("[meta "+nm+"] " + msg);
 	}
 	
 	/**
