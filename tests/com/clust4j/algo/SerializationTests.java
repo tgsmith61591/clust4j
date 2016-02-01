@@ -39,8 +39,9 @@ public class SerializationTests {
 		ap.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		ap = (AffinityPropagation)AffinityPropagation.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(MatUtils.equalsExactly(a, ap.getAvailabilityMatrix()));
+		AffinityPropagation ap2 = (AffinityPropagation)AffinityPropagation.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(MatUtils.equalsExactly(a, ap2.getAvailabilityMatrix()));
+		assertTrue(ap2.equals(ap));
 		Files.delete(path);
 	}
 
@@ -58,8 +59,9 @@ public class SerializationTests {
 		agglom.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		agglom = (HierarchicalAgglomerative)HierarchicalAgglomerative.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(VecUtils.equalsExactly(l, agglom.getLabels()));
+		HierarchicalAgglomerative agglom2 = (HierarchicalAgglomerative)HierarchicalAgglomerative.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(l, agglom2.getLabels()));
+		assertTrue(agglom2.equals(agglom));
 		Files.delete(path);
 	}
 	
@@ -77,8 +79,9 @@ public class SerializationTests {
 		db.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		db = (DBSCAN)DBSCAN.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(a == db.getNumberOfNoisePoints());
+		DBSCAN db2 = (DBSCAN)DBSCAN.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(a == db2.getNumberOfNoisePoints());
+		assertTrue(db.equals(db2));
 		Files.delete(path);
 	}
 	
@@ -95,8 +98,9 @@ public class SerializationTests {
 		km.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		km = (KMeans)KMeans.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(km.totalCost() == c);
+		KMeans km2 = (KMeans)KMeans.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(km2.totalCost() == c);
+		assertTrue(km.equals(km2));
 		Files.delete(path);
 	}
 	
@@ -113,8 +117,9 @@ public class SerializationTests {
 		km.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		km = (KMedoids)KMedoids.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(km.totalCost() == c);
+		KMedoids km2 = (KMedoids)KMedoids.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(km2.totalCost() == c);
+		assertTrue(km2.equals(km));
 		Files.delete(path);
 	}
 	
@@ -130,8 +135,9 @@ public class SerializationTests {
 		ms.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		ms = (MeanShift)MeanShift.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(ms.getNumberOfNoisePoints() == n);
+		MeanShift ms2 = (MeanShift)MeanShift.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(ms2.getNumberOfNoisePoints() == n);
+		assertTrue(ms.equals(ms2));
 		Files.delete(path);
 	}
 	
@@ -149,26 +155,27 @@ public class SerializationTests {
 		nn.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
 		
-		nn = (NearestNeighbors)NearestNeighbors.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(nn.getNearest()[0].equals(c));
+		NearestNeighbors nn2 = (NearestNeighbors)NearestNeighbors.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(nn2.getNearest()[0].equals(c));
+		assertTrue(nn2.equals(nn));
 		Files.delete(path);
 	}
 	
-	//@Test
+	@Test
 	public void testHDBSCAN() throws FileNotFoundException, IOException, ClassNotFoundException {
-		matrix = new Array2DRowRealMatrix(HDBSCANTests.dist_mat);
-		
 		HDBSCAN hd = new HDBSCAN(matrix, 
 			new HDBSCAN.HDBSCANPlanner(1)
 				.setVerbose(true)
 				.setScale(true)).fit();
-		System.out.println("blah");
+
 		final int[] labels = hd.getLabels();
 		hd.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
+		System.out.println(hd.getNumberOfNoisePoints());
 		
-		hd = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(tmpSerPath));
-		assertTrue(VecUtils.equalsExactly(hd.getLabels(), labels));
+		HDBSCAN hd2 = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(hd2.getLabels(), labels));
+		assertTrue(hd.equals(hd2));
 		Files.delete(path);
 	}
 }

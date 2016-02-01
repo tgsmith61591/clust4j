@@ -337,6 +337,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// Count missing
+				info("counting number of noise records");
 				numNoisey = 0;
 				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
 				

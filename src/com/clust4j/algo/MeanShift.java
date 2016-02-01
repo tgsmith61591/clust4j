@@ -44,6 +44,8 @@ public class MeanShift
 	 * 
 	 */
 	private static final long serialVersionUID = 4423672142693334046L;
+	
+	final public static double DEF_BANDWIDTH = 5.0;
 	final public static int DEF_MAX_ITER = 300;
 	final public static double DEF_MIN_CHANGE = 0d;
 	final public static int DEF_MIN_BIN_FREQ = 1;
@@ -171,6 +173,9 @@ public class MeanShift
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
 		
+		public MeanShiftPlanner() {
+			this(DEF_BANDWIDTH);
+		}
 		
 		public MeanShiftPlanner(final double bandwidth) {
 			this.bandwidth = bandwidth;

@@ -33,6 +33,7 @@ import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
 public class VecUtils {
+	final static String VEC_LEN_ERR = "illegal vector length: ";
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
@@ -84,32 +85,44 @@ public class VecUtils {
 	
 	
 	
-	final static public void checkDims(final boolean[] a) {
-		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
-	}
 	
-	final static public void checkDims(final double[] a) {
-		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
-	}
+	// =============== DIM CHECKS ==============
+	final private static void dimAssess(final int a) { if(a < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException(VEC_LEN_ERR + a); }
+	final static public void checkDims(final byte[] a) 		{ dimAssess(a.length); }
+	final static public void checkDims(final short[] a) 	{ dimAssess(a.length); }
+	final static public void checkDims(final boolean[] a) 	{ dimAssess(a.length); }
+	final static public void checkDims(final int[] a) 		{ dimAssess(a.length); }
+	final static public void checkDims(final float[] a) 	{ dimAssess(a.length); }
+	final static public void checkDims(final double[] a) 	{ dimAssess(a.length); }
+	final static public void checkDims(final long[] a) 		{ dimAssess(a.length); }
 	
-	final static public void checkDims(final double[] a, final double[] b) {
-		if(a.length != b.length) throw new DimensionMismatchException(a.length, b.length);
-		checkDims(a); // Only need to do one, knowing they are same length
-	}
+	final private static void dimAssessPermitEmpty(final int a) 	{ if(a < 0) throw new IllegalArgumentException(VEC_LEN_ERR + a); }
+	final static public void checkDimsPermitEmpty(final byte[] a) 	{ dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final short[] a) 	{ dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final boolean[] a){ dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final int[] a) 	{ dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final float[] a) 	{ dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final double[] a) { dimAssessPermitEmpty(a.length); }
+	final static public void checkDimsPermitEmpty(final long[] a) 	{ dimAssessPermitEmpty(a.length); }
 	
-	final static public void checkDims(final int[] a) {
-		if(a.length < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException("illegal vector length:" + a.length);
-	}
-	
-	final static public void checkDims(final int[] a, final int[] b) {
-		if(a.length != b.length) throw new DimensionMismatchException(a.length, b.length);
-		checkDims(a); // Only need to do one, knowing they are same length
-	}
-	
-	
+	final private static void dimAssess(final int a, final int b) { if(a != b) throw new DimensionMismatchException(a, b); dimAssess(a); }
+	final static public void checkDims(final byte[] a, final byte[] b) 		{ dimAssess(a.length, b.length); }
+	final static public void checkDims(final short[] a, final short[] b) 	{ dimAssess(a.length, b.length); }
+	final static public void checkDims(final boolean[] a, final boolean[] b){ dimAssess(a.length, b.length); }
+	final static public void checkDims(final int[] a, final int[] b) 		{ dimAssess(a.length, b.length); }
+	final static public void checkDims(final float[] a, final float[] b) 	{ dimAssess(a.length, b.length); }
+	final static public void checkDims(final double[] a, final double[] b) 	{ dimAssess(a.length, b.length); }
+	final static public void checkDims(final long[] a, final long[] b) 		{ dimAssess(a.length, b.length); }
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	// ====================== MATH FUNCTIONS =======================
 	/**
 	 * Calculate the absolute value of the values in the vector and return a copy.
 	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
@@ -425,6 +438,12 @@ public class VecUtils {
 	public static double[] copy(final double[] d) {
 		final double[] copy = new double[d.length];
 		System.arraycopy(d, 0, copy, 0, d.length);
+		return copy;
+	}
+	
+	public static String[] copy(final String[] s) {
+		final String[] copy = new String[s.length];
+		System.arraycopy(s, 0, copy, 0, s.length);
 		return copy;
 	}
 	
@@ -1252,6 +1271,21 @@ public class VecUtils {
 		if(n < 0)
 			throw new IllegalArgumentException(n+" must not be negative");
 		final int[] d = new int[n];
+		for(int i = 0; i < n; i++)
+			d[i] = val;
+		return d;
+	}
+	
+	/**
+	 * Create a vector of a repeated value
+	 * @param val
+	 * @param n
+	 * @return a vector of a repeated value
+	 */
+	public static boolean[] repBool(final boolean val, final int n) {
+		if(n < 0)
+			throw new IllegalArgumentException(n+" must not be negative");
+		final boolean[] d = new boolean[n];
 		for(int i = 0; i < n; i++)
 			d[i] = val;
 		return d;

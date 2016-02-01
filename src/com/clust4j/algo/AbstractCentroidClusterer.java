@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.metrics.EvaluationMetric;
 import com.clust4j.utils.CentroidLearner;
 import com.clust4j.utils.Classifier;
 import com.clust4j.utils.Convergeable;
@@ -129,6 +131,21 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	public int itersElapsed() {
 		return iter;
+	}
+	
+	@Override
+	public double score(final int[] actual) {
+		return score(actual, Classifier.DEF_METRIC);
+	}
+	
+	@Override
+	public double score(final int[] actual, EvaluationMetric metric) {
+		final int[] predicted = getLabels(); // Propagates a model not fit exception if not fit...
+		
+		if(predicted.length != actual.length)
+			throw new DimensionMismatchException(actual.length, predicted.length);
+		
+		return metric.evaluate(actual, predicted);
 	}
 	
 	abstract TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace();

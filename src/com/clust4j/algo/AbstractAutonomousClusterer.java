@@ -1,7 +1,9 @@
 package com.clust4j.algo;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.metrics.EvaluationMetric;
 import com.clust4j.utils.Classifier;
 
 public abstract class AbstractAutonomousClusterer extends AbstractClusterer implements Classifier {
@@ -19,4 +21,21 @@ public abstract class AbstractAutonomousClusterer extends AbstractClusterer impl
 	 * @return the number of clusters in the system
 	 */
 	abstract public int getNumberOfIdentifiedClusters();
+	
+
+	
+	@Override
+	public double score(final int[] actual) {
+		return score(actual, Classifier.DEF_METRIC);
+	}
+	
+	@Override
+	public double score(final int[] actual, EvaluationMetric metric) {
+		final int[] predicted = getLabels(); // Propagates a model not fit exception if not fit...
+		
+		if(predicted.length != actual.length)
+			throw new DimensionMismatchException(actual.length, predicted.length);
+		
+		return metric.evaluate(actual, predicted);
+	}
 }

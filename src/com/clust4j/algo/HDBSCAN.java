@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -67,6 +68,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 	private volatile int[] labels = null;
 	private volatile int numClusters;
 	private volatile int numNoisey;
+	/** A copy of the data array inside the data matrix */
+	private volatile double[][] dataData = null;
 	
 	
 	public static enum Algorithm {
@@ -336,6 +339,40 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
+	/**
+	 * A simple extension of {@link HashSet} that takes
+	 * an array or varargs as a constructor arg
+	 * @author Taylor G Smith
+	 * @param <T>
+	 */
+	final static class HSet<T> extends HashSet<T> {
+		private static final long serialVersionUID = 5185550036712184095L;
+		
+		HSet(int size) {
+			super(size);
+		}
+		
+		HSet(T[] args) {
+			this(args.length);
+			for(T t: args)
+				add(t);
+		}
+	}
+	
+	/**
+	 * Constructs an {@link HSet} from the labels
+	 * @author Taylor G Smith
+	 */
+	final static class LabelHSetFactory {
+		static HSet<Integer> build(int[] labs) {
+			HSet<Integer> res = new HSet<Integer>(labs.length);
+			for(int i: labs)
+				res.add(i);
+			
+			return res;
+		}
+	}
+	
 	
 	/** Classes that will explicitly need to define 
 	 *  reachability will have to implement this interface */
@@ -490,15 +527,29 @@ public class HDBSCAN extends AbstractDBSCAN {
 		// Tested: passing
 		static HList<QuadTup<Integer, Integer, Double, Integer>> condenseTree(final double[][] hierarchy, final int minSize) {
 			final int m = hierarchy.length;
-			int root = 2 * m, numPoints = root/2 + 1 /*Integer division*/, nextLabel = numPoints+1;
+			int root = 2 * m, 
+					numPoints = root/2 + 1 /*Integer division*/, 
+					nextLabel = numPoints+1;
+			
+			// Get node list from BFS
 			HList<Integer> nodeList = breadthFirstSearch(hierarchy, root), tmpList;
 			HList<QuadTup<Integer, Integer, Double, Integer>> resultList = new HList<>();
-			int[] relabel = new int[nodeList.size()]; 
-			boolean[] ignore = new boolean[nodeList.size()];
+			
+			// Indices needing relabeling -- cython code assigns this to nodeList.size()
+			// but often times this is way too small and causes out of bounds exceptions...
+			// Changed to root + 1 on 02/01/2016; this should be the max node ever in the resultList
+			int[] relabel = new int[root + 1]; //nodeList.size()
+			boolean[] ignore = new boolean[root + 1];
 			double[] children;
 			
 			double lambda;
 			int left, right, leftCount, rightCount;
+			
+			// Sanity check
+			// System.out.println("Root: " + root + ", Relabel length: " + relabel.length + ", m: " + m + ", Relabel array: " + Arrays.toString(relabel));
+			
+			// The cython code doesn't check for bounds and sloppily 
+			// assigns this even if root > relabel.length. 
 			relabel[root] = numPoints;
 			
 			
@@ -831,7 +882,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 					.minSpanTreeLinkageCore_cdist(dt, coreDistances, 
 						metric, alpha);
 			
-			System.out.println(TestSuite.formatter.format(minSpanningTree));
 			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
 		}
 		
@@ -970,7 +1020,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		double[][] link() {
-			return primTreeLinkageFunction(data.getData());
+			return primTreeLinkageFunction(dataData);
 		}
 	}
 	
@@ -986,7 +1036,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 
 		@Override
 		double[][] link() {
-			return primTreeLinkageFunction(data.getData());
+			return primTreeLinkageFunction(dataData);
 		}
 	}
 	
@@ -997,7 +1047,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 
 		@Override
 		double[][] link() {
-			return boruvkaTreeLinkageFunction(data.getData());
+			return boruvkaTreeLinkageFunction(dataData);
 		}
 	}
 	
@@ -1008,28 +1058,57 @@ public class HDBSCAN extends AbstractDBSCAN {
 
 		@Override
 		double[][] link() {
-			return boruvkaTreeLinkageFunction(data.getData());
+			return boruvkaTreeLinkageFunction(dataData);
 		}
 	}
 	
-	interface UnifiedFinder {
-		void union(int m, int n);
-		int find(int x);
+	/**
+	 * A base class for any unify finder classes
+	 * to extend. These should help join nodes and
+	 * branches from trees.
+	 * @author Taylor G Smith
+	 */
+	abstract static class UnifiedFinder {
+		final int SIZE;
+		
+		UnifiedFinder(int N) {
+			this.SIZE = N;
+		}
+		
+		/**
+		 * Wraps the index in a python way (-1 = last index).
+		 * Easier and more concise than having lots of references to 
+		 * {@link LinkageTreeUtils#wraparoundIdxGet(int, int)}
+		 * @param i
+		 * @param j
+		 * @return
+		 */
+		static int wrap(int i, int j) {
+			return LinkageTreeUtils.wraparoundIdxGet(i, j);
+		}
+		
+		int wrap(int i) {
+			return wrap(SIZE, i);
+		}
+		
+		abstract void union(int m, int n);
+		abstract int find(int x);
 	}
 	
-	static class TreeUnifyFind implements UnifiedFinder {
-		int size;
+	// Tested: passing
+	static class TreeUnionFind extends UnifiedFinder {
 		int [][] dataArr;
-		int [] is_component;
+		boolean [] is_component;
 		
-		public TreeUnifyFind(int size) {
+		public TreeUnionFind(int size) {
+			super(size);
 			dataArr = new int[size][2];
+			
 			// First col should be arange to size
 			for(int i = 0; i < size; i++)
 				dataArr[i][0] = i;
 			
-			is_component = VecUtils.repInt(1, size);
-			this.size= size;
+			is_component = VecUtils.repBool(true, size);
 		}
 		
 		@Override
@@ -1037,8 +1116,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 			int x_root = find(x);
 			int y_root = find(y);
 			
-			int x1idx = LinkageTreeUtils.wraparoundIdxGet(size, x_root);
-			int y1idx = LinkageTreeUtils.wraparoundIdxGet(size, x_root);
+			int x1idx = wrap(x_root);
+			int y1idx = wrap(y_root);
 			
 			int dx1 = dataArr[x1idx][1];
 			int dy1 = dataArr[y1idx][1];
@@ -1055,10 +1134,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public int find(int x) {
-			final int idx = LinkageTreeUtils.wraparoundIdxGet(size, x);
+			final int idx = wrap(x);
 			if(dataArr[idx][0] != x) {
 				dataArr[idx][0] = find(dataArr[idx][0]);
-				is_component[idx] = 0;
+				is_component[idx] = false;
 			}
 			
 			return dataArr[idx][0];
@@ -1070,8 +1149,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 		 */
 		int[] components() {
 			final HList<Integer> h = new HList<>();
-			for(int i: is_component)
-				if(i == 1)
+			for(int i = 0; i < is_component.length; i++)
+				if(is_component[i])
 					h.add(i);
 			
 			int idx = 0;
@@ -1083,31 +1162,38 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
-	static class UnifyFind implements UnifiedFinder {
-		int [] parentArr, sizeArr, parent, size;
+	// Tested: passing
+	static class UnionFind extends UnifiedFinder {
+		int [] parent, size;
 		int nextLabel;
 		
-		public UnifyFind(int N) {
-			parentArr = VecUtils.repInt(-1, 2 * N - 1);
+		public UnionFind(int N) {
+			super(N);
+			parent = VecUtils.repInt(-1, 2 * N - 1);
 			nextLabel = N;
-			sizeArr = VecUtils.cat(
-					VecUtils.repInt(1, N), 
-					VecUtils.repInt(0, N-1));
 			
-			parent = parentArr;
-			size = sizeArr;
+			size = new int[2 * N - 1];
+			for(int i = 0; i < size.length; i++)
+				size[i] = i >= N ? 0 : 1; // if N == 5 [1,1,1,1,1,0,0,0,0]
 		}
 		
 		int fastFind(int n) {
-			int p = n, tmp;
-			while(parentArr[n] != -1)
-				n = parentArr[n];
+			int p = n //,tmp
+					;
 			
-			while(parentArr[LinkageTreeUtils.wraparoundIdxGet(parentArr.length, p)] != n) {
-				tmp = parentArr[LinkageTreeUtils.wraparoundIdxGet(parentArr.length,p)];
+			while(parent[wrap(parent.length, n)] != -1)
+				n = parent[wrap(parent.length, n)];
+			
+			// Incredibly enraging to debug
+			while(parent[wrap(parent.length, p)] != n) {
+				//System.out.println("First: {p:" + p + ", parent[p]:" +parent[wrap(parent.length, p)] +  ", n:" +n+"}");
 				
-				parentArr[LinkageTreeUtils.wraparoundIdxGet(parentArr.length, p)] = n;
-				p = tmp;
+				//tmp = p;
+				p = parent[wrap(parent.length, p)];
+				parent[wrap(parent.length, p)] = n;
+				
+				//System.out.println("Second: {p:" + p + ", parent[p]:" +parent[wrap(parent.length, p)] +  ", n:" +n+"}");
+				//System.out.println(Arrays.toString(parent));
 			}
 			
 			return n;
@@ -1115,24 +1201,28 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public int find(int n) {
-			while(parent[n] != -1)
-				n = parent[n];
+			while(parent[wrap(parent.length, n)] != -1)
+				n = parent[wrap(parent.length, n)];
 			return n;
 		}
 		
 		@Override
 		public void union(final int m, final int n) {
-			size[nextLabel] = size[m] + size[n];
-			parent[m] = nextLabel;
-			parent[n] = nextLabel;
-			size[nextLabel] = size[m] + size[n];
+			int mWrap = wrap(size.length, m);
+			int nWrap = wrap(size.length, n);
+			
+			size[nextLabel] = size[mWrap] + size[nWrap];
+			parent[mWrap] = nextLabel;
+			parent[nWrap] = nextLabel;
+			size[nextLabel] = size[mWrap] + size[nWrap];
 			nextLabel++;
+			return;
 		}
 		
 		@Override
 		public String toString() {
-			return "Parent arr: " + Arrays.toString(parentArr) + "; " +
-					"Sizes: " + Arrays.toString(sizeArr) + "; " +
+			return "Parent arr: " + Arrays.toString(parent) + "; " +
+					"Sizes: " + Arrays.toString(size) + "; " +
 					"Parent: " + Arrays.toString(parent);
 		}
 	}
@@ -1166,7 +1256,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		rootCluster = minParent;
 		resultArr = new int[rootCluster];
-		unionFind = new TreeUnifyFind(maxParent + 1);
+		unionFind = new TreeUnionFind(maxParent + 1);
 		
 		for(i = 0; i < n; i++) {
 			child = childArr[i];
@@ -1196,6 +1286,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 				
 				// First get the dist matrix
 				final long start = System.currentTimeMillis();
+				
+				// Meant to prevent multiple .getData() copy calls
+				dataData = data.getData();
 				
 				// We don't build the dist mat, because only needed for some algos
 				//dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
@@ -1240,20 +1333,39 @@ public class HDBSCAN extends AbstractDBSCAN {
 				}
 				
 				long treeStart = System.currentTimeMillis();
-				final double[][] build = tree.link();
+				final double[][] build = tree.link(); // returns the result of the label(..) function
 				info("completed tree building in " + 
 						LogTimeFormatter.millis(System.currentTimeMillis()-treeStart, false) + 
 						System.lineSeparator());
 				
 				
-				info("Labeling clusters");
-				labels = treeToLabels(data.getData(), build, min_cluster_size);
+				long labSt = System.currentTimeMillis();
+				labels = treeToLabels(dataData, build, min_cluster_size);
+				
+				
+				// Wrap up...
+				info("completed cluster labeling in " + 
+					LogTimeFormatter.millis(System.currentTimeMillis()-labSt, false));
+				
+				
+				// Count missing
+				info("counting number of noise records");
+				numNoisey = 0;
+				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				
+				
+				int nextLabel = LabelHSetFactory.build(labels).size() - (numNoisey > 0 ? 1 : 0);
+				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+						" classified noise");
 				
 				
 				info("model "+getKey()+" completed in " + 
 						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
 						System.lineSeparator());
 				
+				// Clean anything with big overhead..
+				dataData = null;
 				dist_mat = null;
 				tree = null;
 				
@@ -1388,14 +1500,15 @@ public class HDBSCAN extends AbstractDBSCAN {
 		return doLabeling(condensed, clusters, clusterMap);
 	}
 	
-	protected static double[][] label(final double[][] tree) {
+	// Tested: passing
+	static double[][] label(final double[][] tree) {
 		double[][] result;
 		int a, aa, b, bb, index;
 		final int m = tree.length, n = tree[0].length, N = m + 1;
 		double delta;
 		
 		result = new double[m][n+1];
-		UnifyFind U = new UnifyFind(N);
+		UnionFind U = new UnionFind(N);
 		
 		for(index = 0; index < m; index++) {
 			
@@ -1413,7 +1526,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			U.union(aa, bb);
 		}
-		System.out.println("blah");
 		
 		return result;
 	}

@@ -13,8 +13,10 @@ import com.clust4j.algo.SerializationTests;
 import com.clust4j.algo.pipeline.PipelineTest;
 import com.clust4j.algo.preprocess.ImputationTests;
 import com.clust4j.algo.preprocess.PreProcessorTests;
+import com.clust4j.data.TestDataSet;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
+import com.clust4j.metrics.TestMetrics;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.MatTests;
@@ -47,10 +49,13 @@ import com.clust4j.utils.parallel.ParallelTests;
 	ParallelTests.class,
 	HDBSCANTests.class,
 	NNHSTests.class,
-	TestGlobals.class
+	TestGlobals.class,
+	TestDataSet.class,
+	TestMetrics.class
 })
 
 /* Runs all the tests */
 public class TestSuite {
+	// Easy access to a global formatter for test classes
 	public static final MatrixFormatter formatter = new MatrixFormatter();
 }

@@ -1,7 +1,5 @@
 package com.clust4j.algo;
 
-import java.util.ArrayList;
-
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -57,11 +55,13 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	}
 	
 	
-	static class BoruvkaUnionFind {
+	/*
+	static class BoruvkaUnionFind extends HDBSCAN.UnifiedFinder {
 		int[][] data;
 		boolean[] isComponent;
 		
 		BoruvkaUnionFind(int size) {
+			super(size);
 			data = new int[size][2];
 			
 			// Set first col to arange
@@ -71,7 +71,8 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 			isComponent = new boolean[size];
 		}
 		
-		void union(int x, int y) {
+		@Override
+		public void union(int x, int y) {
 			int xRoot = find(x);
 			int yRoot = find(y);
 			
@@ -85,7 +86,8 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 			}
 		}
 		
-		int find(int x) {
+		@Override
+		public int find(int x) {
 			if(data[x][0] != x) {
 				data[x][0] = find(data[x][0]);
 				isComponent[x] = false;
@@ -106,6 +108,13 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				components[i] = nonZero.get(i);
 			
 			return components;
+		}
+	}
+	*/
+	
+	static class BoruvkaUnionFind extends HDBSCAN.TreeUnionFind {
+		BoruvkaUnionFind(int N) {
+			super(N);
 		}
 	}
 	

@@ -13,7 +13,8 @@ import com.clust4j.algo.HDBSCAN.Algorithm;
 import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
 import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
-import com.clust4j.algo.HDBSCAN.UnifyFind;
+import com.clust4j.algo.HDBSCAN.TreeUnionFind;
+import com.clust4j.algo.HDBSCAN.UnionFind;
 import com.clust4j.utils.BallTree;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
@@ -93,14 +94,6 @@ public class HDBSCANTests {
 	}
 	
 	@Test
-	public void testUnionClass() {
-		UnifyFind uni = new UnifyFind(10);
-		
-		uni.parentArr[0] = 0;
-		assertTrue(uni.parent[0] == 0);
-	}
-	
-	@Test
 	public void testLabeling() {
 		double[][] x = new double[][]{
 			new double[]{0.0, 2.0, 0.3},
@@ -113,6 +106,19 @@ public class HDBSCANTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(HDBSCAN.label(x), y));
+		
+		// More complex
+		assertTrue(MatUtils.equalsExactly(HDBSCAN.label(
+				new double[][]{
+					new double[]{0.0,2.0,0.3,1.9}, 
+					new double[]{2.0,1.0,0.6,6.7},
+					new double[]{1.0,4.3,0.9,0.1}
+				}), 
+				new double[][]{
+			new double[]{0.0,2.0,0.3,2.0,0.0},
+		    new double[]{4.0,1.0,0.6,3.0,0.0},
+		    new double[]{5.0,5.0,0.9,6.0,0.}
+		}));
 	}
 	
 	@Test
@@ -138,6 +144,73 @@ public class HDBSCANTests {
 		assertTrue(labels[0] == -1);
 		assertTrue(labels[1] == -1);
 		assertTrue(labels[2] == -1);
+	}
+	
+	@Test
+	public void testUnionFindClass() {
+		UnionFind u = new UnionFind(5);
+		int val = 2;
+		
+		// Test finds
+		assertTrue(VecUtils.equalsExactly(new int[]{1,1,1,1,1,0,0,0,0}, u.size));
+		assertTrue(u.fastFind(val) == val);
+		assertTrue(u.parent[u.parent.length - 1] == val);
+		assertFalse(u.parent[val] == val); // Should look like [-1, -1, -1, -1, -1, -1, -1, -1,  2]
+		assertTrue(u.fastFind(-1) == val);
+		assertTrue(VecUtils.equalsExactly(u.parent, new int[]{-1, -1, -1, -1, -1, -1, -1, -1, 2}));
+		assertTrue(u.fastFind(3) == 3);
+		assertTrue(VecUtils.equalsExactly(u.parent, new int[]{-1, -1, -1, -1, -1, -1, -1, -1, 3}));
+		
+		// Test unions
+		u.union(3, 4);
+		assertTrue(VecUtils.equalsExactly(u.parent, new int[]{-1, -1, -1,  5,  5, -1, -1, -1, 3}));
+		assertTrue(VecUtils.equalsExactly(u.size, new int[]{1, 1, 1, 1, 1, 2, 0, 0, 0}));
+		
+		u.union(-1, -2);
+		assertTrue(VecUtils.equalsExactly(u.parent, new int[]{-1, -1, -1,  5,  5, -1, -1,  6,  6}));
+		
+		assertTrue(u.find(6) == 6);
+		assertTrue(VecUtils.equalsExactly(u.parent, new int[]{-1, -1, -1,  5,  5, -1, -1,  6,  6}));
+	}
+	
+	@Test
+	public void testTreeUnionFindClass() {
+		TreeUnionFind t = new TreeUnionFind(5);
+		int[][] parent = new int[][]{
+				new int[]{0,0},
+				new int[]{1,0},
+				new int[]{2,0},
+				new int[]{3,0},
+				new int[]{4,0}
+			};
+		
+		assertTrue(MatUtils.equalsExactly(t.dataArr, parent));
+		assertTrue(t.find(3) == 3);
+		assertTrue(MatUtils.equalsExactly(t.dataArr, parent));
+		
+		assertTrue(t.find(-1) == 4);
+		assertTrue(MatUtils.equalsExactly(t.dataArr, parent));
+		
+		// Test union
+		t.union(3, -1);
+		assertTrue(MatUtils.equalsExactly(t.dataArr, new int[][]{
+			new int[]{0,0},
+			new int[]{1,0},
+			new int[]{2,0},
+			new int[]{3,1},
+			new int[]{3,0}
+		}));
+		
+		t.union(-3, 4);
+		assertTrue(MatUtils.equalsExactly(t.dataArr, new int[][]{
+			new int[]{0,0},
+			new int[]{1,0},
+			new int[]{3,0},
+			new int[]{3,1},
+			new int[]{3,0}
+		}));
+		
+		assertTrue(VecUtils.equalsExactly(t.components(), new int[]{0,1,3}));
 	}
 
 	@Test
@@ -255,6 +328,47 @@ public class HDBSCANTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(minSpanningTree, expected));
+	}
+	
+	@Test
+	public void testMoreBFS() {
+		double[][] x = new double[][]{
+			new double[]{0,1,1.414,2},
+			new double[]{3,2,10.05,3}
+		};
+		
+		HList<Integer> result;
+		int root;
+		
+		// Test with root == 0
+		root = 0;
+		result = HDBSCAN.LinkageTreeUtils.breadthFirstSearch(x, root);
+		assertTrue(result.size() == 1);
+		assertTrue(result.get(0) == root);
+		
+		// Test with root == 1
+		root = 1;
+		result = HDBSCAN.LinkageTreeUtils.breadthFirstSearch(x, root);
+		assertTrue(result.size() == 1);
+		assertTrue(result.get(0) == root);
+
+		// Test with root == 2
+		root = 2;
+		result = HDBSCAN.LinkageTreeUtils.breadthFirstSearch(x, root);
+		assertTrue(result.size() == 1);
+		assertTrue(result.get(0) == root);
+		
+		// Test with root == -1
+		root = -1;
+		result = HDBSCAN.LinkageTreeUtils.breadthFirstSearch(x, root);
+		assertTrue(result.size() == 1);
+		assertTrue(result.get(0) == root);
+		
+		// Test with root == -2
+		root = -2;
+		result = HDBSCAN.LinkageTreeUtils.breadthFirstSearch(x, root);
+		assertTrue(result.size() == 1);
+		assertTrue(result.get(0) == root);
 	}
 	
 	@Test

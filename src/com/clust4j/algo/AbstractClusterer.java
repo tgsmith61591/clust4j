@@ -18,6 +18,7 @@ import com.clust4j.log.Log;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.Distance;
+import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
@@ -140,7 +141,7 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		if(!planner.getScale())
 			this.data = (AbstractRealMatrix) data.copy();
 		else {
-			info("normalizing matrix columns (centering and scaling)");
+			meta("normalizing matrix columns", planner.getNormalizer().toString());
 			this.data = planner.getNormalizer().operate(data);
 		}
 	} // End constructor
@@ -176,6 +177,26 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		}
 	}
 	
+	
+	/**
+	 * A model must have the same key, data and class name
+	 * in order to equal another model
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if(this == o)
+			return true;
+		if(o instanceof AbstractClusterer) {
+			AbstractClusterer a = (AbstractClusterer)o;
+			if(!this.getKey().equals(a.getKey()))
+				return false;
+			
+			return this.data.equals(a.data)
+				&& this.getClass().equals(a.getClass());
+		}
+		
+		return false;
+	}
 	
 	
 	private void flagWarning() {
@@ -219,6 +240,18 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 		return hasWarnings;
 	}
 	
+	@Override
+	public int hashCode() {
+		int result = 17;
+		return result 
+			^ (verbose ? 1 : 0)
+			^ (getKey().hashCode())
+			^ (dist instanceof DistanceMetric ? 31 :
+				dist instanceof SimilarityMetric ? 53 : 1)
+			^ (hasWarnings ? 1 : 0)
+			^ seed.hashCode();
+	}
+	
 	
 	/**
 	 * Get the model key, the model's unique UUID
@@ -236,7 +269,6 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	public boolean getVerbose() {
 		return verbose;
 	}
-	
 	
 	
 	/** 

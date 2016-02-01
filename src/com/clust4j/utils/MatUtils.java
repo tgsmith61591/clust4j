@@ -85,8 +85,14 @@ public class MatUtils {
 			throw new DimensionMismatchException(a[0].length, b.length);
 	}
 	
-	final static public void checkDims(final boolean[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
+	
+	
+	
+	// ========== DIM CHECKS =============
+	private static final void dimAssess(int a) { if(a < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a); }
+	
+	final static public void checkDims(final short[][] a) {
+		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -97,8 +103,20 @@ public class MatUtils {
 		}
 	}
 	
-	final static public void checkDims(final double[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
+	final static public void checkDims(final byte[][] a) {
+		dimAssess(a.length);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
+	}
+	
+	final static public void checkDims(final boolean[][] a) {
+		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -110,7 +128,43 @@ public class MatUtils {
 	}
 	
 	final static public void checkDims(final int[][] a) {
-		if(a.length < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a.length);
+		dimAssess(a.length);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
+	}
+	
+	final static public void checkDims(final float[][] a) {
+		dimAssess(a.length);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
+	}
+	
+	final static public void checkDims(final double[][] a) {
+		dimAssess(a.length);
+		
+		// If you try it on a row-initialized matrix but not col-init
+		try {
+			VecUtils.checkDims(a[0]);
+		} catch(NullPointerException npe) {
+			throw new IllegalArgumentException("matrix rows have been initialized, "
+					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
+		}
+	}
+	
+	final static public void checkDims(final long[][] a) {
+		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
 		try {
@@ -151,6 +205,12 @@ public class MatUtils {
 			throw new DimensionMismatchException(n1, n2);
 	}
 	
+	
+	
+	
+	
+	
+	// ============= MATH FUNCTIONS ==================
 	public static final double[][] abs(final double[][] a) {
 		checkDims(a);
 		

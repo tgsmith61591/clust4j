@@ -15,7 +15,8 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
  */
 public class GlobalState {
 	/** The default random state */
-	public final static Random DEFAULT_RANDOM_STATE = new Random();
+	public final static Random DEFAULT_RANDOM_STATE = new Random(999);
+	public final static int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 5;
 	
 	
 	
