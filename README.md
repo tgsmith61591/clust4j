@@ -95,9 +95,9 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 ### Evaluating performance
 All clustering algorithms that implement `Classifier` can also be scored. If we want to score the `KMeans` model we fit above:
 
-    ```java
-    double accuracy = km.score(new int[]{0,1,1});
-    ```
+```java
+double accuracy = km.score(new int[]{0,1,1});
+```
 
 
 ----
