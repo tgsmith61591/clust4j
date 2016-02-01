@@ -65,6 +65,13 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         final int[] results = db.getLabels();
         ```
 
+  - [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14), a density-based clustering algorithm: performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon (Note: __this implementation is still in development__).
+
+        ```java
+        HDBSCAN hdb = new HDBSCAN(mat, new HDBSCANPlanner()).fit();
+        final int[] results = hdb.getLabels();
+        ```
+
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
 
         ```java
@@ -85,17 +92,34 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         results = nn.getNearest(); // results[i] holds the points that are within the radius
         ```
 
+### Evaluating performance
+All clustering algorithms that implement `Classifier` can also be scored. If we want to score the `KMeans` model we fit above:
+
+        ```java
+        double accuracy = km.score(new int[]{0,1,1});
+        ```
+
+
 ----
 ### Separability metrics
 A number of separability metrics are available for use:
-
- - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) __distance__ (L<sup>2</sup> norm)
- - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) __distance__ (L<sup>1</sup> norm)
- - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) __distance__ (L<sup>P</sup> norm)
- - [Haversine](https://en.wikipedia.org/wiki/Haversine_formula) __distance__ (for geospatial cluster analysis)
+ - [Bray-Curtis](https://en.wikipedia.org/wiki/Bray%E2%80%93Curtis_dissimilarity) distance
+ - [Canberra](https://en.wikipedia.org/wiki/Canberra_distance) distance
+ - [Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_distance) distance
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
+ - [Dice](https://reference.wolfram.com/language/ref/DiceDissimilarity.html) distance
+ - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) distance (L<sup>2</sup> norm)
  - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)]
-   
+ - [Haversine](https://en.wikipedia.org/wiki/Haversine_formula) distance (for geospatial cluster analysis)
+ - [Hamming](https://en.wikipedia.org/wiki/Hamming_distance) distance
+ - [Kulsinsky](http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.spatial.distance.kulsinski.html) distance
+ - [Manhattan](https://en.wikipedia.org/wiki/Taxicab_geometry) distance (L<sup>1</sup> norm)
+ - [Minkowski](https://en.wikipedia.org/wiki/Minkowski_distance) distance (L<sup>P</sup> norm)
+ - [Rogers-Tanimoto](https://reference.wolfram.com/language/ref/RogersTanimotoDissimilarity.html) distance  
+ - [Russell-Rao](https://reference.wolfram.com/language/ref/RussellRaoDissimilarity.html) distance 
+ - [Sokal-Sneath](https://reference.wolfram.com/language/ref/SokalSneathDissimilarity.html) distance
+ - [Yule](https://reference.wolfram.com/language/ref/YuleDissimilarity.html) distance
+
 
 
 ----
@@ -257,3 +281,5 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
  7. [Divisive Clustering](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)
  8. [sklearn](https://github.com/scikit-learn/scikit-learn/tree/master/sklearn/cluster) clustering repository
  9. [The Drawbacks of k-Means](http://stats.stackexchange.com/questions/133656/how-to-understand-the-drawbacks-of-k-means)
+ 10.[hdbscan](https://github.com/lmcinnes/hdbscan) python implementation
+ 11.[HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14) research paper

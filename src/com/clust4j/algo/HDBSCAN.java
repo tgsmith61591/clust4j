@@ -172,7 +172,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		//private boolean genMinTree = DEF_GENERATE_MIN_SPAN;
 		
 		
-		public HDBSCANPlanner() { }
+		public HDBSCANPlanner() { this(DEF_MIN_PTS); }
 		public HDBSCANPlanner(final int minPts) {
 			this.minPts = minPts;
 		}

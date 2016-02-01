@@ -152,7 +152,8 @@ public class DataSet {
 		int j = 0;
 		for(Integer idx: indices) {
 			newLabels[j] = this.labels[idx];
-			newData[j++] = this.data.getRow(idx);
+			newData[j] = this.data.getRow(idx);
+			j++;
 		}
 		
 		return new DataSet(
