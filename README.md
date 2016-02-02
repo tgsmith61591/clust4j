@@ -110,7 +110,7 @@ A number of separability metrics are available for use:
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
  - [Dice](https://reference.wolfram.com/language/ref/DiceDissimilarity.html) distance
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) distance (L<sup>2</sup> norm)
- - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>])]
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)]</sup>)]
  - [Haversine](https://en.wikipedia.org/wiki/Haversine_formula) distance (for geospatial cluster analysis)
  - [Hamming](https://en.wikipedia.org/wiki/Hamming_distance) distance
  - [Kulsinsky](http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.spatial.distance.kulsinski.html) distance
