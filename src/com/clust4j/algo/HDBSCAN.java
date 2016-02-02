@@ -16,6 +16,7 @@ import com.clust4j.TestSuite;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.BallTree;
 import com.clust4j.utils.ClustUtils;
@@ -356,6 +357,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 			this(args.length);
 			for(T t: args)
 				add(t);
+		}
+		
+		HSet(Collection<? extends T> coll) {
+			super(coll);
 		}
 	}
 	
@@ -1338,9 +1343,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 						LogTimeFormatter.millis(System.currentTimeMillis()-treeStart, false) + 
 						System.lineSeparator());
 				
-				
+
+				info("converting tree to labels ("+build.length+" x "+build[0].length+")");
 				long labSt = System.currentTimeMillis();
-				labels = treeToLabels(dataData, build, min_cluster_size);
+				labels = treeToLabels(dataData, build, min_cluster_size, this);
 				
 				
 				// Wrap up...
@@ -1409,94 +1415,155 @@ public class HDBSCAN extends AbstractDBSCAN {
 		return numNoisey;
 	}
 	
+	/**
+	 * Break up the getLabels method 
+	 * into numerous smaller ones.
+	 * @author Taylor G Smith
+	 */
+	static class GetLabelUtils {
+		/**
+		 * Descendingly sort the keys of the map and return
+		 * them in order, but eliminate the very smallest key
+		 * @param stability
+		 * @return
+		 */
+		protected static <T,P> HList<T> descSortedKeySet(TreeMap<T,P> stability) {
+			int ct = 0;
+			HList<T> nodeList = new HList<>();
+			for(T d: stability.descendingKeySet())
+				if(++ct < stability.size()) // exclude the root...
+					nodeList.add(d);
+			
+			return nodeList;
+		}
+		
+		/**
+		 * Get tuples where child size is over one
+		 * @param tree
+		 * @return
+		 */
+		protected static EntryPair<HList<double[]>, Integer> childSizeGtOneAndMaxChild(HList<QuadTup<Integer, Integer, Double, Integer>> tree) {
+			HList<double[]> out = new HList<>();
+			int max = Integer.MIN_VALUE;
+			
+			// [parent, child, lambda, size]
+			for(QuadTup<Integer, Integer, Double, Integer> tup: tree) {
+				if(tup.four > 1)
+					out.add(new double[]{
+						tup.one,
+						tup.two,
+						tup.three,
+						tup.four
+					});
+				else if(tup.four == 1)
+					max = FastMath.max(max, tup.two);
+			}
+			
+			return new EntryPair<>(out, max + 1);
+		}
+		
+		protected static TreeMap<Integer, Boolean> initNodeMap(HList<Integer> nodes) {
+			TreeMap<Integer, Boolean> out = new TreeMap<>();
+			for(Integer i: nodes)
+				out.put(i, true);
+			return out;
+		}
+		
+		protected static double subTreeStability(HList<double[]> clusterTree, 
+				int node, TreeMap<Integer, Double> stability) {
+			double sum = 0;
+			
+			// [parent, child, lambda, size]
+			for(double[] d: clusterTree)
+				if((int)d[0] == node)
+					sum += stability.get((int)d[1]);
+			
+			return sum;
+		}
+		
+		protected static HList<Integer> breadthFirstSearchFromClusterTree(HList<double[]> tree, Integer bfsRoot) {
+			int child, parent;
+			HList<Integer> result = new HList<>();
+			HList<Integer> toProcess = new HList<Integer>();
+			HList<Integer> tmp;
+			
+			toProcess.add(bfsRoot);
+			
+			// [parent, child, lambda, size]
+			while(toProcess.size() > 0) {
+				result.addAll(toProcess);
+				
+				// python code: 
+				// to_process = tree['child'][np.in1d(tree['parent'], to_process)]
+				// For all tuples, if the parent is in toProcess, then
+				// add the child to the new list
+				tmp = new HList<Integer>();
+				for(double[] d: tree) {
+					parent	= (int)d[0];
+					child	= (int)d[1];
+					
+					if(toProcess.contains(parent))
+						tmp.add(child);
+				}
+				
+				toProcess = tmp;
+			}
+			
+			return result;
+		}
+	}
+	
 	protected static int[] getLabels(HList<QuadTup<Integer, Integer, Double, Integer>> condensed,
 									TreeMap<Integer, Double> stability) {
 		
 		double subTreeStability;
-		double[][] tmpClusterTree;
-		int parent;
-		HList<Integer> nodes, clusters;
+		HList<Integer> clusters = new HList<Integer>();
+		HSet<Integer> clusterSet;
+		TreeMap<Integer, Integer> clusterMap = new TreeMap<>(), 
+				reverseClusterMap = new TreeMap<>();
 		
 		// Get descending sorted key set
-		int ct = 0;
-		HList<Integer> nodeList = new HList<>();
-		for(Integer d: stability.descendingKeySet())
-			if(++ct < stability.size()) // exclude the root...
-				nodeList.add(d);
+		HList<Integer> nodeList = GetLabelUtils.descSortedKeySet(stability);
 		
+		// Get tuples where child size > 1
+		EntryPair<HList<double[]>, Integer> entry = GetLabelUtils.childSizeGtOneAndMaxChild(condensed);
+		HList<double[]> clusterTree = entry.getKey();
 		
-		// Within this list, save which nodes map to parents that have the same value as the node...
-		TreeMap<Integer, HList<QuadTup<Integer, Integer, Double, Integer>>> nodeMap = new TreeMap<>();
+		// Map of nodes to whether it's a cluster
+		TreeMap<Integer, Boolean> isCluster = GetLabelUtils.initNodeMap(nodeList);
 		
-		// [parent, child, lambda, size]
-		int maxChildSize = Integer.MIN_VALUE;
-		HList<QuadTup<Integer, Integer, Double, Integer>> clusterTree = new HList<>();
-		for(QuadTup<Integer, Integer, Double, Integer> branch: condensed) {
-			parent = branch.one;
-			if(!nodeMap.containsKey(parent))
-				nodeMap.put(parent, new HList<QuadTup<Integer, Integer, Double, Integer>>());
-			nodeMap.get(parent).add(branch);
-			
-			if(branch.four > 1) // where childSize > 1
-				clusterTree.add(branch);
-			else if(branch.four == 1) {
-				if(branch.two > maxChildSize)
-					maxChildSize = branch.two;
-			}
-		}
+		// Get num points
+		//int numPoints = entry.getValue();
 		
-		// Build the tmp cluster tree
-		tmpClusterTree = new double[clusterTree.size()][4];
-		for(int i = 0; i < tmpClusterTree.length; i++) {
-			tmpClusterTree[i] = new double[]{
-				clusterTree.get(i).one,
-				clusterTree.get(i).two,
-				clusterTree.get(i).three,
-				clusterTree.get(i).four,
-			};
-		}
-		
-		// Get cluster TreeMap
-		TreeMap<Integer, Boolean> isCluster = new TreeMap<>();
-		for(Integer d: nodeList) // init as true
-			isCluster.put(d, true);
-		
-		// Big loop
-		HList<QuadTup<Integer, Integer, Double, Integer>> childSelection;
-		//int numPoints = maxChildSize + 1;
+		// Iter over nodes
 		for(Integer node: nodeList) {
-			childSelection = nodeMap.get(node);
-			subTreeStability = 0;
-			if(null != childSelection)
-				for(QuadTup<Integer,Integer,Double,Integer> selection: childSelection) {
-					subTreeStability += stability.get(selection.two);
-				}
+			subTreeStability = GetLabelUtils.subTreeStability(clusterTree, node, stability);
 			
-			if(subTreeStability > stability.get(new Double(node))) {
+			if(subTreeStability > stability.get(node)) {
 				isCluster.put(node, false);
 				stability.put(node, subTreeStability);
 			} else {
-				nodes = LinkageTreeUtils.breadthFirstSearch(tmpClusterTree, node);
-				for(Integer subNode: nodes)
-					if(subNode != node)
+				for(Integer subNode: GetLabelUtils.breadthFirstSearchFromClusterTree(clusterTree, node))
+					if(subNode.intValue() != node)
 						isCluster.put(subNode, false);
 			}
+			
 		}
 		
-		// Set clusters
-		clusters = new HList<>();
-		for(Map.Entry<Integer, Boolean> entry: isCluster.entrySet())
-			if(entry.getValue())
-				clusters.add(entry.getKey());
+		// Now add to clusters
+		for(Map.Entry<Integer, Boolean> c: isCluster.entrySet())
+			if(c.getValue())
+				clusters.add(c.getKey());
+		clusterSet = new HSet<Integer>(clusters);
 		
-		// Enumerate clusters
-		TreeMap<Integer, Integer> reverseClusterMap = new TreeMap<>();
-		TreeMap<Integer, Integer> clusterMap = new TreeMap<>();
-		for(int n = 0; n < clusters.size(); n++) {
-			clusterMap.put(n, clusters.get(n));
-			reverseClusterMap.put(clusters.get(n), n);
+		// Build cluster map
+		int n = 0;
+		for(Integer clust: clusterSet) {
+			clusterMap.put(clust, n);
+			reverseClusterMap.put(n, clust);
+			n++;
 		}
-		
+
 		return doLabeling(condensed, clusters, clusterMap);
 	}
 	
@@ -1537,6 +1604,11 @@ public class HDBSCAN extends AbstractDBSCAN {
 	
 	protected static int[] treeToLabels(final double[][] X, 
 			final double[][] single_linkage_tree, final int min_size) {
+		return treeToLabels(X, single_linkage_tree, min_size, null);
+	}
+	
+	protected static int[] treeToLabels(final double[][] X, 
+			final double[][] single_linkage_tree, final int min_size, Loggable logger) {
 		
 		final HList<QuadTup<Integer, Integer, Double, Integer>> condensed = 
 				LinkageTreeUtils.condenseTree(single_linkage_tree, min_size);

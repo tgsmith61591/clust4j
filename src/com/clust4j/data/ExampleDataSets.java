@@ -176,8 +176,5 @@ public class ExampleDataSets {
 			},
 			
 			new MatrixFormatter());
-		
-		
-		
 	}
 }

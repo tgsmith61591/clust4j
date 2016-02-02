@@ -15,6 +15,7 @@ import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
+import com.clust4j.data.ExampleDataSets;
 import com.clust4j.utils.BallTree;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
@@ -386,6 +387,45 @@ public class HDBSCANTests {
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
 		System.out.println();
+	}
+	
+	@Test
+	public void testDescKeySet() {
+		TreeMap<Integer, Double> stability = new TreeMap<>();
+		stability.put(1, 456.0);
+		stability.put(9, 23.0);
+		stability.put(-5, 89.0);
+			
+		HList<Integer> nodes = HDBSCAN.GetLabelUtils.descSortedKeySet(stability);
+		assertTrue(nodes.size() == 2);
+		assertTrue(nodes.get(0) == 9);
+		assertTrue(nodes.get(1) == 1);
+		// It should trim the last one
+	}
+	
+	@Test
+	public void testSizeOverOne() {
+		HList<QuadTup<Integer, Integer, Double, Integer>> tup = new HList<>();
+		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,2,1.0,1));
+		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		
+		EntryPair<HList<double[]>, Integer> entry = 
+			HDBSCAN.GetLabelUtils.childSizeGtOneAndMaxChild(tup);
+		
+		assertTrue(entry.getKey().size() == 3);
+		assertTrue(entry.getValue() == 3);
+	}
+	
+	@Test
+	public void testDataSet() { // See if the iris dataset works...
+		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+		new HDBSCAN(data, 
+				new HDBSCANPlanner(1)
+					.setVerbose(true)
+					.setScale(true)).fit();
+		
 	}
 	
 	/*@Test

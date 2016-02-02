@@ -171,7 +171,6 @@ public class SerializationTests {
 		final int[] labels = hd.getLabels();
 		hd.saveModel(new FileOutputStream(tmpSerPath));
 		assertTrue(file.exists());
-		System.out.println(hd.getNumberOfNoisePoints());
 		
 		HDBSCAN hd2 = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(tmpSerPath));
 		assertTrue(VecUtils.equalsExactly(hd2.getLabels(), labels));

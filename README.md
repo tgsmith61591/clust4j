@@ -96,7 +96,8 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 All clustering algorithms that implement `Classifier` can also be scored. If we want to score the `KMeans` model we fit above:
 
 ```java
-double accuracy = km.score(new int[]{0,1,1});
+int[] truth = new int[]{0,1,1};
+double accuracy = km.score(truth);
 ```
 
 
@@ -109,7 +110,7 @@ A number of separability metrics are available for use:
  - [Cosine](https://en.wikipedia.org/wiki/Cosine_similarity) __similarity__
  - [Dice](https://reference.wolfram.com/language/ref/DiceDissimilarity.html) distance
  - [Euclidean](https://en.wikipedia.org/wiki/Euclidean_distance) distance (L<sup>2</sup> norm)
- - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)]
+ - [Kernel](https://en.wikipedia.org/wiki/Kernel_method) __similarity__ methods (descriptions by César Souza<sup>[[1](http://crsouza.com/2010/03/kernel-functions-for-machine-learning-applications/)</sup>)]]
  - [Haversine](https://en.wikipedia.org/wiki/Haversine_formula) distance (for geospatial cluster analysis)
  - [Hamming](https://en.wikipedia.org/wiki/Hamming_distance) distance
  - [Kulsinsky](http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.spatial.distance.kulsinski.html) distance
@@ -281,5 +282,5 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
  7. [Divisive Clustering](http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm)
  8. [sklearn](https://github.com/scikit-learn/scikit-learn/tree/master/sklearn/cluster) clustering repository
  9. [The Drawbacks of k-Means](http://stats.stackexchange.com/questions/133656/how-to-understand-the-drawbacks-of-k-means)
- 10.[hdbscan](https://github.com/lmcinnes/hdbscan) python implementation
- 11.[HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14) research paper
+ 10. [hdbscan](https://github.com/lmcinnes/hdbscan) python implementation
+ 11. [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14) research paper

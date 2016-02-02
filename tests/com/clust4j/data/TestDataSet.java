@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.AffinityPropagation;
 import com.clust4j.algo.DBSCAN;
+import com.clust4j.algo.HDBSCAN;
 import com.clust4j.algo.HierarchicalAgglomerative;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
@@ -69,13 +70,11 @@ public class TestDataSet {
 					.setVerbose(verbose)).fit();
 			stdout(db, actual, b);
 			
-			/* still in development...
 			HDBSCAN hdb = new HDBSCAN(data, 
 				new HDBSCAN.HDBSCANPlanner()
 					.setScale(b)
 					.setVerbose(verbose)).fit();
 			stdout(hdb, actual, b);
-			*/
 			
 			HierarchicalAgglomerative ha = new HierarchicalAgglomerative(data, 
 				new HierarchicalAgglomerative.HierarchicalPlanner()
