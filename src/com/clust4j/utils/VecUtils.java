@@ -168,6 +168,8 @@ public class VecUtils {
 	}
 	
 	
+	
+	
 	/**
 	 * Add two vectors and return a copy.
 	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
@@ -218,6 +220,21 @@ public class VecUtils {
 	
 	
 	
+	
+	
+	// ================= arange ==================
+	private static int check_arange_return_len(int st, int en, int in) {
+		if(in == 0) throw new IllegalArgumentException("increment cannot equal zero");
+		if(st > en && in > 0) throw new IllegalArgumentException("increment can't be positive for this range");
+		if(st < en && in < 0) throw new IllegalArgumentException("increment can't be negative for this range");
+		
+		int length = FastMath.abs(en - st);
+		if(length == 0) throw new IllegalArgumentException("start_inc ("+st+") cannot equal end_exc ("+en+")");
+		if(length%FastMath.abs(in)!=0) throw new IllegalArgumentException("increment will not create evenly spaced elements");
+		
+		return length;
+	}
+	
 	public static int[] arange(final int length) {
 		return arange(0, length, 1);
 	}
@@ -227,34 +244,37 @@ public class VecUtils {
 	}
 	
 	public static int[] arange(final int start_inc, final int end_exc, final int increment) {
-		if(increment == 0)
-			throw new IllegalArgumentException("increment cannot equal zero");
-		if(start_inc > end_exc && increment > 0)
-			throw new IllegalArgumentException("increment can't be positive for this range");
-		if(start_inc < end_exc && increment < 0)
-			throw new IllegalArgumentException("increment can't be negative for this range");
+		int length = check_arange_return_len(start_inc, end_exc, increment) / FastMath.abs(increment);
 		
-		
-		int length = FastMath.abs(end_exc - start_inc);
-		if(length == 0)
-			throw new IllegalArgumentException("start_inc ("+start_inc+") cannot equal end_exc ("+end_exc+")");
-		if(length%FastMath.abs(increment)!=0)
-			throw new IllegalArgumentException("increment will not create evenly spaced elements");
-		length /= FastMath.abs(increment);
-		
-		
+		int i, j;
 		final int[] out = new int[length];
-		if(increment < 0) {
-			int j = 0;
-			for(int i = start_inc; i > end_exc; i+=increment) out[j++] = i;
-		} else {
-			int j = 0;
-			for(int i = start_inc; i < end_exc; i+=increment) out[j++] = i;
-		}
+		if(increment < 0)
+			for(i = start_inc, j = 0; i > end_exc; i+=increment, j++) out[j] = i;
+		else
+			for(i = start_inc, j = 0; i < end_exc; i+=increment, j++) out[j] = i;
 		
 		return out;
 	}
 	
+	
+	
+	
+	public static int argMax(final float[] v) {
+		checkDims(v);
+		
+		float max = Float.NEGATIVE_INFINITY;
+		int max_idx = -1;
+		
+		for(int i = 0; i < v.length; i++) {
+			float val = v[i];
+			if(val > max) {
+				max = val;
+				max_idx = i;
+			}
+		}
+		
+		return max_idx;
+	}
 	
 	public static int argMax(final double[] v) {
 		checkDims(v);
@@ -273,6 +293,26 @@ public class VecUtils {
 		return max_idx;
 	}
 	
+	
+	
+	
+	public static int argMin(final float[] v) {
+		checkDims(v);
+		
+		float min = Float.MAX_VALUE;
+		int min_idx = -1;
+		
+		for(int i = 0; i < v.length; i++) {
+			float val = v[i];
+			if(val < min) {
+				min = val;
+				min_idx = i;
+			}
+		}
+		
+		return min_idx;
+	}
+	
 	public static int argMin(final double[] v) {
 		checkDims(v);
 		
@@ -289,6 +329,9 @@ public class VecUtils {
 		
 		return min_idx;
 	}
+	
+	
+	
 	
 	public static int[] argSort(final double[] a) {
 		checkDims(a);
@@ -1484,6 +1527,13 @@ public class VecUtils {
 		for(boolean b: a)
 			if(b) sum++;
 		return sum;
+	}
+	
+	public static LinkedHashSet<Double> unique(final double[] arr) {
+		final LinkedHashSet<Double> out = new LinkedHashSet<>();
+		for(Double t: arr)
+			out.add(t);
+		return out;
 	}
 	
 	public static <T> LinkedHashSet<T> unique(final T[] arr) {

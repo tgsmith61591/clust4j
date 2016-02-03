@@ -45,27 +45,28 @@ public class MatrixFormatter extends TableFormatter {
     }
     
     public String format(AbstractRealMatrix matrix, int numRows) {
+    	final int rows = matrix.getRowDimension();
+    	
     	if(numRows < 1)
     		throw new IllegalArgumentException("numrows must exceed 0");
-    	else if(numRows > matrix.getRowDimension())
-    		numRows = matrix.getRowDimension();
+    	else if(numRows > rows)
+    		numRows = rows;
     	
     	StringBuilder output = new StringBuilder();
     	output.append(prefix+lineSep);
     	
     	final double[][] data = matrix.getData();
-    	final int rows = matrix.getRowDimension();
     	final int cols = matrix.getColumnDimension();
     	
     	/* While finding width, go ahead and format */
-    	final String[][] formatted = new String[rows][cols];
+    	final String[][] formatted = new String[numRows][cols];
     	
     	
     	// Need to get the max width for each column
     	ArrayList<Integer> idxToWidth = new ArrayList<Integer>(cols);
     	for(int col = 0; col < cols; col++) {
     		int maxWidth = Integer.MIN_VALUE;
-    		for(int row = 0; row < rows; row++) {
+    		for(int row = 0; row < numRows; row++) {
     			String f = formatNumber(data[row][col]); //format.format(data[row][col]);
     			int len = f.length();
     			if(len > maxWidth)
@@ -78,7 +79,7 @@ public class MatrixFormatter extends TableFormatter {
     	
     	// Now append plus width, etc.
     	boolean rightJustify = align.equals(RIGHT);
-    	for(int row = 0; row < rows; row++) {
+    	for(int row = 0; row < numRows; row++) {
     		StringBuilder rowBuild = new StringBuilder();
     		rowBuild.append(rowPrefix);
     		

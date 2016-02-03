@@ -16,11 +16,13 @@ import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.MeanShift;
 import com.clust4j.utils.Classifier;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
 
 public class TestDataSet {
 	private final static DecimalFormat df = new DecimalFormat("##.##");
 
-	@Test
+	@Test(expected=IllegalStateException.class)
 	public void testIris() {
 		DataSet iris = ExampleDataSets.IRIS;
 		final int len = iris.getDataRef().getRowDimension();
@@ -30,6 +32,23 @@ public class TestDataSet {
 		// Test that no reference carried over...
 		shuffled.getHeaderRef()[0] = "TESTING!";
 		assertTrue( !iris.getHeaderRef()[0].equals(shuffled.getHeaderRef()[0]) );
+		
+		shuffled.setColumn("TESTING!", 
+			VecUtils.rep(Double.POSITIVE_INFINITY, shuffled.numRows()));
+		assertTrue(VecUtils.unique(shuffled.getColumn("TESTING!")).size() == 1);
+		
+		// Test piecewise col drops
+		shuffled.dropCol("TESTING!");
+		assertTrue(shuffled.numCols() == 3);
+		
+		shuffled.dropCol("Sepal Width");
+		assertTrue(shuffled.numCols() == 2);
+		
+		shuffled.dropCol("Petal Length");
+		assertTrue(shuffled.numCols() == 1);
+		
+		// Prepare for the throw...
+		shuffled.dropCol("Petal Width"); // BOOM!
 	}
 	
 	private static String formatPct(double num) {
@@ -117,5 +136,60 @@ public class TestDataSet {
 	@Test
 	public void testDifferentAlgorithmNoShuffle() {
 		testAlgos(false);
+	}
+	
+	@Test
+	public void testCopy() {
+		DataSet iris = ExampleDataSets.IRIS;
+		DataSet shuffle = iris.copy();
+		assertFalse(iris.equals(shuffle));
+		
+		shuffle = shuffle.shuffle();
+		assertFalse(shuffle.equals(iris));
+		
+		assertFalse(shuffle.getDataRef().equals(iris.getDataRef()));
+		assertFalse(shuffle.getHeaderRef().equals(iris.getHeaderRef()));
+		assertFalse(shuffle.getLabelRef().equals(iris.getLabelRef()));
+	}
+	
+	@Test
+	public void testDataSetColAddsRemoves() {
+		DataSet iris = ExampleDataSets.IRIS;
+		DataSet shuffle = iris.copy();
+		
+		final int m = shuffle.getDataRef().getRowDimension();
+		final int n = shuffle.getDataRef().getColumnDimension();
+		
+		double[] newCol = VecUtils.randomGaussian(m);
+		shuffle.addColumn(newCol);
+		assertTrue(shuffle.getHeaderRef()[n].equals("V" + n));
+		
+		newCol = VecUtils.randomGaussian(m);
+		shuffle.addColumn("NewCol", newCol);
+		assertTrue(shuffle.getHeaderRef()[n + 1].equals("NewCol"));
+		
+		double[][] newCols = MatUtils.randomGaussian(m, 3);
+		shuffle.addColumns(newCols);
+		assertTrue(shuffle.getDataRef().getColumnDimension() == 9);
+		assertTrue(shuffle.getHeaderRef()[8].equals("V8"));
+		
+		shuffle.dropCol("V4");
+		
+		//Create a new duplicate named col, capture first val, drop that col
+		//(it will drop the first one named that, so the already existing col, 
+		//not the new one) and assert the new one remains
+		newCol = VecUtils.randomGaussian(m);
+		double val = newCol[0];
+		shuffle.addColumn("V8", newCol);
+		shuffle.dropCol("V8");
+		assertTrue(shuffle.getColumn("V8")[0] == val);
+		
+		// Explicitly test the setCol method
+		newCol = VecUtils.randomGaussian(m);
+		val = newCol[0];
+		shuffle.setColumn("V8", newCol);
+		assertTrue(shuffle.getColumn("V8")[0] == val);
+		
+		shuffle.head();
 	}
 }

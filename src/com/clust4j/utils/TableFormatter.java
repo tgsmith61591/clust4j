@@ -113,17 +113,17 @@ public class TableFormatter {
     }
     
     public String format(ArrayList<Object[]> matrix, int numRows) {
+    	final int rows = matrix.size();
     	if(numRows < 1)
     		throw new IllegalArgumentException("numrows must exceed 0");
-    	else if(numRows > matrix.size())
-    		numRows = matrix.size();
+    	else if(numRows > rows)
+    		numRows = rows;
     	
     	StringBuilder output = new StringBuilder();
     	output.append(prefix+lineSep);
 
-    	final int rows = matrix.size();
-    	final Object[][] data = new Object[rows][];
-    	for(int i = 0; i < rows; i++) {
+    	final Object[][] data = new Object[numRows][];
+    	for(int i = 0; i < numRows; i++) {
     		Object[] matI = matrix.get(i);
     		data[i] = matI;
     	}
@@ -138,14 +138,14 @@ public class TableFormatter {
     	final int cols = largestSoFar;
     	
     	/* While finding width, go ahead and format */
-    	final String[][] formatted = new String[rows][cols];
+    	final String[][] formatted = new String[numRows][cols];
     	
     	
     	// Need to get the max width for each column
     	ArrayList<Integer> idxToWidth = new ArrayList<Integer>(cols);
     	for(int col = 0; col < cols; col++) {
     		int maxWidth = Integer.MIN_VALUE;
-    		for(int row = 0; row < rows; row++) {
+    		for(int row = 0; row < numRows; row++) {
     			String f;
     			int len;
     			
@@ -166,7 +166,7 @@ public class TableFormatter {
     	
     	// Now append plus width, etc.
     	boolean rightJustify = align.equals(RIGHT);
-    	for(int row = 0; row < rows; row++) {
+    	for(int row = 0; row < numRows; row++) {
     		StringBuilder rowBuild = new StringBuilder();
     		rowBuild.append(rowPrefix);
     		

@@ -2,6 +2,8 @@ package com.clust4j.utils;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
@@ -168,13 +170,21 @@ public class VectorTests {
 	public void testArgs() {
 		assertTrue(-5 > GlobalState.Mathematics.SIGNED_MIN);
 		
-		final double[] a = new double[]{0, 5};
-		assertTrue(VecUtils.argMax(a) == 1);
-		assertTrue(VecUtils.argMin(a) == 0);
+		final double[] ad = new double[]{0, 5};
+		assertTrue(VecUtils.argMax(ad) == 1);
+		assertTrue(VecUtils.argMin(ad) == 0);
 		
-		final double[] b = new double[]{0,0};
-		assertTrue(VecUtils.argMax(b) == 0);
-		assertTrue(VecUtils.argMin(b) == 0);
+		final double[] bd = new double[]{0,0};
+		assertTrue(VecUtils.argMax(bd) == 0);
+		assertTrue(VecUtils.argMin(bd) == 0);
+		
+		final float[] af = new float[]{0, 5};
+		assertTrue(VecUtils.argMax(af) == 1);
+		assertTrue(VecUtils.argMin(af) == 0);
+		
+		final float[] bf = new float[]{0,0};
+		assertTrue(VecUtils.argMax(bf) == 0);
+		assertTrue(VecUtils.argMin(bf) == 0);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -183,11 +193,13 @@ public class VectorTests {
 		VecUtils.argMax(a);
 	}
 	
-	@Test
-	public void testArange() {
+	@Test(expected=IllegalArgumentException.class)
+	public void testArangeInt() {
 		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10),new int[]{0,1,2,3,4,5,6,7,8,9}));
 		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10,0),new int[]{10,9,8,7,6,5,4,3,2,1}));
 		assertTrue(VecUtils.equalsExactly(VecUtils.arange(10,0,-2),new int[]{10,8,6,4,2}));
+		
+		System.out.println(Arrays.toString(VecUtils.arange(10, 0, -3)));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
