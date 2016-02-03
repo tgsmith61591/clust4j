@@ -71,6 +71,13 @@ public class DataSet implements DeepCloneable {
 	}
 	
 	public DataSet(Array2DRowRealMatrix data, int[] labels, String[] headers, MatrixFormatter formatter, boolean copyData) {
+		if(null == labels)
+			throw new IllegalArgumentException("labels cannot be null");
+		if(null == headers)
+			throw new IllegalArgumentException("headers cannot be null");
+		if(null == data)
+			throw new IllegalArgumentException("data cannot be null");
+		
 		// Check to make sure dims match up...
 		if(labels.length != data.getRowDimension())
 			throw new DimensionMismatchException(labels.length, data.getRowDimension());
@@ -272,7 +279,17 @@ public class DataSet implements DeepCloneable {
 	 * @return
 	 */
 	public double[] getColumn(String header) {
-		return data.getColumn(getColumnIdx(header));
+		return getColumn(getColumnIdx(header));
+	}
+	
+	/**
+	 * Return a copy of the column 
+	 * corresponding to the header
+	 * @param header
+	 * @return
+	 */
+	public double[] getColumn(int i) {
+		return data.getColumn(i);
 	}
 	
 	/**
@@ -429,6 +446,30 @@ public class DataSet implements DeepCloneable {
 			formatter,
 			false
 		);
+	}
+	
+	public void sortAscInPlace(String col) {
+		sortAscInPlace(getColumnIdx(col));
+	}
+	
+	public void sortAscInPlace(int colIdx) {
+		if(colIdx < 0 || colIdx >= data.getColumnDimension())
+			throw new IllegalArgumentException("col out of bounds");
+		
+		double[][] dataRef = data.getDataRef();
+		data = new Array2DRowRealMatrix(MatUtils.sortAscByCol(dataRef, colIdx), false);
+	}
+	
+	public void sortDescInPlace(String col) {
+		sortDescInPlace(getColumnIdx(col));
+	}
+	
+	public void sortDescInPlace(int colIdx) {
+		if(colIdx < 0 || colIdx >= data.getColumnDimension())
+			throw new IllegalArgumentException("col out of bounds");
+
+		double[][] dataRef = data.getDataRef();
+		data = new Array2DRowRealMatrix(MatUtils.sortDescByCol(dataRef, colIdx), false);
 	}
 	
 	/**

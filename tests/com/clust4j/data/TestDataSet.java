@@ -190,6 +190,15 @@ public class TestDataSet {
 		shuffle.setColumn("V8", newCol);
 		assertTrue(shuffle.getColumn("V8")[0] == val);
 		
+		shuffle.sortAscInPlace("Sepal Length");
+		assertTrue(shuffle.getColumn("Sepal Length")[0] == 4.3); // min val
+
+		shuffle.head();
+		
+		val = shuffle.getColumn("Sepal Length")[shuffle.numRows()-1];
+		shuffle.sortDescInPlace("Sepal Length");
+		assertTrue(shuffle.getColumn("Sepal Length")[0] == val); // max val
+		
 		shuffle.head();
 	}
 }

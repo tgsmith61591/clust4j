@@ -4,9 +4,9 @@ A Java-based set of __unsupervised classification__ clustering algorithms. Built
 ____
 ### Dependencies:
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
-  - The `commons-math` dependency is included in [dep/](https://github.com/tgsmith61591/clust4j/tree/master/dep/commons-math-3-3.2) and is already in the `.classpath`
+  - The `commons-math` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/commons-math-3-3.2) and is already in the `.classpath`
  - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
-  - The `log4j` dependency is included in [dep/](https://github.com/tgsmith61591/clust4j/tree/master/dep/apache-log4j-1.2.17) and is already in the `.classpath`.
+  - The `log4j` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/apache-log4j-1.2.17) and is already in the `.classpath`.
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
 
 

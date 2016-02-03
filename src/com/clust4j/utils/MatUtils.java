@@ -1032,6 +1032,18 @@ public class MatUtils {
 		return MatUtils.reorder(data, sortedArgs);
 	}
 	
+	public static double[][] sortDescByCol(final double[][] data, final int col) {
+		checkDims(data);
+		int[] sortedArgs = VecUtils.reverseSeries(VecUtils.argSort(MatUtils.getColumn(data, col)));
+		return MatUtils.reorder(data, sortedArgs);
+	}
+	
+	public static int[][] sortDescByCol(final int[][] data, final int col) {
+		checkDims(data);
+		int[] sortedArgs = VecUtils.reverseSeries(VecUtils.argSort(MatUtils.getColumn(data, col)));
+		return MatUtils.reorder(data, sortedArgs);
+	}
+	
 	public static final double[][] subtract(final double[][] a, final double[][] b) {
 		checkDims(a);
 		checkDims(b);

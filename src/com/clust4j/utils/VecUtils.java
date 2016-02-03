@@ -2,10 +2,11 @@ package com.clust4j.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.TreeMap;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -332,18 +333,40 @@ public class VecUtils {
 	
 	
 	
+	final static <K extends Comparable<? super K>, V extends Comparable<? super V>> 
+				Comparator<Map.Entry<K,V>> KV_Comparator() {
+		return new Comparator<Map.Entry<K,V>>(){
+			@Override
+			public int compare(Map.Entry<K,V> m1, Map.Entry<K,V> m2) {
+				int comp = m1.getKey().compareTo(m2.getKey());
+				if(comp == 0)
+					return m1.getValue().compareTo(m2.getValue());
+				return comp;
+			}
+		};
+	}
 	
 	public static int[] argSort(final double[] a) {
 		checkDims(a);
 		
 		final int n = a.length;
-		final TreeMap<Double, Integer> map = new TreeMap<>();
+		final ArrayList<Map.Entry<Double, Integer>> out = new ArrayList<>();
 		for(int i = 0; i < n; i++)
-			map.put(a[i], i);
+			out.add(new EntryPair<Double, Integer>(a[i], i));
+		
+		Collections.sort(out, new Comparator<Map.Entry<Double,Integer>>(){
+			@Override
+			public int compare(Map.Entry<Double,Integer> m1, Map.Entry<Double,Integer> m2) {
+				int comp = m1.getKey().compareTo(m2.getKey());
+				if(comp == 0)
+					return m1.getValue().compareTo(m2.getValue());
+				return comp;
+			}
+		});
 		
 		int idx = 0;
 		final int[] res = new int[n];
-		for(Map.Entry<Double,Integer> entry: map.entrySet())
+		for(Map.Entry<Double,Integer> entry: out)
 			res[idx++] = entry.getValue();
 		
 		return res;
@@ -353,13 +376,23 @@ public class VecUtils {
 		checkDims(a);
 		
 		final int n = a.length;
-		final TreeMap<Integer, Integer> map = new TreeMap<>();
+		final ArrayList<Map.Entry<Integer, Integer>> out = new ArrayList<>();
 		for(int i = 0; i < n; i++)
-			map.put(a[i], i);
+			out.add(new EntryPair<Integer, Integer>(a[i], i));
+		
+		Collections.sort(out, new Comparator<Map.Entry<Integer, Integer>>(){
+			@Override
+			public int compare(Map.Entry<Integer, Integer> m1, Map.Entry<Integer, Integer> m2) {
+				int comp = m1.getKey().compareTo(m2.getKey());
+				if(comp == 0)
+					return m1.getValue().compareTo(m2.getValue());
+				return comp;
+			}
+		});
 		
 		int idx = 0;
 		final int[] res = new int[n];
-		for(Map.Entry<Integer,Integer> entry: map.entrySet())
+		for(Map.Entry<Integer, Integer> entry: out)
 			res[idx++] = entry.getValue();
 		
 		return res;
