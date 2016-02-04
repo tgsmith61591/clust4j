@@ -115,6 +115,14 @@ public class VecUtils {
 	final static public void checkDims(final double[] a, final double[] b) 	{ dimAssess(a.length, b.length); }
 	final static public void checkDims(final long[] a, final long[] b) 		{ dimAssess(a.length, b.length); }
 	
+	final private static void dimAssessPermitEmpty(final int a, final int b) 			{ if(a != b) throw new DimensionMismatchException(a, b); dimAssessPermitEmpty(a); }
+	final static public void checkDimsPermitEmpty(final byte[] a, final byte[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final short[] a, final short[] b) 	{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final boolean[] a, final boolean[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final int[] a, final int[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final float[] a, final float[] b) 	{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final double[] a, final double[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
+	final static public void checkDimsPermitEmpty(final long[] a, final long[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
 	
 	
 	
@@ -180,7 +188,7 @@ public class VecUtils {
 	 * @return the result of adding two vectors
 	 */
 	public static double[] add(final double[] a, final double[] b) {
-		checkDims(a, b);
+		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -331,19 +339,13 @@ public class VecUtils {
 		return min_idx;
 	}
 	
-	
-	
-	final static <K extends Comparable<? super K>, V extends Comparable<? super V>> 
-				Comparator<Map.Entry<K,V>> KV_Comparator() {
-		return new Comparator<Map.Entry<K,V>>(){
-			@Override
-			public int compare(Map.Entry<K,V> m1, Map.Entry<K,V> m2) {
-				int comp = m1.getKey().compareTo(m2.getKey());
-				if(comp == 0)
-					return m1.getValue().compareTo(m2.getValue());
-				return comp;
-			}
-		};
+	private static <K> int[] argSort(ArrayList<Map.Entry<K, Integer>> theMap) {
+		int idx = 0;
+		final int[] res = new int[theMap.size()];
+		for(Map.Entry<K,Integer> entry: theMap)
+			res[idx++] = entry.getValue();
+		
+		return res;
 	}
 	
 	public static int[] argSort(final double[] a) {
@@ -364,12 +366,7 @@ public class VecUtils {
 			}
 		});
 		
-		int idx = 0;
-		final int[] res = new int[n];
-		for(Map.Entry<Double,Integer> entry: out)
-			res[idx++] = entry.getValue();
-		
-		return res;
+		return argSort(out);
 	}
 	
 	public static int[] argSort(final int[] a) {
@@ -390,12 +387,7 @@ public class VecUtils {
 			}
 		});
 		
-		int idx = 0;
-		final int[] res = new int[n];
-		for(Map.Entry<Integer, Integer> entry: out)
-			res[idx++] = entry.getValue();
-		
-		return res;
+		return argSort(out);
 	}
 	
 	public static double[] asDouble(final int[] a) {
@@ -410,8 +402,8 @@ public class VecUtils {
 	}
 	
 	final public static int[] cat(final int[] a, final int[] b) {
-		checkDims(a);
-		checkDims(b);
+		checkDimsPermitEmpty(a);
+		checkDimsPermitEmpty(b);
 		
 		final int na = a.length, nb = b.length, n = na+nb;
 		if(na == 0) return copy(b);
@@ -426,15 +418,26 @@ public class VecUtils {
 		return res;
 	}
 	
+	/**
+	 * Center a vector around the mean
+	 * @param a
+	 * @return
+	 */
 	final public static double[] center(final double[] a) {
 		return center(a, mean(a));
 	}
 	
-	final public static double[] center(final double[] a, final double mean) {
+	/**
+	 * Center a vector around a value
+	 * @param a
+	 * @param value
+	 * @return
+	 */
+	final public static double[] center(final double[] a, final double value) {
 		final double[] copy = new double[a.length];
 		System.arraycopy(a, 0, copy, 0, a.length);
 		for(int i = 0; i < a.length; i++)
-			copy[i] = a[i] - mean;
+			copy[i] = a[i] - value;
 		return copy;
 	}
 	
@@ -567,7 +570,7 @@ public class VecUtils {
 	}
 	
 	public static boolean equalsExactly(final int[] a, final int[] b) {
-		checkDims(a, b);
+		checkDimsPermitEmpty(a, b);
 		
 		for(int i = 0; i < a.length; i++)
 			if(a[i] != b[i])
@@ -585,7 +588,7 @@ public class VecUtils {
 	 * @return whether the two vectors are exactly equal
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
-		checkDims(a, b);
+		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -783,7 +786,6 @@ public class VecUtils {
 	 * @return the log of the vector
 	 */
 	public static double[] log(final double[] a) {
-		checkDims(a);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && 
 				 a.length>MAX_SERIAL_VECTOR_LEN)) {
@@ -813,6 +815,7 @@ public class VecUtils {
 	 * @return
 	 */
 	public static double[] logForceSerial(final double[] a) {
+		checkDimsPermitEmpty(a);
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.log(a[i]);
@@ -843,6 +846,8 @@ public class VecUtils {
 	 * @return the max in the vector
 	 */
 	final public static double max(final double[] a) {
+		checkDims(a);
+		
 		double max = SIGNED_MIN;
 		for(double d : a)
 			if(d > max)
@@ -896,6 +901,8 @@ public class VecUtils {
 	 * @return the min in the vector
 	 */
 	final public static double min(final double[] a) {
+		checkDims(a);
+		
 		double min = MAX;
 		for(double d : a)
 			if(d < min)
@@ -912,7 +919,6 @@ public class VecUtils {
 	 * @return the product of two vectors
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
-		checkDims(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -945,6 +951,7 @@ public class VecUtils {
 	 * @return
 	 */
 	public static double[] multiplyForceSerial(final double[] a, final double[] b) {
+		checkDimsPermitEmpty(a, b);
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			ab[i] = a[i] * b[i];
@@ -1224,6 +1231,8 @@ public class VecUtils {
 	}
 	
 	public static double[] pow(final double[] a, final double p) {
+		checkDimsPermitEmpty(a);
+		
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.pow(a[i], p);
@@ -1231,7 +1240,6 @@ public class VecUtils {
 	}
 	
 	public static double prod(final double[] a) {
-		checkDims(a);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -1251,6 +1259,7 @@ public class VecUtils {
 	 * @return
 	 */
 	public static double prodForceSerial(final double[] a) {
+		checkDims(a);
 		double prod = 1;
 		for(double d: a)
 			prod *= d;
@@ -1390,7 +1399,7 @@ public class VecUtils {
 	}
 	
 	public static double[] scalarAdd(final double[] a, final double b) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1400,7 +1409,7 @@ public class VecUtils {
 	}
 	
 	public static double[] scalarDivide(final double[] a, final double b) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1410,7 +1419,7 @@ public class VecUtils {
 	}
 	
 	public static double[] scalarMultiply(final double[] a, final double b) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1420,7 +1429,7 @@ public class VecUtils {
 	}
 	
 	public static double[] scalarSubtract(final double[] a, final double b) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1509,7 +1518,7 @@ public class VecUtils {
 	 * @return
 	 */
 	public static double[] subtractForceSerial(final double[] from, final double[] subtractor) {
-		checkDims(from, subtractor);
+		checkDimsPermitEmpty(from, subtractor);
 		
 		final double[] ab = new double[from.length];
 		for(int i = 0; i < from.length; i++)
@@ -1598,7 +1607,7 @@ public class VecUtils {
 	}
 	
 	public static double[][] vstack(final double[] a, final double[] b) {
-		checkDims(a,b);
+		checkDimsPermitEmpty(a,b);
 		
 		final int n = a.length;
 		final double[][] out = new double[2][n];

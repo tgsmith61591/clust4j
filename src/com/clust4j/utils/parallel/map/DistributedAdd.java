@@ -28,7 +28,10 @@ final public class DistributedAdd extends DualVectorMapTaskOperator {
     }
     
     public static double[] scalarOperate(final double[] array, final double val) {
-    	VecUtils.checkDims(array);
     	return getThreadPool().invoke(new DistributedAdd(array, VecUtils.rep(val, array.length), new double[array.length], 0, array.length));
+    }
+    
+    void dimCheck(double[] a, double[] b) {
+    	VecUtils.checkDimsPermitEmpty(array);
     }
 }

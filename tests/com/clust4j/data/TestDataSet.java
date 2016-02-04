@@ -117,6 +117,7 @@ public class TestDataSet {
 			MeanShift ms = new MeanShift(data, 
 				new MeanShift.MeanShiftPlanner()
 					.setScale(b)
+					//.setAutoBandwidthEstimation(true)
 					.setVerbose(verbose)).fit();
 			stdout(ms, actual, b);
 			

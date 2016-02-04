@@ -28,7 +28,11 @@ final public class DistributedSubtract extends DualVectorMapTaskOperator {
     }
     
     public static double[] scalarOperate(final double[] array, final double val) {
-    	VecUtils.checkDims(array);
     	return getThreadPool().invoke(new DistributedSubtract(array, VecUtils.rep(val, array.length), new double[array.length], 0, array.length));
+    }
+    
+    @Override
+    void dimCheck(double[] a, double[] b) {
+    	VecUtils.checkDimsPermitEmpty(a,b);
     }
 }

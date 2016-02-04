@@ -2,6 +2,8 @@ package com.clust4j.utils.parallel.map;
 
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.utils.VecUtils;
+
 public class DistributedLog extends MapTaskOperator {
 	private static final long serialVersionUID = -3885390722365779996L;
 
@@ -20,6 +22,7 @@ public class DistributedLog extends MapTaskOperator {
 	}
 	
 	public static double[] operate(final double[] array) {
+		VecUtils.checkDimsPermitEmpty(array);
 		return getThreadPool().invoke(new DistributedLog(array, 0, array.length));
     }
 }

@@ -83,6 +83,7 @@ public class NearestNeighbors extends AbstractClusterer {
 	
 	/** The actual nearest indices */
 	volatile private ArrayList<Integer>[] nearest = null;
+	volatile private ArrayList<Double>[] nearestDists = null;
 	
 	
 	
@@ -239,6 +240,14 @@ public class NearestNeighbors extends AbstractClusterer {
 		}
 	}
 	
+	public double[][] getDistanceMatrix() {
+		return MatUtils.copy(dist_mat);
+	}
+	
+	double[][] getDistanceMatrixRef() {
+		return dist_mat;
+	}
+	
 	public int getK() {
 		return k;
 	}
@@ -300,6 +309,32 @@ public class NearestNeighbors extends AbstractClusterer {
 			throw new ModelNotFitException(error);
 		}
 	}
+	
+	public ArrayList<Integer> getNearest(int rec) {
+		try {
+			if(rec < 0 || rec >= nearest.length)
+				throw new IllegalArgumentException("illegal record idx: " + rec);
+			
+			return nearest[rec];
+		} catch(NullPointerException e) {
+			String error = "model has not yet been fit";
+			error(error);
+			throw new ModelNotFitException(error);
+		}
+	}
+	
+	public ArrayList<Double> getNearestDists(int rec) {
+		try {
+			if(rec < 0 || rec >= nearestDists.length)
+				throw new IllegalArgumentException("illegal record idx: " + rec);
+			
+			return nearestDists[rec];
+		} catch(NullPointerException e) {
+			String error = "model has not yet been fit";
+			error(error);
+			throw new ModelNotFitException(error);
+		}
+	}
 
 	@Override
 	public Algo getLoggerTag() {
@@ -323,6 +358,7 @@ public class NearestNeighbors extends AbstractClusterer {
 				
 				long start = System.currentTimeMillis();
 				nearest = new ArrayList[m];
+				nearestDists = new ArrayList[m];
 				
 				
 				if(knn) {
@@ -331,20 +367,31 @@ public class NearestNeighbors extends AbstractClusterer {
 					
 					for(int i = 0; i < m; i++) {
 						nearest[i] = new ArrayList<Integer>();
+						nearestDists[i] = new ArrayList<Double>();
 						ordered = getSortedNearest(i, dist_mat);
 						
 						int j = 0;
 						iter = ordered.iterator();
-						while(j++ < k)
-							nearest[i].add(iter.next().getKey());
+						Map.Entry<Integer, Double> next;
+						while(j++ < k) {
+							next = iter.next();
+							nearest[i].add(next.getKey());
+							nearestDists[i].add(next.getValue());
+						}
 					}
 					
 				} else {
 					for(int i = 0; i < m - 1; i++) {
-						if(null == nearest[i]) nearest[i] = new ArrayList<Integer>();
+						if(null == nearest[i]) {
+							nearest[i] = new ArrayList<Integer>();
+							nearestDists[i] = new ArrayList<Double>();
+						}
 						
 						for(int j = i + 1; j < m; j++) {
-							if(null == nearest[j]) nearest[j] = new ArrayList<Integer>();
+							if(null == nearest[j]) {
+								nearest[j] = new ArrayList<Integer>();
+								nearestDists[j] = new ArrayList<Double>();
+							}
 							
 							int row = FastMath.min(i, j), col = FastMath.max(i, j);
 							final double val = FastMath.abs(dist_mat[row][col]);
@@ -352,6 +399,9 @@ public class NearestNeighbors extends AbstractClusterer {
 							if(val <= neighborhood) { // Then both are within eachother's neighborhood...
 								nearest[i].add(j);
 								nearest[j].add(i);
+								
+								nearestDists[i].add(val);
+								nearestDists[j].add(val);
 							}
 						}
 					}

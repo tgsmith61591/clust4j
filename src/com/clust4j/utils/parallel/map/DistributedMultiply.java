@@ -31,4 +31,8 @@ final public class DistributedMultiply extends DualVectorMapTaskOperator {
     	VecUtils.checkDims(array);
     	return getThreadPool().invoke(new DistributedMultiply(array, VecUtils.rep(val, array.length), new double[array.length], 0, array.length));
     }
+
+    void dimCheck(double[] a, double[] b) {
+    	VecUtils.checkDimsPermitEmpty(array);
+    }
 }

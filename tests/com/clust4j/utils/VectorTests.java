@@ -295,4 +295,21 @@ public class VectorTests {
 		final int[] b = new int[]{3,2,1,0};
 		assertTrue(VecUtils.equalsExactly(b, VecUtils.reverseSeries(a)));
 	}
+	
+	@Test
+	public void testOpsWithEmpty() {
+		final double[] a = new double[]{};
+		final double[] b = new double[]{};
+		
+		VecUtils.add(a, b);
+		VecUtils.addDistributed(a, b);
+
+		VecUtils.multiply(a, b);
+		VecUtils.multiplyDistributed(a, b);
+		
+		VecUtils.subtract(a, b);
+		VecUtils.subtractDistributed(a, b);
+		
+		assertTrue(VecUtils.equalsExactly(a, b));
+	}
 }

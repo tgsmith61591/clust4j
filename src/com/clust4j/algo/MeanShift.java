@@ -10,6 +10,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.kernel.GaussianKernel;
@@ -61,7 +62,7 @@ public class MeanShift
 	private final double minChange;
 	
 	/** The kernel bandwidth */
-	private final double bandwidth;
+	private double bandwidth;
 
 	/** Class labels */
 	private volatile int[] labels = null;
@@ -132,7 +133,6 @@ public class MeanShift
 		
 		
 		
-		this.bandwidth = planner.bandwidth;
 		this.maxIter = planner.maxIter;
 		this.minChange = planner.minChange;
 		this.m = data.getRowDimension();
@@ -146,11 +146,57 @@ public class MeanShift
 			throw new IllegalArgumentException(e);
 		}
 		*/
+
+		if(planner.autoEstimateBW) info("auto-estimating kernel bandwidth");
+		this.bandwidth = planner.autoEstimateBW ? 
+			autoEstimateBW(data, planner.autoEstimateBWQuantile, planner.getSep(), planner.seed) : 
+				planner.bandwidth;
 		
 		
-		meta("bandwidth="+bandwidth);
+		meta((planner.autoEstimateBW ? "(auto-estimated) " : "") + "bandwidth="+bandwidth);
 		meta("maxIter="+maxIter);
 		meta("minChange="+minChange);
+	}
+	
+	static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
+		if(quantile <= 0 || quantile > 1)
+			throw new IllegalArgumentException("illegal quantile");
+		final int m = data.getRowDimension();
+		
+		NearestNeighbors nn = new NearestNeighbors(data, 
+			new NearestNeighborsPlanner()
+				.setK( (int)(m * quantile) )
+				.setSeed(seed)
+				.setSep(sep))
+			.fit();
+		
+		double bw = 0.0;
+		final int chunkSize = 500, numChunks = getNumChunks(chunkSize, m);
+		
+		int chunkStart, nextChunk;
+		ArrayList<Double> dists;
+		for(int chunk = 0; chunk < numChunks; chunk++) {
+			chunkStart = chunk * chunkSize;
+			nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
+			
+			for(int i = chunkStart; i < nextChunk; i++) {
+				dists = nn.getNearestDists(i);
+
+				double maxDist = Double.NEGATIVE_INFINITY;
+				for(Double dist: dists)
+					maxDist= FastMath.max(dist, maxDist);
+				
+				//System.out.println(dists);
+				bw += maxDist;
+			}
+		}
+		
+		
+		return bw / (double)m;
+	}
+	
+	static int getNumChunks(final int chunkSize, final int m) {
+		return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
 	}
 	
 	
@@ -163,6 +209,8 @@ public class MeanShift
 	 * @author Taylor G Smith
 	 */
 	final public static class MeanShiftPlanner extends AbstractClusterer.BaseClustererPlanner {
+		private boolean autoEstimateBW = false;
+		private double autoEstimateBWQuantile = 0.3;
 		private double bandwidth;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
@@ -191,6 +239,8 @@ public class MeanShift
 		@Override
 		public MeanShiftPlanner copy() {
 			return new MeanShiftPlanner(bandwidth)
+				.setAutoBandwidthEstimation(autoEstimateBW)
+				.setAutoBandwidthEstimationQuantile(autoEstimateBWQuantile)
 				.setMaxIter(maxIter)
 				.setMinChange(minChange)
 				.setScale(scale)
@@ -219,6 +269,16 @@ public class MeanShift
 		@Override
 		public boolean getVerbose() {
 			return verbose;
+		}
+		
+		public MeanShiftPlanner setAutoBandwidthEstimation(boolean b) {
+			this.autoEstimateBW = b;
+			return this;
+		}
+		
+		public MeanShiftPlanner setAutoBandwidthEstimationQuantile(double d) {
+			this.autoEstimateBWQuantile = d;
+			return this;
 		}
 		
 		public MeanShiftPlanner setMaxIter(final int max) {
