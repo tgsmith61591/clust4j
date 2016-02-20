@@ -2,16 +2,28 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+
+import static com.clust4j.TestSuite.getRandom;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
+import com.clust4j.algo.HierarchicalAgglomerative.HierarchicalPlanner;
 import com.clust4j.algo.HierarchicalClusterer.Linkage;
+import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.VecUtils;
 
-public class HierTests {
-	private static Array2DRowRealMatrix matrix = ClustTests.getRandom(250, 10);
+public class HierarchicalTests implements ClusterTest, ClassifierTest {
+	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
+	private static Array2DRowRealMatrix matrix = getRandom(250, 10);
 	static final MatrixFormatter formatter = new MatrixFormatter();
 	
 	@Test
@@ -113,7 +125,7 @@ public class HierTests {
 	
 	@Test
 	public void loadTest() {
-		Array2DRowRealMatrix mat = ClustTests.getRandom(2500, 10);
+		Array2DRowRealMatrix mat = getRandom(2500, 10);
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerative
 				.HierarchicalPlanner()
@@ -123,7 +135,7 @@ public class HierTests {
 	
 	//@Test // -- takes way too long..
 	public void loadTest2() {
-		Array2DRowRealMatrix mat = ClustTests.getRandom(50000, 10);
+		Array2DRowRealMatrix mat = getRandom(50000, 10);
 		boolean exception = false;
 		
 		try {
@@ -141,12 +153,89 @@ public class HierTests {
 	
 	@Test
 	public void loadTestKernel() {
-		Array2DRowRealMatrix mat = ClustTests.getRandom(2500, 10);
+		Array2DRowRealMatrix mat = getRandom(2500, 10);
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerative
 				.HierarchicalPlanner()
 					.setLinkage(Linkage.AVERAGE)
 					.setSep(new GaussianKernel())
 					.setVerbose(true)).fit().getLabels();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testWithNullLinkage() {
+		Array2DRowRealMatrix mat = getRandom(200, 5);
+		new HierarchicalAgglomerative(mat,
+			new HierarchicalAgglomerative
+				.HierarchicalPlanner()
+					.setLinkage(null)
+					.setSep(new GaussianKernel())
+					.setVerbose(true)).fit().getLabels();
+	}
+
+	@Test
+	@Override
+	public void testScoring() {
+		new HierarchicalAgglomerative(data_).fit().silhouetteScore();
+	}
+
+	@Test
+	@Override
+	public void testDefConst() {
+		new HierarchicalAgglomerative(data_);
+	}
+
+	@Test
+	@Override
+	public void testArgConst() {
+		// NA
+		return;
+	}
+
+	@Test
+	@Override
+	public void testPlannerConst() {
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner());
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.AVERAGE));
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.COMPLETE));
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.WARD));
+	}
+
+	@Test
+	@Override
+	public void testFit() {
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner()).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.AVERAGE)).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.COMPLETE)).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.WARD)).fit();
+	}
+
+	@Test
+	@Override
+	public void testFromPlanner() {
+		new HierarchicalPlanner().buildNewModelInstance(data_);
+		new HierarchicalPlanner(Linkage.AVERAGE).buildNewModelInstance(data_);
+		new HierarchicalPlanner(Linkage.COMPLETE).buildNewModelInstance(data_);
+		new HierarchicalPlanner(Linkage.WARD).buildNewModelInstance(data_);
+	}
+
+	@Test
+	@Override
+	public void testSerialization() throws IOException, ClassNotFoundException {
+		HierarchicalAgglomerative agglom = 
+			new HierarchicalAgglomerative(matrix, 
+				new HierarchicalAgglomerative.HierarchicalPlanner()
+					.setScale(true)
+					.setVerbose(true)).fit();
+		
+		final int[] l = agglom.getLabels();
+		agglom.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		assertTrue(TestSuite.file.exists());
+		
+		HierarchicalAgglomerative agglom2 = (HierarchicalAgglomerative)HierarchicalAgglomerative
+			.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(l, agglom2.getLabels()));
+		assertTrue(agglom2.equals(agglom));
+		Files.delete(TestSuite.path);
 	}
 }

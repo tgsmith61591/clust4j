@@ -109,7 +109,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 
 		@Override
 		public HierarchicalAgglomerative buildNewModelInstance(AbstractRealMatrix data) {
-			return new HierarchicalAgglomerative(data, this);
+			return new HierarchicalAgglomerative(data, this.copy());
 		}
 		
 		@Override
@@ -530,10 +530,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				reorderLabels();
 				
 				
-				info("model " + getKey() + " completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
-						System.lineSeparator());
-				
+				wrapItUp(start);
 				dist_vec = null;
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {

@@ -1,5 +1,7 @@
 package com.clust4j.utils.parallel.reduce;
 
+import com.clust4j.utils.VecUtils;
+
 final public class DistributedNaNCount extends ReduceTaskOperator<Integer> {
 	private static final long serialVersionUID = 5031788548523204436L;
 
@@ -31,4 +33,9 @@ final public class DistributedNaNCount extends ReduceTaskOperator<Integer> {
 			return 0;
 		return getThreadPool().invoke(new DistributedNaNCount(array,0,array.length));
 	}
+
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDimsPermitEmpty(v);
+    }
 }

@@ -62,7 +62,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		final public double getP() {
-			return 1;
+			return 1.0;
 		}
 		
 		@Override
@@ -102,7 +102,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		final public double getP() {
-			return 2;
+			return 2.0;
 		}
 		
 		@Override

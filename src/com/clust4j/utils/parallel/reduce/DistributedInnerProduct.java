@@ -32,7 +32,11 @@ final public class DistributedInnerProduct extends DualReduceTaskOperator<Double
 	}
 
     public static double operate(final double[] array, final double[] array_b) {
-    	VecUtils.checkDims(array, array_b);
         return getThreadPool().invoke(new DistributedInnerProduct(array,array_b,0,array.length));
+    }
+
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDimsPermitEmpty(v);
     }
 }

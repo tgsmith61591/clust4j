@@ -1,6 +1,6 @@
 package com.clust4j.metrics;
 
-public enum ClassificationScoring implements EvaluationMetric {
+public enum ClassificationScoring implements SupervisedEvaluationMetric {
 	ACCURACY {
 		@Override
 		public double evaluate(final int[] actual, final int[] predicted) {

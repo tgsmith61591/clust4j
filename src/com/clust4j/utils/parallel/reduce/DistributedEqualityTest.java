@@ -55,4 +55,9 @@ public class DistributedEqualityTest extends VectorReduceTask<Boolean> {
 	public static Boolean operate(final double[] array, final double[] array_b, final double tol) {
 		return getThreadPool().invoke(new DistributedEqualityTest(array,array_b,tol,0,array.length));
 	}
+
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDimsPermitEmpty(v);
+    }
 }

@@ -1,5 +1,7 @@
 package com.clust4j.utils.parallel.reduce;
 
+import com.clust4j.utils.VecUtils;
+
 /**
  * A class for distributed summing of vectors
  * @author Taylor G Smith
@@ -33,5 +35,9 @@ final public class DistributedSum extends ReduceTaskOperator<Double> {
     	if(array.length == 0)
     		return 0;
         return getThreadPool().invoke(new DistributedSum(array,0,array.length));
+    }
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDimsPermitEmpty(v);
     }
 }

@@ -3,15 +3,12 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Loggable;
-import com.clust4j.utils.BallTree;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.DistanceMetric;
-import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.KDTree;
-import com.clust4j.utils.NearestNeighborHeapSearch;
-import com.clust4j.utils.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.utils.VecUtils;
 
 class BoruvkaAlgorithm implements java.io.Serializable {
@@ -124,9 +121,9 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		return FastMath.max(0, (distPt - rad1 - rad2));
 	}
 	
-	EntryPair<double[][], int[][]> coreDistQuery(NearestNeighborHeapSearch tree, double[][] X,
+	Neighborhood coreDistQuery(NearestNeighborHeapSearch tree, double[][] X,
 									int min_samples, boolean dualTree, boolean breadthFirst) {
-		return tree.query(X, min_samples, dualTree, breadthFirst, true);
+		return tree.query(X, min_samples, dualTree, true);
 	}
 	
 	/**
@@ -371,11 +368,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		void computeBounds() {
 			int n, i, m;
 			
-			EntryPair<double[][], int[][]> queryResult =
-				TREE.query(data_arr, minSamples + 1, true, true, true);
+			Neighborhood queryResult =
+				TREE.query(data_arr, minSamples + 1, true, true);
 		
-			double[][] knnDist = queryResult.getKey();
-			int[][] knnIndices = queryResult.getValue();
+			double[][] knnDist = queryResult.getDistances();
+			int[][] knnIndices = queryResult.getIndices();
 			
 			// Assign the core distance array and change to rdist...
 			this.coreDistance = new double[knnDist.length];
@@ -589,11 +586,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		void computeBounds() {
 			int n, i, m;
 			
-			EntryPair<double[][], int[][]> queryResult =
-				TREE.query(data_arr, minSamples, true, true, true);
+			Neighborhood queryResult =
+				TREE.query(data_arr, minSamples, true, true);
 		
-			double[][] knnDist = queryResult.getKey();
-			int[][] knnIndices = queryResult.getValue();
+			double[][] knnDist = queryResult.getDistances();
+			int[][] knnIndices = queryResult.getIndices();
 			
 			// Assign the core distance array...
 			this.coreDistance = new double[knnDist.length];

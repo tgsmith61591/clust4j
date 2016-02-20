@@ -1,5 +1,7 @@
 package com.clust4j.utils.parallel.reduce;
 
+import com.clust4j.utils.VecUtils;
+
 /**
  * A class for distributed NaN checks
  * @author Taylor G Smith
@@ -32,4 +34,9 @@ public class DistributedNaNCheck extends ReduceTaskOperator<Boolean> {
 	public static boolean operate(final double[] array) {
 		return getThreadPool().invoke(new DistributedNaNCheck(array,0,array.length));
 	}
+
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDimsPermitEmpty(v);
+    }
 }

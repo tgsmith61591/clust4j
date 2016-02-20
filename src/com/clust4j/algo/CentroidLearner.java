@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.algo;
 
 import java.util.ArrayList;
 

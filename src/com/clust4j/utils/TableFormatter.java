@@ -34,6 +34,7 @@ public class TableFormatter {
     protected static final int DEFAULT_WHITE_SPACE = 4;
     /** Default column alignment */
     protected static final ColumnAlignment DEFAULT_ALIGNMENT = RIGHT;
+    static final String NULL_STR = "--";
 
     
     

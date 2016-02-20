@@ -8,6 +8,8 @@ import org.junit.Test;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.algo.NearestCentroid;
+import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
@@ -26,7 +28,7 @@ public class PipelineTest {
 		final KMeans.KMeansPlanner planner = new KMeans.KMeansPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline pipe = new Pipeline(planner, 
+		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, 
 			new PreProcessor[]{
 				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
@@ -39,7 +41,6 @@ public class PipelineTest {
 		System.out.println();
 	}
 	
-	// Should cause a class cast exception...
 	@Test
 	public void testB() {
 		final double[][] data = new double[][] {
@@ -52,18 +53,17 @@ public class PipelineTest {
 		final KMedoids.KMedoidsPlanner planner = new KMedoids.KMedoidsPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline pipe = new Pipeline(planner, 
+		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, 
 			new PreProcessor[]{
 				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
 		@SuppressWarnings("unused")
-		KMedoids km = (KMedoids)pipe.fit(mat); // Thrown here...
+		KMedoids km = (KMedoids)pipe.fit(mat); 
 		System.out.println();
 	}
 	
-	// Should cause a class cast exception...
 	@Test
 	public void testVarArgs() {
 		final double[][] data = new double[][] {
@@ -76,10 +76,59 @@ public class PipelineTest {
 		final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
 		
 		// Build the pipeline
-		final Pipeline pipe = new Pipeline(planner, FeatureNormalization.STANDARD_SCALE);
+		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, FeatureNormalization.STANDARD_SCALE);
 		
 		@SuppressWarnings("unused")
 		KMedoids km = (KMedoids)pipe.fit(mat);
+		System.out.println();
+	}
+	
+	
+	
+	
+	
+	@Test
+	public void testSupervisedA() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		final NearestCentroidPlanner planner = new NearestCentroidPlanner().setVerbose(true);
+		
+		// Build the pipeline
+		final SupervisedPipeline pipe = new SupervisedPipeline(planner, 
+			new PreProcessor[]{
+				FeatureNormalization.STANDARD_SCALE, 
+				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
+			});
+		final NearestCentroid nc = (NearestCentroid) pipe.fit(mat, new int[]{0,1,1});
+		
+		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
+		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
+		System.out.println();
+	}
+	
+	@Test
+	public void testSupervisedVarArgs() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		final NearestCentroidPlanner planner = new NearestCentroidPlanner().setVerbose(true);
+		
+		// Build the pipeline
+		final SupervisedPipeline pipe = new SupervisedPipeline(planner, 
+			FeatureNormalization.STANDARD_SCALE);
+		final NearestCentroid nc = (NearestCentroid) pipe.fit(mat, new int[]{0,1,1});
+		
+		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
+		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
 		System.out.println();
 	}
 }

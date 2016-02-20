@@ -7,6 +7,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.algo.Neighbors;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
@@ -16,7 +17,7 @@ import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighborImputation extends MatrixImputation {
-	final static public int DEF_K = NearestNeighbors.DEF_K;
+	final static public int DEF_K = Neighbors.DEF_K;
 	final static public GeometricallySeparable DEF_METRIC = Distance.EUCLIDEAN;
 	final static public CentralTendencyMethod DEF_CENT = CentralTendencyMethod.MEAN;
 	
@@ -152,6 +153,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 		info("imputing k nearest; method="+cent);
 		int replacements;
 		int[] nearest;
+		NearestNeighbors nbrs;
 		ArrayList<Integer> impute_indices;
 		double[][] completeCols, nearestMat;
 		double[] incomplete, completeRecord, col;
@@ -174,7 +176,19 @@ public class NearestNeighborImputation extends MatrixImputation {
 			
 			completeRecord = exclude(incomplete, impute_indices);
 			completeCols = excludeCols(complete, impute_indices);
-			nearest = NearestNeighbors.getKNearest(completeRecord, completeCols, k, sep);
+			
+			nbrs = new NearestNeighbors(new Array2DRowRealMatrix(completeCols, false), 
+				new NearestNeighbors.NearestNeighborsPlanner(k)
+					.setScale(false)
+					.setVerbose(false)
+					.setSeed(getSeed())
+					.setSep(this.sep)).fit();
+			
+			nearest = nbrs.getNeighbors(
+				new Array2DRowRealMatrix(new double[][]{completeRecord}, 
+					false)).getIndices()[0];
+			
+			
 			nearestMat = MatUtils.getRows(complete, nearest);
 			
 			// Perform the imputation

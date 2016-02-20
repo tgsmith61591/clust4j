@@ -1,21 +1,33 @@
-package com.clust4j.utils;
+package com.clust4j.algo;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Loggable;
-import com.clust4j.utils.NearestNeighborHeapSearch.Heap.NodeHeapData;
+import com.clust4j.utils.DeepCloneable;
+import com.clust4j.utils.Distance;
+import com.clust4j.utils.DistanceMetric;
+import com.clust4j.utils.EntryPair;
+import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.QuadTup;
+import com.clust4j.utils.TriTup;
+import com.clust4j.utils.VecUtils;
 
 import static com.clust4j.GlobalState.Mathematics.*;
 
+import java.util.Arrays;
+
 
 /**
- * 
+ * A datastructure for optimized high dimensional k-neighbors and radius
+ * searches. Based on sklearns' BinaryTree class.
  * @author Taylor G Smith
  * @see <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/neighbors/binary_tree.pxi">sklearn BinaryTree</a>
  */
-abstract public class NearestNeighborHeapSearch implements java.io.Serializable {
+abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	private static final long serialVersionUID = -5617532034886067210L;
 	
 	final static public int DEF_LEAF_SIZE = 40;
@@ -36,7 +48,15 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	final DistanceMetric dist_metric;
 	int n_trims, n_leaves, n_splits, n_calls, leaf_size, n_levels, n_nodes;
 	final int N_SAMPLES, N_FEATURES;
+	/** Whether or not the algorithm uses the Inf distance, {@link Distance#CHEBYSHEV} */
+	final boolean infinity_dist;
 	
+	
+	
+	/**
+	 * Ensure valid metric
+	 */
+	abstract boolean checkValidDistMet(GeometricallySeparable dist);
 	
 	
 	
@@ -78,21 +98,41 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	public NearestNeighborHeapSearch(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
 		this.data_arr = X.getData();
 		this.leaf_size = leaf_size;
-		this.dist_metric = dist;
 		this.logger = logger;
 		
 		if(leaf_size < 1)
 			throw new IllegalArgumentException("illegal leaf size: " + leaf_size);
 		
+		if(!checkValidDistMet(dist)) {
+			if(null != logger)
+				logger.warn(dist+" is not valid for " + this.getClass() +". Reverting to " + DEF_DIST);
+			this.dist_metric = DEF_DIST;
+		} else {
+			this.dist_metric = dist;
+		}
+		
+		
+		// Whether the algorithm is using the infinity distance (Chebyshev)
+		this.infinity_dist = this.dist_metric.getP() == Double.POSITIVE_INFINITY ||
+			Double.isInfinite(this.dist_metric.getP());
+		
 		
 		// determine number of levels in the tree, and from this
         // the number of nodes in the tree.  This results in leaf nodes
         // with numbers of points between leaf_size and 2 * leaf_size
+		MatUtils.checkDims(this.data_arr);
 		N_SAMPLES = data_arr.length;  
 		N_FEATURES = X.getColumnDimension();
 		
-		this.n_levels = (int)FastMath.log(2, FastMath.max(1, (N_SAMPLES-1)/leaf_size)) + 1;
-		this.n_nodes = (int)(FastMath.pow(2, n_levels)) - 1;
+		/*
+		// Should round up or always take floor function?...
+		double nlev = FastMath.log(2, FastMath.max(1, (N_SAMPLES-1)/leaf_size)) + 1;
+		this.n_levels = (int)FastMath.round(nlev);
+		this.n_nodes = (int)(FastMath.pow(2, nlev) - 1);
+		*/
+		
+		this.n_levels = (int)(FastMath.log(2, FastMath.max(1, (N_SAMPLES-1)/leaf_size)) + 1);
+		this.n_nodes = (int)(FastMath.pow(2, n_levels) - 1);
 	
 		// allocate arrays for storage
 		this.idx_array = VecUtils.arange(N_SAMPLES);
@@ -123,7 +163,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * that are faster and simpler than the {@link Kernel} class methods.
 	 * @author Taylor G Smith
 	 */
-	public static enum PartialKernelDensity implements Density {
+	public static enum PartialKernelDensity implements Density, java.io.Serializable {
 		LOG_COSINE {
 			@Override
 			public double getDensity(double dist, double h) {
@@ -205,6 +245,52 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 	}
 	
+
+	
+	
+	public static class Neighborhood 
+			extends EntryPair<double[][], int[][]> 
+			implements DeepCloneable, java.io.Serializable {
+
+		private static final long serialVersionUID = 2016176782694689004L;
+		private static final MatrixFormatter fmt = new MatrixFormatter();		
+		
+		public Neighborhood(EntryPair<double[][],int[][]> entry) {
+			this(entry.getKey(), entry.getValue());
+		}
+		
+		public Neighborhood(double[][] key, int[][] value) {
+			super(key, value);
+		}
+		
+		@Override
+		public Neighborhood copy() {
+			return new Neighborhood(
+				MatUtils.copy(getDistances()),
+				MatUtils.copy(getIndices()));
+		}
+		
+		public double[][] getDistances() {
+			return getKey();
+		}
+		
+		public int[][] getIndices() {
+			return getValue();
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			String ls = System.getProperty("line.separator");
+			
+			sb.append("Distances:" + ls + fmt.format(getDistances()) + ls + ls);
+			sb.append("Indices:"   + ls + fmt.format(getIndices()));
+			
+			return sb.toString();
+		}
+	}
+	
+	
 	/**
 	 * A hacky container for passing double references...
 	 * Allows us to modify the value of a double as if
@@ -213,9 +299,10 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * leans heavily on passing pointers.
 	 * @author Taylor G Smith
 	 */
+	// Tested: passing
 	public static class MutableDouble implements Comparable<Double>, java.io.Serializable {
 		private static final long serialVersionUID = -4636023903600763877L;
-		Double value = new Double(0);
+		public Double value = new Double(0);
 		
 		MutableDouble() { }
 		MutableDouble(Double value) {
@@ -232,6 +319,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * Node data container
 	 * @author Taylor G Smith
 	 */
+	// Tested: passing
 	public static class NodeData implements DeepCloneable, java.io.Serializable {
 		private static final long serialVersionUID = -2469826821608908612L;
 		int idx_start, idx_end;
@@ -257,6 +345,21 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			return new NodeData(idx_start, idx_end, is_leaf, radius);
 		}
 		
+		@Override
+		public boolean equals(Object o) {
+			if(this == o)
+				return true;
+			if(o instanceof NodeData) {
+				NodeData nd = (NodeData)o;
+				return nd.idx_start == this.idx_start
+					&& nd.idx_end   == this.idx_end
+					&& nd.is_leaf   == this.is_leaf
+					&& nd.radius    == this.radius;
+			}
+			
+			return false;
+		}
+		
 		public boolean isLeaf() {
 			return is_leaf;
 		}
@@ -280,26 +383,25 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * @author Taylor G Smith
 	 */
 	abstract static class Heap implements java.io.Serializable {
-		private static final long serialVersionUID = 1L;
+		private static final long serialVersionUID = 8073174366388667577L;
 
-		/** Node class. */
-		static class NodeHeapData {
+		abstract static class Node {
 			double val;
 			int i1;
 			int i2;
 			
-			NodeHeapData() { }
-			NodeHeapData(double val, int i1, int i2) {
+			Node() {}
+			Node(double val, int i1, int i2) {
 				this.val = val;
-				this.i1  = i1;
-				this.i2  = i2;
+				this.i1 = i1;
+				this.i2 = i2;
 			}
 		}
 		
 		Heap(){}
 		
-		static void swapNodes(NodeHeapData[] arr, int i1, int i2) {
-			NodeHeapData tmp = arr[i1];
+		static void swapNodes(Node[] arr, int i1, int i2) {
+			Node tmp = arr[i1];
 			arr[i1] = arr[i2];
 			arr[i2] = tmp;
 		}
@@ -313,6 +415,33 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			iarr[i1] = iarr[i2];
 			iarr[i2] = itmp;
 		}
+		
+		/*
+		private static EntryPair<double[], int[]> copyDual(double[] d, int[] ia) {
+			int n = d.length;
+			double[] out = new double[n];
+			int[] out_i = new int[n];
+			
+			for(int i = 0; i < n; i++) {
+				out[i] = d[i];
+				out_i[i] = ia[i];
+			}
+			
+			return new EntryPair<>(out, out_i);
+		}
+		
+		static void dualOrderInPlace(double[] darr, int[] iarr, int[] order) {
+			int n = darr.length;
+			EntryPair<double[],int[]> copies = copyDual(darr, iarr);
+			double[] dtmp = copies.getKey();
+			int[] itmp = copies.getValue();
+			
+			for(int i = 0; i < n; i++) {
+				darr[i] = dtmp[order[i]];
+				iarr[i] = itmp[order[i]];
+			}
+		}
+		*/
 	}
 	
 	/**
@@ -333,10 +462,10 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			indices   = new int[nPts][k];
 		}
 		
-		EntryPair<double[][], int[][]> getArrays(boolean sort) {
+		Neighborhood getArrays(boolean sort) {
 			if(sort)
-				sort();
-			return new EntryPair<>(distances, indices);
+				this.sort();
+			return new Neighborhood(distances, indices);
 		}
 		
 		int push(int row, double val, int i_val) {
@@ -389,8 +518,12 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 		
 		int sort() {
-			for(int row = 0; row < distances.length; row++)
-				simultaneous_sort(distances[row], indices[row], distances[row].length);
+			for(int row = 0; row < distances.length; row++) {
+				simultaneous_sort(
+					this.distances[row], 
+					this.indices[row], 
+					distances[row].length);
+			}
 			
 			return 0;
 		}
@@ -399,26 +532,41 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			return distances[row][0];
 		}
 		
-		int simultaneous_sort(double[] dist, int[] idx, int size) {
+		static int simultaneous_sort(double[] dist, int[] idx, int size) {
 			int pivot_idx, i, store_idx;
 			double pivot_val;
 			
 			if(size <= 1){ // pass
-			} else if(size == 2) {
+			} 
+			
+			else if(size == 2) {
 				if(dist[0] > dist[1])
 					dualSwap(dist, idx, 0, 1);
-			} else if(size == 3) {
+			}
+			
+			/*
+			else {
+				int[] order = VecUtils.argSort(dist);
+				dualOrderInPlace(dist, idx, order);
+			}
+			*/
+			
+			else if(size == 3) {
 				if(dist[0] > dist[1])
 					dualSwap(dist, idx, 0, 1);
+				
 				if(dist[1] > dist[2]) {
 					dualSwap(dist, idx, 1, 2);
 					if(dist[0] > dist[1])
 						dualSwap(dist, idx, 0, 1);
 				}
-			} else {
+			} 
+			
+			else {
 				pivot_idx = size / 2;
 				if(dist[0] > dist[size - 1])
 					dualSwap(dist, idx, 0, size - 1);
+				
 				if(dist[size - 1] > dist[pivot_idx]) {
 					dualSwap(dist, idx, size - 1, pivot_idx);
 					if(dist[0] > dist[size - 1])
@@ -433,16 +581,29 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 						store_idx++;
 					}
 				}
+				
 				dualSwap(dist, idx, store_idx, size - 1);
 				pivot_idx = store_idx;
 				
 				if(pivot_idx > 1)
 					simultaneous_sort(dist, idx, pivot_idx);
-				if(pivot_idx + 2 < size)
-					simultaneous_sort(
-						VecUtils.slice(dist, pivot_idx+1, dist.length),
-						VecUtils.slice(idx,  pivot_idx+1, idx.length),
-						size - pivot_idx - 1);
+				
+				if(pivot_idx + 2 < size) {
+					// Can't pass reference to middle of array, so sort copy
+					// and then iterate over sorted, replacing in place
+					final int sliceStart = pivot_idx + 1;
+					final int sliceEnd = dist.length;
+					
+					double[] a = VecUtils.slice(dist, sliceStart, sliceEnd);
+					int[] b =    VecUtils.slice(idx, sliceStart, sliceEnd);
+					simultaneous_sort(a, b, size - pivot_idx - 1);
+					
+					// Now iter over and replace...
+					for(int k = 0, p = sliceStart; p < sliceEnd; k++, p++) {
+						dist[p] = a[k];
+						idx[p]  = b[k];
+					}
+				}
 			}
 			
 			return 0;
@@ -469,11 +630,39 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		NodeHeapData[] data;
 		int n;
 		
+		/** Node class. */
+		static class NodeHeapData extends Node {
+			NodeHeapData() { super(); }
+			NodeHeapData(double val, int i1, int i2) {
+				super(val, i1, i2);
+			}
+			
+			@Override
+			public boolean equals(Object o) {
+				if(o == this)
+					return true;
+				if(o instanceof NodeHeapData) {
+					NodeHeapData n = (NodeHeapData)o;
+					return n.val == this.val
+						&& n.i1 == this.i1
+						&& n.i2 == this.i2;
+				}
+				
+				return false;
+			}
+			
+			@Override
+			public String toString() {
+				return "{" + val + ", " + i1 + ", " + i2 + "}";
+ 			}
+		}
+		
 		NodeHeap(int size) {
 			super();
 			size = FastMath.max(size, 1);
 			data = new NodeHeapData[size];
-			n = size;
+			
+			//n = size;
 			clear();
 		}
 		
@@ -485,39 +674,51 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			return data[0];
 		}
 		
+		/**
+		 * Remove and return first element in heap
+		 * @return
+		 */
 		NodeHeapData pop() {
-			if(n == 0)
+			if(this.n == 0)
 				throw new IllegalStateException("cannot pop an empty heap");
 			
 			int i, i_child1, i_child2, i_swap;
-			NodeHeapData popped_element = data[0];
+			NodeHeapData popped_element = this.data[0];
 			
 			// pop off the first element, move the last element to the front,
 	        // and then perform swaps until the heap is back in order
-			data[0] = data[n - 1];
-			n--;
+			this.data[0] = this.data[this.n - 1];
+			
+			// Omitted from sklearn, but added here; make last element null again...
+			this.data[this.n - 1] = null;
+			this.n--;
 			
 			i = 0;
-			while(i < n) {
+			
+			while(i < this.n) {
 				i_child1 = 2 * i + 1;
 				i_child2 = 2 * i + 2;
 				i_swap = 0;
 				
-				if(i_child2 < n) {
-					if(data[i_child1].val <= data[i_child2].val)
+				
+				if(i_child2 < this.n) {
+					if(this.data[i_child1].val <= this.data[i_child2].val)
 						i_swap = i_child1;
 					else
 						i_swap = i_child2;
-				} else if(i_child1 < n)
+				} else if(i_child1 < this.n) {
 					i_swap = i_child1;
-				else
+				} else {
 					break;
+				}
 				
-				if(i_swap > 0 && data[i_swap].val <= data[i].val) {
-					swapNodes(data, i, i_swap);
+				
+				if(i_swap > 0 && this.data[i_swap].val <= this.data[i].val) {
+					swapNodes(this.data, i, i_swap);
 					i = i_swap;
-				} else
+				} else {
 					break;
+				}
 			}
 			
 			return popped_element;
@@ -525,42 +726,72 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		
 		int push(NodeHeapData node) {
 			// Add to the heap
-			int i = n, i_parent;
-			n++;
+			int i;
+			this.n++;
 			
-			if(n > this.data.length)
-				resize(2 * n);
+			// If the new n exceeds current length,
+			// double the size of the data array
+			if(this.n > this.data.length)
+				resize(2 * this.n);
 			
 			// Put new element at end, perform swaps
+			i = this.n - 1;
 			this.data[i] = node;
-			
-			while(i > 0) {
-				i_parent = (i-1) / 2;
-				if(data[i_parent].val <= data[i].val)
-					break;
-				else {
-					swapNodes(data, i, i_parent);
-					i = i_parent;
-				}
-			}
+			reorderFromPush(i);
 			
 			return 0;
 		}
 		
+		private void reorderFromPush(int i) {
+			int i_parent;
+			while(i > 0) {
+				i_parent = (i - 1) / 2;
+				if(this.data[i_parent].val <= this.data[i].val)
+					break;
+				else {
+					swapNodes(this.data, i, i_parent);
+					i = i_parent;
+				}
+			}
+		}
+		
 		int resize(int new_size) {
+			if(new_size < 1)
+				throw new IllegalArgumentException("cannot resize heap "
+						+ "to size less than 1 (" + new_size + ")");
+			
 			// Resize larger or smaller
-			int size = data.length, lim = FastMath.min(size, new_size);
+			int size = this.data.length;
+			final int oldN = n;
 			NodeHeapData[] newData = new NodeHeapData[new_size];
 			
-			if(size > 0 && new_size > 0)
-				for(int i = 0; i < lim; i++)
-					newData[i] = data[i];
+			// Original sklearn line included if clause, but due to our
+			// new IAE check, we can skip it and enter for loop automatically:
+			// if(size > 0 && new_size > 0)
 			
+			for(int i = 0; i < FastMath.min(size, new_size); i++)
+				newData[i] = this.data[i];
+			
+			// Original sklearn line, but seems to be
+			// buggy. n is supposed to be count of objs inside,
+			// and as it stands, this makes n equal to total size
+			// of the heap.
+			/*
 			if(new_size < size)
-				n = new_size;
+				this.n = new_size;
+			*/
+			
+			// New line that accts for above corner case:
+			if(new_size < size)
+				this.n = FastMath.min(new_size, oldN);
 			
 			this.data = newData;
 			return 0;
+		}
+		
+		@Override
+		public String toString() {
+			return Arrays.toString(this.data);
 		}
 	}
 	
@@ -575,8 +806,16 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return MatUtils.copy(data_arr);
 	}
 	
-	public double[][] getDataRef() {
+	double[][] getDataRef() {
 		return data_arr;
+	}
+	
+	public int getLeafSize() {
+		return leaf_size;
+	}
+	
+	public DistanceMetric getMetric() {
+		return dist_metric;
 	}
 	
 	public double[][][] getNodeBounds() {
@@ -589,7 +828,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return out;
 	}
 	
-	public double[][][] getNodeBoundsRef() {
+	double[][][] getNodeBoundsRef() {
 		return node_bounds;
 	}
 	
@@ -597,7 +836,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return VecUtils.copy(idx_array);
 	}
 	
-	public int[] getIndexArrayRef() {
+	int[] getIndexArrayRef() {
 		return idx_array;
 	}
 	
@@ -608,17 +847,23 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return copy;
 	}
 	
-	public NodeData[] getNodeDataRef() {
+	NodeData[] getNodeDataRef() {
 		return node_data;
 	}
 	
 	
 	// ========================== Instance methods ==========================
 	double dist(final double[] a, final double[] b) {
+		n_calls++;
 		return dist_metric.getDistance(a, b);
 	}
 	
+	public int getNumCalls() {
+		return n_calls;
+	}
+	
 	double rDist(final double[] a, final double[] b) {
+		n_calls++;
 		return dist_metric.getPartialDistance(a, b);
 	}
 	
@@ -647,7 +892,8 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	 * @param nodeLogBoundSpreads
 	 * @return estimated kernel densities
 	 */
-	double estimateKernelDensitySingleBreadthFirst(double[] pt, PartialKernelDensity kern, double h, double logKNorm,
+	/*
+	private double estimateKernelDensitySingleBreadthFirst(double[] pt, PartialKernelDensity kern, double h, double logKNorm,
 			double logAbsTol, double logRelTol, NodeHeap nodeHeap, double[] nodeLogMinBounds, double[] nodeLogBoundSpreads) {
 		
 		int i, i1, i2, N1, N2, i_node;
@@ -749,8 +995,9 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		nodeHeap.clear();
 		return logAddExp(globalLogMinBound, globalLogBoundSpread - FastMath.log(2));
 	}
+	*/
 	
-	void estimateKernelDensitySingleDepthFirst(int i_node, double[] pt, PartialKernelDensity kern, double h,
+	private void estimateKernelDensitySingleDepthFirst(int i_node, double[] pt, PartialKernelDensity kern, double h,
 			double logKNorm, double logAbsTol, double logRelTol, double localLogMinBound, double localLogBoundSpread,
 			MutableDouble globalLogMinBound, MutableDouble globalLogBoundSpread) {
 		
@@ -839,6 +1086,8 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		// maxes and the vector of column mins, then finds the
 		// arg max.
 		
+		// computes equivalent of (sklearn): 
+		// j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
 		int n = data[0].length, idx, argMax = -1;
 		double[] maxVec= VecUtils.rep(Double.NEGATIVE_INFINITY, n), 
 				minVec = VecUtils.rep(Double.POSITIVE_INFINITY, n),
@@ -878,20 +1127,16 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return new QuadTup<>(data_arr, idx_array, node_data, node_bounds);
 	}
 	
-	public int getNumCalls() {
-		return n_calls;
-	}
-	
 	public TriTup<Integer, Integer, Integer> getTreeStats() {
 		return new TriTup<>(n_trims, n_leaves, n_splits);
 	}
 	
-	double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern) {
-		return kernelDensity(X, bandwidth, kern, 0, 1e-8, true, false); // Default settings
+	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern) {
+		return kernelDensity(X, bandwidth, kern, 0, 1e-8, /*true,*/ false); // Default settings
 	}
 	
-	double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern, 
-			double absTol, double relTol, boolean breadthFirst, boolean returnLog) {
+	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern, 
+			double absTol, double relTol, /*boolean breadthFirst,*/ boolean returnLog) {
 		
 		double b_c = bandwidth, logAbsTol = FastMath.log(absTol), 
 				logRelTol = FastMath.log(relTol), logMinBound, logMaxBound,
@@ -910,8 +1155,9 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 				logM = FastMath.log(m), log2 = FastMath.log(2);
 		double[][] Xarr = MatUtils.copy(X);
 		double[] logDensity = new double[Xarr.length], pt;
-		NodeHeap nodeHeap;
 		
+		/*
+		NodeHeap nodeHeap;
 		double[] nodeLogMinBounds, nodeBoundWidths;
 		if(breadthFirst) {
 			nodeHeap = new NodeHeap(this.data_arr.length / this.leaf_size);
@@ -925,22 +1171,24 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 						nodeLogMinBounds, nodeBoundWidths);
 			}
 		} else {
-			for(i = 0; i < Xarr.length; i++) {
-				pt = Xarr[i];
-				
-				minMaxDist(this, 0, pt, dist_LB, dist_UB);
-				logMinBound = logM + kern.getDensity(dist_UB.value, b_c);
-				logMaxBound = logM + kern.getDensity(dist_LB.value, b_c);
-				logBoundSpread = logSubExp(logMaxBound, logMinBound);
-				
-				estimateKernelDensitySingleDepthFirst(0, pt, kern, b_c, logKNorm, 
-						logAbsTol, logRelTol, logMinBound, logBoundSpread, 
-						new MutableDouble(logMinBound), 
-						new MutableDouble(logBoundSpread));
-				
-				logDensity[i] = logAddExp(logMinBound, logBoundSpread - log2);
-			}
+		*/
+		for(i = 0; i < Xarr.length; i++) {
+			pt = Xarr[i];
+			
+			minMaxDist(this, 0, pt, dist_LB, dist_UB);
+			logMinBound = logM + kern.getDensity(dist_UB.value, b_c);
+			logMaxBound = logM + kern.getDensity(dist_LB.value, b_c);
+			logBoundSpread = logSubExp(logMaxBound, logMinBound);
+			
+			estimateKernelDensitySingleDepthFirst(0, pt, kern, b_c, logKNorm, 
+					logAbsTol, logRelTol, logMinBound, logBoundSpread, 
+					new MutableDouble(logMinBound), 
+					new MutableDouble(logBoundSpread));
+			
+			logDensity[i] = logAddExp(logMinBound, logBoundSpread - log2);
 		}
+
+		//}
 		
 		
 		// Norm results
@@ -950,10 +1198,12 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		return returnLog ? logDensity : VecUtils.exp(logDensity);
 	}
 	
-	static double kernelNorm(double h, int i, PartialKernelDensity kern, boolean log) {
+	/*
+	private static double kernelNorm(double h, int i, PartialKernelDensity kern, boolean log) {
 		double res = logKernelNorm(h,i,kern);
 		return log ? res : FastMath.exp(res);
 	}
+	*/
 	
 	private double logAddExp(double x1, double x2) {
 		final double a = FastMath.max(x1, x2);
@@ -984,28 +1234,31 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			int[] nodeIndices, int splitDim, int splitIndex,
 			int nFeatures, int nPoints) {
 			 
-		int left = 0, right = nPoints - 1, midindex, i, j1, j2;
+		int left = 0;
+		int right = nPoints - 1;
 		double d1, d2;
 		
 		while(true) {
-			midindex = left;
+			int midindex = left;
 			
-			for(i = left; i < right; i++) {
-				j1 = nodeIndices[i] * nFeatures + splitDim;
-				j2 = nodeIndices[right] * nFeatures + splitDim;
-				
-				d1 = data[j1 / nFeatures][j1 % nFeatures];
-				d2 = data[j2 / nFeatures][j2 % nFeatures];
+			for(int i = left; i < right; i++) {
+				d1 = data[nodeIndices[i]][splitDim];
+				d2 = data[nodeIndices[right]][splitDim];
 				            
-				if(d1 < d2)
-					swap(nodeIndices, i, midindex++);
+				if(d1 < d2) {
+					swap(nodeIndices, i, midindex);
+					midindex++;
+				}
 			}
 			
 			swap(nodeIndices, midindex, right);
-			if(midindex == splitIndex)
+			if(midindex == splitIndex) {
 				break;
-			
-			left = (midindex < splitIndex) ? midindex + 1 : midindex - 1;
+			} else if(midindex < splitIndex) {
+				left = midindex + 1;
+			} else {
+				right = midindex - 1;
+			}
 		}
 	}
 
@@ -1016,15 +1269,17 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	}
 	
 	void recursiveBuild(int i_node, int idx_start, int idx_end) {
-		int i_max, n = data_arr[0].length, n_points = idx_end - idx_start,
+		int i_max,
+			n_points = idx_end - idx_start,
 			n_mid = n_points / 2;
 		initNode(this, i_node, idx_start, idx_end);
 		
 		
-		if(2 * i_node + 1 >= n_nodes) {
+		if(2 * i_node + 1 >= this.n_nodes) {
 			node_data[i_node].is_leaf = true;
-			if(idx_end - idx_start > 2 * leaf_size && null != logger)
-				logger.warn(MEM_ERR);
+			if(idx_end - idx_start > 2 * leaf_size)
+				if(null != logger)
+					logger.warn(MEM_ERR);
 			
 		} else if(idx_end - idx_start < 2) {
 			if(null != logger)
@@ -1035,7 +1290,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			node_data[i_node].is_leaf = false;
 			i_max = findNodeSplitDim(data_arr, idx_array);
 			partitionNodeIndices(data_arr, idx_array, 
-					i_max, n_mid, n, n_points);
+					i_max, n_mid, N_FEATURES, n_points);
 			
 			recursiveBuild(2 * i_node + 1, idx_start, idx_start + n_mid);
 			recursiveBuild(2 * i_node + 2, idx_start + n_mid, idx_end);
@@ -1055,78 +1310,92 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	}
 	
 	
-	public EntryPair<double[][], int[][]> query(double[][] X, int k, boolean dualTree, boolean breadthFirst, boolean sort) {
+	public Neighborhood query(double[][] X, int k, boolean dualTree, boolean sort) {
 		MatUtils.checkDims(X);
 		
-		final int n = data_arr[0].length, m = data_arr.length;
+		final int n = data_arr[0].length, mPrime = X.length;
+		
 		if(n != X[0].length)
 			throw new DimensionMismatchException(n, X[0].length);
-		if(m < k) throw new IllegalArgumentException(k+" is greater than rows in data");
+		if(this.N_SAMPLES < k) throw new IllegalArgumentException(k+" is greater than rows in data");
 		if(k < 1) throw new IllegalArgumentException(k+" must exceed 0");
 		
 		double[][] Xarr = MatUtils.copy(X);
 		
 		// Initialize neighbor heap
-		NeighborsHeap heap = new NeighborsHeap(m, k);
+		NeighborsHeap heap = new NeighborsHeap(mPrime, k);
 		
 		// Breadth-first node heap query
+		/*
 		NodeHeap nodeHeap = null;
 		if(breadthFirst)
-			nodeHeap = new NodeHeap(m / leaf_size);
+			nodeHeap = new NodeHeap(this.N_SAMPLES / this.leaf_size);
+		*/
 		
 		double[] bounds, pt;
 		double reduced_dist_LB;
-		n_trims  = 0;
-		n_leaves = 0;
-		n_splits = 0;
+		
+		this.n_trims  = 0;
+		this.n_leaves = 0;
+		this.n_splits = 0;
 		
 		if(dualTree) {
 			NearestNeighborHeapSearch other = newInstance(Xarr, leaf_size, dist_metric, logger);
 			
+			/*
 			if(breadthFirst)
 				queryDualBreadthFirst(other, heap, nodeHeap);
 			else {
+			*/
+			
 				reduced_dist_LB = minRDistDual(this, 0, other, 0);
-				bounds = VecUtils.rep(Double.POSITIVE_INFINITY, m);
+				bounds = VecUtils.rep(Double.POSITIVE_INFINITY, this.N_SAMPLES);
 				queryDualDepthFirst(0, other, 0, bounds, heap, reduced_dist_LB);
-			}
+				
+			//}
 			
 		} else {
 			int i;
 			
+			/*
 			if(breadthFirst) {
-				for(i = 0; i < X.length; i++) {
+				for(i = 0; i < mPrime; i++) {
 					pt = Xarr[i];
 					querySingleBreadthFirst(pt, i, heap, nodeHeap);
 				}
+				
 			} else {
-				for(i = 0; i < X.length; i++) {
+			*/
+			
+				for(i = 0; i < mPrime; i++) {
 					pt = Xarr[i];
 					reduced_dist_LB = minRDist(this, 0, pt);
 					querySingleDepthFirst(0, pt, i, heap, reduced_dist_LB);
 				}
-			}
+				
+			//}
 		}
 		
-		EntryPair<double[][], int[][]> distances_indices = heap.getArrays(sort);
+		Neighborhood distances_indices = heap.getArrays(sort);
 		int[][] indices = distances_indices.getValue();
 		double[][] distances = distances_indices.getKey();
 		rDistToDistInPlace(distances); // set back to dist
 		
-		
-		return new EntryPair<double[][], int[][]>(
-				MatUtils.reshape(distances, X.length, k), 
-				MatUtils.reshape(indices,   X.length, k));
+		return new Neighborhood(
+				MatUtils.reshape(distances, mPrime, k), 
+				MatUtils.reshape(indices,   mPrime, k));
 	}
 	
+	/*
 	private void queryDualBreadthFirst(NearestNeighborHeapSearch other,
 									   NeighborsHeap heap,
 									   NodeHeap nodeHeap) {
 		// dual-tree k-nn query breadth first
-		int i1, i2, i_node1, i_node2, i_pt, 
-			m = other.node_data.length;
+		int i1, i2, i_node1, i_node2, i_pt;
 		double dist_pt, reduced_dist_LB;
-		double[] bounds = VecUtils.rep(Double.POSITIVE_INFINITY, m);
+		double[] bounds = VecUtils
+			.rep(Double.POSITIVE_INFINITY, 
+				other.node_data.length);
 		
 		NodeData[] node_data1 = this.node_data, 
 			node_data2 = other.node_data;
@@ -1137,6 +1406,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		// Push nodes into node heap
 		NodeHeapData nodeHeap_item = new NodeHeapData();
 		nodeHeap_item.val = minRDistDual(this, 0, other, 0);
+		
 		nodeHeap_item.i1 = 0;
 		nodeHeap_item.i2 = 0;
 		nodeHeap.push(nodeHeap_item);
@@ -1171,11 +1441,14 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 					for(i1 = node_info1.idx_start; i1 < node_info1.idx_end; i1++) {
 						
 						// sklearn line:
-						// data1 + n_features * self.idx_array[i1],
-                        // data2 + n_features * i_pt,
-						dist_pt = rDist(data1[idx_array[i1]], data2[i_pt]);
+						// dist_pt = self.rdist(
+                        //   data1 + n_features * self.idx_array[i1],
+                        //   data2 + n_features * i_pt,
+                        //   n_features)
+						dist_pt = rDist(data1[this.idx_array[i1]], data2[i_pt]);
+						
 						if(dist_pt < heap.largest(i_pt))
-							heap.push(i_pt, dist_pt, idx_array[i1]);
+							heap.push(i_pt, dist_pt, this.idx_array[i1]);
 					}
 					
 					// Keep track of node bound
@@ -1186,8 +1459,9 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			
 			// When node 1 is a leaf or is smaller
 			else if(node_info1.is_leaf 
-					|| (!node_info2.is_leaf
-						&& node_info2.radius > node_info1.radius)) {
+					|| ((!node_info2.is_leaf)
+						&& node_info2.radius 
+							> node_info1.radius)) {
 				
 				nodeHeap_item.i1 = i_node1;
 				for(i2 = 2*i_node2+1; i2 < 2*i_node2+3; i2++) {
@@ -1208,6 +1482,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			}
 		}
 	}
+	*/
 	
 	private void queryDualDepthFirst(int i_node1, NearestNeighborHeapSearch other,
 									 int i_node2, double[] bounds, NeighborsHeap heap,
@@ -1296,46 +1571,121 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 	}
 	
-	int queryRadiusSingle(int i_node, double[] pt, double r, int[] indices, 
-			double[] distances, int count, boolean countOnly, boolean returnDists) {
+	private void ensurePositiveRadius(final double radius) {
+		RadiusNeighbors.validateRadius(radius);
+	}
+	
+	public Neighborhood queryRadius(double[][] X, double[] radius, boolean sort) {
+		int i, m_prime = X.length;
+		int[] idx_arr_i, counts_arr;
+		double[] dist_arr_i, pt;
+		
+		// Assumes non-jagged rows but caught in dist ops...
+		MatUtils.checkDims(X);
+		if(X[0].length != N_FEATURES)
+			throw new DimensionMismatchException(X[0].length, N_FEATURES);
+		
+		VecUtils.checkDims(radius);
+		if(m_prime != radius.length)
+			throw new DimensionMismatchException(m_prime, radius.length);
+		
+		for(double rad: radius)
+			ensurePositiveRadius(rad);
+		
+		// Prepare for iter
+		int[][] indices = new int[m_prime][];
+		double[][] dists= new double[m_prime][];
+		
+		idx_arr_i = new int[N_SAMPLES];
+		dist_arr_i= new double[N_SAMPLES];
+		counts_arr= new int[m_prime];
+		
+		
+		// For each row in X
+		for(i = 0; i < m_prime; i++) {
+			// The current row
+			pt = X[i];
+			
+			counts_arr[i] = queryRadiusSingle(0, pt, radius[i], 
+											  idx_arr_i, 
+											  dist_arr_i, 
+											  0, true);
+			
+			if(sort)
+				NeighborsHeap.simultaneous_sort(dist_arr_i, idx_arr_i, counts_arr[i]);
+			
+			
+			// There's a chance the length could be zero if there are no neighbors in the radius...
+			indices[i] = counts_arr.length == 0 ? new int[ ]{ }  : VecUtils.slice(idx_arr_i,  0, counts_arr[i]);
+			dists[i]   = counts_arr.length == 0 ? new double[]{} : VecUtils.slice(dist_arr_i, 0, counts_arr[i]);
+		}
+		
+		return new Neighborhood(dists, indices);
+	}
+	
+	public Neighborhood queryRadius(double[][] X, double radius, boolean sort) {
+		MatUtils.checkDims(X);
+		ensurePositiveRadius(radius);
+		
+		int n = X[0].length;
+		if(n != N_FEATURES)
+			throw new DimensionMismatchException(n, N_FEATURES);
+		
+		return queryRadius(X, VecUtils.rep(radius, X.length), sort);
+	}
+	
+	private int queryRadiusSingle(
+			final int i_node, 
+			final double[] pt, 
+			final double r, 
+			final int[] indices, 
+			final double[] distances, 
+			int count,
+			final boolean returnDists) {
 		
 		double[][] data = this.data_arr;
 		NodeData nodeInfo = node_data[i_node];
 		
 		int i;
 		double reduced_r, dist_pt;
-		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
+		
+		// Lower bound (min)
+		MutableDouble dist_LB = new MutableDouble(0.0);
+				
+		// Upper bound (max)
+		MutableDouble dist_UB = new MutableDouble(0.0);
+		
+		// Find min dist and max dist from pts
 		minMaxDist(this, i_node, pt, dist_LB, dist_UB);
 		
-		// If all outside of r, prune
+		// If min dist is greater than radius, then pass
 		if(dist_LB.value > r) {
 		} // pass
 		
-		// All points within r
+		
+		// All points within radius
 		else if(dist_UB.value <= r) {
-			if(countOnly)
-				count += (nodeInfo.idx_end - nodeInfo.idx_start);
-			else {
-				for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++, count++) {
-					if(count < 0 || count >= N_SAMPLES) {
-						String err = "count is too big; this should not happen";
-						if(null != logger)
-							logger.error(err);
-						throw new IllegalStateException(err);
-					}
-					
-					indices[count] = idx_array[i];
-					if(returnDists)
-						distances[count] = this.dist(pt, data[idx_array[i]]);
+			for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
+				if(count < 0 || count >= N_SAMPLES) {
+					String err = "count is too big; this should not happen";
+					if(null != logger)
+						logger.error(err);
+					throw new IllegalStateException(err);
 				}
+				
+				indices[count] = idx_array[i];
+				if(returnDists)
+					distances[count] = this.dist(pt, data[idx_array[i]]);
+				
+				count++;
 			}
 		}
 		
-		// this is a leaf node
+		// this is a leaf node; check every point
 		else if(nodeInfo.is_leaf) {
 			reduced_r = this.dist_metric.distanceToPartialDistance(r);
 			
-			for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++, count++) {
+			for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
 				dist_pt = this.rDist(pt, data[idx_array[i]]);
 				
 				if(dist_pt <= reduced_r) {
@@ -1346,50 +1696,63 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 						throw new IllegalStateException(err);
 					}
 					
-					if(!countOnly) {
-						indices[count] = idx_array[i];
-						if(returnDists)
-							distances[count] = this.dist_metric.partialDistanceToDistance(dist_pt);
-					}
+					indices[count] = idx_array[i];
+					if(returnDists)
+						distances[count] = this.dist_metric.partialDistanceToDistance(dist_pt);
+
+					count++;
 				}
 			}
 		}
 		
-		// Otherwise node is not a leaf
+		// Otherwise node is not a leaf. Recursively check subnodes
 		else {
-			count = this.queryRadiusSingle(2 * i_node + 1, pt, r, indices, distances, count, countOnly, returnDists);
-			count = this.queryRadiusSingle(2 * i_node + 2, pt, r, indices, distances, count, countOnly, returnDists);
+			count = this.queryRadiusSingle(2 * i_node + 1, pt, r, 
+											indices, distances, count, 
+											returnDists);
+			
+			count = this.queryRadiusSingle(2 * i_node + 2, pt, r, 
+											indices, distances, count, 
+											returnDists);
 		}
 		
 		return count;
 	}
 	
-	private void querySingleBreadthFirst(double[] pt, int i_pt, NeighborsHeap heap, NodeHeap nodeHeap) {
+	/*
+	private void querySingleBreadthFirst(double[] pt, int i_pt, 
+				NeighborsHeap heap, NodeHeap nodeHeap) {
 		int i, i_node;
 		double dist_pt, reduced_dist_LB;
-		NodeData nodeInfo;
 		
+		// Will initialize to NodeHeapData(minRDist, 0, 0)
 		NodeHeapData nodeHeap_item = new NodeHeapData();
 		nodeHeap_item.val = minRDist(this, 0, pt);
 		nodeHeap_item.i1 = 0;
 		nodeHeap.push(nodeHeap_item);
 		
+		
 		while(nodeHeap.n > 0) {
 			nodeHeap_item = nodeHeap.pop();
 			reduced_dist_LB = nodeHeap_item.val;
+			System.out.println(reduced_dist_LB + ", " + heap.largest(i_pt));
 			i_node = nodeHeap_item.i1;
-			nodeInfo = node_data[i_node];
+			//System.out.println(i_node + ", " + reduced_dist_LB);
 			
 			// Pt is outside radius:
-			if(reduced_dist_LB < heap.largest(i_pt))
+			if(reduced_dist_LB > heap.largest(i_pt))
 				this.n_trims++;
 			
 			// This is leaf node
-			else if(nodeInfo.is_leaf) {
+			else if(this.node_data[i_node].is_leaf) {
 				this.n_leaves++;
 				
-				for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
+				for(i = this.node_data[i_node].idx_start; 
+					i < this.node_data[i_node].idx_end; 
+					i++) {
+					
 					dist_pt = this.rDist(pt, this.data_arr[idx_array[i]]);
+					//System.out.println(Arrays.toString(pt)+ ", " + i_pt + ", " + i + ", " + dist_pt + ", " +i_node);
 					if(dist_pt < heap.largest(i_pt))
 						heap.push(i_pt, dist_pt, idx_array[i]);
 				}
@@ -1398,17 +1761,23 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			// Node is not a leaf
 			else {
 				this.n_splits++;
-				for(i = 2 * i_node + 1; i < 2 * i_node + 3; i++) {
+				for(i = 2 * i_node + 1; 
+					i < 2 * i_node + 3; 
+						i++) {
+					
 					nodeHeap_item.i1 = i;
 					nodeHeap_item.val = minRDist(this, i, pt);
+					System.out.println(Arrays.toString(pt)+ ", " + i_pt + ", " + i + ", " + nodeHeap_item.val + ", " +i_node);
 					nodeHeap.push(nodeHeap_item);
 				}
 			}
 		}
 	}
+	*/
 	
 	private void querySingleDepthFirst(int i_node, double[] pt, int i_pt, NeighborsHeap heap, double reduced_dist_LB) {
-		NodeData nodeInfo = node_data[i_node];
+		NodeData nodeInfo = this.node_data[i_node];
+		
 		double dist_pt, reduced_dist_LB_1, reduced_dist_LB_2;
 		int i, i1, i2;
 		
@@ -1421,8 +1790,10 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			this.n_leaves++;
 			for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
 				dist_pt = rDist(pt, this.data_arr[idx_array[i]]);
-				if(dist_pt < heap.largest(i_pt)) // in radius
+				
+				if(dist_pt < heap.largest(i_pt)) { // in radius
 					heap.push(i_pt, dist_pt, idx_array[i]);
+				}
 			}
 		}
 		
@@ -1435,6 +1806,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			reduced_dist_LB_1 = minRDist(this, i1, pt);
 			reduced_dist_LB_2 = minRDist(this, i2, pt);
 			
+			// Recurse
 			if(reduced_dist_LB_1 <= reduced_dist_LB_2) {
 				querySingleDepthFirst(i1, pt, i_pt, heap, reduced_dist_LB_1);
 				querySingleDepthFirst(i2, pt, i_pt, heap, reduced_dist_LB_2);
@@ -1447,11 +1819,19 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 	}
 	
-	int[] twoPointCorrelation(double[][] X, double[] r) {
+	public int[] twoPointCorrelation(double[][] X, double r) {
 		return twoPointCorrelation(X, r, false);
 	}
 	
-	int[] twoPointCorrelation(double[][] X, double[] r, boolean dual) {
+	public int[] twoPointCorrelation(double[][] X, double r, boolean dual) {
+		return twoPointCorrelation(X, VecUtils.rep(r, X.length), dual);
+	}
+	
+	public int[] twoPointCorrelation(double[][] X, double[] r) {
+		return twoPointCorrelation(X, r, false);
+	}
+	
+	public int[] twoPointCorrelation(double[][] X, double[] r, boolean dual) {
 		int i;
 		
 		MatUtils.checkDims(X);
@@ -1459,8 +1839,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			throw new DimensionMismatchException(X[0].length, N_FEATURES);
 	
 		double[][] Xarr = MatUtils.copy(X);
-		int[] i_rsort = VecUtils.argSort(r);
-		double[] rarr = VecUtils.reorder(r, i_rsort);
+		double[] rarr = VecUtils.reorder(r, VecUtils.argSort(r));
 		
 		// count array
 		int[] carr = new int[r.length];
@@ -1469,34 +1848,35 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			NearestNeighborHeapSearch other = newInstance(Xarr, leaf_size, dist_metric, logger);
 			this.twoPointDual(0, other, 0, rarr, carr, 0, rarr.length);
 		} else {
-			for(i = 0; i < Xarr.length; i++) {
+			for(i = 0; i < Xarr.length; i++)
 				this.twoPointSingle(0, Xarr[i], rarr, carr, 0, rarr.length);
-			}
 		}
 		
 		return carr;
 	}
 	
-	void twoPointDual(int i_node1, NearestNeighborHeapSearch other, int i_node2,
+	private void twoPointDual(int i_node1, NearestNeighborHeapSearch other, int i_node2,
 			double[] r, int[] count, int i_min, int i_max) {
 		
 		double[][] data1 = this.data_arr;
 		double[][] data2 = other.data_arr;
+		
 		int[] idx_array1 = this.idx_array;
 		int[] idx_array2 = other.idx_array;
+		
 		NodeData nodeInfo1 = this.node_data[i_node1];
 		NodeData nodeInfo2 = other.node_data[i_node2];
 		
 		int i1, i2, j, Npts;
 		double dist_pt;
-		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
+		double dist_LB, dist_UB;
 		
-		dist_LB.value = minDistDual(this, i_node1, other, i_node2);
-		dist_UB.value = maxDistDual(this, i_node1, other, i_node2);
+		dist_LB = minDistDual(this, i_node1, other, i_node2);
+		dist_UB = maxDistDual(this, i_node1, other, i_node2);
 		
 		// Check for cuts
 		while(i_min < i_max) {
-			if(dist_LB.value > r[i_min])
+			if(dist_LB > r[i_min])
 				i_min++;
 			else break;
 		}
@@ -1504,7 +1884,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		while(i_max > i_min) {
 			Npts = ((nodeInfo1.idx_end - nodeInfo1.idx_start) 
 					* (nodeInfo2.idx_end - nodeInfo2.idx_start));
-			if(dist_UB.value <= r[i_max - 1]) {
+			if(dist_UB <= r[i_max - 1]) {
 				count[i_max - 1] += Npts;
 				i_max--;
 			} else break;
@@ -1514,6 +1894,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 			if(nodeInfo1.is_leaf && nodeInfo2.is_leaf) {
 				for(i1 = nodeInfo1.idx_start; i1 < nodeInfo1.idx_end; i1++) {
 					for(i2 = nodeInfo2.idx_start; i2 < nodeInfo2.idx_end; i2++) {
+						
 						dist_pt = this.dist(data1[idx_array1[i1]], data2[idx_array2[i2]]);
 						j = i_max - 1;
 						
@@ -1538,14 +1919,14 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 		}
 	}
 	
-	void twoPointSingle(int i_node, double[] pt, double[] r, int[] count, int i_min, int i_max) {
+	private void twoPointSingle(int i_node, double[] pt, double[] r, int[] count, int i_min, int i_max) {
 		double[][] data = this.data_arr;
 		NodeData nodeInfo = node_data[i_node];
 		
 		int i, j, Npts;
 		double dist_pt;
 		
-		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
+		MutableDouble dist_LB = new MutableDouble(0.0), dist_UB = new MutableDouble(0.0);
 		minMaxDist(this, i_node, pt, dist_LB, dist_UB);
 		
 		while(i_min < i_max) {
@@ -1570,6 +1951,7 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 					j = i_max - 1;
 					while(j >= i_min && dist_pt <= r[j])
 						count[j--]++;
+						// same as count[j]++; j--;
 				}
 			} else {
 				this.twoPointSingle(2 * i_node + 1, pt, r, count, i_min, i_max);
@@ -1596,6 +1978,5 @@ abstract public class NearestNeighborHeapSearch implements java.io.Serializable 
 	abstract double minRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	
 	// Hack for new instance functions
-	abstract NearestNeighborHeapSearch newInstance(double[][] arr, int leaf, DistanceMetric dist);
 	abstract NearestNeighborHeapSearch newInstance(double[][] arr, int leaf, DistanceMetric dist, Loggable logger);
 }

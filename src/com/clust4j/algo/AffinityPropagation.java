@@ -12,8 +12,6 @@ import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.CentroidLearner;
-import com.clust4j.utils.Classifier;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
@@ -38,7 +36,7 @@ import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_PO
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn Python implementation
  *
  */
-public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, Classifier, CentroidLearner {
+public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, BaseClassifier, CentroidLearner {
 	/**
 	 * 
 	 */
@@ -144,7 +142,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	
 	
-	public static class AffinityPropagationPlanner extends AbstractClusterer.BaseClustererPlanner {
+	public static class AffinityPropagationPlanner 
+			extends AbstractClusterer.BaseClustererPlanner 
+			implements UnsupervisedClassifierPlanner {
+		
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_MIN_CHANGE;
 		private int iterBreak = DEF_ITER_BREAK;
@@ -166,7 +167,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 		@Override
 		public AffinityPropagation buildNewModelInstance(AbstractRealMatrix data) {
-			return new AffinityPropagation(data, this);
+			return new AffinityPropagation(data, this.copy());
 		}
 		
 		@Override
@@ -717,10 +718,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				}
 				
 				
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) +
-					System.lineSeparator());
-				
+				wrapItUp(start);
 				
 				// Clean up
 				sim_mat = null;

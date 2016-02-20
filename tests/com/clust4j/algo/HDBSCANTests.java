@@ -2,6 +2,10 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -15,20 +19,19 @@ import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
+import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.utils.BallTree;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
-import com.clust4j.utils.KDTree;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.NearestNeighborHeapSearch;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
 
-public class HDBSCANTests {
+public class HDBSCANTests implements ClusterTest, ClassifierTest {
+	final Array2DRowRealMatrix DATA = ExampleDataSets.IRIS.getData();
 	final static MatrixFormatter formatter = TestSuite.formatter;
 	final static double[][] dist_mat = new double[][]{
 		new double[]{1,2,3},
@@ -249,8 +252,8 @@ public class HDBSCANTests {
 		Array2DRowRealMatrix X = new Array2DRowRealMatrix(dist_mat);
 		
 		KDTree tree = new KDTree(X, HDBSCAN.DEF_LEAF_SIZE, Distance.EUCLIDEAN);
-		EntryPair<double[][], int[][]> query = tree.query(dist_mat, min_points, true, true, true);
-		double[][] dists = query.getKey();
+		Neighborhood query = tree.query(dist_mat, min_points, true, true);
+		double[][] dists = query.getDistances();
 		double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
 		
 		// Needs to equal this:
@@ -302,8 +305,8 @@ public class HDBSCANTests {
 		Array2DRowRealMatrix X = new Array2DRowRealMatrix(dist_mat);
 		
 		BallTree tree = new BallTree(X, HDBSCAN.DEF_LEAF_SIZE, Distance.EUCLIDEAN);
-		EntryPair<double[][], int[][]> query = tree.query(dist_mat, min_points, true, true, true);
-		double[][] dists = query.getKey();
+		Neighborhood query = tree.query(dist_mat, min_points, true, true);
+		double[][] dists = query.getDistances();
 		double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
 		
 		// Needs to equal this:
@@ -426,6 +429,61 @@ public class HDBSCANTests {
 					.setVerbose(true)
 					.setScale(true)).fit();
 		
+	}
+
+	@Test
+	@Override
+	public void testScoring() {
+		new HDBSCAN(DATA).fit().silhouetteScore();
+	}
+
+	@Test
+	@Override
+	public void testDefConst() {
+		new HDBSCAN(DATA);
+	}
+
+	@Test
+	@Override
+	public void testArgConst() {
+		new HDBSCAN(DATA, 3);
+	}
+
+	@Test
+	@Override
+	public void testPlannerConst() {
+		new HDBSCAN(DATA, new HDBSCANPlanner());
+	}
+
+	@Test
+	@Override
+	public void testFit() {
+		new HDBSCAN(DATA, 1).fit();
+	}
+
+	@Test
+	@Override
+	public void testFromPlanner() {
+		new HDBSCANPlanner().buildNewModelInstance(DATA);
+		new HDBSCANPlanner(3).buildNewModelInstance(DATA);
+	}
+
+	@Test
+	@Override
+	public void testSerialization() throws IOException, ClassNotFoundException {
+		HDBSCAN hd = new HDBSCAN(DATA, 
+			new HDBSCAN.HDBSCANPlanner(1)
+				.setVerbose(true)
+				.setScale(true)).fit();
+
+		final int[] labels = hd.getLabels();
+		hd.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		assertTrue(TestSuite.file.exists());
+		
+		HDBSCAN hd2 = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(hd2.getLabels(), labels));
+		assertTrue(hd.equals(hd2));
+		Files.delete(TestSuite.path);
 	}
 	
 	/*@Test

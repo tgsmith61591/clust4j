@@ -90,90 +90,137 @@ public class MatUtils {
 	
 	// ========== DIM CHECKS =============
 	private static final void dimAssess(int a) { if(a < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + a); }
+	private static final void dimAssessPermitEmpty(int a) { if(a < 0) throw new IllegalArgumentException("illegal dim: " + a); }
+	private static final void throwDimException(int a, Throwable npe) { 
+		throw new IllegalArgumentException("matrix rows have been initialized, "
+			+ "but columns have not, i.e.: new double["+a+"][]", npe); 
+	}
+	
 	
 	final static public void checkDims(final short[][] a) {
 		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final byte[][] a) {
 		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final boolean[][] a) {
 		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final int[][] a) {
 		dimAssess(a.length);
-		
+
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final float[][] a) {
 		dimAssess(a.length);
-		
+
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final double[][] a) {
 		dimAssess(a.length);
-		
+
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
 	final static public void checkDims(final long[][] a) {
 		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { VecUtils.checkDims(a[0]); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	
+	
+	
+	
+	
+	
+	final static public void checkDimsPermitEmpty(final short[][] a) {
+		dimAssess(a.length);
 		
 		// If you try it on a row-initialized matrix but not col-init
-		try {
-			VecUtils.checkDims(a[0]);
-		} catch(NullPointerException npe) {
-			throw new IllegalArgumentException("matrix rows have been initialized, "
-					+ "but columns have not, i.e.: new double["+a.length+"][]", npe);
-		}
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
+	
+	final static public void checkDimsPermitEmpty(final byte[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	final static public void checkDimsPermitEmpty(final boolean[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	final static public void checkDimsPermitEmpty(final int[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	final static public void checkDimsPermitEmpty(final float[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	final static public void checkDimsPermitEmpty(final double[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	final static public void checkDimsPermitEmpty(final long[][] a) {
+		dimAssess(a.length);
+
+		// If you try it on a row-initialized matrix but not col-init
+		try { dimAssessPermitEmpty(a[0].length); } 
+		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	}
+	
+	
+	
+	
+	
+	
+	
 	
 	final static public void checkDims(final double[][] a, final double[][] b) {
 		checkDims(a);
@@ -295,6 +342,16 @@ public class MatUtils {
 		return out;
 	}
 	
+	public static double[] colMeans(final double[][] data) {
+		checkDims(data);
+		
+		final double[] out = new double[data[0].length];
+		for(int i = 0; i < out.length; i++)
+			out[i] = VecUtils.mean(getColumn(data, i));
+		
+		return out;
+	}
+	
 	
 	public static double[] colSums(final double[][] data) {
 		checkDims(data);
@@ -389,6 +446,22 @@ public class MatUtils {
 		return copy;
 	}
 	
+	/**
+	 * Copy a 2d int array
+	 * @param data
+	 * @return
+	 */
+	public static final int[][] copy(final int[][] data) {
+		final int[][] copy = new int[data.length][];
+		
+		if(data.length != 0) {
+			for(int i = 0; i < copy.length; i++)
+				copy[i] = VecUtils.copy(data[i]);
+		}
+		
+		return copy;
+	}
+	
 	public static double[] diagFromSquare(final double[][] data) {
 		checkDims(data);
 		
@@ -439,6 +512,18 @@ public class MatUtils {
 		return true;
 	}
 	
+	public static boolean equalsExactly(final boolean[][] a, final boolean[][] b) {
+		if(a.length != b.length)
+			return false;
+		if(a.length == 0) // Both are empty
+			return true;
+		
+		for(int i = 0; i < a.length; i++)
+			if(!VecUtils.equalsExactly(a[i], b[i]))
+				return false;
+		return true;
+	}
+	
 	public static double[] flatten(final double[][] a) {
 		checkDims(a);
 		
@@ -447,6 +532,23 @@ public class MatUtils {
 		int ctr = 0;
 		for(int i = 0; i < m; i++) {
 			final double[] row = a[i];
+			if(row.length != n) // Check for jaggedness
+				throw new DimensionMismatchException(n, row.length);
+			for(int j = 0; j < n; j++)
+				out[ctr++] = a[i][j];
+		}
+		
+		return out;
+	}
+	
+	public static int[] flatten(final int[][] a) {
+		checkDims(a);
+		
+		final int m = a.length, n = a[0].length;
+		final int[] out = new int[m * n];
+		int ctr = 0;
+		for(int i = 0; i < m; i++) {
+			final int[] row = a[i];
 			if(row.length != n) // Check for jaggedness
 				throw new DimensionMismatchException(n, row.length);
 			for(int j = 0; j < n; j++)
@@ -572,7 +674,29 @@ public class MatUtils {
 		return out;
 	}
 	
+	public static double[][] getColumns(final double[][] data, final Integer[] idcs) {
+		final double[][] out = new double[data.length][idcs.length];
+		
+		int idx = 0;
+		for(int i = 0; i < idcs.length; i++)
+			setColumnInPlace(out, idx++, getColumn(data, idcs[i]));
+		
+		return out;
+	}
+	
 	public static double[][] getRows(final double[][] data, final int[] idcs) {
+		final double[][] out = new double[idcs.length][];
+		
+		int idx = 0;
+		for(int i = 0; i < idcs.length; i++) {
+			out[idx] = new double[data[i].length];
+			setRowInPlace(out, idx++, data[idcs[i]]);
+		}
+		
+		return out;
+	}
+	
+	public static double[][] getRows(final double[][] data, final Integer[] idcs) {
 		final double[][] out = new double[idcs.length][];
 		
 		int idx = 0;
@@ -835,7 +959,9 @@ public class MatUtils {
 		final int mOld = matrix.length, nOld = matrix[0].length;
 		
 		if(mOld*nOld != mNew*nNew)
-			throw new IllegalArgumentException("total matrix size cannot change");
+			throw new IllegalArgumentException("total matrix size cannot "
+				+ "change (original: "+mOld+"x"+nOld+", "
+				+ "new: "+mNew+"x"+nNew+")");
 		if(mNew < 0 || nNew < 0) // either they both are, or neither is or it wouldn't make it to this check...
 			throw new IllegalArgumentException("m, n must be greater than 0");
 		
@@ -845,6 +971,42 @@ public class MatUtils {
 		for(int i = 0; i < mNew; i++)
 			for(int j = 0; j < nNew; j++)
 				out[i][j] = matrix[idx / nOld][idx++ % nOld];
+		
+		return out;
+	}
+	
+	public static double[][] reshape(final double[] vector, final int mNew, final int nNew) {
+		VecUtils.checkDimsPermitEmpty(vector);
+		final int n = vector.length;
+		
+		if(n != mNew*nNew)
+			throw new IllegalArgumentException("vector size and m*n dims don't match");
+		if(mNew < 0 || nNew < 0) // either they both are, or neither is or it wouldn't make it to this check...
+			throw new IllegalArgumentException("m, n must be >= 0");
+		final double[][] out = new double[mNew][nNew];
+		
+		int idx = 0;
+		for(int i = 0; i < mNew; i++)
+			for(int j = 0; j < nNew; j++)
+				out[i][j] = vector[idx++];
+		
+		return out;
+	}
+	
+	public static int[][] reshape(final int[] vector, final int mNew, final int nNew) {
+		VecUtils.checkDimsPermitEmpty(vector);
+		final int n = vector.length;
+		
+		if(n != mNew*nNew)
+			throw new IllegalArgumentException("vector size and m*n dims don't match");
+		if(mNew < 0 || nNew < 0) // either they both are, or neither is or it wouldn't make it to this check...
+			throw new IllegalArgumentException("m, n must be >= 0");
+		final int[][] out = new int[mNew][nNew];
+		
+		int idx = 0;
+		for(int i = 0; i < mNew; i++)
+			for(int j = 0; j < nNew; j++)
+				out[i][j] = vector[idx++];
 		
 		return out;
 	}
@@ -865,6 +1027,16 @@ public class MatUtils {
 		for(int i = 0; i < mNew; i++)
 			for(int j = 0; j < nNew; j++)
 				out[i][j] = matrix[idx / nOld][idx++ % nOld];
+		
+		return out;
+	}
+	
+	public static double[] rowMeans(final double[][] data) {
+		checkDims(data);
+		
+		final double[] out = new double[data.length];
+		for(int i = 0; i < out.length; i++)
+			out[i] = VecUtils.mean(data[i]);
 		
 		return out;
 	}
@@ -1059,6 +1231,21 @@ public class MatUtils {
 			for(int j = 0; j < n; j++)
 				c[i][j] = a[i][j] - b[i][j];
 		return c;
+	}
+	
+	public static double[][] toDouble(int[][] mat) {
+		// Allow jagged arrays
+		checkDimsPermitEmpty(mat);
+		
+		final int m = mat.length;
+		double[][] out = new double[m][];
+		for(int i = 0; i < m; i++) {
+			out[i] = new double[mat[i].length];
+			for(int j = 0; j < out[i].length; j++)
+				out[i][j] = (double)mat[i][j];
+		}
+		
+		return out;
 	}
 	
 	public static double[][] transpose(final double[][] a) {

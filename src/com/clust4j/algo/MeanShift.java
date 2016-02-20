@@ -1,22 +1,21 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.SortedSet;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.CentroidLearner;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Convergeable;
@@ -51,6 +50,8 @@ public class MeanShift
 	final public static double DEF_MIN_CHANGE = 0d;
 	final public static int DEF_MIN_BIN_FREQ = 1;
 	final public static int NOISE_CLASS = -1;
+	final static int maxTries = 4;
+	final static double incrementAmt = 0.25;
 	
 	
 	
@@ -61,11 +62,11 @@ public class MeanShift
 	/** Min change convergence criteria */
 	private final double minChange;
 	
-	/** The kernel bandwidth */
-	private double bandwidth;
+	/** The kernel bandwidth (volatile because can change in sync method) */
+	volatile private double bandwidth;
 
 	/** Class labels */
-	private volatile int[] labels = null;
+	volatile private int[] labels = null;
 	
 	/** The M x N seeds to be used as initial kernel points */
 	private double[][] seeds;
@@ -95,6 +96,15 @@ public class MeanShift
 	}
 	
 	/**
+	 * Default constructor for auto bandwidth estimation
+	 * @param data
+	 * @param bandwidth
+	 */
+	public MeanShift(AbstractRealMatrix data) {
+		this(data, new MeanShiftPlanner());
+	}
+	
+	/**
 	 * Constructor with custom MeanShiftPlanner
 	 * @param data
 	 * @param planner
@@ -120,36 +130,34 @@ public class MeanShift
 			if(planner.seeds[0].length != (n=data.getColumnDimension())) {
 				e = "seeds column dims do not match data column dims";
 				error(e);
-				throw new DimensionMismatchException(planner.seeds[0].length, n);
+				throw new org.apache.commons.math3.exception.DimensionMismatchException(planner.seeds[0].length, n);
+			}
+			
+			if(seeds.length > data.getRowDimension()) {
+				e = "seeds length cannot exceed number of datapoints";
+				error(e);
+				throw new IllegalArgumentException(e);
 			}
 			
 			info("initializing kernels from given seeds");
 			seeds = MatUtils.copy(planner.seeds);
-		} else { // Default = all
+		} else { // Default = all*/
 			info("no seeds provided; defaulting to all datapoints");
 			seeds = data.getData();
 			n = data.getColumnDimension();
 		}
 		
 		
-		
 		this.maxIter = planner.maxIter;
 		this.minChange = planner.minChange;
-		this.m = data.getRowDimension();
+		this.m = seeds.length; //data.getRowDimension();
 		
-		
-		/*// No longer need the test...
-		this.seeds_m = seeds.length;
-		if(seeds_m > m) {
-			e = "seeds length cannot exceed number of datapoints";
-			if(verbose) error(e);
-			throw new IllegalArgumentException(e);
-		}
-		*/
 
 		if(planner.autoEstimateBW) info("auto-estimating kernel bandwidth");
 		this.bandwidth = planner.autoEstimateBW ? 
-			autoEstimateBW(data, planner.autoEstimateBWQuantile, planner.getSep(), planner.seed) : 
+			autoEstimateBW(this.data, // Needs to be 'this' because might be stdized
+				planner.autoEstimateBWQuantile, 
+				planner.getSep(), planner.seed) : 
 				planner.bandwidth;
 		
 		
@@ -163,36 +171,52 @@ public class MeanShift
 			throw new IllegalArgumentException("illegal quantile");
 		final int m = data.getRowDimension();
 		
-		NearestNeighbors nn = new NearestNeighbors(data, 
-			new NearestNeighborsPlanner()
-				.setK( (int)(m * quantile) )
+		
+		NearestNeighbors nn = new NearestNeighbors(data,
+			new NearestNeighborsPlanner((int)(m * quantile))
 				.setSeed(seed)
 				.setSep(sep))
 			.fit();
 		
 		double bw = 0.0;
-		final int chunkSize = 500, numChunks = getNumChunks(chunkSize, m);
-		
-		int chunkStart, nextChunk;
-		ArrayList<Double> dists;
-		for(int chunk = 0; chunk < numChunks; chunk++) {
-			chunkStart = chunk * chunkSize;
-			nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
+		ArrayList<Array2DRowRealMatrix> chunks = generateChunks(data.getData(), 500);
+		Neighborhood neighb;
+		double[][] distances;
+		for(Array2DRowRealMatrix chunk: chunks) {
+			neighb = nn.getNeighbors(chunk);
+			distances = neighb.getDistances();
 			
-			for(int i = chunkStart; i < nextChunk; i++) {
-				dists = nn.getNearestDists(i);
-
+			for(double[] distRow: distances) {
 				double maxDist = Double.NEGATIVE_INFINITY;
-				for(Double dist: dists)
+				
+				for(double dist: distRow)
 					maxDist= FastMath.max(dist, maxDist);
 				
-				//System.out.println(dists);
 				bw += maxDist;
 			}
 		}
 		
 		
 		return bw / (double)m;
+	}
+	
+	static ArrayList<Array2DRowRealMatrix> generateChunks(double[][] data, int chunkSize) {
+		final int m = data.length, numChunks = getNumChunks(chunkSize, m);
+		
+		int chunkStart, nextChunk;
+		ArrayList<Array2DRowRealMatrix> out = new ArrayList<>();
+		for(int chunk = 0; chunk < numChunks; chunk++) {
+			chunkStart = chunk * chunkSize;
+			nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
+			
+			double[][] nextMatrix = new double[nextChunk - chunkStart][];
+			for(int i = chunkStart, j = 0; i < nextChunk; i++, j++)
+				nextMatrix[j] = data[i];
+			
+			out.add(new Array2DRowRealMatrix(nextMatrix, false));
+		}
+		
+		return out;
 	}
 	
 	static int getNumChunks(final int chunkSize, final int m) {
@@ -208,10 +232,13 @@ public class MeanShift
 	 * interface to set custom parameters for DBSCAN
 	 * @author Taylor G Smith
 	 */
-	final public static class MeanShiftPlanner extends AbstractClusterer.BaseClustererPlanner {
+	final public static class MeanShiftPlanner 
+			extends AbstractClusterer.BaseClustererPlanner 
+			implements UnsupervisedClassifierPlanner {
+		
 		private boolean autoEstimateBW = false;
 		private double autoEstimateBWQuantile = 0.3;
-		private double bandwidth;
+		private double bandwidth = DEF_BANDWIDTH;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_MIN_CHANGE;
@@ -222,7 +249,7 @@ public class MeanShift
 		private boolean verbose	= DEF_VERBOSE;
 		
 		public MeanShiftPlanner() {
-			this(DEF_BANDWIDTH);
+			this.autoEstimateBW = true;
 		}
 		
 		public MeanShiftPlanner(final double bandwidth) {
@@ -233,7 +260,7 @@ public class MeanShift
 		
 		@Override
 		public MeanShift buildNewModelInstance(AbstractRealMatrix data) {
-			return new MeanShift(data, this);
+			return new MeanShift(data, this.copy());
 		}
 		
 		@Override
@@ -245,7 +272,6 @@ public class MeanShift
 				.setMinChange(minChange)
 				.setScale(scale)
 				.setSeed(seed)
-				.setSeeds(seeds)
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setNormalizer(norm);
@@ -303,11 +329,6 @@ public class MeanShift
 			return this;
 		}
 		
-		public MeanShiftPlanner setSeeds(final double[][] seeds) {
-			this.seeds = null == seeds ? seeds : MatUtils.copy(seeds);
-			return this;
-		}
-		
 		@Override
 		public MeanShiftPlanner setSep(final GeometricallySeparable dist) {
 			this.dist = dist;
@@ -359,10 +380,12 @@ public class MeanShift
 		return MatUtils.copy(seeds);
 	}
 	
+	@Override
 	public int getMaxIter() {
 		return maxIter;
 	}
 	
+	@Override
 	public double getConvergenceTolerance() {
 		return minChange;
 	}
@@ -386,46 +409,77 @@ public class MeanShift
 			try {
 				if(null!=labels) // Already fit this model
 					return this;
+				
+				
+				int tries = 0;
+				final long start = System.currentTimeMillis();
 				info("identifying neighborhoods within bandwidth");
 				
-				
-				// Init labels, centroids
-				converged = true; // Will reset to false in loop in needed
-				final long start = System.currentTimeMillis();
-				labels = new int[m];
-				centroids = new ArrayList<double[]>();
+
+				// Put the results into a Map (hash because tree imposes comparable casting)
+				ArrayList<EntryPair<double[], Integer>> center_intensity = null;
+				RadiusNeighbors nbrs;
 				String error; // Hold any error msgs
 				
-				
-				// Now get single seed members
-				info("computing points within seed bandwidth radii");
-				ArrayList<EntryPair<double[], Integer>> all_res = new ArrayList<>();
-				for(double[] seed: seeds)
-					all_res.add(meanShiftSingleSeed(seed));
-				
-				
-				// Put the results into a Map (hash because tree imposes comparable casting)
-				HashMap<double[], Integer> center_intensity = new HashMap<>();
-				for(int i = 0; i < m; i++)
-					if(null != all_res.get(i))
-						center_intensity.put(all_res.get(i).getKey(), all_res.get(i).getValue());
-				
-				
-				// Check for points all too far from seeds
-				if(center_intensity.isEmpty()) {
-					error = "No point was within bandwidth="+bandwidth+
-							" of any seed. Increase the bandwidth or try different seeds.";
-					error(error);
-					throw new IllegalClusterStateException(error);
+				while(true) {
+					
+					// Init labels, centroids
+					converged = true; // Will reset to false in loop in needed
+					centroids = new ArrayList<double[]>();
+					
+
+					nbrs = new RadiusNeighbors(data,
+						new RadiusNeighborsPlanner(bandwidth)
+							.setScale(false) // if we scaled in MeanShift, data is already there
+							.setSeed(getSeed())
+							.setSep(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+					
+					// Now get single seed members
+					ArrayList<EntryPair<double[], Integer>> computedSeeds = new ArrayList<>();
+					for(double[] seed: seeds)
+						computedSeeds.add(computeNewSeed(seed, nbrs));
+						//all_res.add(meanShiftSingleSeed(seed));
+					
+					
+					
+					center_intensity = new ArrayList<>();
+					
+					
+					for(int i = 0; i < m; i++)
+						if(null != computedSeeds.get(i))
+							center_intensity.add(computedSeeds.get(i));
+					
+					
+					// Check for points all too far from seeds
+					boolean empty = center_intensity.isEmpty();
+					if(empty && tries >= maxTries) {
+						error = "No point was within bandwidth="+bandwidth+
+								" of any seed. Max tries reached; try increasing bandwidth";
+						error(error);
+						throw new IllegalClusterStateException(error);
+					} else if(empty) {
+						error = "No point was within bandwidth="+bandwidth+
+								" of any seed. Automatically increasing bandwidth to " + 
+								(bandwidth=(bandwidth+incrementAmt)) + " and trying again.";
+						warn(error);
+						tries++;
+					} else 
+						break;
 				}
+				
+				
+				if(tries > 0) // if it was automatically increased
+					info("final bandwidth selection: " + bandwidth);
+				
 				
 				
 				// Post-processing. Remove near duplicate seeds
 				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
 				info("identifying most populated seeds, removing near-duplicates");
-				SortedSet<Map.Entry<double[], Integer>> sorted_by_intensity = 
-					ClustUtils.sortEntriesByValue(center_intensity, true);
-				
+				ArrayList<Map.Entry<double[], Integer>> sorted_by_intensity = 
+					(ArrayList<Map.Entry<double[], Integer>>)ClustUtils
+						.sortEntriesByValue(center_intensity, true);
 				
 				// Extract the centroids
 				int idx = 0;
@@ -438,17 +492,25 @@ public class MeanShift
 				final boolean[] unique = new boolean[sorted_centers.length];
 				for(int i = 0; i < unique.length; i++) unique[i] = true;
 				
+				// Fit the new neighbors model
+				nbrs = new RadiusNeighbors(new Array2DRowRealMatrix(sorted_centers,false),
+					new RadiusNeighborsPlanner(bandwidth)
+						.setScale(false) // dont scale centers
+						.setSeed(getSeed())
+						.setSep(getSeparabilityMetric())
+						.setVerbose(false)).fit();
+
 				
-				
-				// Iterate over sorted centers
+				// Iterate over sorted centers and query radii
 				int redundant_ct = 0;
-				ArrayList<Integer> indcs;
-				final double[][] cent_dist_mat = ClustUtils.distanceUpperTriangMatrix(sorted_centers, getSeparabilityMetric());
+				int[] indcs;
+				double[] center;
 				for(int i = 0; i < sorted_centers.length; i++) {
 					if(unique[i]) {
-						indcs = NearestNeighbors.getNearestWithinRadius(bandwidth, cent_dist_mat, i);
+						center = sorted_centers[i];
+						indcs = nbrs.getNeighbors(new double[][]{center}, bandwidth).getIndices()[0];
 						
-						for(Integer id: indcs) {
+						for(int id: indcs) {
 							unique[id] = false;
 							redundant_ct++;
 						}
@@ -458,35 +520,71 @@ public class MeanShift
 				}
 				
 				
+				
 				// Now assign the centroids...
-				for(int i = 0; i < unique.length; i++)
-					if(unique[i])
+				for(int i = 0; i < unique.length; i++) {
+					if(unique[i]) {
 						centroids.add(sorted_centers[i]);
+					}
+				}
+				
+				// also put the centroids into a matrix. We have to
+				// wait to perform this op, because we have to know
+				// the size of centroids first...
+				double[][] centers = new double[centroids.size()][];
+				for(int i = 0; i < centers.length; i++)
+					centers[i] = centroids.get(i);
+				
+				
+				// Build yet another neighbors model... 
+				// this one has the propensity to throw exceptions
+				NearestNeighbors nn; 
+				try { // This only happens if centeres.length == 1...
+					nn = new NearestNeighbors(new Array2DRowRealMatrix(centers, false),
+						new NearestNeighborsPlanner(1)
+							.setScale(false) // dont scale the centers
+							.setSeed(getSeed())
+							.setSep(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+				} catch(IllegalArgumentException iae) {
+					error = "only "+centers.length+" centroid"
+							+ (centers.length==1?"":"s")+" identified; "
+							+ "try reducing or increasing bandwidth";
+					error(error);
+					throw new IllegalClusterStateException(error + "; " + iae.getMessage(), iae);
+				}
+				
 				
 				info((numClusters=centroids.size())+" optimal kernels identified");
 				info(redundant_ct + " nearly-identical kernel" + 
 						(redundant_ct!=1?"s":"") + " removed");
 				
 				
-				// Assign labels now
+				// Get the nearest...
 				final long clustStart = System.currentTimeMillis();
-				for(int i = 0; i < unique.length; i++) {
-					final double[] record = data.getRow(i);
-					
-					int closest_cent = NOISE_CLASS;
-					double min_dist = Double.MAX_VALUE;
-					for(int j = 0; j < centroids.size(); j++) {
-						final double[] centroid = centroids.get(j);
-						double dist = getSeparabilityMetric().getDistance(record, centroid);
-						
-						if(dist < min_dist && dist <= bandwidth) {
-							closest_cent = j;
-							min_dist = dist;
-						}
-					}
-					
-					labels[i] = closest_cent;
-				}
+				Neighborhood knrst = nn.getNeighbors(data);
+				labels = MatUtils.flatten(knrst.getIndices());
+				
+				
+				
+				// order the labels..
+				/* 
+				 * Reduce labels to a sorted, gapless, list
+				 * sklearn line: cluster_centers_indices = np.unique(labels)
+				 */
+				ArrayList<Integer> centroidIndices = new ArrayList<Integer>(numClusters);
+				for(Integer i: labels) // force autobox
+					if(!centroidIndices.contains(i)) // Not race condition because synchronized
+						centroidIndices.add(i);
+				
+				/*
+				 * final label assignment...
+				 * sklearn line: labels = np.searchsorted(cluster_centers_indices, labels)
+				 */
+				for(int i = 0; i < labels.length; i++)
+					labels[i] = centroidIndices.indexOf(labels[i]);
+				
+				
 				
 				// Wrap up...
 				// Count missing
@@ -499,10 +597,7 @@ public class MeanShift
 						LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
 				
 				
-				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
-				
+				wrapItUp(start);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
@@ -540,17 +635,7 @@ public class MeanShift
 		}
 	}
 	
-	private Integer[] getNeighbors(final double[] seed) {
-		final ArrayList<Integer> output = new ArrayList<Integer>();
-		for(int i = 0; i < data.getRowDimension(); i++) {
-			double dist = getSeparabilityMetric().getDistance(seed, data.getRow(i));
-			if(dist < bandwidth) output.add(i);
-		}
-		
-		return output.toArray(new Integer[output.size()]);
-	}
-	
-	private EntryPair<double[], Integer> meanShiftSingleSeed(double[] seed) {
+	private EntryPair<double[], Integer> computeNewSeed(double[] seed, RadiusNeighbors rn) {
 
 		double norm, diff;
 		int completed_iterations = 0;
@@ -560,8 +645,8 @@ public class MeanShift
 			if(completed_iterations > itersElapsed)
 				itersElapsed = completed_iterations;
 			
-			
-			final Integer[] i_nbrs = getNeighbors(seed);
+			Neighborhood nbrs = rn.getNeighbors(new double[][]{seed}, this.bandwidth);
+			int[] i_nbrs = nbrs.getIndices()[0];
 			
 			// Check if exit
 			if(i_nbrs.length == 0) {
@@ -572,22 +657,22 @@ public class MeanShift
 			// Save the old seed
 			final double[] oldSeed = seed;
 			
-			
 			// Get the points inside and simultaneously calc new seed
 			final double[] newSeed = new double[n];
-			for(Integer rec: i_nbrs) {
-				final double[] record = data.getRow(rec);
-				for(int j = 0; j < n; j++)
-					newSeed[j] += record[j];
-			}
-			
-			// Set newSeed to means
-			// Also calculate running norm to avoid 2N extra passes
 			norm = 0; diff = 0;
-			for(int j = 0; j < n; j++) {
-				newSeed[j] /= (double) i_nbrs.length;
-				diff = newSeed[j] - oldSeed[j];
-				norm += diff * diff;
+			for(int i = 0; i < i_nbrs.length; i++) {
+				final double[] record = data.getRow(i_nbrs[i]);
+				
+				for(int j = 0; j < n; j++) {
+					newSeed[j] += record[j];
+				
+					// Last iter hack, go ahead and compute means simultaneously
+					if(i == i_nbrs.length - 1) {
+						newSeed[j] /= (double) i_nbrs.length;
+						diff = newSeed[j] - oldSeed[j];
+						norm += diff * diff;
+					}
+				}
 			}
 			
 			// Assign the new seed

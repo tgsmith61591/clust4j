@@ -166,4 +166,18 @@ public class TestDistanceEnums {
 		final double[] b = new double[]{1,0,1,1,3};
 		assertTrue(Distance.SOKAL_SNEATH.getDistance(a, b) == 2.2000000000000002);
 	}
+	
+	@Test
+	public void testInfP() {
+		assertTrue(Distance.CHEBYSHEV.getP() == Double.POSITIVE_INFINITY);
+		assertTrue(Double.isInfinite(Distance.CHEBYSHEV.getP()));
+		
+		for(Distance d: Distance.values()) {
+			if(d.equals(Distance.CHEBYSHEV))
+				continue;
+			
+			assertFalse(d.getP() == Double.POSITIVE_INFINITY);
+			assertFalse(Double.isInfinite(d.getP()));
+		}
+	}
 }

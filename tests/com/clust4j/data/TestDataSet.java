@@ -15,7 +15,8 @@ import com.clust4j.algo.HierarchicalAgglomerative;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.MeanShift;
-import com.clust4j.utils.Classifier;
+import com.clust4j.algo.UnsupervisedClassifier;
+import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -55,9 +56,14 @@ public class TestDataSet {
 		return df.format(num * 100) + "%";
 	}
 	
-	private static void stdout(Classifier model, int[] actual, boolean b) {
+	private static void stdout(UnsupervisedClassifier model, boolean b, int[] labels) {
 		String nm = ((AbstractClusterer)model).getName();
-		System.out.println(nm+" (scale = "+b+"):  " + formatPct(model.score(actual)) );
+		System.out.println(nm+" (scale = "+b+"):  " + formatPct(model.indexAffinityScore(labels)) );
+	}
+	
+	private static void stdout(UnsupervisedClassifier model, boolean b) {
+		String nm = ((AbstractClusterer)model).getName();
+		System.out.println(nm+" (scale = "+b+"):  " + model.silhouetteScore() );
 	}
 
 	private void testAlgos(boolean shuffle) {
@@ -67,9 +73,10 @@ public class TestDataSet {
 		
 		DataSet iris = ExampleDataSets.IRIS;
 		DataSet shuffled = shuffle ? iris.shuffle() : iris;
+		int[] labels = shuffled.getLabels();
 		
-		final Array2DRowRealMatrix data = shuffled.getDataRef();
-		final int[] actual = shuffled.getLabels();
+		final Array2DRowRealMatrix data = shuffled.getData();
+		//final int[] actual = shuffled.getLabels();
 		
 		final boolean verbose = false;
 		final boolean[] scale = new boolean[]{false, true};
@@ -80,46 +87,51 @@ public class TestDataSet {
 				new AffinityPropagation.AffinityPropagationPlanner()
 					.setScale(b)
 					.setVerbose(verbose)).fit();
-			stdout(ap, actual, b);
+			stdout(ap, b);
 			
 			
 			DBSCAN db = new DBSCAN(data, 
 				new DBSCAN.DBSCANPlanner()
 					.setScale(b)
 					.setVerbose(verbose)).fit();
-			stdout(db, actual, b);
+			stdout(db, b);
 			
 			HDBSCAN hdb = new HDBSCAN(data, 
 				new HDBSCAN.HDBSCANPlanner()
 					.setScale(b)
+					//.setAlgo(com.clust4j.algo.HDBSCAN.Algorithm.PRIMS_KDTREE)
 					.setVerbose(verbose)).fit();
-			stdout(hdb, actual, b);
+			stdout(hdb, b);
 			
 			HierarchicalAgglomerative ha = new HierarchicalAgglomerative(data, 
 				new HierarchicalAgglomerative.HierarchicalPlanner()
 					.setScale(b)
 					.setVerbose(verbose)).fit();
-			stdout(ha, actual, b);
+			stdout(ha, b);
 			
 			
 			KMeans kmn = new KMeans(data, 
 				new KMeans.KMeansPlanner(3)
 					.setScale(b)
 					.setVerbose(verbose)).fit();
-			stdout(kmn, actual, b);
+			stdout(kmn, b, labels);
 			
 			KMedoids kmd = new KMedoids(data, 
 				new KMedoids.KMedoidsPlanner(3)
 					.setScale(b)
 					.setVerbose(verbose)).fit();
-			stdout(kmd, actual, b);
+			stdout(kmd, b, labels);
 			
-			MeanShift ms = new MeanShift(data, 
-				new MeanShift.MeanShiftPlanner()
-					.setScale(b)
-					//.setAutoBandwidthEstimation(true)
-					.setVerbose(verbose)).fit();
-			stdout(ms, actual, b);
+			try {
+				MeanShift ms = new MeanShift(data, 
+					new MeanShift.MeanShiftPlanner()
+						.setScale(b)
+						.setVerbose(verbose)).fit();
+				stdout(ms, b);
+			} catch(IllegalClusterStateException e) {
+				if(!(e.getMessage().contains("k must") || e.getMessage().contains("identified")))
+					throw e;
+			}
 			
 			
 			

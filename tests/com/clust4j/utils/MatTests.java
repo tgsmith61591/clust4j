@@ -121,9 +121,11 @@ public class MatTests {
 	}
 	
 	@Test
-	public void testRowColSums() {
+	public void testRowColSumsMeans() {
 		final double[] a = new double[]{4,4,4};
 		final double[] b = new double[]{0,3,9};
+		final double[] c = new double[]{4.0/3.0, 4.0/3.0, 4.0/3.0};
+		final double[] d = new double[]{0.0, 1.0, 3.0};
 		
 		final double[][] data = new double[][] {
 			new double[] {0.000, 	 0.000,     0.000},
@@ -133,6 +135,8 @@ public class MatTests {
 		
 		assertTrue(VecUtils.equalsExactly(a, MatUtils.colSums(data)));
 		assertTrue(VecUtils.equalsExactly(b, MatUtils.rowSums(data)));
+		assertTrue(VecUtils.equalsExactly(c, MatUtils.colMeans(data)));
+		assertTrue(VecUtils.equalsExactly(d, MatUtils.rowMeans(data)));
 	}
 	
 	@Test
@@ -261,7 +265,10 @@ public class MatTests {
 		};
 		
 		final double[] record = new double[]{0,0,0};
-		assertTrue( NearestNeighbors.getKNearest(record, mat, 1, Distance.EUCLIDEAN)[0] == 0 );
+		NearestNeighbors nn = new NearestNeighbors(new Array2DRowRealMatrix(mat, false), 
+			new NearestNeighbors.NearestNeighborsPlanner(1)).fit();
+		assertTrue( nn.getNeighbors(new Array2DRowRealMatrix(new double[][]{record},
+			false)).getIndices()[0][0] == 0 );
 	}
 	
 	@Test

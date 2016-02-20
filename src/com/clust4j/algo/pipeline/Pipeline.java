@@ -1,17 +1,16 @@
 package com.clust4j.algo.pipeline;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
-import com.clust4j.algo.AbstractClusterer;
-import com.clust4j.algo.AbstractClusterer.BaseClustererPlanner;
+import com.clust4j.algo.BaseClassifierPlanner;
 import com.clust4j.algo.preprocess.PreProcessor;
 
-public class Pipeline {
-	final private BaseClustererPlanner planner;
-	final private PreProcessor[] pipe;
-	
-	public Pipeline(final BaseClustererPlanner planner, final PreProcessor... pipe) {
-		this.planner = planner.copy();
+public abstract class Pipeline<T extends BaseClassifierPlanner> implements java.io.Serializable {
+	private static final long serialVersionUID = 3491192139356583621L;
+	final PreProcessor[] pipe;
+	final T planner;
+
+	@SuppressWarnings("unchecked")
+	public Pipeline(T planner, PreProcessor... pipe) {
+		this.planner = (T)planner.copy();
 		this.pipe = copyPipe(pipe);
 	}
 	
@@ -23,19 +22,5 @@ public class Pipeline {
 			out[idx++] = pre.copy();
 		
 		return out;
-	}
-	
-	public AbstractClusterer fit(final AbstractRealMatrix data) {
-		AbstractRealMatrix copy = (AbstractRealMatrix)data.copy();
-		
-		// Push through pipeline...
-		for(PreProcessor pre: pipe)
-			copy = pre.operate(copy);
-
-		// Build the model
-		final AbstractClusterer model = planner.buildNewModelInstance(copy);
-		
-		// Fit the model
-		return model.fit();
 	}
 }

@@ -1,5 +1,5 @@
 ## clust4j
-A Java-based set of __unsupervised classification__ clustering algorithms. Built and tested under JDK 1.7.0_79
+A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
 ____
 ### Dependencies:
@@ -79,25 +79,60 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         final int[] results = ms.getLabels();
         ```
 
-- **Generalized clustering algorithms**:
-  - NearestNeighbors, a generalized clusterer that will fit the nearest points for each record in a matrix. This algorithm can be run in two modes: __DENSITY__ and __K_NEAREST__.
+- **Neighbor point clustering algorithms**:
+  - NearestNeighbors, a neighbor clusterer that will fit the *k*-nearest points for each record in a matrix.
 
         ```java
-        // RunMode == K_NEAREST (default RunMode; k = 5)
-        NearestNeighbors nn = new NearestNeighbors(mat).fit();
-        ArrayList<Integer>[] results = nn.getNearest(); // results[i] holds the points in sorted order
-        
-        // RunMode == DENSITY (default radius = 0.5)
-        nn = new NearestNeighbors(mat, new NearestNeighborsPlanner(RunMode.RADIUS)).fit();
-        results = nn.getNearest(); // results[i] holds the points that are within the radius
+        Neighbors nn = new NearestNeighbors(mat).fit();
+        Neighborhood neighborhood = nn.getNeighbors();
+        int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
+        double[][] distances = neighborhood.getDistances(); // The corresponding distances
         ```
 
+  - RadiusNeighbors, a neighbor clusterer that will fit the nearest points within a given radius.
+        ```java
+        Neighbors rn = new RadiusNeighbors(mat).fit();
+        RadiusNeighbors = rn.getNeighbors();
+        int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
+        double[][] distances = neighborhood.getDistances(); // The corresponding distances
+        ```
+
+- **Supervised clustering algorithms**:
+  - NearestCentroid, a supervised algorithm that fits centroids based on a set of observed labels.
+        ```java
+        NearestCentroid nc = new NearestCentroid(mat, new int[]{0,1,1}).fit();
+        // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data
+        ```
+
+
+
 ### Evaluating performance
-All clustering algorithms that implement `Classifier` can also be scored. If we want to score the `KMeans` model we fit above:
+All clustering algorithms that implement `Classifier` can also be scored. Supervised and unsupervised methods are scored in different manner. If we want to score the `NearestCentroid` model we fit above:
 
 ```java
-int[] truth = new int[]{0,1,1};
-double accuracy = km.score(truth);
+// implicitly uses ground truth and predicted labels
+double accuracy = nc.score();
+```
+
+Conversely, if we'd like to score an unsupervised algorithm, we have a few options. Every `UnsupervisedClassifier` implements a [`silhouetteScore`](https://en.wikipedia.org/wiki/Silhouette_%28clustering%29) method, but also implements a home-grown scoring algorithm called `UnsupervisedIndexAffinity`. This operates based on the following complication:
+
+```java
+// our k-means model predicts labels like this:
+km.getLabels(); // {0,1,1}
+// ...but the ground truth may actually be {9,15,15}
+```
+
+... this method, then, is an attempt to measure accuracy not traditionally, but by accounting for predicted segmentation in regards to actual label segmentation. It works by penalizing indices which are inappropriately associated with incorrect neighbor indices. In this regard a ground truth set of {0,1,0,2,2} and predicted set of {2,0,2,1,1} would be 100% accurate. Use as follows:
+
+```java
+km.indexAffinityScore(new int[]{50,10,10}); // 100%
+```
+
+Alternatively, the `silhouetteScore` method can be called as follows:
+
+```java
+km.silhouetteScore(); // Uses internally predicted labels
+km.silhouetteScore(Distance.HAMMING); // Define a different metric, if you wish
 ```
 
 
@@ -226,7 +261,7 @@ final Kernel kernel = new GaussianKernel();
 KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k).setSep(kernel));
 ```
 
-__Note:__ though similarity metrics *may* be used with any clustering algorithm, it is recommended that they *not* be used with [density-based](https://github.com/tgsmith61591/clust4j/blob/master/src/com/clust4j/algo/AbstractDensityClusterer.java) clustering algorithms, as they seek "neighborhoods" around points and similarity metrics such as kernels will not accurately describe a point's neighborhood.  Using a similarity metric with a density-based algorithm will cause a warning to be logged.
+__Note:__ though similarity metrics *may* be used with any clustering algorithm, it is recommended that they *not* be used with [density-based](https://github.com/tgsmith61591/clust4j/blob/master/src/com/clust4j/algo/AbstractDensityClusterer.java) clustering algorithms, as they seek "neighborhoods" around points and similarity metrics such as kernels will not accurately describe a point's neighborhood.  Using a similarity metric with a density-based algorithm will cause a warning to be logged and the algorithm will fall back to the default separability metric (Euclidean distance).
 
 ----
 
@@ -241,11 +276,17 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
   - Construct a pipeline of `PreProcessor`s through which to push new data, resulting in a cluster fit:
         
         ```java
+        // Unsupervised:
         final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
         // Use of varargs for the PreProcessors is supported
-        final Pipeline pipe = new Pipeline(planner, Normalize.CENTER_SCALE /*, ... */);
+        final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, Normalize.CENTER_SCALE /*, ... */);
         // Push data through preprocessing pipeline and fit model
         KMedoids km = (KMedoids) pipe.fit(mat);
+        
+        // Supervised:
+        final NearestCentroidPlanner s_planner = new NearestCentroidPlanner().setVerbose(true);
+        final SupervisedPipeline sup_pip = new SupervisedPipeline(s_planner, Normalize.CENTER_SCALE);
+        NearestCentroid model = (NearestCentroid) sup_pip.fit();
         ```
 
 

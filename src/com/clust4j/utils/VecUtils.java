@@ -578,6 +578,15 @@ public class VecUtils {
 		return true;
 	}
 	
+	public static boolean equalsExactly(final boolean[] a, final boolean[] b) {
+		checkDimsPermitEmpty(a, b);
+		
+		for(int i = 0; i < a.length; i++)
+			if(a[i] != b[i])
+				return false;
+		return true;
+	}
+	
 	/**
 	 * Checks whether two vectors are exactly equal.
 	 * Automatically assigns parallel or serial jobs depending 
@@ -638,7 +647,7 @@ public class VecUtils {
 	 * @return whether the two vectors are equal within a certain tolerance
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
-		checkDims(a, b);
+		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -1443,8 +1452,10 @@ public class VecUtils {
 		
 		if(endExc > a.length)
 			throw new ArrayIndexOutOfBoundsException(endExc);
-		if(startInc < 0 || startInc > a.length || startInc >= endExc)
+		if(startInc < 0 || startInc > a.length || startInc > endExc)
 			throw new ArrayIndexOutOfBoundsException(startInc);
+		if(startInc == endExc)
+			return new double[]{};
 		
 		final double[] out = new double[endExc - startInc];
 		for(int i = startInc, j = 0; i < endExc; i++, j++)
@@ -1458,8 +1469,10 @@ public class VecUtils {
 		
 		if(endExc > a.length)
 			throw new ArrayIndexOutOfBoundsException(endExc);
-		if(startInc < 0 || startInc > a.length || startInc >= endExc)
+		if(startInc < 0 || startInc > a.length || startInc > endExc)
 			throw new ArrayIndexOutOfBoundsException(startInc);
+		if(startInc == endExc)
+			return new int[]{};
 		
 		final int[] out = new int[endExc - startInc];
 		for(int i = startInc, j = 0; i < endExc; i++, j++)
@@ -1574,6 +1587,13 @@ public class VecUtils {
 	public static LinkedHashSet<Double> unique(final double[] arr) {
 		final LinkedHashSet<Double> out = new LinkedHashSet<>();
 		for(Double t: arr)
+			out.add(t);
+		return out;
+	}
+	
+	public static LinkedHashSet<Integer> unique(final int[] arr) {
+		final LinkedHashSet<Integer> out = new LinkedHashSet<>();
+		for(Integer t: arr)
 			out.add(t);
 		return out;
 	}

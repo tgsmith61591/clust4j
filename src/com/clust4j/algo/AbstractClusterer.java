@@ -15,6 +15,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
+import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.Distance;
@@ -37,7 +38,7 @@ import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
  */
-public abstract class AbstractClusterer implements Loggable, Named, java.io.Serializable {
+public abstract class AbstractClusterer extends BaseModel implements Loggable, Named, java.io.Serializable {
 	private static final long serialVersionUID = -3623527903903305017L;
 	
 	
@@ -83,9 +84,11 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	 * 
 	 * @author Taylor G Smith
 	 */
-	abstract public static class BaseClustererPlanner implements DeepCloneable {
-		abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
-		abstract public BaseClustererPlanner copy();
+	abstract public static class BaseClustererPlanner 
+			implements DeepCloneable, BaseClassifierPlanner {
+		
+		//abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
+		@Override abstract public BaseClustererPlanner copy();
 		abstract public FeatureNormalization getNormalizer();
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
@@ -272,11 +275,11 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	
 	
 	/** 
-	 * Fits the model. In order to coalesce with the milieu of clust4j,
+	 * Fits the model. In order to fit the style of clust4j,
 	 * the execution of this method should be synchronized on 'this'. This
 	 * is due to the volatile nature of many of the instance class variables.
 	 */
-	abstract public AbstractClusterer fit();
+	@Override abstract public AbstractClusterer fit();
 	
 	
 	
@@ -345,5 +348,15 @@ public abstract class AbstractClusterer implements Loggable, Named, java.io.Seri
 	
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
 		this.dist = sep;
+	}
+	
+	/**
+	 * Write the time the algorithm took to complete
+	 * @param start
+	 */
+	final void wrapItUp(long start) {
+		info("model "+getKey()+" completed in " + 
+			LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+			System.lineSeparator());
 	}
 }

@@ -6,8 +6,7 @@ import java.util.Stack;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
-import com.clust4j.algo.NearestNeighbors.RunMode;
+import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
@@ -77,7 +76,7 @@ public class DBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public DBSCAN buildNewModelInstance(AbstractRealMatrix data) {
-			return new DBSCAN(data, this);
+			return new DBSCAN(data, this.copy());
 		}
 		
 		@Override
@@ -158,9 +157,17 @@ public class DBSCAN extends AbstractDBSCAN {
 	}
 	
 	
+	/**
+	 * Constructs an instance of DBSCAN from the default epsilon
+	 * @param data
+	 */
+	public DBSCAN(final AbstractRealMatrix data) {
+		this(data, DEF_EPS);
+	}
+	
 	
 	/**
-	 * Constructs an instance of DBSCAN from the default values
+	 * Constructs an instance of DBSCAN from the default planner values
 	 * @param eps
 	 * @param data
 	 */
@@ -180,7 +187,6 @@ public class DBSCAN extends AbstractDBSCAN {
 		this.eps = planner.eps;
 		meta("epsilon="+eps);
 		meta("min_pts="+minPts);
-		
 		
 		
 		// Error handle...
@@ -225,7 +231,6 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				// First get the dist matrix
 				final long start = System.currentTimeMillis();
-				info("fitting model");
 				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 				final int m = dist_mat.length;
 				
@@ -247,22 +252,20 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				// Fit the nearest neighbor model...
 				info("fitting nearest neighbor density model");
-				final NearestNeighbors nnModel = new NearestNeighbors(data, 
-					new NearestNeighborsPlanner(RunMode.RADIUS)
-						.setRadius(eps)
-						.setDistanceMatrix(dist_mat)
+				
+				final RadiusNeighbors rnModel = new RadiusNeighbors(data,
+					new RadiusNeighborsPlanner(eps)
 						.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 						.setSeed(getSeed())
 						.setSep(getSeparabilityMetric())
-						.setNormalizer(normer)
-						.setVerbose(false)) // Don't want nested verbosity logging...
+						.setNormalizer(normer) // Don't really need because not normalizing...
+						.setVerbose(false))
 					.fit();
-				final ArrayList<Integer>[] nearest = nnModel.getNearest();
+				int[][] nearest = rnModel.getNeighbors().getIndices();
 				
 				
-				
-				ArrayList<Integer> ptNeighbs;
-				ArrayList<ArrayList<Integer>> neighborhoods = new ArrayList<>();
+				int[] ptNeighbs;
+				ArrayList<int[]> neighborhoods = new ArrayList<>();
 				int numCorePts = 0;
 				for(int i = 0; i < m; i++) {
 					// Each label inits to -1 as noise
@@ -272,7 +275,7 @@ public class DBSCAN extends AbstractDBSCAN {
 					// Add neighborhood...
 					int pts;
 					neighborhoods.add(ptNeighbs);
-					sampleWeights[i] = pts = ptNeighbs.size();
+					sampleWeights[i] = pts = ptNeighbs.length;
 					coreSamples[i] = pts >= minPts;
 					
 					if(coreSamples[i]) 
@@ -291,7 +294,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				int nextLabel = 0, v;
 				final long clustStart = System.currentTimeMillis();
 				final Stack<Integer> stack = new Stack<>();
-				ArrayList<Integer> neighb;
+				int[] neighb;
 				
 				
 				for(int i = 0; i < m; i++) {
@@ -309,8 +312,8 @@ public class DBSCAN extends AbstractDBSCAN {
 							if(coreSamples[i]) {
 								neighb = neighborhoods.get(i);
 								
-								for(i = 0; i < neighb.size(); i++) {
-									v = neighb.get(i);
+								for(i = 0; i < neighb.length; i++) {
+									v = neighb[i];
 									if(labels[v] == NOISE_CLASS)
 										stack.push(v);
 								}
@@ -346,11 +349,7 @@ public class DBSCAN extends AbstractDBSCAN {
 					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
 						" classified noise");
 				
-				info("model "+getKey()+" completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
-				
-				
+				wrapItUp(start);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

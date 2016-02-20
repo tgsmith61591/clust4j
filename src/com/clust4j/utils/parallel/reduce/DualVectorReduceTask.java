@@ -1,6 +1,6 @@
 package com.clust4j.utils.parallel.reduce;
 
-import com.clust4j.utils.VecUtils;
+import org.apache.commons.math3.exception.DimensionMismatchException;
 
 abstract class DualVectorReduceTask<T> extends VectorReduceTask<T> {
 	private static final long serialVersionUID = -4647929958194428774L;
@@ -9,8 +9,10 @@ abstract class DualVectorReduceTask<T> extends VectorReduceTask<T> {
 	
 	DualVectorReduceTask(double[] arr, double[] arr_b, int lo, int hi) {
 		super(arr, lo, hi);
+		checkDims(arr_b); // super class handles arr
 		
-		VecUtils.checkDims(arr, arr_b); // If equal, result is ok length too
+		if(arr.length != arr_b.length)
+			throw new DimensionMismatchException(arr.length, arr_b.length);
 		array_b = arr_b;
 	}
 

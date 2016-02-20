@@ -39,6 +39,7 @@ public class LogTimeFormatter {
 	 * @param micros
 	 * @return
 	 */
+	/*
 	public static String micros(long amt) {
 		final TimeSlots slots = fromTimeUnit(amt, TimeUnit.MICROSECONDS);
 		
@@ -48,6 +49,7 @@ public class LogTimeFormatter {
 	    if( slots.ms != 0 ) return String.format("%3d.%03d msec", slots.ms, slots.us);
 	    return String.format("%3d usec", slots.us);
 	}
+	*/
 	
 	private static TimeSlots fromTimeUnit(long amt, final TimeUnit unit) {
 		final long hr = unit.toHours(amt); 
@@ -61,9 +63,10 @@ public class LogTimeFormatter {
 	    
 	    final long ms = unit.toMillis(amt);
 	    
-	    if(unit.equals(TimeUnit.MICROSECONDS))
+	    /*if(unit.equals(TimeUnit.MICROSECONDS))
 	    	amt -= TimeUnit.MILLISECONDS.toMicros(ms);
-	    else amt = 0;
+	    else*/
+	    	amt = 0;
 	    
 	    return new TimeSlots(hr, min, sec, ms, amt);
 	}
@@ -72,10 +75,12 @@ public class LogTimeFormatter {
 		switch(unit) {
 			case MILLISECONDS:
 				return trans.toMillis(amt);
+			/*
 			case MICROSECONDS:
 				return trans.toMicros(amt);
+			*/
 			default:
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(unit.toString()+" not supported");
 		}
 	}
 }

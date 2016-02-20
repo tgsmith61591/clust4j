@@ -6,6 +6,7 @@ abstract class VectorReduceTask<T> extends VectorMRTask<T> {
 	
 	VectorReduceTask(double[] arr, int lo, int hi) {
 		super(arr, lo, hi);
+		checkDims(arr);
 	}
     
     /**
@@ -20,4 +21,10 @@ abstract class VectorReduceTask<T> extends VectorMRTask<T> {
      * @return
      */
     abstract protected T operate(final int lo, final int hi);
+    
+    /**
+     * Check dims
+     * @param v
+     */
+    abstract void checkDims(double[] v);
 }

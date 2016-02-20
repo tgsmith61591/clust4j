@@ -14,7 +14,6 @@ final public class DistributedProduct extends ReduceTaskOperator<Double> {
 	}
 	
 	public static double operate(final double[] array) {
-		VecUtils.checkDims(array);
 		return getThreadPool().invoke(new DistributedProduct(array,0,array.length));
 	}
 
@@ -35,4 +34,9 @@ final public class DistributedProduct extends ReduceTaskOperator<Double> {
 	protected DistributedProduct newInstance(double[] array, int low, int high) {
 		return new DistributedProduct(array, low, high);
 	}
+	
+    
+    @Override void checkDims(double[] v) {
+    	VecUtils.checkDims(v);
+    }
 }

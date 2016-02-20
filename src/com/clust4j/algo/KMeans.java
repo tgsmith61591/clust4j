@@ -33,6 +33,10 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	
 	
+	public KMeans(final AbstractRealMatrix data) {
+		this(data, DEF_K);
+	}
+	
 	public KMeans(final AbstractRealMatrix data, final int k) {
 		this(data, new KMeansPlanner(k));
 	}
@@ -50,15 +54,16 @@ public class KMeans extends AbstractCentroidClusterer {
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
-		private int k;
+		private int k = DEF_K;
 		
+		public KMeansPlanner() { }
 		public KMeansPlanner(int k) {
 			this.k = k;
 		}
 		
 		@Override
 		public KMeans buildNewModelInstance(final AbstractRealMatrix data) {
-			return new KMeans(data, this);
+			return new KMeans(data, this.copy());
 		}
 		
 		@Override
@@ -299,9 +304,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				info("Total system cost: " + cost);
 				if(!converged) warn("algorithm did not converge");
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
+				wrapItUp(start);
 				
 				
 				reorderLabels();

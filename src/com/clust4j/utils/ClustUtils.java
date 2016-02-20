@@ -1,5 +1,8 @@
 package com.clust4j.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -320,6 +323,32 @@ public class ClustUtils {
 		
 		sortedEntries.addAll(map.entrySet());
 		return sortedEntries;
+	}
+	
+	
+	final public static <K,V extends Comparable<? super V>> 
+			Collection<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col) {
+		
+		return sortEntriesByValue(col, false);
+	}
+	
+	
+	
+	final public static <K,V extends Comparable<? super V>> 
+			Collection<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col, 
+					final boolean desc) {
+		
+		Comparator<Map.Entry<K,V>> comp = new Comparator<Map.Entry<K,V>>() {
+			@Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
+				int res = e1.getValue().compareTo(e2.getValue());
+				int scale = desc ? -1 : 1;
+				return res * scale;
+			}
+		};
+		
+		ArrayList<Map.Entry<K,V>> sorted = new ArrayList<>(col);
+		Collections.sort(sorted, comp);
+		return sorted;
 	}
 	
 	

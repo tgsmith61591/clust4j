@@ -30,7 +30,10 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 		}
 	}
 	
-	abstract public static class AbstractDBSCANPlanner extends AbstractClusterer.BaseClustererPlanner {
+	abstract public static class AbstractDBSCANPlanner 
+			extends AbstractClusterer.BaseClustererPlanner 
+			implements UnsupervisedClassifierPlanner {
+		
 		abstract public AbstractDBSCANPlanner setMinPts(final int minPts);
 		abstract public int getMinPts();
 	}

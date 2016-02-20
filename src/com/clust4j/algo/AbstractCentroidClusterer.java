@@ -4,20 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.TreeMap;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.EvaluationMetric;
-import com.clust4j.utils.CentroidLearner;
-import com.clust4j.utils.Classifier;
+import com.clust4j.metrics.SilhouetteScore;
+import com.clust4j.metrics.UnsupervisedIndexAffinity;
 import com.clust4j.utils.Convergeable;
+import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractCentroidClusterer extends AbstractPartitionalClusterer 
-		implements CentroidLearner, Convergeable, Classifier {
+		implements CentroidLearner, Convergeable, UnsupervisedClassifier {
+	
 	private static final long serialVersionUID = -424476075361612324L;
 	final public static double DEF_MIN_CHNG = 0.005;
+	final public static int DEF_K = Neighbors.DEF_K;
 	
 	final protected int maxIter;
 	final protected double minChange;
@@ -54,7 +55,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 
 	
 	
-	public static abstract class CentroidClustererPlanner extends BaseClustererPlanner {
+	public static abstract class CentroidClustererPlanner 
+			extends BaseClustererPlanner 
+			implements UnsupervisedClassifierPlanner {
+		
 		abstract public int getK();
 		abstract public int getMaxIter();
 		abstract public double getMinChange();
@@ -133,20 +137,26 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return iter;
 	}
 	
+	/** {@inheritDoc} */
 	@Override
-	public double score(final int[] actual) {
-		return score(actual, Classifier.DEF_METRIC);
+	public double indexAffinityScore(int[] labels) {
+		// Propagates ModelNotFitException
+		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public double silhouetteScore() {
+		return silhouetteScore(getSeparabilityMetric());
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public double silhouetteScore(GeometricallySeparable dist) {
+		// Propagates ModelNotFitException
+		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
 	}
 	
-	@Override
-	public double score(final int[] actual, EvaluationMetric metric) {
-		final int[] predicted = getLabels(); // Propagates a model not fit exception if not fit...
-		
-		if(predicted.length != actual.length)
-			throw new DimensionMismatchException(actual.length, predicted.length);
-		
-		return metric.evaluate(actual, predicted);
-	}
 	
 	abstract TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace();
 }

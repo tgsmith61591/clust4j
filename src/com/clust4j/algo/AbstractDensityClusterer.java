@@ -19,7 +19,11 @@ public abstract class AbstractDensityClusterer extends AbstractAutonomousCluster
 	protected static void checkState(AbstractClusterer ac) {
 		// Should not use similarity metrics in DBClusterers, DB looks for 
 		// neighborhoods not accurately represented via similarity metrics.
-		if(ac.getSeparabilityMetric() instanceof SimilarityMetric)
-			ac.warn("density or radius-based clustering algorithms should use distance metrics instead of similarity metrics");
+		if(ac.getSeparabilityMetric() instanceof SimilarityMetric) {
+			ac.warn("density or radius-based clustering algorithms "
+				+ "should use distance metrics instead of similarity metrics. "
+				+ "Falling back to default: " + DEF_DIST);
+			ac.setSeparabilityMetric(DEF_DIST);
+		}
 	}
 }

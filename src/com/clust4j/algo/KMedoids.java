@@ -59,6 +59,9 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	
+	public KMedoids(final AbstractRealMatrix data) {
+		this(data, DEF_K);
+	}
 	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
 		this(data, new KMedoidsPlanner(k).setSep(Distance.MANHATTAN));
@@ -78,15 +81,16 @@ public class KMedoids extends AbstractCentroidClusterer {
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
-		private int k;
+		private int k = DEF_K;
 		
+		public KMedoidsPlanner() { }
 		public KMedoidsPlanner(int k) {
 			this.k = k;
 		}
 		
 		@Override
 		public KMedoids buildNewModelInstance(final AbstractRealMatrix data) {
-			return new KMedoids(data, this);
+			return new KMedoids(data, this.copy());
 		}
 		
 		@Override
@@ -397,12 +401,10 @@ public class KMedoids extends AbstractCentroidClusterer {
 				} // End iter loop
 				
 				
-					if(!converged) // KMedoids should always converge...
-						warn("algorithm did not converge");
-					
-					info("model " + getKey() + " completed in " + 
-							LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-							System.lineSeparator());
+				if(!converged) // KMedoids should always converge...
+					warn("algorithm did not converge");
+				
+				wrapItUp(start);
 				
 				
 				cost = oldCost;

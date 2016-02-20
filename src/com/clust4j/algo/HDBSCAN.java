@@ -14,25 +14,20 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.utils.QuadTup;
+import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.BallTree;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.Distance;
 import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.HaversineDistance;
 import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.Inequality;
-import com.clust4j.utils.KDTree;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.MinkowskiDistance;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.ModelNotFitException;
-import com.clust4j.utils.NearestNeighborHeapSearch;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.VecUtils.VecSeries;
 
@@ -79,25 +74,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 		PRIMS_BALLTREE,
 		//BORUVKA_KDTREE,
 		//BORUVKA_BALLTREE
-	}
-	
-	
-	
-	public final static ArrayList<Class<? extends GeometricallySeparable>> ValidKDMetrics;
-	public final static ArrayList<Class<? extends GeometricallySeparable>> ValidBallMetrics;
-	static {
-		ValidKDMetrics = new ArrayList<>();
-		ValidKDMetrics.add(Distance.EUCLIDEAN.getClass());
-		ValidKDMetrics.add(Distance.MANHATTAN.getClass());
-		ValidKDMetrics.add(MinkowskiDistance.class);
-		ValidKDMetrics.add(Distance.CHEBYSHEV.getClass());
-		
-		
-		ValidBallMetrics = new ArrayList<>();
-		for(DistanceMetric dm: Distance.values())
-			ValidBallMetrics.add(dm.getClass());
-		ValidBallMetrics.add(MinkowskiDistance.class);
-		ValidBallMetrics.add(HaversineDistance.class);
 	}
 	
 	
@@ -181,7 +157,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public HDBSCAN buildNewModelInstance(AbstractRealMatrix data) {
-			return new HDBSCAN(data, this);
+			return new HDBSCAN(data, this.copy());
 		}
 		
 		@Override
@@ -845,7 +821,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	abstract class HeapSearchAlgorithm extends HDBSCANLinkageTree {
 		int leafSize;
 		
-		HeapSearchAlgorithm(int leafSize, ArrayList<Class<? extends GeometricallySeparable>> clzs) {
+		HeapSearchAlgorithm(int leafSize, Collection<Class<? extends GeometricallySeparable>> clzs) {
 			super();
 			
 			this.leafSize = leafSize;
@@ -879,8 +855,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			
 			// Query for dists to k nearest neighbors
-			EntryPair<double[][], int[][]> query = tree.query(dt, min_points, true, true, true);
-			double[][] dists = query.getKey();
+			Neighborhood query = tree.query(dt, min_points, true, true);
+			double[][] dists = query.getDistances();
 			double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
 			
 			double[][] minSpanningTree = LinkageTreeUtils
@@ -926,7 +902,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 */
 	abstract class KDTreeAlgorithm extends HeapSearchAlgorithm {
 		KDTreeAlgorithm(int leafSize) {
-			super(leafSize, ValidKDMetrics);
+			super(leafSize, KDTree.VALID_METRICS);
 		}
 		
 		@Override String getTreeName() { return "KD"; }
@@ -945,7 +921,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 */
 	abstract class BallTreeAlgorithm extends HeapSearchAlgorithm {
 		BallTreeAlgorithm(int leafSize) {
-			super(leafSize, ValidBallMetrics);
+			super(leafSize, BallTree.VALID_METRICS);
 		}
 		
 		@Override String getTreeName() { return "Ball"; }
@@ -1366,9 +1342,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 						" classified noise");
 				
 				
-				info("model "+getKey()+" completed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-						System.lineSeparator());
+				wrapItUp(start);
 				
 				// Clean anything with big overhead..
 				dataData = null;

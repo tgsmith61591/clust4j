@@ -4,7 +4,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import static com.clust4j.utils.TableFormatter.ColumnAlignment.RIGHT;
 
@@ -33,19 +33,12 @@ public class MatrixFormatter extends TableFormatter {
     }
     
     public String format(double[][] mat) {
-    	return format(new Array2DRowRealMatrix(mat, false));
+    	return format(mat, mat.length);
     }
     
     public String format(double[][] mat, int numRows) {
-    	return format(new Array2DRowRealMatrix(mat, false), numRows);
-    }
-    
-    public String format(AbstractRealMatrix matrix) {
-    	return format(matrix, matrix.getRowDimension());
-    }
-    
-    public String format(AbstractRealMatrix matrix, int numRows) {
-    	final int rows = matrix.getRowDimension();
+    	MatUtils.checkDimsPermitEmpty(mat);
+    	final int rows = mat.length;
     	
     	if(numRows < 1)
     		throw new IllegalArgumentException("numrows must exceed 0");
@@ -55,24 +48,39 @@ public class MatrixFormatter extends TableFormatter {
     	StringBuilder output = new StringBuilder();
     	output.append(prefix+lineSep);
     	
-    	final double[][] data = matrix.getData();
-    	final int cols = matrix.getColumnDimension();
+    	final double[][] data = MatUtils.copy(mat);
+    	
+    	// In case of jagged rows, get max col len
+    	int max_cols = 0;
+    	for(int row = 0; row < numRows; row++)
+    		max_cols = FastMath.max(mat[row].length, max_cols);
+    	
+    	/*// We can allow this for empty arrays...
+    	if(max_cols < 1)
+    		throw new IllegalArgumentException("max row length is 0");
+    	*/
+    	
     	
     	/* While finding width, go ahead and format */
-    	final String[][] formatted = new String[numRows][cols];
+    	final String[][] formatted = new String[numRows][max_cols];
     	
     	
     	// Need to get the max width for each column
-    	ArrayList<Integer> idxToWidth = new ArrayList<Integer>(cols);
-    	for(int col = 0; col < cols; col++) {
+    	ArrayList<Integer> idxToWidth = new ArrayList<Integer>(max_cols);
+    	for(int col = 0; col < max_cols; col++) {
     		int maxWidth = Integer.MIN_VALUE;
+    		
     		for(int row = 0; row < numRows; row++) {
-    			String f = formatNumber(data[row][col]); //format.format(data[row][col]);
+    			int thisLen = mat[row].length;
+    			
+    			String f = col < thisLen ? formatNumber(data[row][col]) : NULL_STR; //format.format(data[row][col]);
     			int len = f.length();
     			if(len > maxWidth)
     				maxWidth = len;
+    			
     			formatted[row][col] = f;
     		}
+    		
     		idxToWidth.add(maxWidth);
     	}
     	
@@ -83,7 +91,7 @@ public class MatrixFormatter extends TableFormatter {
     		StringBuilder rowBuild = new StringBuilder();
     		rowBuild.append(rowPrefix);
     		
-    		for(int col = 0; col < cols; col++) {
+    		for(int col = 0; col < max_cols; col++) {
     			StringBuilder entry = new StringBuilder();
     			String f = formatted[row][col];
     			int len = f.length();
@@ -99,7 +107,7 @@ public class MatrixFormatter extends TableFormatter {
     				entry.append(appender);
     			}
     			
-    			rowBuild.append(entry.toString() + (col == cols-1 ? rowSuffix + lineSep : colSepStr));
+    			rowBuild.append(entry.toString() + (col == max_cols-1 ? rowSuffix + lineSep : colSepStr));
     		}
     		
     		output.append(rowBuild);
@@ -107,5 +115,21 @@ public class MatrixFormatter extends TableFormatter {
     	
     	output.append(suffix);
     	return output.toString();
+    }
+    
+    public String format(int[][] mat) {
+    	return format(MatUtils.toDouble(mat));
+    }
+    
+    public String format(int[][] mat, int numRows) {
+    	return format(MatUtils.toDouble(mat), numRows);
+    }
+    
+    public String format(AbstractRealMatrix matrix) {
+    	return format(matrix, matrix.getRowDimension());
+    }
+    
+    public String format(AbstractRealMatrix matrix, int numRows) {
+    	return format(matrix.getData(), numRows);
     }
 }

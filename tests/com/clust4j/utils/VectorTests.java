@@ -312,4 +312,13 @@ public class VectorTests {
 		
 		assertTrue(VecUtils.equalsExactly(a, b));
 	}
+	
+	@Test
+	public void testArgSortWithTie() {
+		double[] a = new double[]{2,1,1};
+		assertTrue(VecUtils.equalsExactly(new int[]{1,2,0}, VecUtils.argSort(a)));
+		
+		a = VecUtils.rep(0.8, 10);
+		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2,3,4,5,6,7,8,9}, VecUtils.argSort(a)));
+	}
 }

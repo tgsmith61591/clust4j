@@ -1,168 +1,108 @@
 package com.clust4j.algo;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.log.Log;
-import com.clust4j.log.LogTimeFormatter;
-import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
-/**
- * A generalized {@link AbstractClusterer} that fits the nearest neighbor
- * records for each record in an {@link AbstractRealMatrix}. This algorithm can
- * be run in two modes ({@link RunMode}):
- * <p>
- * <b>K_NEAREST</b>: will find the K nearest neighbors for each record in the matrix. In the
- * case of <i>k</i> exceeding or equaling the number of rows in the data, <i>k</i> will
- * be truncated to <i>m - 1</i>, where <i>m</i> is the number of records. Default = 5.
- * 
- * <p>
- * <b>RADIUS</b>: will identify the records within a radius of each point. Note that the
- * number of points will vary for each record; some may even result in zero neighbors. Default = 0.5.
- * 
- * <p>
- * This algorithm is used extensively internally within various algorithms including {@link MeanShift},
- * {@link DBSCAN}, and {@link KNN}.
- * 
- * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
- * @see {@link RunMode}
- */
-public class NearestNeighbors extends AbstractClusterer {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -1261837566319096096L;
-
-
-	/**
-	 * The mode in which to run the {@link NearestNeighbors} algorithm:
-	 * <p>
-	 * <b>K_NEAREST</b>: will find the K nearest neighbors for each record in the matrix. In the
-	 * case of <i>k</i> exceeding or equaling the number of rows in the data, <i>k</i> will
-	 * be truncated to <i>m - 1</i>, where <i>m</i> is the number of records. Default = 5.
-	 * 
-	 * <p>
-	 * <b>RADIUS</b>: will identify the records within a radius of each point. Note that the
-	 * number of points will vary for each record; some may even result in zero neighbors. Default = 0.5.
-	 * 
-	 * @author Taylor G Smith
-	 */
-	public static enum RunMode implements java.io.Serializable {
-		/** Find K nearest neighbors*/
-		K_NEAREST,
-		
-		/** Return the neighborhood points within a certain radius -- can be zero */
-		RADIUS
-	}
-	
-	
-	final public static double DEF_EPS_RADIUS = DBSCAN.DEF_EPS;
-	final public static int DEF_K = 5;
-	final public static RunMode DEF_RUN_MODE = RunMode.K_NEAREST;
-	
-	
-	private final RunMode runmode;
-	private final int k, m;
-	private final double neighborhood;
-	private final double[][] dist_mat;
-	
-	
-	/** The actual nearest indices */
-	volatile private ArrayList<Integer>[] nearest = null;
-	volatile private ArrayList<Double>[] nearestDists = null;
+public class NearestNeighbors extends Neighbors {
+	private static final long serialVersionUID = 8306843374522289973L;
 	
 	
 	
 	
 	public NearestNeighbors(AbstractRealMatrix data) {
-		this(data, new NearestNeighborsPlanner(DEF_RUN_MODE));
+		this(data, DEF_K);
+	}
+
+	public NearestNeighbors(AbstractRealMatrix data, int k) {
+		this(data, new NearestNeighborsPlanner(k));
 	}
 
 	public NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner) {
 		super(data, planner);
-		
-		this.runmode = planner.runmode;
-		final boolean radius_run = runmode.equals(RunMode.RADIUS);
-		
-		this.k = FastMath.min(planner.k, (m = data.getRowDimension()) - 1);
-		if(k <= 0 && !radius_run)
-			throw new IllegalArgumentException("k="+k);
-			
-		this.neighborhood = planner.neighborhood;
-		
-		meta("runmode="+runmode);
-		meta(radius_run?("radius="+neighborhood):("k="+k));
-		
-		if(this.k != planner.k && !radius_run) {
-			warn("provided k (" + planner.k + ") is greater than the number of "
-				+ "rows in data. reducing k to " + this.k + " (m - 1)");
-		}
-		
-		
-		// Check whether using similarity metric AND radius...
-		// Will throw a warning if so.
-		if(radius_run) AbstractDensityClusterer.checkState(this);
-		
-		
-		if(null == planner.dist_mat) {
-			info("computing distance matrix (" + m + "x" + m + ")");
-			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-		} else {
-			dist_mat = planner.dist_mat;
-		}
+		if(kNeighbors < 1) throw new IllegalArgumentException("k must be positive");
+		if(kNeighbors > m) throw new IllegalArgumentException("k must be <= number of samples");
+	}
+	
+	private static void validateK(int k, int m) {
+		if(k < 1) throw new IllegalArgumentException("k must be positive");
+		if(k > m) throw new IllegalArgumentException("k must be < number of samples");
 	}
 	
 	
 	
-
-	public static class NearestNeighborsPlanner extends BaseClustererPlanner {
-		private RunMode runmode = DEF_RUN_MODE;
-		private int k = DEF_K;
+	
+	public static class NearestNeighborsPlanner extends NeighborsPlanner {
+		private Algorithm algo = DEF_ALGO;
+		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
 		private FeatureNormalization norm = DEF_NORMALIZER;
-		private double neighborhood = DEF_EPS_RADIUS;
+		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
-		private GeometricallySeparable dist	= DEF_DIST;
-		private boolean verbose	= DEF_VERBOSE;
-		private double[][] dist_mat = null;
+		private final int k;
+		private int leafSize = DEF_LEAF_SIZE;
 		
 		
-		public NearestNeighborsPlanner() { }
-		public NearestNeighborsPlanner(RunMode runmode) {
-			this.runmode = runmode;
+		public NearestNeighborsPlanner() { this(DEF_K); }
+		public NearestNeighborsPlanner(int k) {
+			this.k = k;
 		}
+		
 
 		
 		@Override
 		public NearestNeighbors buildNewModelInstance(AbstractRealMatrix data) {
-			return new NearestNeighbors(data, this);
+			return new NearestNeighbors(data, this.copy());
 		}
-		
+
+		@Override
+		public NearestNeighborsPlanner setAlgorithm(Algorithm algo) {
+			this.algo = algo;
+			return this;
+		}
+
+		@Override
+		public Algorithm getAlgorithm() {
+			return algo;
+		}
+
 		@Override
 		public NearestNeighborsPlanner copy() {
-			return new NearestNeighborsPlanner(runmode)
-				.setK(k)
-				.setRadius(neighborhood)
+			return new NearestNeighborsPlanner(k)
+				.setAlgorithm(algo)
+				.setNormalizer(norm)
 				.setScale(scale)
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setDistanceMatrix(dist_mat)
-				.setNormalizer(norm);
+				.setLeafSize(leafSize);
+		}
+		
+		@Override
+		public int getLeafSize() {
+			return leafSize;
+		}
+		
+		@Override
+		final public Integer getK() {
+			return k;
+		}
+
+		@Override
+		final public Double getRadius() {
+			return null;
+		}
+		
+		@Override
+		public FeatureNormalization getNormalizer() {
+			return norm;
 		}
 
 		@Override
@@ -184,24 +124,15 @@ public class NearestNeighbors extends AbstractClusterer {
 		public boolean getVerbose() {
 			return verbose;
 		}
-		
-		public NearestNeighborsPlanner setDistanceMatrix(final double[][] dist_mat) {
-			this.dist_mat = null == dist_mat ? null : MatUtils.copy(dist_mat);
+
+		public NearestNeighborsPlanner setLeafSize(int leafSize) {
+			this.leafSize = leafSize;
 			return this;
 		}
 		
-		public NearestNeighborsPlanner setK(final int k) {
-			this.k = k;
-			return this;
-		}
-		
-		public NearestNeighborsPlanner setRadius(final double d) {
-			this.neighborhood = d;
-			return this;
-		}
-		
-		public NearestNeighborsPlanner setRunMode(final RunMode mode) {
-			this.runmode = mode;
+		@Override
+		public NearestNeighborsPlanner setNormalizer(FeatureNormalization norm) {
+			this.norm = norm;
 			return this;
 		}
 
@@ -213,7 +144,7 @@ public class NearestNeighbors extends AbstractClusterer {
 
 		@Override
 		public NearestNeighborsPlanner setSeed(Random rand) {
-			this.seed = rand;
+			this.seed= rand;
 			return this;
 		}
 
@@ -228,276 +159,131 @@ public class NearestNeighbors extends AbstractClusterer {
 			this.dist = dist;
 			return this;
 		}
-		
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		@Override
-		public NearestNeighborsPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
 	}
 	
-	public double[][] getDistanceMatrix() {
-		return MatUtils.copy(dist_mat);
-	}
-	
-	double[][] getDistanceMatrixRef() {
-		return dist_mat;
-	}
-	
-	public int getK() {
-		return k;
-	}
-	
-	/**
-	 * Return the rows that correspond to the nearest neighbor
-	 * indices identified in the {@link #fit()} method.
-	 * @param rowNumber
-	 * @throws ModelNotFitException if the model is not fit yet
-	 * @return the nearest records
-	 */
-	public double[][] getNearestRecords(final int rowNumber) {
-		ArrayList<Integer> closest = null;
-		
-		try {
-			closest = nearest[rowNumber];
-		} catch(NullPointerException e) {
-			throw new ModelNotFitException(e);
-		} catch(ArrayIndexOutOfBoundsException e) {
-			throw new ModelNotFitException(e);
-		} catch(IndexOutOfBoundsException e) {
-			throw new ModelNotFitException(e);
+	@Override
+	public boolean equals(Object o) {
+		if(this == o)
+			return true;
+		if(o instanceof NearestNeighbors) {
+			NearestNeighbors other = (NearestNeighbors)o;
+			
+			
+			return 
+				((null == other.kNeighbors || null == this.kNeighbors) ?
+					other.kNeighbors == this.kNeighbors : 
+						other.kNeighbors.intValue() == this.kNeighbors)
+				&& other.leafSize == this.leafSize
+				&& MatUtils.equalsExactly(other.fit_X, this.fit_X);
 		}
 		
-		final double[][] d = new double[closest.size()][];
-		for(int i = 0; i < d.length; i++) {
-			d[i] = VecUtils.copy(data.getRow(closest.get(i)));
-		}
-		
-		return d;
+		return false;
 	}
 	
-	public double getRadius() {
-		return neighborhood;
-	}
-	
-	public RunMode getRunMode() {
-		return runmode;
-	}
-
 	@Override
 	public String getName() {
 		return "NearestNeighbors";
 	}
 	
-	public ArrayList<Integer>[] getNearest() {
-		try {
-			@SuppressWarnings("unchecked")
-			final ArrayList<Integer>[] copy = new ArrayList[nearest.length];
-			
-			int i = 0;
-			for(ArrayList<Integer> ai: nearest)
-				copy[i++] = VecUtils.copy(ai);
-			
-			return copy;
-		} catch(NullPointerException e) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
-	}
-	
-	public ArrayList<Integer> getNearest(int rec) {
-		try {
-			if(rec < 0 || rec >= nearest.length)
-				throw new IllegalArgumentException("illegal record idx: " + rec);
-			
-			return nearest[rec];
-		} catch(NullPointerException e) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
-	}
-	
-	public ArrayList<Double> getNearestDists(int rec) {
-		try {
-			if(rec < 0 || rec >= nearestDists.length)
-				throw new IllegalArgumentException("illegal record idx: " + rec);
-			
-			return nearestDists[rec];
-		} catch(NullPointerException e) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
+	public int getK() {
+		return kNeighbors;
 	}
 
-	@Override
-	public Algo getLoggerTag() {
-		return Log.Tag.Algo.NEAREST;
-	}
-
-	@SuppressWarnings("unchecked")
 	@Override
 	public NearestNeighbors fit() {
 		synchronized(this) {
-			
 			try {
-				if(null != nearest) // synch condition
+				if(null != res)
 					return this;
 				
-				
-				final boolean knn = runmode.equals(RunMode.K_NEAREST);
-				info("identifying " + (knn ? 
-					(k+" nearest record"+(k!=1?"s":"")+" for each point") : 
-						("neighborhoods for each record within radius="+neighborhood)));
-				
+				int nNeighbors = kNeighbors + 1;
 				long start = System.currentTimeMillis();
-				nearest = new ArrayList[m];
-				nearestDists = new ArrayList[m];
+				info("querying tree for nearest neighbors");
+				Neighborhood initRes = new Neighborhood(
+					tree.query(fit_X, nNeighbors, 
+						DUAL_TREE_SEARCH, SORT));
+
+				
+				double[][] dists = initRes.getDistances();
+				int[][] indices  = initRes.getIndices();
+				int i, j, ni = indices[0].length;
 				
 				
-				if(knn) {
-					SortedSet<Map.Entry<Integer, Double>> ordered;
-					Iterator<Map.Entry<Integer, Double>> iter;
+				// Set up sample range
+				int[] sampleRange = VecUtils.arange(m);
+				
+				
+				boolean allInRow, bval;
+				boolean[] dupGroups = new boolean[m];
+				boolean[][] sampleMask= new boolean[m][ni];
+				for(i = 0; i < m; i++) {
+					allInRow = true;
 					
-					for(int i = 0; i < m; i++) {
-						nearest[i] = new ArrayList<Integer>();
-						nearestDists[i] = new ArrayList<Double>();
-						ordered = getSortedNearest(i, dist_mat);
-						
-						int j = 0;
-						iter = ordered.iterator();
-						Map.Entry<Integer, Double> next;
-						while(j++ < k) {
-							next = iter.next();
-							nearest[i].add(next.getKey());
-							nearestDists[i].add(next.getValue());
-						}
+					for(j = 0; j < ni; j++) {
+						bval = indices[i][j] != sampleRange[i];
+						sampleMask[i][j] = bval;
+						allInRow &= bval;
 					}
 					
-				} else {
-					for(int i = 0; i < m - 1; i++) {
-						if(null == nearest[i]) {
-							nearest[i] = new ArrayList<Integer>();
-							nearestDists[i] = new ArrayList<Double>();
-						}
-						
-						for(int j = i + 1; j < m; j++) {
-							if(null == nearest[j]) {
-								nearest[j] = new ArrayList<Integer>();
-								nearestDists[j] = new ArrayList<Double>();
-							}
-							
-							int row = FastMath.min(i, j), col = FastMath.max(i, j);
-							final double val = FastMath.abs(dist_mat[row][col]);
-							
-							if(val <= neighborhood) { // Then both are within eachother's neighborhood...
-								nearest[i].add(j);
-								nearest[j].add(i);
-								
-								nearestDists[i].add(val);
-								nearestDists[j].add(val);
-							}
-						}
-					}
-					
-					// Check how many weren't classified
-					int ct = 0;
-					for(int i = 0; i < m; i++) if(nearest[i].isEmpty()) ct++;
-					if(ct > 0) {
-						warn(ct + " record" + (ct!=1?"s have":" has") + 
-							" no records within radius=" + neighborhood);
-					}
+					dupGroups[i] = allInRow; // duplicates in row?
 				}
 				
 				
-				info("model " + getKey() + " completed in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-					System.lineSeparator());
+				// Comment from SKLEARN:
+				// Corner case: When the number of duplicates are more
+		        // than the number of neighbors, the first NN will not
+		        // be the sample, but a duplicate.
+		        // In that case mask the first duplicate.
+				// sample_mask[:, 0][dup_gr_nbrs] = False
 				
+				info("identifying duplicate neighbors");
+				for(i = 0; i < m; i++)
+					if(dupGroups[i])
+						sampleMask[i][0] = false;
+				
+				
+				// Build output indices
+				int k = 0;
+				int[] indOut = new int[m * (nNeighbors - 1)];
+				double[] distOut = new double[m * (nNeighbors - 1)];
+				for(i = 0; i < m; i++) {
+					for(j = 0; j < ni; j++) {
+						if(sampleMask[i][j]) {
+							indOut[k] = indices[i][j];
+							distOut[k]= dists[i][j];
+							k++;
+						}
+					}
+				}
+				
+				info("computing neighborhoods");
+				res = new Neighborhood(
+					MatUtils.reshape(distOut, m, nNeighbors - 1),
+					MatUtils.reshape(indOut,  m, nNeighbors - 1));
+				
+				
+				wrapItUp(start);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
 				throw e;
 			} // end try/catch
 			
-		} // end synch
-	} // end fit
-	
-	private static SortedSet<Map.Entry<Integer, Double>> getSortedNearest(final int record, final double[][] dist_mat) {
-		// TM container
-		TreeMap<Integer, Double> rec_to_dist = new TreeMap<Integer, Double>();
-		
-		final int m = dist_mat.length;
-		for(int i = 0; i < m; i++) {
-			if(i == record)
-				continue;
-			
-			int row = FastMath.min(i, record), col = FastMath.max(i, record);
-			rec_to_dist.put(row == record ? col : row, dist_mat[row][col]);
-		}
-		
-		// Sort treemap on value
-		// If the distance metric is a similarity metric, we want it DESC else ASC
-		return ClustUtils.sortEntriesByValue( rec_to_dist );
+		} // End synch
 	}
 	
-	
-	public static int[] getKNearest(final double[] record, 
-			final double[][] matrix, int k, final GeometricallySeparable sep) {
-		// TM container
-		TreeMap<Integer, Double> rec_to_dist = new TreeMap<>();
-		k = FastMath.min(k, matrix.length);
-		
-		
-		if(matrix.length == 0)
-			throw new IllegalArgumentException("empty matrix");
-		if(k < 1)
-			throw new IllegalArgumentException("illegal k value");
-		
-		
-		for(int i = 0; i < matrix.length; i++)
-			rec_to_dist.put(i, sep.getDistance(record, matrix[i]));
-		
-		
-		int rec = 0;
-		final int[] nrst = new int[k];
-		SortedSet<Map.Entry<Integer, Double>> ordered = ClustUtils.sortEntriesByValue(rec_to_dist);
-		for(Map.Entry<Integer, Double> entry: ordered) {
-			if(rec == k)
-				break;
-			nrst[rec++] = entry.getKey();
-		}
-		
-		return nrst;
+	@Override
+	public Neighborhood getNeighbors(AbstractRealMatrix x) {
+		return getNeighbors(x, kNeighbors);
 	}
 	
-
-	/**
-	 * For use with MeanShift so as not to create new model each iteration
-	 * @param rad
-	 * @return
-	 */
-	protected static ArrayList<Integer> getNearestWithinRadius(final double rad, final double[][] dist_mat, final int recordIdx) {
-		// TM container
-		final ArrayList<Integer> insideRad = new ArrayList<>();
+	public Neighborhood getNeighbors(AbstractRealMatrix x, int k) {
+		if(null == res)
+			throw new ModelNotFitException("model not yet fit");
+		double[][] X = x.getData();
 		
-		// Get map of distances to each record
-		for(int train_row = 0; train_row < dist_mat.length; train_row++) {
-			if(train_row == recordIdx)
-				continue;
-			
-			final double sim = dist_mat[FastMath.min(recordIdx, train_row)][FastMath.max(recordIdx, train_row)];
-			if(FastMath.abs(sim) < rad) insideRad.add(train_row);
-		}
-		
-		// Sort treemap on value
-		// If the distance metric is a similarity metric, we want it DESC else ASC
-		return insideRad;
+		validateK(k, X.length);
+		return new Neighborhood(tree.query(X, k, 
+			DUAL_TREE_SEARCH, SORT));
 	}
 }

@@ -1,7 +1,7 @@
 package com.clust4j.utils;
 
 public interface DistanceMetric extends GeometricallySeparable {
-	public static final int DEFAULT_P = 2;
+	public static final double DEFAULT_P = 2.0;
 	
 	public double getP();
 	

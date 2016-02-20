@@ -1,12 +1,12 @@
 package com.clust4j.algo;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.EvaluationMetric;
-import com.clust4j.utils.Classifier;
+import com.clust4j.metrics.SilhouetteScore;
+import com.clust4j.metrics.UnsupervisedIndexAffinity;
+import com.clust4j.utils.GeometricallySeparable;
 
-public abstract class AbstractAutonomousClusterer extends AbstractClusterer implements Classifier {
+public abstract class AbstractAutonomousClusterer extends AbstractClusterer implements UnsupervisedClassifier {
 	/**
 	 * 
 	 */
@@ -22,20 +22,24 @@ public abstract class AbstractAutonomousClusterer extends AbstractClusterer impl
 	 */
 	abstract public int getNumberOfIdentifiedClusters();
 	
-
 	
+	/** {@inheritDoc} */
 	@Override
-	public double score(final int[] actual) {
-		return score(actual, Classifier.DEF_METRIC);
+	public double indexAffinityScore(int[] labels) {
+		// Propagates ModelNotFitException
+		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
 	}
-	
+
+	/** {@inheritDoc} */
 	@Override
-	public double score(final int[] actual, EvaluationMetric metric) {
-		final int[] predicted = getLabels(); // Propagates a model not fit exception if not fit...
-		
-		if(predicted.length != actual.length)
-			throw new DimensionMismatchException(actual.length, predicted.length);
-		
-		return metric.evaluate(actual, predicted);
+	public double silhouetteScore() {
+		return silhouetteScore(getSeparabilityMetric());
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public double silhouetteScore(GeometricallySeparable dist) {
+		// Propagates ModelNotFitException
+		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
 	}
 }
