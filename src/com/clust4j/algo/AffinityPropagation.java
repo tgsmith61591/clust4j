@@ -430,8 +430,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[] Y2;	// vector of maxes post neg inf
 				double[] sum_e;
 				
+				info("beginning affinity computations");
 				long iterStart = System.currentTimeMillis();
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
+					
+					if(iterCt % 25 == 0 && iterCt != 0)
+						info("iteration " + iterCt);
 					
 					// Reassign tmp, create vector of arg maxes. Can
 					// assign tmp like this:

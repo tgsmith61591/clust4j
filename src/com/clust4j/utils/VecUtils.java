@@ -140,7 +140,8 @@ public class VecUtils {
 	 * @return absolute value of the vector
 	 */
 	public static double[] abs(final double[] a) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
+		
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -707,7 +708,7 @@ public class VecUtils {
 	 * @return the truncated vector
 	 */
 	public static double[] floor(final double[] a, final double min, final double floor) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[] b = new double[a.length];
 		for(int i = 0; i < b.length; i++)

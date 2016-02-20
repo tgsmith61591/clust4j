@@ -80,7 +80,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         ```
 
 - **Neighbor point clustering algorithms**:
-  - NearestNeighbors, a neighbor clusterer that will fit the *k*-nearest points for each record in a matrix.
+  - `NearestNeighbors`, a neighbor clusterer that will fit the *k*-nearest points for each record in a matrix.
 
         ```java
         Neighbors nn = new NearestNeighbors(mat).fit();
@@ -89,7 +89,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         double[][] distances = neighborhood.getDistances(); // The corresponding distances
         ```
 
-  - RadiusNeighbors, a neighbor clusterer that will fit the nearest points within a given radius.
+  - `RadiusNeighbors`, a neighbor clusterer that will fit the nearest points within a given radius.
         ```java
         Neighbors rn = new RadiusNeighbors(mat).fit();
         RadiusNeighbors = rn.getNeighbors();
@@ -98,7 +98,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         ```
 
 - **Supervised clustering algorithms**:
-  - NearestCentroid, a supervised algorithm that fits centroids based on a set of observed labels.
+  - `NearestCentroid`, a supervised algorithm that fits centroids based on a set of observed labels.
         ```java
         NearestCentroid nc = new NearestCentroid(mat, new int[]{0,1,1}).fit();
         // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data
@@ -107,7 +107,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 
 
 ### Evaluating performance
-All clustering algorithms that implement `Classifier` can also be scored. Supervised and unsupervised methods are scored in different manner. If we want to score the `NearestCentroid` model we fit above:
+All clustering algorithms that implement `Classifier` can also be scored. Supervised and unsupervised methods are scored in different manners. If we want to score the `NearestCentroid` model we fit above:
 
 ```java
 // implicitly uses ground truth and predicted labels

@@ -97,22 +97,11 @@ public class MatUtils {
 	}
 	
 	
-	final static public void checkDims(final short[][] a) {
-		dimAssess(a.length);
-		
-		// If you try it on a row-initialized matrix but not col-init
-		try { VecUtils.checkDims(a[0]); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
 	
-	final static public void checkDims(final byte[][] a) {
-		dimAssess(a.length);
-		
-		// If you try it on a row-initialized matrix but not col-init
-		try { VecUtils.checkDims(a[0]); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
 	
+	/*
+	 * For operations that forbid emptiness but permit jaggedness
+	 */
 	final static public void checkDims(final boolean[][] a) {
 		dimAssess(a.length);
 		
@@ -129,14 +118,6 @@ public class MatUtils {
 		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
-	final static public void checkDims(final float[][] a) {
-		dimAssess(a.length);
-
-		// If you try it on a row-initialized matrix but not col-init
-		try { VecUtils.checkDims(a[0]); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
-	
 	final static public void checkDims(final double[][] a) {
 		dimAssess(a.length);
 
@@ -145,36 +126,49 @@ public class MatUtils {
 		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
-	final static public void checkDims(final long[][] a) {
-		dimAssess(a.length);
-
-		// If you try it on a row-initialized matrix but not col-init
-		try { VecUtils.checkDims(a[0]); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
 	
 	
 	
 	
 	
-	
-	
-	final static public void checkDimsPermitEmpty(final short[][] a) {
-		dimAssess(a.length);
+	/*
+	 * For operations that mandate uniformity
+	 */
+	final static public void checkDimsForUniformity(final boolean[][] a) {
+		checkDimsPermitEmpty(a);
 		
-		// If you try it on a row-initialized matrix but not col-init
-		try { dimAssessPermitEmpty(a[0].length); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+		final int n = a[0].length;
+		for(boolean[] b: a)
+			if(b.length != n)
+				throw new NonUniformMatrixException(b.length, n);
 	}
 	
-	final static public void checkDimsPermitEmpty(final byte[][] a) {
-		dimAssess(a.length);
-
-		// If you try it on a row-initialized matrix but not col-init
-		try { dimAssessPermitEmpty(a[0].length); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
+	final static public void checkDimsForUniformity(final int[][] a) {
+		checkDimsPermitEmpty(a);
+		
+		final int n = a[0].length;
+		for(int[] i: a)
+			if(i.length != n)
+				throw new NonUniformMatrixException(i.length, n);
 	}
 	
+	final static public void checkDimsForUniformity(final double[][] a) {
+		checkDimsPermitEmpty(a);
+		
+		final int n = a[0].length;
+		for(double[] d: a)
+			if(d.length != n)
+				throw new NonUniformMatrixException(d.length, n);
+	}
+	
+	
+	
+	
+	
+	
+	/*
+	 * For operations that allow empty rows
+	 */
 	final static public void checkDimsPermitEmpty(final boolean[][] a) {
 		dimAssess(a.length);
 
@@ -191,14 +185,6 @@ public class MatUtils {
 		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
-	final static public void checkDimsPermitEmpty(final float[][] a) {
-		dimAssess(a.length);
-
-		// If you try it on a row-initialized matrix but not col-init
-		try { dimAssessPermitEmpty(a[0].length); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
-	
 	final static public void checkDimsPermitEmpty(final double[][] a) {
 		dimAssess(a.length);
 
@@ -207,24 +193,18 @@ public class MatUtils {
 		catch(NullPointerException npe) { throwDimException(a.length, npe); }
 	}
 	
-	final static public void checkDimsPermitEmpty(final long[][] a) {
-		dimAssess(a.length);
-
-		// If you try it on a row-initialized matrix but not col-init
-		try { dimAssessPermitEmpty(a[0].length); } 
-		catch(NullPointerException npe) { throwDimException(a.length, npe); }
-	}
 	
 	
 	
 	
 	
 	
-	
-	
-	final static public void checkDims(final double[][] a, final double[][] b) {
-		checkDims(a);
-		checkDims(b);
+	/*
+	 * For operations checking for compatability
+	 */
+	final static public void checkDimsForUniformity(final double[][] a, final double[][] b) {
+		checkDimsForUniformity(a);
+		checkDimsForUniformity(b);
 		
 		if(a.length != b.length)
 			throw new DimensionMismatchException(a.length, b.length);
@@ -232,6 +212,77 @@ public class MatUtils {
 			throw new DimensionMismatchException(a[0].length, b[0].length);
 	}
 	
+	final static public void checkDimsForUniformity(final int[][] a, final int[][] b) {
+		checkDimsForUniformity(a);
+		checkDimsForUniformity(b);
+		
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		if(a[0].length != b[0].length)
+			throw new DimensionMismatchException(a[0].length, b[0].length);
+	}
+	
+	final static public void checkDimsForUniformity(final boolean[][] a, final boolean[][] b) {
+		checkDimsForUniformity(a);
+		checkDimsForUniformity(b);
+		
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		if(a[0].length != b[0].length)
+			throw new DimensionMismatchException(a[0].length, b[0].length);
+	}
+	
+	final static public void checkDims(final double[][] a, final double[][] b) {
+		if(a.length == 0 || b.length == 0)
+			throw new IllegalArgumentException("row dims are empty");
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		
+		for(int i = 0; i < a.length; i++) {
+			try {
+				if(a[i].length != b[i].length)
+					throw new DimensionMismatchException(a[i].length, b[i].length);
+			} catch(NullPointerException npe) {
+				throwDimException(a.length, npe);
+			}
+		}
+	}
+	
+	final static public void checkDims(final boolean[][] a, final boolean[][] b) {
+		if(a.length == 0 || b.length == 0)
+			throw new IllegalArgumentException("row dims are empty");
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		
+		for(int i = 0; i < a.length; i++) {
+			try {
+				if(a[i].length != b[i].length)
+					throw new DimensionMismatchException(a[i].length, b[i].length);
+			} catch(NullPointerException npe) {
+				throwDimException(a.length, npe);
+			}
+		}
+	}
+	
+	final static public void checkDims(final int[][] a, final int[][] b) {
+		if(a.length == 0 || b.length == 0)
+			throw new IllegalArgumentException("row dims are empty");
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		
+		for(int i = 0; i < a.length; i++) {
+			try {
+				if(a[i].length != b[i].length)
+					throw new DimensionMismatchException(a[i].length, b[i].length);
+			} catch(NullPointerException npe) {
+				throwDimException(a.length, npe);
+			}
+		}
+	}
+	
+	/*
+	 * AbstractRealMatrix won't allow any empty rows
+	 */
 	final static public void checkDims(final AbstractRealMatrix a) {
 		int m = a.getRowDimension(), n = a.getColumnDimension();
 		
@@ -258,8 +309,14 @@ public class MatUtils {
 	
 	
 	// ============= MATH FUNCTIONS ==================
+	/**
+	 * Compute the absolute value of every element in the matrix.
+	 * This method allows for jagged (uneven) matrices.
+	 * @param a
+	 * @return a copy of the absolute value of the matrix
+	 */
 	public static final double[][] abs(final double[][] a) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[][] b = new double[a.length][];
 		for(int i = 0; i < b.length; i++)
@@ -268,15 +325,19 @@ public class MatUtils {
 		return b;
 	}
 	
+	/**
+	 * Add two matrices together. This operation demands 
+	 * uniformity of the input matrices, but permits matrices with
+	 * empty rows to be added together so long as their dimensions match.
+	 * @param a
+	 * @param b
+	 * @throws NonUniformMatrixException if either matrix is jagged
+	 * @throws DimensionMismatchException if dimensions of matrices don't match
+	 * @return the sum of two matrices
+	 */
 	public static final double[][] add(final double[][] a, final double[][] b) {
-		checkDims(a);
-		checkDims(b);
-		
+		checkDimsForUniformity(a, b);
 		final int m = a.length, n = a[0].length;
-		if(b.length != m)
-			throw new DimensionMismatchException(b.length, m);
-		if(b[0].length != n)
-			throw new DimensionMismatchException(b[0].length, n);
 			
 		final double[][] c = new double[m][n];
 		for(int i = 0; i < m; i++)
@@ -287,14 +348,47 @@ public class MatUtils {
 	
 	
 	/**
-	 * The indices of the max along axes
+	 * Computes the indices of the max along the provided axes.
 	 * @param data
-	 * @param axis: row or column wise
-	 * @return
+	 * @param axis - row or column wise. For {@link Axis#ROW}, returns
+	 * the column index of the max for each row; for {@link Axis#COL}, returns
+	 * the row index of the max for each column.
+	 * @return an array of the indices of the arg max
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @see {@link VecUtils#argMax(double[])}
 	 */
 	public static int[] argMax(final double[][] data, final Axis axis) {
+		return argMaxMin(data, axis, true);
+	}
+	
+	
+	/**
+	 * Computes the indices of the min along the provided axes.
+	 * @param data
+	 * @param axis - row or column wise. For {@link Axis#ROW}, returns
+	 * the column index of the min for each row; for {@link Axis#COL}, returns
+	 * the row index of the min for each column.
+	 * @return an array of the indices of the arg min
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @see {@link VecUtils#argMin(double[])}
+	 */
+	public static int[] argMin(final double[][] data, final Axis axis) {
+		return argMaxMin(data, axis, false);
+	}
+	
+	
+	/**
+	 * Computes either the argMin or the argMax depending on the boolean parameter
+	 * @param data
+	 * @param axis
+	 * @param max - whether to compute the min or max
+	 * @return the argMin or argMax vector
+	 */
+	private static int[] argMaxMin(final double[][] data, final Axis axis, final boolean max) {
 		if(data.length == 0)
 			return new int[0];
+		checkDimsForUniformity(data);
+		
 		
 		int[] out;
 		final int m=data.length, n=data[0].length;
@@ -303,72 +397,74 @@ public class MatUtils {
 			double[] col;
 			for(int i = 0; i < n; i++) {
 				col = getColumn(data, i);
-				out[i] = VecUtils.argMax(col);
+				out[i] = max ? VecUtils.argMax(col) : VecUtils.argMin(col);
 			}
 		} else {
 			out = new int[m];
 			for(int i = 0; i < m; i++)
-				out[i] = VecUtils.argMax(data[i]);
+				out[i] = max ? VecUtils.argMax(data[i]) : VecUtils.argMin(data[i]);
+		}
+		
+		return out;
+	}
+	
+	
+	/**
+	 * Compute the column means of a matrix. The matrix must
+	 * be uniform in dimensions.
+	 * @param data
+	 * @throws NonUniformMatrixException if row lengths are non-uniform
+	 * @return an array of column means
+	 */
+	public static double[] colMeans(final double[][] data) {
+		return colMeansSums(data, true);
+	}
+	
+	/**
+	 * Compute the column sums of a matrix. The matrix must
+	 * be uniform in dimensions.
+	 * @param data
+	 * @throws NonUniformMatrixException if row lengths are non-uniform
+	 * @return an array of column sums
+	 */
+	public static double[] colSums(final double[][] data) {
+		return colMeansSums(data, false);
+	}
+	
+	/**
+	 * Compute the column means or sums for a matrix
+	 * @param data
+	 * @param means
+	 * @return
+	 */
+	private static double[] colMeansSums(final double[][] data, boolean means) {
+		checkDimsForUniformity(data);
+		
+		final int n = data[0].length;
+		final double[] out = new double[n];
+		double[] col;
+		for(int i = 0; i < n; i++) {
+			col = getColumn(data, i);
+			out[i] = means ? VecUtils.mean(col) : 
+				VecUtils.sum(col);
 		}
 		
 		return out;
 	}
 	
 	/**
-	 * The indices of the max along axes
+	 * Returns a matrix of complete cases, or rows which do not
+	 * contain NaN values.
 	 * @param data
-	 * @param axis: row or column wise
-	 * @return
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @return the complete cases in the matrix
 	 */
-	public static int[] argMin(final double[][] data, final Axis axis) {
-		if(data.length == 0)
-			return new int[0];
-		
-		int[] out;
-		final int m=data.length, n=data[0].length;
-		if(axis.equals(Axis.COL)) {
-			out = new int[n];
-			double[] col;
-			for(int i = 0; i < n; i++) {
-				col = getColumn(data, i);
-				out[i] = VecUtils.argMin(col);
-			}
-		} else {
-			out = new int[m];
-			for(int i = 0; i < m; i++)
-				out[i] = VecUtils.argMin(data[i]);
-		}
-		
-		return out;
-	}
-	
-	public static double[] colMeans(final double[][] data) {
-		checkDims(data);
-		
-		final double[] out = new double[data[0].length];
-		for(int i = 0; i < out.length; i++)
-			out[i] = VecUtils.mean(getColumn(data, i));
-		
-		return out;
-	}
-	
-	
-	public static double[] colSums(final double[][] data) {
-		checkDims(data);
-		
-		final double[] out = new double[data[0].length];
-		for(int i = 0; i < out.length; i++)
-			out[i] = VecUtils.sum(getColumn(data, i));
-		
-		return out;
-	}
-	
 	public static double[][] completeCases(final double[][] data) {
-		checkDims(data);
+		checkDimsPermitEmpty(data);
 		
 		final ArrayList<double[]> rows = new ArrayList<>();
 		for(int i = 0; i < data.length; i++)
-			if(VecUtils.nanCount(data[i]) == 0)
+			if(!VecUtils.containsNaNForceSerial(data[i]))
 				rows.add(data[i]);
 		
 		final double[][] out = new double[rows.size()][];
@@ -378,24 +474,43 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Returns a matrix of complete cases, or rows which do not
+	 * contain NaN values.
+	 * @param data
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @return the complete cases in the matrix
+	 */
 	public static double[][] completeCases(final AbstractRealMatrix data) {
 		return completeCases(data.getData());
 	}
 	
+	/**
+	 * Returns true if there are any NaN values in the matrix.
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @param mat
+	 * @return true if the matrix contains NaN
+	 */
 	public static boolean containsNaN(final double[][] mat) {
-		checkDims(mat);
+		checkDimsPermitEmpty(mat);
 		
-		final int m = mat.length, n = mat[0].length;
+		final int m = mat.length;
 		for(int i = 0; i < m; i++)
-			for(int j = 0; j < n; j++)
+			for(int j = 0; j < mat[i].length; j++)
 				if(Double.isNaN(mat[i][j]))
 					return true;
 		
 		return false;
 	}
 	
+	/**
+	 * Returns true if there are any NaN values in the matrix.
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @param mat
+	 * @return true if the matrix contains NaN
+	 */
 	public static boolean containsNaNDistributed(final double[][] mat) {
-		checkDims(mat);
+		checkDimsPermitEmpty(mat);
 		
 		final int m = mat.length;
 		for(int i = 0; i < m; i++)
@@ -405,9 +520,21 @@ public class MatUtils {
 		return false;
 	}
 	
+	/**
+	 * Returns true if there are any NaN values in the matrix.
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @param mat
+	 * @return true if the matrix contains NaN
+	 */
 	public static boolean containsNaN(final AbstractRealMatrix mat) {
 		return containsNaN(mat.getData());
 	}
+	/**
+	 * Returns true if there are any NaN values in the matrix.
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @param mat
+	 * @return true if the matrix contains NaN
+	 */
 	
 	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
 		return containsNaNDistributed(mat.getData());
@@ -417,15 +544,12 @@ public class MatUtils {
 	/**
 	 * Copy a 2d double array
 	 * @param data
-	 * @return
+	 * @return a copy of the input matrix
 	 */
 	public static final double[][] copy(final double[][] data) {
 		final double[][] copy = new double[data.length][];
-		
-		if(data.length != 0) {
-			for(int i = 0; i < copy.length; i++)
-				copy[i] = VecUtils.copy(data[i]);
-		}
+		for(int i = 0; i < copy.length; i++)
+			copy[i] = VecUtils.copy(data[i]);
 		
 		return copy;
 	}
@@ -433,15 +557,12 @@ public class MatUtils {
 	/**
 	 * Copy a 2d boolean array
 	 * @param data
-	 * @return
+	 * @return a copy of the input matrix
 	 */
 	public static final boolean[][] copy(final boolean[][] data) {
 		final boolean[][] copy = new boolean[data.length][];
-		
-		if(data.length != 0) {
-			for(int i = 0; i < copy.length; i++)
-				copy[i] = VecUtils.copy(data[i]);
-		}
+		for(int i = 0; i < copy.length; i++)
+			copy[i] = VecUtils.copy(data[i]);
 		
 		return copy;
 	}
@@ -449,50 +570,73 @@ public class MatUtils {
 	/**
 	 * Copy a 2d int array
 	 * @param data
-	 * @return
+	 * @return a copy of the input matrix
 	 */
 	public static final int[][] copy(final int[][] data) {
 		final int[][] copy = new int[data.length][];
-		
-		if(data.length != 0) {
-			for(int i = 0; i < copy.length; i++)
-				copy[i] = VecUtils.copy(data[i]);
-		}
+		for(int i = 0; i < copy.length; i++)
+			copy[i] = VecUtils.copy(data[i]);
 		
 		return copy;
 	}
 	
+	/**
+	 * Extract the diagonal vector from a square matrix
+	 * @param data
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws DimensionMismatchException if the row dims do not match the col dims
+	 * @return the diagonal vector of a square matrix
+	 */
 	public static double[] diagFromSquare(final double[][] data) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
 		final int m = data.length, n = data[0].length;
 		if(m!=n)
 			throw new DimensionMismatchException(m, n);
 		
 		final double[] out = new double[n];
-		for(int i = 0; i < m; i++) {
-			if(data[i].length != n) // Check for jagged array
-				throw new DimensionMismatchException(data[i].length, n);
+		for(int i = 0; i < m; i++)
 			out[i] = data[i][i];
-		}
 		
 		return out;
 	}
 	
-	
+	/**
+	 * Assess whether every element in the matrices are exactly equal
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsExactly(final double[][] a, final double[][] b) {
 		return equalsWithTolerance(a,b,0.0);
 	}
 	
+	/**
+	 * Assess whether every element in the matrices are equal within 
+	 * a default tolerance of {@value Precision#EPSILON}
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsWithTolerance(final double[][] a, final double[][] b) {
 		return equalsWithTolerance(a,b,Precision.EPSILON);
 	}
 	
+	/**
+	 * Assess whether every element in the matrices are equal within 
+	 * a tolerance
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsWithTolerance(final double[][] a, final double[][] b, final double tol) {
-		if(a.length != b.length)
-			return false;
-		if(a.length == 0) // Both are empty
-			return true;
+		checkDims(a, b);
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsWithTolerance(a[i], b[i], tol))
@@ -500,11 +644,16 @@ public class MatUtils {
 		return true;
 	}
 	
+	/**
+	 * Assess whether every element in the matrices are exactly equal
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsExactly(final int[][] a, final int[][] b) {
-		if(a.length != b.length)
-			return false;
-		if(a.length == 0) // Both are empty
-			return true;
+		checkDims(a, b);
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsExactly(a[i], b[i]))
@@ -512,11 +661,16 @@ public class MatUtils {
 		return true;
 	}
 	
+	/**
+	 * Assess whether every element in the matrices are exactly equal
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsExactly(final boolean[][] a, final boolean[][] b) {
-		if(a.length != b.length)
-			return false;
-		if(a.length == 0) // Both are empty
-			return true;
+		checkDims(a, b);
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsExactly(a[i], b[i]))
@@ -524,35 +678,45 @@ public class MatUtils {
 		return true;
 	}
 	
+	/**
+	 * Flatten a uniform matrix into a vector of M x N
+	 * @param a
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @return a flattened matrix
+	 */
 	public static double[] flatten(final double[][] a) {
-		checkDims(a);
+		checkDimsForUniformity(a);
 		
 		final int m = a.length, n = a[0].length;
 		final double[] out = new double[m * n];
 		int ctr = 0;
 		for(int i = 0; i < m; i++) {
 			final double[] row = a[i];
-			if(row.length != n) // Check for jaggedness
-				throw new DimensionMismatchException(n, row.length);
 			for(int j = 0; j < n; j++)
-				out[ctr++] = a[i][j];
+				out[ctr++] = row[j];
 		}
 		
 		return out;
 	}
 	
+	/**
+	 * Flatten a uniform matrix into a vector of M x N
+	 * @param a
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @return a flattened matrix
+	 */
 	public static int[] flatten(final int[][] a) {
-		checkDims(a);
+		checkDimsForUniformity(a);
 		
 		final int m = a.length, n = a[0].length;
 		final int[] out = new int[m * n];
 		int ctr = 0;
 		for(int i = 0; i < m; i++) {
 			final int[] row = a[i];
-			if(row.length != n) // Check for jaggedness
-				throw new DimensionMismatchException(n, row.length);
 			for(int j = 0; j < n; j++)
-				out[ctr++] = a[i][j];
+				out[ctr++] = row[j];
 		}
 		
 		return out;
@@ -562,10 +726,12 @@ public class MatUtils {
 	 * Flattens an upper triangular matrix into a vector of M choose 2 length
 	 * @param mat - the square upper triangular matrix
 	 * @throws DimensionMismatchException if the matrix is not square
+	 * @throws IllegalArgumentException if the matrix has no rows
+	 * @throws NonUniformMatrixException if the matrix is jagged
 	 * @return the upper triangular vector
 	 */
 	public static double[] flattenUpperTriangularMatrix(final double[][] mat) {
-		checkDims(mat);
+		checkDimsForUniformity(mat);
 		
 		final int m = mat.length, n = mat[0].length;
 		if(m != n)
@@ -585,10 +751,10 @@ public class MatUtils {
 	 * @param a
 	 * @param min -- the value to compare to (less than this equals newMin)
 	 * @param newMin -- the replace value
-	 * @return
+	 * @return the floored matrix
 	 */
 	public static double[][] floor(final double[][] a, final double min, final double newMin) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final double[][] b = new double[a.length][];
 		for(int i = 0; i < b.length; i++)
@@ -598,13 +764,15 @@ public class MatUtils {
 	}
 	
 	/**
-	 * Build a matrix from a vector
-	 * @param v
+	 * Build a matrix from a vector. Repeating a vector ({0,1}) row-wise twice will
+	 * yield a matrix {{0,0},{1,1}}; column-wise will yield {{0,1},{0,1}}
+	 * @param v - the vector
+	 * @param repCount - the number of time to repeat the vector
 	 * @param axis: which axis each value in the vector represents
-	 * @return
+	 * @return a matrix
 	 */
 	public static double[][] fromVector(final double[] v, final int repCount, final Axis axis) {
-		VecUtils.checkDims(v);
+		VecUtils.checkDimsPermitEmpty(v);
 		
 		if(repCount < 1)
 			throw new IllegalArgumentException("repCount cannot be less than 1");
@@ -626,18 +794,32 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Create a matrix from an ArrayList of vectors
+	 * @param a
+	 * @return a matrix
+	 */
 	public static double[][] fromList(final ArrayList<double[]> a) {
 		final double[][] b = new double[a.size()][];
 		
 		int idx = 0;
 		for(double[] vec: a)
-			b[idx++] = vec;
+			b[idx++] = VecUtils.copy(vec);
 		
 		return b;
 	}
 	
+	/**
+	 * Retrieve a column from a uniform matrix
+	 * @param data
+	 * @param idx
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the column at the idx
+	 */
 	public static double[] getColumn(final double[][] data, final int idx) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
 		final int m=data.length, n=data[0].length;
 		if(idx >= n || idx < 0)
@@ -650,8 +832,17 @@ public class MatUtils {
 		return col;
 	}
 	
+	/**
+	 * Retrieve a column from a uniform matrix
+	 * @param data
+	 * @param idx
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the column at the idx
+	 */
 	public static int[] getColumn(final int[][] data, final int idx) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
 		final int m=data.length, n=data[0].length;
 		if(idx >= n || idx < 0)
@@ -664,7 +855,18 @@ public class MatUtils {
 		return col;
 	}
 	
+	/**
+	 * Retrieve a set of columns from a uniform matrix
+	 * @param data
+	 * @param idx
+	 * @throws IllegalArgumentException if the rows are empty
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the new matrix
+	 */
 	public static double[][] getColumns(final double[][] data, final int[] idcs) {
+		checkDimsForUniformity(data);
 		final double[][] out = new double[data.length][idcs.length];
 		
 		int idx = 0;
@@ -674,17 +876,34 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Retrieve a set of columns from a uniform matrix
+	 * @param data
+	 * @param idx
+	 * @throws IllegalArgumentException if the rows are empty
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the new matrix
+	 */
 	public static double[][] getColumns(final double[][] data, final Integer[] idcs) {
-		final double[][] out = new double[data.length][idcs.length];
-		
-		int idx = 0;
-		for(int i = 0; i < idcs.length; i++)
-			setColumnInPlace(out, idx++, getColumn(data, idcs[i]));
-		
-		return out;
+		int[] i = new int[idcs.length];
+		for(int j = 0; j < i.length; j++)
+			i[j] = idcs[j];
+		return getColumns(data, i);
 	}
 	
+	/**
+	 * Retrieve a set of rows from a matrix
+	 * @param data
+	 * @param idx
+	 * @throws IllegalArgumentException if the rows are empty
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the new matrix
+	 */
 	public static double[][] getRows(final double[][] data, final int[] idcs) {
+		checkDimsPermitEmpty(data);
 		final double[][] out = new double[idcs.length][];
 		
 		int idx = 0;
@@ -696,16 +915,19 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Retrieve a set of rows from a matrix
+	 * @param data
+	 * @param idx
+	 * @throws IndexOutOfBoundsException if the idx is 
+	 * less than 0 or >= the length of the matrix
+	 * @return the new matrix
+	 */
 	public static double[][] getRows(final double[][] data, final Integer[] idcs) {
-		final double[][] out = new double[idcs.length][];
-		
-		int idx = 0;
-		for(int i = 0; i < idcs.length; i++) {
-			out[idx] = new double[data[i].length];
-			setRowInPlace(out, idx++, data[idcs[i]]);
-		}
-		
-		return out;
+		int[] i = new int[idcs.length];
+		for(int j = 0; j < i.length; j++)
+			i[j] = idcs[j];
+		return getRows(data, i);
 	}
 	
 	public static double[] max(final double[][] data, final Axis axis) {
@@ -1271,7 +1493,7 @@ public class MatUtils {
 	}
 
 	public static double[][] where(final MatSeries series, double[][] x, double[][] y) {
-		checkDims(x, y);
+		checkDimsForUniformity(x, y);
 		
 		final int m = x.length, n = x[0].length;
 		final boolean[][] ser = series.get();
