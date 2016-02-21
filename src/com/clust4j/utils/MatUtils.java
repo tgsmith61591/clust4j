@@ -235,22 +235,22 @@ public class MatUtils {
 	final static public void checkDims(final double[][] a, final double[][] b) {
 		if(a.length == 0 || b.length == 0)
 			throw new IllegalArgumentException("row dims are empty");
-		if(a.length != b.length)
-			throw new DimensionMismatchException(a.length, b.length);
-		
-		for(int i = 0; i < a.length; i++) {
-			try {
-				if(a[i].length != b[i].length)
-					throw new DimensionMismatchException(a[i].length, b[i].length);
-			} catch(NullPointerException npe) {
-				throwDimException(a.length, npe);
-			}
-		}
+		checkDimsPermitEmpty(a,b);
 	}
 	
 	final static public void checkDims(final boolean[][] a, final boolean[][] b) {
 		if(a.length == 0 || b.length == 0)
 			throw new IllegalArgumentException("row dims are empty");
+		checkDimsPermitEmpty(a,b);
+	}
+	
+	final static public void checkDims(final int[][] a, final int[][] b) {
+		if(a.length == 0 || b.length == 0)
+			throw new IllegalArgumentException("row dims are empty");
+		checkDimsPermitEmpty(a,b);
+	}
+	
+	final static public void checkDimsPermitEmpty(final double[][] a, final double[][] b) {
 		if(a.length != b.length)
 			throw new DimensionMismatchException(a.length, b.length);
 		
@@ -264,9 +264,21 @@ public class MatUtils {
 		}
 	}
 	
-	final static public void checkDims(final int[][] a, final int[][] b) {
-		if(a.length == 0 || b.length == 0)
-			throw new IllegalArgumentException("row dims are empty");
+	final static public void checkDimsPermitEmpty(final boolean[][] a, final boolean[][] b) {
+		if(a.length != b.length)
+			throw new DimensionMismatchException(a.length, b.length);
+		
+		for(int i = 0; i < a.length; i++) {
+			try {
+				if(a[i].length != b[i].length)
+					throw new DimensionMismatchException(a[i].length, b[i].length);
+			} catch(NullPointerException npe) {
+				throwDimException(a.length, npe);
+			}
+		}
+	}
+	
+	final static public void checkDimsPermitEmpty(final int[][] a, final int[][] b) {
 		if(a.length != b.length)
 			throw new DimensionMismatchException(a.length, b.length);
 		
@@ -631,12 +643,12 @@ public class MatUtils {
 	 * a tolerance
 	 * @param a
 	 * @param b
-	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws IllegalArgumentException if the matrix row dims are empty
 	 * @throws DimensionMismatchException if the matrix dims don't match
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[][] a, final double[][] b, final double tol) {
-		checkDims(a, b);
+		checkDimsPermitEmpty(a, b);
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsWithTolerance(a[i], b[i], tol))
@@ -930,31 +942,39 @@ public class MatUtils {
 		return getRows(data, i);
 	}
 	
+	/**
+	 * Return a vector of maxes across an axis in a uniform matrix.
+	 * @param data
+	 * @param axis
+	 * @throws IllegalArgumentException if no rows in matrix
+	 * @throws NonUniformMatrixException if the matrix is non uniform
+	 * @return a vector of maxes
+	 */
 	public static double[] max(final double[][] data, final Axis axis) {
-		if(data.length == 0)
-			return new double[0];
-		
-		double[] out;
-		final int m=data.length, n=data[0].length;
-		if(axis.equals(Axis.COL)) {
-			out = new double[n];
-			double[] col;
-			for(int i = 0; i < n; i++) {
-				col = getColumn(data, i);
-				out[i] = VecUtils.max(col);
-			}
-		} else {
-			out = new double[m];
-			for(int i = 0; i < m; i++)
-				out[i] = VecUtils.max(data[i]);
-		}
-		
-		return out;
+		return minMax(data, axis, true);
 	}
 	
+	/**
+	 * Return a vector of mins across an axis in a uniform matrix.
+	 * @param data
+	 * @param axis
+	 * @throws IllegalArgumentException if no rows in matrix
+	 * @throws NonUniformMatrixException if the matrix is non uniform
+	 * @return a vector of mins
+	 */
 	public static double[] min(final double[][] data, final Axis axis) {
-		if(data.length == 0)
-			return new double[0];
+		return minMax(data, axis, false);
+	}
+	
+	/**
+	 * Local helper function for computing min or max vectors across an axis
+	 * @param data
+	 * @param axis
+	 * @param max
+	 * @return
+	 */
+	private static double[] minMax(final double[][] data, final Axis axis, boolean max) {
+		checkDimsForUniformity(data);
 		
 		double[] out;
 		final int m=data.length, n=data[0].length;
@@ -963,24 +983,26 @@ public class MatUtils {
 			double[] col;
 			for(int i = 0; i < n; i++) {
 				col = getColumn(data, i);
-				out[i] = VecUtils.min(col);
+				out[i] = max ? VecUtils.max(col) : VecUtils.min(col);
 			}
 		} else {
 			out = new double[m];
 			for(int i = 0; i < m; i++)
-				out[i] = VecUtils.min(data[i]);
+				out[i] = max ? VecUtils.max(data[i]) : VecUtils.min(data[i]);
 		}
 		
 		return out;
 	}
 	
 	/**
-	 * Returns the mean row from a matrix
+	 * Returns the mean row from a uniform matrix
 	 * @param data
-	 * @return
+	 * @throws NonUniformMatrixException if the matrix is non uniform
+	 * @throws IllegalArgumentException if the matrix has no rows
+	 * @return the mean record
 	 */
 	public static double[] meanRecord(final double[][] data) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
 		// Note: could use VecUtils.mean(...) and getColumn(...)
 		// in conjunction here, but this is a faster hack, though
@@ -1000,8 +1022,15 @@ public class MatUtils {
 		return sums;
 	}
 	
+	/**
+	 * Returns the median row from a uniform matrix
+	 * @param data
+	 * @throws NonUniformMatrixException if the matrix is non uniform
+	 * @throws IllegalArgumentException if the matrix has no rows
+	 * @return the median record
+	 */
 	public static double[] medianRecord(final double[][] data) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
 		final int n = data[0].length;
 		final double[] median = new double[n];
@@ -1012,15 +1041,16 @@ public class MatUtils {
 	}
 	
 	/**
-	 * Multiply two matrices. Auto selects either 
-	 * parallelization or serialization
+	 * Multiply two matrices. Auto schedules 
+	 * parallel job if applicable
 	 * @param a
 	 * @param b
 	 * @return the product A*B
 	 */
 	public static double[][] multiply(final double[][] a, final double[][] b) {
-		checkDims(a);
-		if(ALLOW_AUTO_PARALLELISM && a.length>MAX_SERIAL_VECTOR_LEN) {
+		if(ALLOW_AUTO_PARALLELISM && 
+				(a.length>MAX_SERIAL_VECTOR_LEN 
+			  || b.length>MAX_SERIAL_VECTOR_LEN)) {
 			try {
 				return multiplyDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1030,9 +1060,13 @@ public class MatUtils {
 	}
 	
 	/**
-	 * Multiply two matrices in a distributed fashion
+	 * Multiply two matrices, A and B, in a parallel fashion using 
+	 * {@link DistributedMatrixMultiplication}
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the number of columns in A does not
+	 * match the number of rows in B
+	 * @throws IllegalArgumentException if the rows of either matrix are empty
 	 * @return the product A*B
 	 */
 	public static double[][] multiplyDistributed(final double[][] a, final double[][] b) {
@@ -1040,13 +1074,19 @@ public class MatUtils {
 	}
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Multiply two matrices, A and B, serially
 	 * @param a
 	 * @param b
-	 * @return
+	 * @throws DimensionMismatchException if the number of columns in A does not
+	 * match the number of rows in B
+	 * @throws IllegalArgumentException if the rows of either matrix are empty
+	 * @return the product A*B
 	 */
 	public static double[][] multiplyForceSerial(final double[][] a, final double[][] b) {
+		checkDims(a);
+		checkDims(b);
+		
+		// The following classes implicitly handle the multiplication criteria
 		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
 			final BlockRealMatrix aa = new BlockRealMatrix(a);
 			final BlockRealMatrix bb = new BlockRealMatrix(b);
@@ -1062,9 +1102,12 @@ public class MatUtils {
 	/**
 	 * Invert the sign of every element in a matrix, return a copy
 	 * @param data
-	 * @return
+	 * @throws IllegalArgumentException if the matrix's row dims are empty
+	 * @return the matrix with every element's sign inverted
 	 */
 	public static double[][] negative(final double[][] data) {
+		checkDimsPermitEmpty(data);
+		
 		final double[][] copy = MatUtils.copy(data);
 		for(int i = 0; i < copy.length; i++)
 			for(int j = 0; j < copy[i].length; j++)
@@ -1111,11 +1154,23 @@ public class MatUtils {
 		return c;
 	}
 	
+	/**
+	 * Creates a matrix of random Gaussians.
+	 * @param m
+	 * @param n
+	 * @return a MxN matrix
+	 */
 	public static double[][] randomGaussian(final int m, final int n) {
 		return randomGaussian(m, n, new Random());
 	}
 	
-	
+	/**
+	 * Creates a matrix of random Gaussians.
+	 * @param m
+	 * @param n
+	 * @param seed
+	 * @return a MxN matrix
+	 */
 	public static double[][] randomGaussian(final int m, final int n, final Random seed) {
 		if(m < 0 || n < 0)
 			throw new IllegalArgumentException("illegal dimensions");
@@ -1127,6 +1182,13 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Reorder the rows in a matrix
+	 * @param data
+	 * @param order
+	 * @throws IllegalArgumentException if the data is empty
+	 * @return the reordered matrix
+	 */
 	public static double[][] reorder(final double[][] data, final int[] order) {
 		VecUtils.checkDims(order);
 		checkDims(data);
@@ -1141,6 +1203,13 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Reorder the rows in a matrix
+	 * @param data
+	 * @param order
+	 * @throws IllegalArgumentException if the data is empty
+	 * @return the reordered matrix
+	 */
 	public static int[][] reorder(final int[][] data, final int[] order) {
 		VecUtils.checkDims(order);
 		checkDims(data);

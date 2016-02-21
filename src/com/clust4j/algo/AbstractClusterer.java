@@ -38,7 +38,10 @@ import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
  */
-public abstract class AbstractClusterer extends BaseModel implements Loggable, Named, java.io.Serializable {
+public abstract class AbstractClusterer 
+		extends BaseModel 
+		implements Loggable, Named, java.io.Serializable {
+	
 	private static final long serialVersionUID = -3623527903903305017L;
 	
 	

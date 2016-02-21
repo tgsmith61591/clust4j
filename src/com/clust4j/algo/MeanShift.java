@@ -18,7 +18,6 @@ import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.IllegalClusterStateException;
-import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;

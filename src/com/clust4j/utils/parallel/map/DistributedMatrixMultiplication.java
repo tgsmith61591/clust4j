@@ -24,6 +24,9 @@ public class DistributedMatrixMultiplication extends DualMatrixMapTaskOperator {
 		return matrix_c; // Unnecessary in this context (using mutability) except for erasure
 	}
 
+	/**
+	 * Unnecessary for this specific class, but fits type erasure
+	 */
 	@Override
 	protected DistributedMatrixMultiplication newInstance(double[][] a, 
 			double[][] b, double[][] c, int low, int high) {

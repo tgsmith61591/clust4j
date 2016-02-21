@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.algo;
 
 /**
  * An interface to be implemented by {@link AbstractAutonomousClusterer}<tt>s</tt> that converge

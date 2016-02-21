@@ -3,13 +3,17 @@ package com.clust4j.utils;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
+import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.data.ExampleDataSets;
+import com.clust4j.log.Log;
 import com.clust4j.utils.MatUtils.Axis;
 import com.clust4j.utils.MatUtils.MatSeries;
 
@@ -303,6 +307,40 @@ public class MatTests {
 		//System.out.println(TestSuite.formatter.format(new Array2DRowRealMatrix(MatUtils.partitionByRow(a, 2))));
 		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 2), b) );
 		assertTrue( MatUtils.equalsExactly(a, c) );
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testPartitionIAE1() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,0,1},
+			new double[]{0,0,0}
+		};
+		
+		final double[][] b = new double[][]{
+			new double[]{0,0,0},
+			new double[]{0,1,2},
+			new double[]{0,0,1}
+		};
+		
+		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, -1), b) );
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testPartitionIAE2() {
+		final double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,0,1},
+			new double[]{0,0,0}
+		};
+		
+		final double[][] b = new double[][]{
+			new double[]{0,0,0},
+			new double[]{0,1,2},
+			new double[]{0,0,1}
+		};
+		
+		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 3), b) );
 	}
 	
 	@Test
@@ -1258,5 +1296,364 @@ public class MatTests {
 	@Test(expected=IllegalArgumentException.class)
 	public void testGetRowsEmpty() {
 		MatUtils.getRows(new double[][]{}, new Integer[]{0,0,2});
+	}
+	
+	@Test
+	public void testAxisMinMax() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2,3},
+			new double[]{4,5,6,7},
+			new double[]{8,9,10,11}
+		};
+		
+		assertTrue(VecUtils.equalsExactly(MatUtils.max(a, Axis.COL), a[2]));
+		assertTrue(VecUtils.equalsExactly(MatUtils.max(a, Axis.ROW), 
+				new double[]{3,7,11}));
+		
+		assertTrue(VecUtils.equalsExactly(MatUtils.min(a, Axis.COL), a[0]));
+		assertTrue(VecUtils.equalsExactly(MatUtils.min(a, Axis.ROW), 
+				new double[]{0,4,8}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMinMaxEmpty1() {
+		MatUtils.min(new double[][]{}, Axis.ROW);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMinMaxEmpty2() {
+		MatUtils.min(new double[][]{}, Axis.COL);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMinMaxEmpty3() {
+		MatUtils.max(new double[][]{}, Axis.ROW);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMinMaxEmpty4() {
+		MatUtils.max(new double[][]{}, Axis.COL);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMinMaxNUME1() {
+		double[][] a = new double[][]{
+			new double[]{1,2},
+			new double[]{},
+			new double[]{1}
+		};
+		
+		MatUtils.min(a, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMinMaxNUME2() {
+		double[][] a = new double[][]{
+			new double[]{1,2},
+			new double[]{},
+			new double[]{1}
+		};
+		
+		MatUtils.min(a, Axis.COL);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMinMaxNUME3() {
+		double[][] a = new double[][]{
+			new double[]{1,2},
+			new double[]{},
+			new double[]{1}
+		};
+		
+		MatUtils.max(a, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMinMaxNUME() {
+		double[][] a = new double[][]{
+			new double[]{1,2},
+			new double[]{},
+			new double[]{1}
+		};
+		
+		MatUtils.max(a, Axis.COL);
+	}
+	
+	@Test
+	public void testMeanRecords() {
+		assertTrue(VecUtils.equalsExactly(
+			MatUtils.meanRecord(ExampleDataSets.IRIS.getData().getData()),
+			new double[]{5.843333333333335, 3.057333333333334, 3.7580000000000027, 1.199333333333334}));
+	
+		double[][] d = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,1,0},
+			new double[]{1.75,1.75,1.75}
+		};
+		
+		assertTrue(VecUtils.equalsExactly(MatUtils.meanRecord(d), new double[]{1.25,1.25,1.25}));
+		assertTrue(VecUtils.equalsExactly(
+				MatUtils.meanRecord(new double[][]{new double[]{}, new double[]{}}), 
+				new double[]{}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMeanRecordIAE() {
+		MatUtils.meanRecord(new double[][]{});
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMeanRecordNUME() {
+		MatUtils.meanRecord(new double[][]{
+			new double[]{},
+			new double[]{1,2,3}
+		});
+	}
+	
+	@Test
+	public void testMedianRecord() {
+		assertTrue(VecUtils.equalsExactly(
+			MatUtils.medianRecord(ExampleDataSets.IRIS.getData().getData()),
+			new double[]{5.8, 3.0, 4.35, 1.3}));
+		
+		double[][] d = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,1,0},
+			new double[]{1.75,1.75,1.75}
+		};
+		
+		assertTrue(VecUtils.equalsExactly(
+			MatUtils.medianRecord(d), 
+			new double[]{1.75,1,1.75}));
+		assertTrue(VecUtils.equalsExactly(
+			MatUtils.medianRecord(new double[][]{new double[]{}, new double[]{}}), 
+			new double[]{}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMedianRecordIAE() {
+		MatUtils.medianRecord(new double[][]{});
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testMedianRecordNUME() {
+		MatUtils.medianRecord(new double[][]{
+			new double[]{},
+			new double[]{1,2,3}
+		});
+	}
+	
+	@Test
+	public void testMultiplication() {
+		double[][] a = new double[][]{
+			new double[]{ 0.2364806 ,  0.7345841 ,  0.28644998,  0.73868295,  0.73302448},
+			new double[]{ 0.55749876,  0.13274999,  0.26477233,  0.92365331,  0.91806343},
+			new double[]{ 0.6493526 ,  0.12678364,  0.67091553,  0.34491586,  0.86128125},
+			new double[]{ 0.47833579,  0.57711398,  0.87922115,  0.34463673,  0.11473969}
+		};
+		
+		double[][] b = new double[][]{
+			new double[]{ 0.28103802,  0.35056847},
+			new double[]{ 0.86042456,  0.82745279},
+			new double[]{ 0.19988524,  0.61973525},
+			new double[]{ 0.19302864,  0.92796937},
+			new double[]{ 0.84613975,  0.43899853}
+		};
+		
+		double[][] product = new double[][]{
+			new double[]{1.5185994790989712, 1.8755312760443719},
+			new double[]{1.2789252835311595, 1.7295250594395744},
+			new double[]{1.2210295793067456, 1.4465125838040807},
+			new double[]{0.9703474881065354, 1.5602912426056987}
+		};
+		
+		// both should be run serially...
+		assertTrue(MatUtils.equalsExactly(MatUtils.multiply(a, b), product));
+		assertTrue(MatUtils.equalsExactly(MatUtils.multiplyForceSerial(a, b), product));
+		
+		// Force distributed:
+		assertTrue(MatUtils.equalsExactly(MatUtils.multiplyDistributed(a, b), product));
+		
+		
+		// Force a massively distributed task... can take long time (if works...)!
+		final int rows = GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN + 1;
+		final int cols = 2;
+		GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM = true;
+		try {
+			// 2 X 10,000,001
+			Array2DRowRealMatrix A = TestSuite.getRandom(cols, rows);
+			
+			// 10,000,001 X 2
+			Array2DRowRealMatrix B = TestSuite.getRandom(rows, cols);
+			
+			// Yield 2 X 2
+			MatUtils.multiply(A.getDataRef(), B.getDataRef());
+		} catch(OutOfMemoryError e) {
+			Log.info("could not complete large distributed multiplication due to heap space");
+		} finally { // don't want to fail tests just because of this...
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM = 
+					GlobalState.ParallelismConf.PARALLELISM_RECOMMENDED;
+		}
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testMultDimExcept1() {
+		MatUtils.multiply(
+			new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,3}
+			},
+			
+			new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,3}
+			});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testMultDimExcept2() {
+		MatUtils.multiplyDistributed(
+			new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,3}
+			},
+			
+			new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,3}
+			});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testMultDimExcept3() {
+		MatUtils.multiplyForceSerial(
+			TestSuite.getRandom(10001, 2).getDataRef(),
+			TestSuite.getRandom(10001, 2).getDataRef());
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMultIAExcept1() {
+		MatUtils.multiply(
+			new double[][]{
+			},
+			
+			new double[][]{
+			});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMultIAExcept2() {
+		MatUtils.multiplyDistributed(
+			new double[][]{
+			},
+			
+			new double[][]{
+			});
+	}
+	
+	@Test
+	public void testNegative1() {
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.negative(new double[][]{
+				new double[]{}
+			}), 
+			new double[][]{
+				new double[]{}
+			}));
+	}
+	
+	@Test
+	public void testNegative2() {
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.negative(new double[][]{
+				new double[]{-0,1,2},
+				new double[]{-2,1,0},
+				new double[]{-5,2,3}
+			}), 
+			new double[][]{
+				new double[]{0,-1,-2},
+				new double[]{2,-1,-0},
+				new double[]{5,-2,-3}
+			}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNegativeIAE() {
+		MatUtils.negative(new double[][]{ });
+	}
+	
+	@Test
+	public void testRandomGaussians() {
+		double[][] a= MatUtils.randomGaussian(4, 4);
+		assertTrue(a.length == 4 && a[0].length == 4);
+	}
+	
+	@Test
+	public void testRandomGaussiansEmpty() {
+		assertTrue(MatUtils.equalsExactly(MatUtils.randomGaussian(0,0),
+			new double[][]{}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testRandomGaussiansIAE1() {
+		MatUtils.randomGaussian(0,-1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testRandomGaussiansIAE2() {
+		MatUtils.randomGaussian(-1,0);
+	}
+	
+	@Test
+	public void testReorder() {
+		double[][] a = new double[][]{
+			new double[]{0,0,0},
+			new double[]{1,1,1}
+		};
+		
+		int[][] b = new int[][]{
+			new int[]{0,0,0},
+			new int[]{1,1,1}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.reorder(
+				a, new int[]{0,0,0}),
+
+			new double[][]{
+				new double[]{0,0,0},
+				new double[]{0,0,0},
+				new double[]{0,0,0}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.reorder(
+				b, new int[]{0,0,0}),
+
+			new int[][]{
+				new int[]{0,0,0},
+				new int[]{0,0,0},
+				new int[]{0,0,0}
+			}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReorderIAE1() {
+		MatUtils.reorder(new int[][]{}, new int[]{0,0,0});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReorderIAE2() {
+		MatUtils.reorder(new int[][]{new int[]{}}, new int[]{});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReorderIAE3() {
+		MatUtils.reorder(new double[][]{}, new int[]{0,0,0});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReorderIAE4() {
+		MatUtils.reorder(new double[][]{new double[]{}}, new int[]{});
 	}
 }

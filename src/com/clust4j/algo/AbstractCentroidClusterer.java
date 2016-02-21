@@ -8,7 +8,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.metrics.SilhouetteScore;
 import com.clust4j.metrics.UnsupervisedIndexAffinity;
-import com.clust4j.utils.Convergeable;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;

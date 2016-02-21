@@ -108,6 +108,6 @@ public class TestSuite {
 			for(int j = 0; j < cols; j++)
 				data[i][j] = rand.nextDouble() * (rand.nextDouble() > 0.5 ? -1 : 1);
 		
-		return new Array2DRowRealMatrix(data);
+		return new Array2DRowRealMatrix(data, false);
 	}
 }

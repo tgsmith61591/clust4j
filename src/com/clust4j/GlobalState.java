@@ -183,12 +183,19 @@ public class GlobalState {
 		 * whether or not to use parallelism & how large parallel chunks should be. */
 		public static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 		
-		/** If true and the size of the vector exceeds {@value ParallelismUtils#MAX_SERIAL_VECTOR_LEN}, 
+		/**
+		 * Whether parallelization is recommended for this machine.
+		 * Default value is true if availableProcessors is at least 8.
+		 */
+		public static final boolean PARALLELISM_RECOMMENDED = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
+		
+		/** If true and the size of the vector exceeds {@value #MAX_SERIAL_VECTOR_LEN}, 
 		 *  auto schedules parallel job for applicable operations. This can slow
 		 *  things down on machines with a lower core count, but speed them up
 		 *  on machines with a higher core count. More heap space may be required. 
-		 *  Default value is true if availableProcessors is at least 8 */
-		public static boolean ALLOW_AUTO_PARALLELISM = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
+		 *  Defaults to {@link #PARALLELISM_RECOMMENDED}
+		 */
+		public static boolean ALLOW_AUTO_PARALLELISM = PARALLELISM_RECOMMENDED;
 		
 		/**
 		 * If true, will try to force parallelism whenever possible. On a machine
