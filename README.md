@@ -90,6 +90,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         ```
 
   - `RadiusNeighbors`, a neighbor clusterer that will fit the nearest points within a given radius.
+
         ```java
         Neighbors rn = new RadiusNeighbors(mat).fit();
         RadiusNeighbors = rn.getNeighbors();
@@ -99,6 +100,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 
 - **Supervised clustering algorithms**:
   - `NearestCentroid`, a supervised algorithm that fits centroids based on a set of observed labels.
+
         ```java
         NearestCentroid nc = new NearestCentroid(mat, new int[]{0,1,1}).fit();
         // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data

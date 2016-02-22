@@ -33,6 +33,6 @@ final public class DistributedSubtract extends DualVectorMapTaskOperator {
     
     @Override
     void dimCheck(double[] a, double[] b) {
-    	VecUtils.checkDimsPermitEmpty(a,b);
+    	VecUtils.checkDimsPermitEmpty(a, b);
     }
 }

@@ -32,6 +32,6 @@ final public class DistributedAdd extends DualVectorMapTaskOperator {
     }
     
     void dimCheck(double[] a, double[] b) {
-    	VecUtils.checkDimsPermitEmpty(array);
+    	VecUtils.checkDimsPermitEmpty(a, b);
     }
 }

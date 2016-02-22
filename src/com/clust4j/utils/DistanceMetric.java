@@ -1,8 +1,15 @@
 package com.clust4j.utils;
 
+import com.clust4j.utils.MinkowskiDistance;
+
 public interface DistanceMetric extends GeometricallySeparable {
 	public static final double DEFAULT_P = 2.0;
 	
+	/**
+	 * Get the p parameter for the distance metric
+	 * @see {@link MinkowskiDistance}
+	 * @return the p parameter
+	 */
 	public double getP();
 	
 	/**
@@ -16,7 +23,7 @@ public interface DistanceMetric extends GeometricallySeparable {
 	 * stage for the sake of efficiency.
 	 * @param a
 	 * @param b
-	 * @return
+	 * @return the partial distance
 	 */
 	public double getPartialDistance(double[] a, double[] b);
 	
@@ -24,7 +31,7 @@ public interface DistanceMetric extends GeometricallySeparable {
 	 * Convert the partial distance to the full distance
 	 * @param a
 	 * @param b
-	 * @return
+	 * @return the full distance
 	 */
 	public double partialDistanceToDistance(double d);
 	
@@ -32,7 +39,7 @@ public interface DistanceMetric extends GeometricallySeparable {
 	 * Convert the full distance to the partial distance
 	 * @param a
 	 * @param b
-	 * @return
+	 * @return the partial distance
 	 */
 	public double distanceToPartialDistance(double d);
 }
