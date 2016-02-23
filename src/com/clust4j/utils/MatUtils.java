@@ -1244,8 +1244,17 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Reshape a matrix into new dimensions
+	 * @param matrix
+	 * @param mNew
+	 * @param nNew
+	 * @throws IllegalArgumentException if either new dimension is less than 0, or if the
+	 * product of the new dimensions don't match the product of the current dimensions
+	 * @return the reshaped matrix
+	 */
 	public static double[][] reshape(final double[][] matrix, final int mNew, final int nNew) {
-		checkDims(matrix);
+		checkDimsForUniformity(matrix);
 		
 		final int mOld = matrix.length, nOld = matrix[0].length;
 		

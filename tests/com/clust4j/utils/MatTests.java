@@ -1656,4 +1656,49 @@ public class MatTests {
 	public void testReorderIAE4() {
 		MatUtils.reorder(new double[][]{new double[]{}}, new int[]{});
 	}
+	
+	@Test
+	public void testReshape1() {
+		final double[][] a = new double[][]{
+			new double[]{-0,1,2,3},
+			new double[]{-2,1,0,8},
+			new double[]{-5,2,3,4}
+		};
+		
+		final double[][] b = new double[][]{
+			new double[]{-0,1,2},
+			new double[]{3,-2,1},
+			new double[]{0,8,-5},
+			new double[]{2,3,4}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(MatUtils.reshape(a, 4, 3), b));
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testReshapeNUME1() {
+		MatUtils.reshape(new double[][]{
+			new double[]{-0,1,2,3},
+			new double[]{-2,1,8},
+			new double[]{-5,2,3,4}
+		}, 4, 3);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE1() {
+		MatUtils.reshape(new double[][]{
+			new double[]{-0,1,2,3},
+			new double[]{-2,1,8,2},
+			new double[]{-5,2,3,4}
+		}, 4, 2);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE2() {
+		MatUtils.reshape(new double[][]{
+			new double[]{-0,1,2,3},
+			new double[]{-2,1,8,2},
+			new double[]{-5,2,3,4}
+		}, -12, -1);
+	}
 }
