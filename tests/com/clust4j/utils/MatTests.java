@@ -3,7 +3,6 @@ package com.clust4j.utils;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -367,6 +366,341 @@ public class MatTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(d, MatUtils.where(ser, b, c)));
+		
+		// Test if one of the matrices is empty
+		boolean pass = false;
+		try {
+			pass = false;
+			MatUtils.where(ser, new double[][]{}, c);
+		} catch(IllegalArgumentException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.where(ser, b, new double[][]{});
+		} catch(IllegalArgumentException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		// Test for non-uniformity
+		try {
+			pass = false;
+			MatUtils.where(ser, 
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1}
+				}, c);
+		} catch(NonUniformMatrixException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.where(ser, b,
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1}
+				});
+		} catch(NonUniformMatrixException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		// Test for dim mismatches
+		try { // where c is the odd man out
+			pass = false;
+			MatUtils.where(ser, b,
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1,2,3}
+				});
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try { // where b is the odd man out
+			pass = false;
+			MatUtils.where(ser,
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1,2,3}
+				}, c);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try { // where ser is the odd man out by col dim
+			pass = false;
+			MatUtils.where(ser,
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1,2,3}
+				},
+				new double[][]{
+					new double[]{1,2,3},
+					new double[]{1,2,3}
+				});
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try { // where ser is the odd man out by row dim
+			pass = false;
+			MatUtils.where(ser,
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1,2},
+					new double[]{1,2}
+				},
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1,2},
+					new double[]{1,2}
+				});
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		//vector 'where' tests
+		double[] x = new double[]{1,2,3};
+		double[] y = new double[]{3,2,1};
+		MatSeries s = new MatSeries(new double[][]{
+			new double[]{-1,0,1},
+			new double[]{0,-1,2},
+		}, Inequality.GTOET, 0);
+		
+		// {false, true , true }
+		// {true , false, true }
+		double[][] z = MatUtils.where(s, x, y);
+		assertTrue(MatUtils.equalsExactly(z,
+			new double[][]{
+				new double[]{3,2,3},
+				new double[]{1,2,3}
+		}));
+		
+		double[][] xm = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6}
+		};
+		z = MatUtils.where(s, xm, y);
+		assertTrue(MatUtils.equalsExactly(z,
+			new double[][]{
+				new double[]{3,2,3},
+				new double[]{4,2,6}
+		}));
+		
+		double[][] ym = new double[][]{
+			new double[]{9,8,5},
+			new double[]{-1,-5,4}
+		};
+		z = MatUtils.where(s, x, ym);
+		assertTrue(MatUtils.equalsExactly(z,
+			new double[][]{
+				new double[]{9,2,3},
+				new double[]{1,-5,3}
+		}));
+	}
+	
+	@Test
+	public void testMatSeries() {
+		// Test constructor A with matrix and static value
+		double[][] a = new double[][]{
+			new double[]{4,1,2},
+			new double[]{2,6,0},
+			new double[]{9,2,0}
+		};
+		
+		MatSeries series = new MatSeries(a, Inequality.ET, 0);
+		assertTrue(MatUtils.equalsExactly(series.getRef(), 
+			new boolean[][] {
+				new boolean[]{false,false,false},
+				new boolean[]{false,false, true},
+				new boolean[]{false,false, true}
+		}));
+		
+		series = new MatSeries(a, Inequality.GT, 0);
+		assertTrue(MatUtils.equalsExactly(series.getRef(), 
+			new boolean[][] {
+				new boolean[]{true, true, true},
+				new boolean[]{true, true,false},
+				new boolean[]{true, true,false}
+		}));
+		
+		// Ensure are the same
+		assertTrue(MatUtils.equalsExactly(series.getRef(), series.get()));
+		
+		series = new MatSeries(a, Inequality.LT, 0);
+		assertTrue(MatUtils.equalsExactly(series.getRef(), 
+			new boolean[][] {
+				new boolean[]{false,false,false},
+				new boolean[]{false,false,false},
+				new boolean[]{false,false,false}
+		}));
+		
+		// Test for NUME and IAE
+		boolean pass = false;
+		try {
+			pass = false;
+			new MatSeries(
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1}
+				}, Inequality.ET, 0);
+		} catch(NonUniformMatrixException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			new MatSeries(
+				new double[][]{
+				}, Inequality.ET, 0);
+		} catch(IllegalArgumentException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		
+		
+		// Test constructor B with matrix and vector values
+		/*
+		a = new double[][]{
+			new double[]{4,1,2},
+			new double[]{2,6,0},
+			new double[]{9,2,0}
+		};
+		*/
+		
+		series = new MatSeries(new double[]{1,2,3}, Inequality.ET, a);
+		assertTrue(MatUtils.equalsExactly(series.getRef(), 
+			new boolean[][] {
+				new boolean[]{false,false,false},
+				new boolean[]{false,false,false},
+				new boolean[]{false,true, false}
+		}));
+		
+		series = new MatSeries(new double[]{1,2,3}, Inequality.GT, a);
+		assertTrue(MatUtils.equalsExactly(series.getRef(), 
+			new boolean[][] {
+				new boolean[]{false,true ,true },
+				new boolean[]{false,false,true },
+				new boolean[]{false,false,true }
+		}));
+		
+		
+		// Test for NUME, DME and IAE
+		try {
+			pass = false;
+			new MatSeries(new double[]{0,0},Inequality.ET,
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1}
+				});
+		} catch(NonUniformMatrixException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			new MatSeries(new double[]{}, Inequality.ET,
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1,2}
+			});
+		} catch(DimensionMismatchException d) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			new MatSeries(new double[]{1,2,3}, Inequality.ET,
+				new double[][]{
+					new double[]{1,2},
+					new double[]{1,2}
+			});
+		} catch(DimensionMismatchException d) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			new MatSeries(new double[]{0,0}, Inequality.ET,
+				new double[][]{
+				});
+		} catch(IllegalArgumentException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+	}
+	
+	@Test(expected=NonUniformMatrixException.class) 
+	public void testNUMEMatSeries1() {
+		double[][] jagged = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2}
+		};
+		
+		new MatSeries(jagged, Inequality.ET, 0);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class) 
+	public void testNUMEMatSeries2() {
+		double[][] jagged = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2}
+		};
+		
+		new MatSeries(new double[]{1,2,3}, Inequality.ET, jagged);
+	}
+	
+	@Test(expected=DimensionMismatchException.class) 
+	public void testDMEMatSeries1() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,1,0}
+		};
+		
+		new MatSeries(new double[]{1,2}, Inequality.ET, a);
 	}
 	
 	@Test
@@ -1700,5 +2034,972 @@ public class MatTests {
 			new double[]{-2,1,8,2},
 			new double[]{-5,2,3,4}
 		}, -12, -1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE2_5() {
+		MatUtils.reshape(new int[][]{
+			new int[]{-0,1,2,3},
+			new int[]{-2,1,8,2},
+			new int[]{-5,2,3,4}
+		}, -12, -1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE2_75() {
+		MatUtils.reshape(new int[][]{
+			new int[]{-0,1,2,3},
+			new int[]{-2,1,8,2},
+			new int[]{-5,2,3,4}
+		}, 11, 1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE3() {
+		final double[] n = new double[]{1,2,3,4,5};
+		MatUtils.reshape(n, 3, 2); //here
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE4() {
+		final int[] n = new int[]{1,2,3,4,5};
+		MatUtils.reshape(n, 3, 2); //here
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE5() {
+		final double[] n = new double[]{1,2,3,4,5,6};
+		MatUtils.reshape(n, -3, -2); //here
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testReshapeIAE6() {
+		final int[] n = new int[]{1,2,3,4,5,6};
+		MatUtils.reshape(n, -3, -2); //here
+	}
+	
+	public void testRepping() {
+		double val = 3.0;
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.rep(val, 3, 3),
+			new double[][]{
+				new double[]{val, val, val},
+				new double[]{val, val, val}, 
+				new double[]{val, val, val}
+			} ));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.rep(new double[]{val, val, val}, 3),
+			new double[][]{
+				new double[]{val, val, val},
+				new double[]{val, val, val}, 
+				new double[]{val, val, val}
+			} ));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.rep(val, 2, 0),
+			new double[][]{
+				new double[]{},
+				new double[]{}
+			} ));
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testRepIAE1() { MatUtils.rep(3.0, -1, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testRepIAE2() { MatUtils.rep(3.0, 0, -1); }
+	@Test(expected=IllegalArgumentException.class) public void testRepIAE3() { MatUtils.rep(3.0, 0, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testRepIAE4() { MatUtils.rep(new double[]{1.0,1.0}, -1); }
+	@Test(expected=IllegalArgumentException.class) public void testRepIAE5() { MatUtils.rep(new double[]{1.0,1.0}, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testRowMeansSumIAE1() { MatUtils.rowSums(new double[][]{}); }
+	@Test(expected=IllegalArgumentException.class) public void testRowMeansSumIAE2() { MatUtils.rowMeans(new double[][]{}); }
+	
+	@Test
+	public void testScalarOps() {
+		double val = 1.0;
+		double[][] a = new double[][]{
+			new double[]{4.0,2.0,0.0},
+			new double[]{1.5,3.2,1.1}
+		};
+		
+		// Subtraction yields some extremely small floating point difference
+		// for 0.1: 0.10000000000000009
+		assertTrue(MatUtils.equalsWithTolerance(
+			MatUtils.scalarSubtract(a, val),
+			new double[][]{
+				new double[]{3.0,1.0,-1.0},
+				new double[]{0.5,2.2,0.1}
+			}, 1e-9));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(a, val),
+			new double[][]{
+				new double[]{4.0,2.0,0.0},
+				new double[]{1.5,3.2,1.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(a, val),
+			new double[][]{
+				new double[]{4.0,2.0,0.0},
+				new double[]{1.5,3.2,1.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(a, val),
+			new double[][]{
+				new double[]{5.0,3.0,1.0},
+				new double[]{2.5,4.2,2.1}
+			}));
+		
+		
+		// Test non-uniform matrices...
+		a = new double[][]{
+			new double[]{4.0},
+			new double[]{1.5,3.2,1.1}
+		};
+		
+		assertTrue(MatUtils.equalsWithTolerance(
+			MatUtils.scalarSubtract(a, val),
+			new double[][]{
+				new double[]{3.0},
+				new double[]{0.5,2.2,0.1}
+			}, 1e-9));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(a, val),
+			new double[][]{
+				new double[]{4.0},
+				new double[]{1.5,3.2,1.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(a, val),
+			new double[][]{
+				new double[]{4.0},
+				new double[]{1.5,3.2,1.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(a, val),
+			new double[][]{
+				new double[]{5.0},
+				new double[]{2.5,4.2,2.1}
+			}));
+		
+		
+		// Test empty matrices....
+		a = new double[][]{
+			new double[]{},
+			new double[]{}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarSubtract(a, val),
+			a));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(a, val),
+			a));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(a, val),
+			a));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(a, val),
+			a));
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testScalarOpIAE1() { MatUtils.scalarAdd(new double[][]{}, 0.0); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarOpIAE2() { MatUtils.scalarDivide(new double[][]{}, 0.0); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarOpIAE3() { MatUtils.scalarMultiply(new double[][]{}, 0.0); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarOpIAE4() { MatUtils.scalarSubtract(new double[][]{}, 0.0); }
+	
+	public void testScalarVectorOps() {
+		double[] valCol = new double[]{1.0,2.0,3.0};
+		double[] valRow = new double[]{1.0,2.0};
+		double[] emptyVec = new double[]{};
+		
+		double[][] a = new double[][]{
+			new double[]{4.0,2.0,0.0},
+			new double[]{1.5,3.2,1.1}
+		};
+		
+		final double[][] empty = new double[][]{
+			new double[]{},
+			new double[]{}
+		};
+		
+		
+		// COL AXIS TESTS ==========================
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(a, valCol, Axis.COL), 
+			new double[][]{
+				new double[]{5.0,4.0,3.0},
+				new double[]{2.5,5.2,4.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(a, valCol, Axis.COL), 
+			new double[][]{
+				new double[]{4.0,1.0,0.0},
+				new double[]{1.5,1.6,(1.1/3.0)}
+			}));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(a, valCol, Axis.COL), 
+			new double[][]{
+				new double[]{4.0,4.0,0.0},
+				new double[]{1.5,6.4,3.3}
+			}));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarSubtract(a, valCol, Axis.COL), 
+			new double[][]{
+				new double[]{3.0,0.0,-3.0},
+				new double[]{0.5,1.2,-2.1}
+			}));
+		
+		// test empty matrices
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(empty, emptyVec, Axis.COL), 
+			empty));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(empty, emptyVec, Axis.COL), 
+			empty));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(empty, emptyVec, Axis.COL), 
+			empty));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarSubtract(empty, emptyVec, Axis.COL), 
+			empty));
+		
+		// test empty matrices with dim mismatched vectors
+		boolean pass = false;
+		
+		try {
+			pass = false;
+			MatUtils.scalarAdd(empty, valCol, Axis.COL);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarDivide(empty, valCol, Axis.COL);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarMultiply(empty, valCol, Axis.COL);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarSubtract(empty, valCol, Axis.COL);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		
+		
+		
+		
+		// ROW AXIS TESTS ==========================
+		// row = {1.0,2.0}
+		// mat = [{4.0,2.0,0.0},
+		//        {1.5,3.2,1.1}]
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(a, valRow, Axis.ROW), 
+			new double[][]{
+				new double[]{5.0,3.0,1.0},
+				new double[]{3.5,5.2,3.1}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(a, valRow, Axis.ROW), 
+			new double[][]{
+				new double[]{4.0,2.0,0.0},
+				new double[]{0.75,1.6,0.55}
+			}));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(a, valRow, Axis.ROW), 
+			new double[][]{
+				new double[]{4.0,2.0,0.0},
+				new double[]{3.0,6.4,2.2}
+			}));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarSubtract(a, valRow, Axis.ROW), 
+			new double[][]{
+				new double[]{3.0,1.0,-1.0},
+				new double[]{-0.5,1.2,-1.1}
+			}));
+		
+		// test empty matrices
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarAdd(empty, emptyVec, Axis.ROW), 
+			empty));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarDivide(empty, emptyVec, Axis.ROW), 
+			empty));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarMultiply(empty, emptyVec, Axis.ROW), 
+			empty));
+	
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.scalarSubtract(empty, emptyVec, Axis.ROW), 
+			empty));
+		
+		// test empty matrices with dim mismatched vectors
+		pass = false;
+		
+		try {
+			pass = false;
+			MatUtils.scalarAdd(empty, valRow, Axis.ROW);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarDivide(empty, valRow, Axis.ROW);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarMultiply(empty, valRow, Axis.ROW);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+		
+		try {
+			pass = false;
+			MatUtils.scalarSubtract(empty, valRow, Axis.ROW);
+		} catch(DimensionMismatchException e) {
+			pass = true;
+		} finally {
+			if(!pass)
+				fail();
+		}
+	}
+	
+	// Tests on empty matrices
+	@Test(expected=IllegalArgumentException.class) public void testScalarVecOpIAE1() 	{ MatUtils.scalarAdd(new double[][]{}, new double[]{}, Axis.ROW); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarVecOpIAE2() 	{ MatUtils.scalarDivide(new double[][]{}, new double[]{}, Axis.ROW); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarVecOpIAE3() 	{ MatUtils.scalarMultiply(new double[][]{}, new double[]{}, Axis.ROW); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarVecOpIAE4()    { MatUtils.scalarSubtract(new double[][]{}, new double[]{}, Axis.ROW); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarColVecOpIAE1() { MatUtils.scalarAdd(new double[][]{}, new double[]{}, Axis.COL); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarColVecOpIAE2() { MatUtils.scalarDivide(new double[][]{}, new double[]{}, Axis.COL); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarColVecOpIAE3() { MatUtils.scalarMultiply(new double[][]{}, new double[]{}, Axis.COL); }
+	@Test(expected=IllegalArgumentException.class) public void testScalarColVecOpIAE4() { MatUtils.scalarSubtract(new double[][]{}, new double[]{}, Axis.COL); }
+	
+	// Tests on non-uniform matrices
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarVecOpNUME1() {
+		MatUtils.scalarAdd(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarVecOpNUME2() {
+		MatUtils.scalarDivide(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarVecOpNUME3() {
+		MatUtils.scalarMultiply(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarVecOpNUME4() {
+		MatUtils.scalarSubtract(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.ROW);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarColVecOpNUME1() {
+		MatUtils.scalarAdd(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.COL);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarColVecOpNUME2() {
+		MatUtils.scalarDivide(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.COL);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarColVecOpNUME3() {
+		MatUtils.scalarMultiply(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.COL);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testScalarColVecOpNUME4() {
+		MatUtils.scalarSubtract(new double[][]{
+			new double[]{1,2,3},
+			new double[]{1}
+		}, new double[]{}, Axis.COL);
+	}
+	
+	@Test
+	public void testSetColInPlace() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,1}
+		};
+		
+		double[] v = new double[]{0,1};
+		
+		
+		MatUtils.setColumnInPlace(a, 0, v);
+		assertTrue(MatUtils.equalsExactly(a,
+			new double[][]{
+				new double[]{0,1,2},
+				new double[]{1,3,1}
+		}));
+		
+		MatUtils.setColumnInPlace(a, 1, v);
+		assertTrue(MatUtils.equalsExactly(a,
+			new double[][]{
+				new double[]{0,0,2},
+				new double[]{1,1,1}
+		}));
+		
+		MatUtils.setColumnInPlace(a, 2, v);
+		assertTrue(MatUtils.equalsExactly(a,
+			new double[][]{
+				new double[]{0,0,0},
+				new double[]{1,1,1}
+		}));
+	}
+	
+	@Test(expected=IndexOutOfBoundsException.class)
+	public void testSetColInPlaceIOOBE1() {
+		MatUtils.setColumnInPlace(new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,1,2} }, 3, new double[]{});
+	}
+	
+	@Test(expected=IndexOutOfBoundsException.class)
+	public void testSetColInPlaceIOOBE2() {
+		MatUtils.setColumnInPlace(new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,1,2} }, -1, new double[]{});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSetColInPlaceIAE1() {
+		MatUtils.setColumnInPlace(new double[][]{}, 0, new double[]{});
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testSetColInPlaceNUME1() {
+		MatUtils.setColumnInPlace(new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,1} }, 0, new double[]{});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testSetColInPlaceDME1() {
+		MatUtils.setColumnInPlace(new double[][]{
+			new double[]{0,1,2},
+			new double[]{0,1,2} }, 0, new double[]{1,2,3});
+	}
+	
+	@Test
+	public void testSetRowInPlace() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,1}
+		};
+		
+		double[] v = new double[]{0,1,3};
+		
+		
+		MatUtils.setRowInPlace(a, 0, v);
+		
+		assertTrue(MatUtils.equalsExactly(a,
+			new double[][]{
+				new double[]{0,1,3},
+				new double[]{2,3,1}
+		}));
+		
+		MatUtils.setRowInPlace(a, 1, v);
+		assertTrue(MatUtils.equalsExactly(a,
+			new double[][]{
+				new double[]{0,1,3},
+				new double[]{0,1,3}
+		}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)   public void testSetRowIAE() { MatUtils.setRowInPlace(new double[][]{}, 0, new double[]{}); }
+	@Test(expected=IndexOutOfBoundsException.class)  public void testSetRowIOOBE1() { MatUtils.setRowInPlace(new double[][]{new double[]{}}, -1, new double[]{}); }
+	@Test(expected=IndexOutOfBoundsException.class)  public void testSetRowIOOBE2() { MatUtils.setRowInPlace(new double[][]{new double[]{}}, 1, new double[]{}); }
+	@Test(expected=DimensionMismatchException.class) public void testSetRowDME() { MatUtils.setRowInPlace(new double[][]{new double[]{}}, 0, new double[]{1,2,3}); }
+
+
+	@Test
+	public void testSortAscDesc() {
+		double[][] d = new double[][]{
+			new double[]{2,9,3},
+			new double[]{1,2,4},
+			new double[]{0,4,5}
+		};
+		
+		int[][] i = new int[][]{
+			new int[]{2,9,3},
+			new int[]{1,2,4},
+			new int[]{0,4,5}
+		};
+		
+		
+		// asc tests
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortAscByCol(d, 0), 
+			new double[][]{
+				new double[]{0,4,5},
+				new double[]{1,2,4},
+				new double[]{2,9,3}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortAscByCol(i, 0), 
+			new int[][]{
+				new int[]{0,4,5},
+				new int[]{1,2,4},
+				new int[]{2,9,3}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortAscByCol(d, 1), 
+			new double[][]{
+				new double[]{1,2,4},
+				new double[]{0,4,5},
+				new double[]{2,9,3}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortAscByCol(i, 1), 
+			new int[][]{
+				new int[]{1,2,4},
+				new int[]{0,4,5},
+				new int[]{2,9,3}
+			}));
+		
+		// Ensure originals not affected
+		assertTrue(d[0][0] != 1);
+		assertTrue(i[0][0] != 1);
+		
+		
+		
+		// desc tests
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortDescByCol(d, 0), 
+			new double[][]{
+				new double[]{2,9,3},
+				new double[]{1,2,4},
+				new double[]{0,4,5}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortDescByCol(i, 0), 
+			new int[][]{
+				new int[]{2,9,3},
+				new int[]{1,2,4},
+				new int[]{0,4,5}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortDescByCol(d, 1), 
+			new double[][]{
+				new double[]{2,9,3},
+				new double[]{0,4,5},
+				new double[]{1,2,4}
+			}));
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.sortDescByCol(i, 1), 
+			new int[][]{
+				new int[]{2,9,3},
+				new int[]{0,4,5},
+				new int[]{1,2,4}
+			}));
+		
+		// Ensure originals not affected
+		assertTrue(d[0][0] != 1);
+		assertTrue(i[0][0] != 1);
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testSortIAE1() { MatUtils.sortAscByCol(new double[][]{}, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testSortIAE2() { MatUtils.sortAscByCol(new int[][]{}, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testSortIAE3() { MatUtils.sortDescByCol(new double[][]{}, 0); }
+	@Test(expected=IllegalArgumentException.class) public void testSortIAE4() { MatUtils.sortDescByCol(new int[][]{}, 0); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE1() { MatUtils.sortAscByCol(new double[][]{new double[]{}}, -1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE2() { MatUtils.sortAscByCol(new double[][]{new double[]{}},  1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE3() { MatUtils.sortAscByCol(new int[][]{new int[]{}}, -1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE4() { MatUtils.sortAscByCol(new int[][]{new int[]{}},  1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE5() { MatUtils.sortDescByCol(new double[][]{new double[]{}}, -1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE6() { MatUtils.sortDescByCol(new double[][]{new double[]{}},  1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE7() { MatUtils.sortDescByCol(new int[][]{new int[]{}}, -1); }
+	@Test(expected=IndexOutOfBoundsException.class) public void testSortIOOBE8() { MatUtils.sortDescByCol(new int[][]{new int[]{}},  1); }
+	@Test(expected=NonUniformMatrixException.class) public void testSortNUME1() { MatUtils.sortAscByCol(new double[][]{new double[]{}, new double[]{1,2}}, 0); }
+	@Test(expected=NonUniformMatrixException.class) public void testSortNUME2() { MatUtils.sortAscByCol(new int[][]{new int[]{}, new int[]{1,2}}, 0); }
+	@Test(expected=NonUniformMatrixException.class) public void testSortNUME3() { MatUtils.sortDescByCol(new double[][]{new double[]{}, new double[]{1,2}}, 0); }
+	@Test(expected=NonUniformMatrixException.class) public void testSortNUME4() { MatUtils.sortDescByCol(new int[][]{new int[]{}, new int[]{1,2}}, 0); }
+
+	@Test
+	public void testSubtraction() {
+		final double[][] a = new double[][]{
+			new double[]{1.0,2.0,3.0},
+			new double[]{3.0,2.0,1.0},
+			new double[]{0.0,0.0,0.0}
+		};
+		
+		final double[][] b = new double[][]{
+			new double[]{0.0,1.0,2.0},
+			new double[]{2.0,1.0,0.0},
+			new double[]{-1.0,-1.0,-1.0}
+		};
+		
+		final double[][] c = new double[][]{
+			new double[]{1.0,1.0,1.0},
+			new double[]{1.0,1.0,1.0},
+			new double[]{1.0,1.0,1.0}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.subtract(a, b), c));
+		
+		// Check empty permitted
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.subtract(
+				new double[][]{new double[]{}}, 
+				new double[][]{new double[]{}}),
+			
+			new double[][]{new double[]{}}
+				));
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testSubIAE1() { MatUtils.subtract(new double[][]{}, new double[][]{new double[]{}}); }
+	@Test(expected=IllegalArgumentException.class) public void testSubIAE2() { MatUtils.subtract(new double[][]{new double[]{}}, new double[][]{}); }
+	@Test(expected=DimensionMismatchException.class) public void testSubDME1() { MatUtils.subtract(new double[][]{new double[]{}}, new double[][]{new double[]{},new double[]{}}); }
+
+	@Test
+	public void testToDouble() {
+		int[][] i = new int[][]{
+			new int[]{0,1},
+			new int[]{2,3}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.toDouble(i),
+			new double[][]{
+				new double[]{0,1},
+				new double[]{2,3}
+			}));
+		
+		// ensure empty works
+		i = new int[][]{
+			new int[]{},
+			new int[]{}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.toDouble(i),
+			new double[][]{
+				new double[]{},
+				new double[]{}
+			}));
+		
+		// ensure jagged works
+		i = new int[][]{
+			new int[]{1,0,2},
+			new int[]{}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(
+			MatUtils.toDouble(i),
+			new double[][]{
+				new double[]{1,0,2},
+				new double[]{}
+			}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testToDoubleIAE() { MatUtils.toDouble(new int[][]{}); }
+
+	@Test
+	public void testTranspose() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{3,4,5}
+		};
+		
+		double[][] t = new double[][]{
+			new double[]{0,3},
+			new double[]{1,4},
+			new double[]{2,5}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(t, MatUtils.transpose(a)));
+		assertTrue(MatUtils.equalsExactly(
+			new double[][]{
+				new double[]{0},
+				new double[]{1}
+			},
+			
+			MatUtils.transpose(new double[]{0,1})));
+	}
+	
+	@Test(expected=IllegalArgumentException.class) public void testTransposeIAE() { MatUtils.transpose(new double[][]{}); }
+	@Test(expected=NonUniformMatrixException.class) public void testTransposeNUME() { MatUtils.transpose(new double[][]{new double[]{}, new double[]{1,2}}); }
+	@Test(expected=IllegalArgumentException.class) public void testTransposeEmpty() { MatUtils.transpose(new double[][]{new double[]{}}); }
+	@Test(expected=IllegalArgumentException.class) public void testTransposeVecIAE() { MatUtils.transpose(new double[]{}); }
+
+	@Test
+	public void testScalarSubtractVector() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2,3}, y = new double[]{1,2};
+		double[][] b = MatUtils.scalarSubtract(a, v, Axis.COL);
+		double[][] c = MatUtils.scalarSubtract(a, y, Axis.ROW);
+		
+		assertTrue(MatUtils.equalsExactly(b, new double[][]{
+			new double[]{1,-1,-1},
+			new double[]{3, 1, 1}
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(c, new double[][]{
+			new double[]{-1,0,1},
+			new double[]{0, 1,2}
+		}));
+	}
+	
+	@Test
+	public void testScalarAddVector() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2,3}, y = new double[]{1,2};
+		double[][] b = MatUtils.scalarAdd(a, v, Axis.COL);
+		double[][] c = MatUtils.scalarAdd(a, y, Axis.ROW);
+		
+		assertTrue(MatUtils.equalsExactly(b, new double[][]{
+			new double[]{-1, 3, 5},
+			new double[]{ 1, 5, 7}
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(c, new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6}
+		}));
+	}
+	
+	@Test
+	public void testScalarMultVector() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2,3}, y = new double[]{1,2};
+		double[][] b = MatUtils.scalarMultiply(a, v, Axis.COL);
+		double[][] c = MatUtils.scalarMultiply(a, y, Axis.ROW);
+		
+		assertTrue(MatUtils.equalsExactly(b, new double[][]{
+			new double[]{-0,2,6},
+			new double[]{-2,6,12}
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(c, new double[][]{
+			new double[]{0,1,2},
+			new double[]{4,6,8}
+		}));
+	}
+	
+	@Test
+	public void testScalarDivVector() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2,3}, y = new double[]{1,2};
+		double[][] b = MatUtils.scalarDivide(a, v, Axis.COL);
+		double[][] c = MatUtils.scalarDivide(a, y, Axis.ROW);
+		
+		assertTrue(MatUtils.equalsExactly(b, new double[][]{
+			new double[]{-0,0.5,2.0/3.0},
+			new double[]{-2,1.5,4.0/3.0}
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(c, new double[][]{
+			new double[]{0,1,2},
+			new double[]{1,1.5,2}
+		}));
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testScalarOpDME1() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2,3};
+		MatUtils.scalarAdd(a, v, Axis.ROW); // here
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testScalarOpDME2() {
+		double[][] a = new double[][]{
+			new double[]{0,1,2},
+			new double[]{2,3,4}
+		};
+		
+		double[] v = new double[]{-1,2};
+		MatUtils.scalarAdd(a, v, Axis.COL); // here
+	}
+	
+	@Test
+	public void testBlockMatMult() {
+		double[][] a = TestSuite.getRandom(5, 1500).getDataRef();
+		double[][] b = TestSuite.getRandom(1500, 2).getDataRef();
+		MatUtils.multiplyForceSerial(a, b); // force block mat
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE1() {
+		Array2DRowRealMatrix matrix = new Array2DRowRealMatrix();
+		MatUtils.checkDims(matrix);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE2() {
+		double[][] a = new double[5][2];
+		double[][] b = new double[5][];
+		MatUtils.checkDimsPermitEmpty(a, b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE3() {
+		boolean[][] a = new boolean[5][2];
+		boolean[][] b = new boolean[5][];
+		MatUtils.checkDimsPermitEmpty(a, b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE4() {
+		boolean[][] b = new boolean[5][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE5() {
+		int[][] b = new int[5][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE6() {
+		double[][] b = new double[5][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE7() {
+		boolean[][] b = new boolean[1][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE8() {
+		int[][] b = new int[1][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDimCheckIAE9() {
+		double[][] b = new double[1][];
+		MatUtils.checkDimsPermitEmpty(b);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testNUMEBoolean1() {
+		boolean[][] b = new boolean[][]{
+			new boolean[]{true, false},
+			new boolean[]{true}
+		};
+		MatUtils.checkDimsForUniformity(b);
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testDimCheckDME1() {
+		Array2DRowRealMatrix matrix1 = new Array2DRowRealMatrix(new double[5][2], false);
+		Array2DRowRealMatrix matrix2 = new Array2DRowRealMatrix(new double[4][2], false);
+		MatUtils.checkDims(matrix1, matrix2);
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testDimCheckDME2() {
+		Array2DRowRealMatrix matrix1 = new Array2DRowRealMatrix(new double[5][2], false);
+		Array2DRowRealMatrix matrix2 = new Array2DRowRealMatrix(new double[5][3], false);
+		MatUtils.checkDims(matrix1, matrix2);
 	}
 }

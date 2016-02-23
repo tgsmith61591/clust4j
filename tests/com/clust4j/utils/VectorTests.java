@@ -2,8 +2,11 @@ package com.clust4j.utils;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
@@ -11,6 +14,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.utils.VecUtils.VecSeries;
 
 public class VectorTests {
+	final static double[] empty = new double[]{};
 
 	@Test
 	public void test() {
@@ -22,6 +26,7 @@ public class VectorTests {
 		assertTrue((mean = VecUtils.mean(a)) == 2);
 		assertTrue(VecUtils.mean(a, sum) == 2);
 		assertTrue(VecUtils.stdDev(a,mean) == VecUtils.stdDev(a));
+		assertTrue(Double.isNaN(VecUtils.mean(empty)));
 	}
 	
 	@Test
@@ -31,6 +36,11 @@ public class VectorTests {
 		
 		i[0] = 0;
 		assertTrue(j[0] != i[0]);
+		
+		final String[] s= new String[]{"a","b"};
+		String[] b = VecUtils.copy(s);
+		b[0] = "b";
+		assertFalse(s[0].equals("b"));
 	}
 	
 	@Test
@@ -162,7 +172,7 @@ public class VectorTests {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testMedianExcept() {
-		final double[] a = new double[]{};
+		final double[] a = empty;
 		VecUtils.median(a);
 	}
 	
@@ -177,19 +187,11 @@ public class VectorTests {
 		final double[] bd = new double[]{0,0};
 		assertTrue(VecUtils.argMax(bd) == 0);
 		assertTrue(VecUtils.argMin(bd) == 0);
-		
-		final float[] af = new float[]{0, 5};
-		assertTrue(VecUtils.argMax(af) == 1);
-		assertTrue(VecUtils.argMin(af) == 0);
-		
-		final float[] bf = new float[]{0,0};
-		assertTrue(VecUtils.argMax(bf) == 0);
-		assertTrue(VecUtils.argMin(bf) == 0);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testArgs2() {
-		final double[] a = new double[]{};
+		final double[] a = empty;
 		VecUtils.argMax(a);
 	}
 	
@@ -271,8 +273,19 @@ public class VectorTests {
 	@Test
 	public void testArgSort() {
 		double[] a = new double[]{5,1,3,4};
+		int[] b = new int[]{5,1,3,4};
 		int[] exp = new int[]{1,2,3,0};
 		assertTrue(VecUtils.equalsExactly(exp, VecUtils.argSort(a)));
+		assertTrue(VecUtils.equalsExactly(exp, VecUtils.argSort(b)));
+		
+		// Test empty
+		boolean p = false;
+		try {p = false; VecUtils.argSort(empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.argSort(new int[]{ }); } catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	
+		// test tie corner case
+		b = new int[]{5,1,3,4,4,9};
+		assertTrue(VecUtils.equalsExactly(VecUtils.argSort(b), new int[]{1,2,3,4,0,5}));
 	}
 	
 	@Test
@@ -298,8 +311,8 @@ public class VectorTests {
 	
 	@Test
 	public void testOpsWithEmpty() {
-		final double[] a = new double[]{};
-		final double[] b = new double[]{};
+		final double[] a = empty;
+		final double[] b = empty;
 		
 		VecUtils.add(a, b);
 		VecUtils.addDistributed(a, b);
@@ -320,5 +333,342 @@ public class VectorTests {
 		
 		a = VecUtils.rep(0.8, 10);
 		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2,3,4,5,6,7,8,9}, VecUtils.argSort(a)));
+	}
+	
+	@Test
+	public void testAbs() {
+		// test empty
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.abs(empty)));
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.absDistributed(empty)));
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.absForceSerial(empty)));
+
+		// full tests
+		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.abs(new double[]{-1,-2,3})));
+		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.absDistributed(new double[]{-1,-2,3})));
+		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.absForceSerial(new double[]{-1,-2,3})));
+	}
+	
+	@Test
+	public void testAdd() {
+		// test empty
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.add(empty, empty)));
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.addDistributed(empty,empty)));
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.addForceSerial(empty,empty)));
+
+		// full tests
+		final double[] add = new double[]{1,2,3};
+		final double[] tgt = new double[]{2,4,6};
+		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.add(add, add)));
+		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.addDistributed(add, add)));
+		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.addForceSerial(add, add)));
+		
+		// Test DMEs
+		boolean p = false;
+		final double[] off = new double[]{1,2};
+		try {p = false; VecUtils.add(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.addDistributed(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.addForceSerial(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testArange() {
+		boolean p = false;
+		
+		// test default
+		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2,3,4}, VecUtils.arange(5)));
+		try {p = false; VecUtils.arange(0);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(Integer.MAX_VALUE);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		
+		// test second
+		assertTrue(VecUtils.equalsExactly(new int[]{2,3,4}, VecUtils.arange(2,5)));
+		assertTrue(VecUtils.equalsExactly(new int[]{5,4,3}, VecUtils.arange(5,2)));
+		try {p = false; VecUtils.arange(2,2);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(0,Integer.MAX_VALUE);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		
+		// test third
+		assertTrue(VecUtils.equalsExactly(new int[]{2,3,4}, VecUtils.arange(2,5,1)));
+		assertTrue(VecUtils.equalsExactly(new int[]{5,4,3}, VecUtils.arange(5,2,-1)));
+		assertTrue(VecUtils.equalsExactly(new int[]{0,2,4,6,8}, VecUtils.arange(0,10,2)));
+		try {p = false; VecUtils.arange(2,2,0);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(2,2,2);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(0,Integer.MAX_VALUE,1);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(0,5,3);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(0,5,-1);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.arange(5,0, 1);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testArgMinMax() {
+		final double[] v = new double[]{-1,4,2,5,-1,5};
+		assertTrue(VecUtils.argMax(v) == 3);
+		assertTrue(VecUtils.argMin(v) == 0);
+		
+		boolean p = false;
+		try {p = false; VecUtils.argMax(empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.argMin(empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testAsDouble() {
+		// Test populated and empty
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.asDouble(new int[]{})));
+		assertTrue(VecUtils.equalsExactly(new double[]{1.0,2.0,3.0}, VecUtils.asDouble(new int[]{1,2,3})));
+	}
+	
+	@Test
+	public void testCat2() {
+		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3,4}, VecUtils.cat(new double[]{1,2}, new double[]{3,4})));
+		assertTrue(VecUtils.equalsExactly(new int[]{1,2,3,4}, VecUtils.cat(new int[]{1,2}, new int[]{3,4})));
+		
+		// test empties
+		assertTrue(VecUtils.equalsExactly(new double[]{3,4}, VecUtils.cat(empty, new double[]{3,4})));
+		assertTrue(VecUtils.equalsExactly(new double[]{1,2}, VecUtils.cat(new double[]{1,2}, empty)));
+		assertTrue(VecUtils.equalsExactly(empty, 	 VecUtils.cat(empty, empty)));
+		
+		// test empties
+		assertTrue(VecUtils.equalsExactly(new int[]{3,4}, VecUtils.cat(new int[]{}, new int[]{3,4})));
+		assertTrue(VecUtils.equalsExactly(new int[]{1,2}, VecUtils.cat(new int[]{1,2}, new int[]{})));
+		assertTrue(VecUtils.equalsExactly(new int[]{}, 	  VecUtils.cat(new int[]{}, new int[]{})));
+	}
+	
+	@Test
+	public void testCenter() {
+		double[] v = new double[]{1,2,3};
+		assertTrue(VecUtils.equalsExactly(new double[]{-1,0,1}, VecUtils.center(v)));
+		assertTrue(VecUtils.equalsExactly(new double[]{-2,-1,0}, VecUtils.center(v, 3)));
+		
+		// Test empty
+		boolean p = false;
+		try {p = false; VecUtils.center(empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.center(empty, 2);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testCompleteCases() {
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.completeCases(empty)));
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.completeCases(new double[]{Double.NaN, Double.NaN})));
+		assertTrue(VecUtils.equalsExactly(new double[]{0,0,1}, VecUtils.completeCases(new double[]{0,0,1})));
+	}
+	
+	@Test
+	public void testContainsNaN() {
+		final double[] none = new double[]{1,2,3,4};
+		final double[] some = new double[]{1, Double.NaN, 2};
+		
+		// default
+		assertFalse(VecUtils.containsNaN(empty));
+		assertFalse(VecUtils.containsNaN(none));
+		assertTrue(VecUtils.containsNaN(some));
+		
+		// force parallel
+		assertFalse(VecUtils.containsNaNDistributed(empty));
+		assertFalse(VecUtils.containsNaNDistributed(none));
+		assertTrue(VecUtils.containsNaNDistributed(some));
+		
+		// serial
+		assertFalse(VecUtils.containsNaNForceSerial(empty));
+		assertFalse(VecUtils.containsNaNForceSerial(none));
+		assertTrue(VecUtils.containsNaNForceSerial(some));
+	}
+	
+	@Test
+	public void testShallowClone() {
+		ArrayList<double[]> og = new ArrayList<>();
+		og.add(new double[]{0});
+		
+		ArrayList<double[]> co = VecUtils.copy(og);
+		co.get(0)[0] = 1;
+		assertTrue(og.get(0)[0] == 1);
+	}
+	
+	@Test
+	public void testDeepClone() {
+		ArrayList<Double> og = new ArrayList<>();
+		og.add(0.0);
+		
+		ArrayList<Double> co = VecUtils.copy(og);
+		co.set(0, 1.0);
+		assertFalse(og.get(0) == 1.0);
+	}
+	
+	@Test
+	public void testCosSim2() {
+		boolean p = false;
+		try {p = false; VecUtils.cosSim(empty,empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.cosSim(new double[]{1}, new double[]{1,2});}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testDivide() {
+		// test empty first
+		assertTrue(VecUtils.equalsExactly(empty, VecUtils.divide(empty, empty)));
+		assertTrue(VecUtils.equalsExactly(new double[]{0.5,0.5,1.0}, VecUtils.divide(new double[]{1.0,1.0,1.0}, new double[]{2.0,2.0,1.0})));
+		
+		// dme
+		boolean p = false;
+		try {p = false; VecUtils.divide(new double[]{1}, new double[]{1,2});}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testExp() {
+		double[] a = new double[]{1,2,3};
+		double[] e = new double[]{2.718281828459045, 7.38905609893065, 20.085536923187668};
+		assertTrue(VecUtils.equalsExactly(VecUtils.exp(a), e));
+		assertTrue(VecUtils.equalsExactly(VecUtils.exp(empty), empty));
+	}
+	
+	@Test
+	public void testInnerProduct() {
+		// test empties
+		assertTrue(0.0 == VecUtils.innerProduct(empty, empty));
+		assertTrue(0.0 == VecUtils.innerProductForceSerial(empty, empty));
+		assertTrue(0.0 == VecUtils.innerProductDistributed(empty, empty));
+		
+		// test populated
+		double[] a = new double[]{1,2};
+		double[] b = new double[]{1,2,3};
+		final double res = 14;
+		assertTrue(res == VecUtils.innerProduct(b,b));
+		assertTrue(res == VecUtils.innerProductForceSerial(b,b));
+		assertTrue(res == VecUtils.innerProductDistributed(b,b));
+		
+		// test ortho
+		assertFalse(VecUtils.isOrthogonalTo(b, b));
+		
+		// test DMEs
+		boolean p = false;
+		try {p = false; VecUtils.innerProduct(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.innerProductForceSerial(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.innerProductDistributed(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.isOrthogonalTo(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testIqr() {
+		assertTrue(0.0 == VecUtils.iqr(new double[]{1.0}));
+		boolean p = false;
+		try {p = false; VecUtils.iqr(empty);}catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testNorms() {
+		assertTrue(VecUtils.l1Norm(new double[]{1,2,-3,4}) == 10.0);
+		assertTrue(VecUtils.l1Norm(empty) == 0.0);
+		assertTrue(VecUtils.l2Norm(new double[]{1,2,-3,4}) == FastMath.sqrt(30.0));
+		assertTrue(VecUtils.l2Norm(empty) == 0.0);
+	}
+	
+	@Test
+	public void testVecSeries() {
+		double[] va = new double[]{1,2,3};
+		double[] vb = new double[]{3,2,1};
+		VecSeries a = new VecSeries(va, Inequality.ET, vb);
+		assertTrue(VecUtils.equalsExactly(a.get(), a.getRef()));
+		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, true, false}));
+		
+		a = new VecSeries(va, Inequality.GT, vb);
+		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, false, true}));
+		
+		boolean p = false;
+		try {p = false; new VecSeries(va, Inequality.ET, new double[]{1,1}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecSeries(va, Inequality.ET, new double[]{}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecSeries(new double[]{}, Inequality.ET, vb); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void checkDims() {
+		VecUtils.checkDims(new boolean[1]); // should pass
+		VecUtils.checkDimsPermitEmpty(new boolean[]{});// should pass
+		
+		boolean p = false;
+		boolean[] a = new boolean[]{true};
+		boolean[] b = new boolean[]{true, false};
+		boolean[] c = new boolean[]{};
+		
+		VecUtils.checkDims(a,a); // should pass
+		VecUtils.checkDimsPermitEmpty(c, c); // should pass
+		VecUtils.checkDimsPermitEmpty(a, a); // should pass
+		try {p = false; VecUtils.checkDims(a,b); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.checkDims(c,c); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	
+		int[] ia = new int[]{1};
+		int[] ib = new int[]{1,2};
+		int[] ic = new int[]{};
+		VecUtils.checkDims(ia, ia); // should pass
+		VecUtils.checkDimsPermitEmpty(ic, ic); // should pass
+		try {p = false; VecUtils.checkDims(ia,ib); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.checkDims(ic,ic); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testEquals() {
+		int[] ia = new int[]{1,2,5};
+		int[] ib = new int[]{1,2,3};
+		assertFalse(VecUtils.equalsExactly(ia, ib));
+		
+		boolean[] ba = new boolean[]{true, false};
+		boolean[] bb = new boolean[]{true, true};
+		assertFalse(VecUtils.equalsExactly(ba, bb));
+		
+		double[] da = new double[]{1,2};
+		double[] db = new double[]{2,2};
+		assertFalse(VecUtils.equalsExactly(da, db));
+		assertFalse(VecUtils.equalsExactlyDistributed(da, db));
+		assertTrue(VecUtils.equalsWithToleranceDistributed(da, db, 1));
+		assertTrue(VecUtils.equalsWithToleranceForceSerial(da, db, 1));
+		assertFalse(VecUtils.equalsWithToleranceForceSerial(da, db, 0));
+	}
+	
+	@Test
+	public void testLog() {
+		final double[] a = new double[]{1, 2, 3};
+		final double[] b = new double[]{0, 0.69314718055994529, 1.0986122886681098};
+		final double[] c = new double[]{};
+		assertTrue(VecUtils.equalsExactly(VecUtils.log(a), b));
+		assertTrue(VecUtils.equalsExactly(VecUtils.logForceSerial(a), b));
+		assertTrue(VecUtils.equalsExactly(VecUtils.logDistributed(a), b));
+		assertTrue(VecUtils.equalsExactly(VecUtils.log(c), c));
+		assertTrue(VecUtils.equalsExactly(VecUtils.logForceSerial(c), c));
+		assertTrue(VecUtils.equalsExactly(VecUtils.logDistributed(c), c));
+	}
+	
+	@Test
+	public void testLpNorm() {
+		double p = 3.0;
+		double[] a = new double[]{1,2,3};
+		assertTrue(VecUtils.lpNorm(a, p) == 3.3019272488946263);
+		assertTrue(VecUtils.l2Norm(a) == VecUtils.magnitude(a));
+	}
+	
+	@Test
+	public void testMaxMinMedian() {
+		double[] a = new double[]{1,2,3};
+		double[] b = new double[]{1};
+		assertTrue(VecUtils.max(a) == 3);
+		assertTrue(VecUtils.min(a) == 1);
+		assertTrue(VecUtils.median(a) == 2);
+		assertTrue(VecUtils.median(b) == 1);
+		
+		boolean p = false;
+		try {p = false; VecUtils.max(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.min(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.median(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.nanMax(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.nanMin(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; VecUtils.nanMedian(new double[]{}); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	
+		double[] nan = new double[]{Double.NaN};
+		assertTrue(Double.isNaN(VecUtils.nanMax(nan)));
+		assertTrue(Double.isNaN(VecUtils.nanMin(nan)));
+		assertTrue(VecUtils.nanMedian(new double[]{Double.NaN, 4}) == 4);
+		try {p = false; VecUtils.nanMedian(nan); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+	}
+	
+	@Test
+	public void testNaNCountEmpty() {
+		double[] a = new double[]{};
+		assertTrue(VecUtils.nanCount(a) == 0);
+		assertTrue(VecUtils.nanCountForceSerial(a) == 0);
+		assertTrue(VecUtils.nanCountDistributed(a) == 0);
 	}
 }

@@ -41,26 +41,49 @@ public class VecUtils {
 	
 	
 	/**
-	 * Create a boolean vector
+	 * Create a boolean masking vector to be used in the 
+	 * {@link VecUtils#where(VecSeries, double, double)} family
+	 * of methods.
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @throws DimensionMismatchException if the input vector dims do not match
 	 * @author Taylor G Smith
 	 */
 	public static class VecSeries extends Series<boolean[]> {
 		final boolean[] vec;
 		final int n;
 		
-		
+		/**
+		 * Private constructor
+		 * @throws IllegalArgumentException if the vector is empty
+		 * @param v
+		 */
 		private VecSeries(double[] v) {
 			checkDims(v);
 			this.n = v.length;
 			this.vec = new boolean[n];
 		}
 		
+		/**
+		 * One vector constructor. Elements in the vector to the provided val
+		 * @param a
+		 * @param in
+		 * @param val
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
 		public VecSeries(double[] v, Inequality in, double val) {
 			this(v);
 			for(int j = 0; j < n; j++)
 				vec[j] = eval(v[j], in, val);
 		}
 		
+		/**
+		 * Two vector constructor. Compares respective elements.
+		 * @param a
+		 * @param in
+		 * @param b
+		 * @throws DimensionMismatchException if the dims of A and B don't match
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
 		public VecSeries(double[] a, Inequality in, double[] b) {
 			this(a);
 			if(n != b.length)
@@ -89,40 +112,24 @@ public class VecUtils {
 	
 	// =============== DIM CHECKS ==============
 	final private static void dimAssess(final int a) { if(a < MIN_ACCEPTABLE_VEC_LEN) throw new IllegalArgumentException(VEC_LEN_ERR + a); }
-	final static public void checkDims(final byte[] a) 		{ dimAssess(a.length); }
-	final static public void checkDims(final short[] a) 	{ dimAssess(a.length); }
 	final static public void checkDims(final boolean[] a) 	{ dimAssess(a.length); }
 	final static public void checkDims(final int[] a) 		{ dimAssess(a.length); }
-	final static public void checkDims(final float[] a) 	{ dimAssess(a.length); }
 	final static public void checkDims(final double[] a) 	{ dimAssess(a.length); }
-	final static public void checkDims(final long[] a) 		{ dimAssess(a.length); }
 	
 	final private static void dimAssessPermitEmpty(final int a) 	{ if(a < 0) throw new IllegalArgumentException(VEC_LEN_ERR + a); }
-	final static public void checkDimsPermitEmpty(final byte[] a) 	{ dimAssessPermitEmpty(a.length); }
-	final static public void checkDimsPermitEmpty(final short[] a) 	{ dimAssessPermitEmpty(a.length); }
 	final static public void checkDimsPermitEmpty(final boolean[] a){ dimAssessPermitEmpty(a.length); }
 	final static public void checkDimsPermitEmpty(final int[] a) 	{ dimAssessPermitEmpty(a.length); }
-	final static public void checkDimsPermitEmpty(final float[] a) 	{ dimAssessPermitEmpty(a.length); }
 	final static public void checkDimsPermitEmpty(final double[] a) { dimAssessPermitEmpty(a.length); }
-	final static public void checkDimsPermitEmpty(final long[] a) 	{ dimAssessPermitEmpty(a.length); }
 	
 	final private static void dimAssess(final int a, final int b) { if(a != b) throw new DimensionMismatchException(a, b); dimAssess(a); }
-	final static public void checkDims(final byte[] a, final byte[] b) 		{ dimAssess(a.length, b.length); }
-	final static public void checkDims(final short[] a, final short[] b) 	{ dimAssess(a.length, b.length); }
 	final static public void checkDims(final boolean[] a, final boolean[] b){ dimAssess(a.length, b.length); }
 	final static public void checkDims(final int[] a, final int[] b) 		{ dimAssess(a.length, b.length); }
-	final static public void checkDims(final float[] a, final float[] b) 	{ dimAssess(a.length, b.length); }
 	final static public void checkDims(final double[] a, final double[] b) 	{ dimAssess(a.length, b.length); }
-	final static public void checkDims(final long[] a, final long[] b) 		{ dimAssess(a.length, b.length); }
 	
 	final private static void dimAssessPermitEmpty(final int a, final int b) 			{ if(a != b) throw new DimensionMismatchException(a, b); dimAssessPermitEmpty(a); }
-	final static public void checkDimsPermitEmpty(final byte[] a, final byte[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
-	final static public void checkDimsPermitEmpty(final short[] a, final short[] b) 	{ dimAssessPermitEmpty(a.length, b.length); }
 	final static public void checkDimsPermitEmpty(final boolean[] a, final boolean[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
 	final static public void checkDimsPermitEmpty(final int[] a, final int[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
-	final static public void checkDimsPermitEmpty(final float[] a, final float[] b) 	{ dimAssessPermitEmpty(a.length, b.length); }
 	final static public void checkDimsPermitEmpty(final double[] a, final double[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
-	final static public void checkDimsPermitEmpty(final long[] a, final long[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
 	
 	
 	
@@ -165,10 +172,9 @@ public class VecUtils {
 	
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Calculates the absolute value of the vector in a serial fashion
 	 * @param a
-	 * @return
+	 * @return absolute value of the vector
 	 */
 	public static double[] absForceSerial(final double[] a) {
 		final double[] b= new double[a.length];
@@ -181,15 +187,15 @@ public class VecUtils {
 	
 	
 	/**
-	 * Add two vectors and return a copy.
+	 * Add two vectors.
 	 * Depending on {@link GlobalState} parallelism settings, auto schedules parallel
 	 * or serial job.
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if dims do not match
 	 * @return the result of adding two vectors
 	 */
 	public static double[] add(final double[] a, final double[] b) {
-		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -203,10 +209,11 @@ public class VecUtils {
 	
 	
 	/**
-	 * Add two vectors and return a copy in a parallel fashion
+	 * Add two vectors in a parallel fashion
 	 * @param a
 	 * @param b
-	 * @return the result of adding two vectors
+	 * @throws DimensionMismatchException if dims do not match
+	 * @return the sum of two vectors
 	 */
 	public static double[] addDistributed(final double[] a, final double[] b) {
 		return DistributedAdd.operate(a, b);
@@ -214,13 +221,14 @@ public class VecUtils {
 	
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Add two vectors in a serial fashion
 	 * @param a
 	 * @param b
-	 * @return
+	 * @throws DimensionMismatchException if dims do not match
+	 * @return the sum of two vectors
 	 */
 	public static double[] addForceSerial(final double[] a, final double[] b) {
+		checkDimsPermitEmpty(a, b);
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			ab[i] = a[i] + b[i];
@@ -241,18 +249,53 @@ public class VecUtils {
 		int length = FastMath.abs(en - st);
 		if(length == 0) throw new IllegalArgumentException("start_inc ("+st+") cannot equal end_exc ("+en+")");
 		if(length%FastMath.abs(in)!=0) throw new IllegalArgumentException("increment will not create evenly spaced elements");
+		if(length > GlobalState.MAX_ARRAY_SIZE) throw new IllegalArgumentException("array would be too long");
 		
 		return length;
 	}
 	
+	/**
+	 * Create a range of values starting at zero (inclusive)
+	 * and continuing to the provided length (exclusive). 
+	 * <br>EX: <tt>arange(10) = {0,1,2,3,4,5,6,7,8,9}</tt>
+	 * @param length
+	 * @throws IllegalArgumentException if the length exceeds 
+	 * {@value GlobalState#MAX_ARRAY_SIZE} or if length == 0
+	 * @return a range of values
+	 */
 	public static int[] arange(final int length) {
 		return arange(0, length, 1);
 	}
 	
+	/**
+	 * Create a range of values starting at <tt>start_inc</tt> (inclusive) and 
+	 * continuing to <tt>end_exc</tt> (exclusive). 
+	 * <br>EX 1: <tt>arange(2,5) = {2,3,4}</tt>
+	 * <br>EX 2: <tt>arange(5,2) = {5,4,3}</tt>
+	 * @param start_inc - the beginning index, inclusive
+	 * @param end_exc - the stopping index, exclusive
+	 * @throws IllegalArgumentException if start_inc == end_exc or if the difference
+	 * between start and end exceeds {@value GlobalState#MAX_ARRAY_SIZE}
+	 * @return a range of values
+	 */
 	public static int[] arange(final int start_inc, final int end_exc) {
 		return arange(start_inc, end_exc, start_inc>end_exc?-1:1);
 	}
 	
+	/**
+	 * Create a range of values starting at <tt>start_inc</tt> (inclusive) and 
+	 * continuing to <tt>end_exc</tt> (exclusive). 
+	 * <br>EX 1: <tt>arange(2, 5, 1) = {2,3,4}</tt>
+	 * <br>EX 2: <tt>arange(5, 2,-1) = {5,4,3}</tt>
+	 * <br>EX 3: <tt>arange(0,10, 2) = {0,2,4,6,8}</tt>
+	 * @param start_inc - the beginning index, inclusive
+	 * @param end_exc - the stopping index, exclusive
+	 * @param increment - the amount to space values by
+	 * @throws IllegalArgumentException if start_inc == end_exc, if the difference
+	 * between start and end exceeds {@value GlobalState#MAX_ARRAY_SIZE}, if the values
+	 * cannot be evenly distributed given the increment value
+	 * @return a range of values
+	 */
 	public static int[] arange(final int start_inc, final int end_exc, final int increment) {
 		int length = check_arange_return_len(start_inc, end_exc, increment) / FastMath.abs(increment);
 		
@@ -268,24 +311,13 @@ public class VecUtils {
 	
 	
 	
-	
-	public static int argMax(final float[] v) {
-		checkDims(v);
-		
-		float max = Float.NEGATIVE_INFINITY;
-		int max_idx = -1;
-		
-		for(int i = 0; i < v.length; i++) {
-			float val = v[i];
-			if(val > max) {
-				max = val;
-				max_idx = i;
-			}
-		}
-		
-		return max_idx;
-	}
-	
+	/**
+	 * Return the index of the max element in the vector. In the case
+	 * of a tie, the first "max" element ordinally will be returned.
+	 * @param v
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the idx of the max element
+	 */
 	public static int argMax(final double[] v) {
 		checkDims(v);
 		
@@ -304,25 +336,13 @@ public class VecUtils {
 	}
 	
 	
-	
-	
-	public static int argMin(final float[] v) {
-		checkDims(v);
-		
-		float min = Float.MAX_VALUE;
-		int min_idx = -1;
-		
-		for(int i = 0; i < v.length; i++) {
-			float val = v[i];
-			if(val < min) {
-				min = val;
-				min_idx = i;
-			}
-		}
-		
-		return min_idx;
-	}
-	
+	/**
+	 * Return the index of the min element in the vector. In the case
+	 * of a tie, the first "min" element ordinally will be returned.
+	 * @param v
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the idx of the min element
+	 */
 	public static int argMin(final double[] v) {
 		checkDims(v);
 		
@@ -349,6 +369,15 @@ public class VecUtils {
 		return res;
 	}
 	
+	/**
+	 * Given a vector, returns a vector of ints corresponding to the position
+	 * of the original elements the indices in which they would be ordered were they sorted.
+	 * <br> EX: <tt>argSort({5,1,3,4}) = {1,2,3,0}</tt>, where reordering the input vector
+	 * in the index order <tt>{1,2,3,0}</tt> would effectively sort the input vector.
+	 * @param a
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @return the ascending sort order of indices
+	 */
 	public static int[] argSort(final double[] a) {
 		checkDims(a);
 		
@@ -370,6 +399,15 @@ public class VecUtils {
 		return argSort(out);
 	}
 	
+	/**
+	 * Given a vector, returns a vector of ints corresponding to the position
+	 * of the original elements the indices in which they would be ordered were they sorted.
+	 * <br> EX: <tt>argSort({5,1,3,4}) = {1,2,3,0}</tt>, where reordering the input vector
+	 * in the index order <tt>{1,2,3,0}</tt> would effectively sort the input vector.
+	 * @param a
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @return the ascending sort order of indices
+	 */
 	public static int[] argSort(final int[] a) {
 		checkDims(a);
 		
@@ -391,8 +429,14 @@ public class VecUtils {
 		return argSort(out);
 	}
 	
+	/**
+	 * Coerce an int vector to a double vector. If the
+	 * input vector, will return an empty double vector
+	 * @param a
+	 * @return the double vector
+	 */
 	public static double[] asDouble(final int[] a) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		final int n = a.length;
 		final double[] d = new double[n];
 		
@@ -402,6 +446,13 @@ public class VecUtils {
 		return d;
 	}
 	
+	/**
+	 * Concatenate two vectors together.
+	 * <br>EX: cat({1,2,3}, {4,5,6}) = {1,2,3,4,5,6}
+	 * @param a
+	 * @param b
+	 * @return the concatenation of A and B
+	 */
 	final public static int[] cat(final int[] a, final int[] b) {
 		checkDimsPermitEmpty(a);
 		checkDimsPermitEmpty(b);
@@ -420,21 +471,49 @@ public class VecUtils {
 	}
 	
 	/**
-	 * Center a vector around the mean
+	 * Concatenate two vectors together.
+	 * <br>EX: cat({1,2,3}, {4,5,6}) = {1,2,3,4,5,6}
 	 * @param a
-	 * @return
+	 * @param b
+	 * @return the concatenation of A and B
+	 */
+	final public static double[] cat(final double[] a, final double[] b) {
+		checkDimsPermitEmpty(a);
+		checkDimsPermitEmpty(b);
+		
+		final int na = a.length, nb = b.length, n = na+nb;
+		if(na == 0) return copy(b);
+		if(nb == 0) return copy(a);
+		
+		final double[] res = new double[n];
+		for(int i = 0; i < na; i++)
+			res[i] = a[i];
+		for(int i = 0; i < nb; i++)
+			res[i+na] = b[i];
+		
+		return res;
+	}
+	
+	/**
+	 * Zero-center a vector around the mean
+	 * @param a
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the centered vector
 	 */
 	final public static double[] center(final double[] a) {
 		return center(a, mean(a));
 	}
 	
 	/**
-	 * Center a vector around a value
+	 * Zero-center a vector around a value
 	 * @param a
 	 * @param value
-	 * @return
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the centered vector
 	 */
 	final public static double[] center(final double[] a, final double value) {
+		checkDims(a);
+		
 		final double[] copy = new double[a.length];
 		System.arraycopy(a, 0, copy, 0, a.length);
 		for(int i = 0; i < a.length; i++)
@@ -442,10 +521,15 @@ public class VecUtils {
 		return copy;
 	}
 	
+	/**
+	 * Get all the complete (non-NaN) values in a vector
+	 * @param d
+	 * @return the complete vector
+	 */
 	public static double[] completeCases(final double[] d) {
-		checkDims(d);
-		final ArrayList<Double> out = new ArrayList<>();
+		checkDimsPermitEmpty(d);
 		
+		final ArrayList<Double> out = new ArrayList<>();
 		for(double dub: d)
 			if(!Double.isNaN(dub))
 				out.add(dub);
@@ -489,11 +573,10 @@ public class VecUtils {
 	
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Identifies whether a vector contains any missing values
+	 * in a serial fashion.
 	 * @param a
-	 * @param b
-	 * @return
+	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaNForceSerial(final double[] a) {
 		for(double b: a)
@@ -503,24 +586,44 @@ public class VecUtils {
 		return false;
 	}
 	
+	/**
+	 * Return a copy of a boolean array
+	 * @param b
+	 * @return the copy
+	 */
 	public static boolean[] copy(final boolean[] b) {
 		final boolean[] copy = new boolean[b.length];
 		System.arraycopy(b, 0, copy, 0, b.length);
 		return copy;
 	}
 	
+	/**
+	 * Return a copy of an int array
+	 * @param i
+	 * @return the copy
+	 */
 	public static int[] copy(final int[] i) {
 		final int[] copy = new int[i.length];
 		System.arraycopy(i, 0, copy, 0, i.length);
 		return copy;
 	}
 	
+	/**
+	 * Return a copy of a double array
+	 * @param d
+	 * @return the copy
+	 */
 	public static double[] copy(final double[] d) {
 		final double[] copy = new double[d.length];
 		System.arraycopy(d, 0, copy, 0, d.length);
 		return copy;
 	}
 	
+	/**
+	 * Return a copy of a String array
+	 * @param s
+	 * @return the copy
+	 */
 	public static String[] copy(final String[] s) {
 		final String[] copy = new String[s.length];
 		System.arraycopy(s, 0, copy, 0, s.length);
@@ -532,6 +635,7 @@ public class VecUtils {
 	 * type is immutable (an instance of Number, String, etc) will
 	 * act as a deep copy.
 	 * @param a
+	 * @throws NullPointerException if arg is null
 	 * @return a shallow copy
 	 */
 	public static <T> ArrayList<T> copy(final ArrayList<T> a) {
@@ -543,6 +647,14 @@ public class VecUtils {
 		return copy;
 	}
 	
+	/**
+	 * Computes the cosine similarity between two vectors.
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if either a or b is empty
+	 * @throws DimensionMismatchException if dims don't match
+	 * @return the cosine similarity
+	 */
 	public static double cosSim(final double[] a, final double[] b) {
 		checkDims(a, b);
 		
@@ -560,8 +672,15 @@ public class VecUtils {
 		return innerProdSum / (FastMath.sqrt(normAsum) * FastMath.sqrt(normBsum));
 	}
 	
+	/**
+	 * Divide one vector by another
+	 * @param numer
+	 * @param by
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return the quotient vector
+	 */
 	public static double[] divide(final double[] numer, final double[] by) {
-		checkDims(numer, by);
+		checkDimsPermitEmpty(numer, by);
 		
 		final double[] ab = new double[numer.length];
 		for(int i = 0; i < numer.length; i++)
@@ -570,6 +689,14 @@ public class VecUtils {
 		return ab;
 	}
 	
+	/**
+	 * Returns true if every element in the vector A
+	 * exactly equals the corresponding element in the vector B
+	 * @param a
+	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsExactly(final int[] a, final int[] b) {
 		checkDimsPermitEmpty(a, b);
 		
@@ -579,6 +706,14 @@ public class VecUtils {
 		return true;
 	}
 	
+	/**
+	 * Returns true if every element in the vector A
+	 * exactly equals the corresponding element in the vector B
+	 * @param a
+	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
+	 */
 	public static boolean equalsExactly(final boolean[] a, final boolean[] b) {
 		checkDimsPermitEmpty(a, b);
 		
@@ -589,16 +724,14 @@ public class VecUtils {
 	}
 	
 	/**
-	 * Checks whether two vectors are exactly equal.
-	 * Automatically assigns parallel or serial jobs depending 
-	 * on settings in {@link GlobalState}
+	 * Returns true if every element in the vector A
+	 * exactly equals the corresponding element in the vector B.
 	 * @param a
 	 * @param b
-	 * @param eps
-	 * @return whether the two vectors are exactly equal
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
-		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -612,12 +745,13 @@ public class VecUtils {
 	
 	
 	/**
-	 * Checks whether two vectors are exactly equal 
-	 * in a distributed fashion
+	 * Returns true if every element in the vector A
+	 * exactly equals the corresponding element in the vector B.
+	 * Operates in a distributed fashion.
 	 * @param a
 	 * @param b
-	 * @param eps
-	 * @return whether the two vectors are exactly equal
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactlyDistributed(final double[] a, final double[] b) {
 		return DistributedEqualityTest.operate(a, b, 0);
@@ -625,13 +759,13 @@ public class VecUtils {
 	
 	
 	/**
-	 * Checks whether two vectors are equal within a 
-	 * tolerance of {@link Precision#EPSILON}. Automatically assigns parallel
-	 * or serial jobs depending on settings in {@link GlobalState}
+	 * Returns true if every element in the vector A
+	 * equals the corresponding element in the vector B within
+	 * a default tolerance of {@link Precision#EPSILON}
 	 * @param a
 	 * @param b
-	 * @param eps
-	 * @return whether the two vectors are equal within a certain tolerance
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b) {
 		return equalsWithTolerance(a, b, Precision.EPSILON);
@@ -639,16 +773,16 @@ public class VecUtils {
 	
 	
 	/**
-	 * Checks whether two vectors are equal within a 
-	 * specified tolerance. Automatically assigns parallel
-	 * or serial jobs depending on settings in {@link GlobalState}
+	 * Returns true if every element in the vector A
+	 * equals the corresponding element in the vector B within
+	 * a provided tolerance
 	 * @param a
 	 * @param b
 	 * @param eps
-	 * @return whether the two vectors are equal within a certain tolerance
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
-		checkDimsPermitEmpty(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && null!=a && 
 				 a.length > MAX_SERIAL_VECTOR_LEN)) {
@@ -662,25 +796,31 @@ public class VecUtils {
 	
 	
 	/**
-	 * Checks whether two vectors are equal within a 
-	 * specified tolerance in a distributed fashion
+	 * Returns true if every element in the vector A
+	 * equals the corresponding element in the vector B within
+	 * a provided tolerance. Operated in a distributed fashion
 	 * @param a
 	 * @param b
 	 * @param eps
-	 * @return whether the two vectors are equal within a certain tolerance
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithToleranceDistributed(final double[] a, final double[] b, final double eps) {
 		return DistributedEqualityTest.operate(a, b, eps);
 	}
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Returns true if every element in the vector A
+	 * equals the corresponding element in the vector B within
+	 * a provided tolerance. Operates in a strictly serial fashion
 	 * @param a
 	 * @param b
-	 * @return
+	 * @param eps
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
+		checkDimsPermitEmpty(a, b);
 		for(int i = 0; i < a.length; i++)
 			if( !Precision.equals(a[i], b[i], eps) )
 				return false;
@@ -688,8 +828,14 @@ public class VecUtils {
 		return true;
 	}
 	
+	/**
+	 * Apply the {@link FastMath#exp(double)} function
+	 * across a vector.
+	 * @param a
+	 * @return a vector of corresponding exp'd values
+	 */
 	public static double[] exp(final double[] a) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
 		final int n = a.length;
 		final double[] out = new double[n];
@@ -723,10 +869,10 @@ public class VecUtils {
 	 * value alotted in GlobalState, will automatically schedule a parallel job.
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
 	 * @return the inner product between a and b
 	 */
 	public static double innerProduct(final double[] a, final double[] b) {
-		checkDims(a, b);
 		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
 				(ALLOW_AUTO_PARALLELISM && 
 				 a.length>MAX_SERIAL_VECTOR_LEN)) {
@@ -742,6 +888,7 @@ public class VecUtils {
 	 * Calculate the inner product between a and b in a distributed fashion
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
 	 * @return the inner product between a and b
 	 */
 	public static double innerProductDistributed(final double[] a, final double[] b) {
@@ -749,41 +896,75 @@ public class VecUtils {
 	}
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Calculate the inner product between a and b in a serial fashion
 	 * @param a
 	 * @param b
-	 * @return
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return the inner product between a and b
 	 */
 	public static double innerProductForceSerial(final double[] a, final double[] b) {
-		double sum = 0d;
+		checkDimsPermitEmpty(a, b);
+		double sum = 0.0;
 		for(int i = 0; i < a.length; i++)
 			sum += a[i] * b[i];
 		
 		return sum;
 	}
 	
+	/**
+	 * Compute the interquartile range in a vector
+	 * @param a
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @return the interquartile range
+	 */
 	public static double iqr(final double[] a) {
 		checkDims(a);
 		DescriptiveStatistics d = new DescriptiveStatistics(a);
 		return d.getPercentile(75) - d.getPercentile(25);
 	}
 	
+	/**
+	 * Assess whether two vectors are orthogonal, i.e., their inner product is 0.
+	 * @param a
+	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if the inner product equals 0
+	 */
 	public static boolean isOrthogonalTo(final double[] a, final double[] b) {
 		// Will auto determine whether parallel is necessary or allowed...
 		return Precision.equals(innerProduct(a, b), 0, Precision.EPSILON);
 	}
 	
+	/**
+	 * Returns the kurtosis of the vector.
+	 * @param a
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @deprecated due to instability in {@link DescriptiveStatistics} API
+	 * @return the kurtosis
+	 */
+	@Deprecated
 	public static double kurtosis(final double[] a) {
 		checkDims(a);
 		DescriptiveStatistics d = new DescriptiveStatistics(a);
 		return d.getKurtosis();
 	}
 	
+	/**
+	 * Computes the <tt>L<sub>1</sub></tt> norm, or the sum
+	 * of the absolute values in the vector.
+	 * @param a
+	 * @return the norm
+	 */
 	public static double l1Norm(final double[] a) {
 		return sum(abs(a));
 	}
 	
+	/**
+	 * Compute the <tt>L<sub>2</sub></tt> (Euclidean) norm, or the sqrt
+	 * of the sum of squared terms in the vector
+	 * @param a
+	 * @return the norm
+	 */
 	public static double l2Norm(final double[] a) {
 		return FastMath.sqrt(innerProduct(a, a));
 	}
@@ -819,10 +1000,9 @@ public class VecUtils {
 	
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Calculate the log of the vector in a serial fashion
 	 * @param a
-	 * @return
+	 * @return the log of the vector
 	 */
 	public static double[] logForceSerial(final double[] a) {
 		checkDimsPermitEmpty(a);
@@ -832,7 +1012,12 @@ public class VecUtils {
 		return b;
 	}
 	
-	
+	/**
+	 * Return the <tt>L<sub>P</sub></tt> or Minkowski norm
+	 * @param a
+	 * @param p
+	 * @return the <tt>L<sub>P</sub></tt> norm
+	 */
 	public static double lpNorm(final double[] a, final double p) {
 		if(p == 1) return l1Norm(a);
 		if(p == 2) return l2Norm(a);
@@ -853,6 +1038,7 @@ public class VecUtils {
 	/**
 	 * Identify the max value in the vector
 	 * @param a
+	 * @throws IllegalArgumentException if the vector is empty
 	 * @return the max in the vector
 	 */
 	final public static double max(final double[] a) {
@@ -866,7 +1052,7 @@ public class VecUtils {
 	}
 	
 	/**
-	 * Calculate the mean of the vector
+	 * Calculate the mean of the vector, NaN if it's empty
 	 * @param a
 	 * @return the mean of the vector
 	 */
@@ -887,6 +1073,7 @@ public class VecUtils {
 	/**
 	 * Calculate the median of the vector
 	 * @param a
+	 * @throws IllegalArgumentException if the vector is empty
 	 * @return the vector median
 	 */
 	public static double median(final double[] a) {
@@ -908,6 +1095,7 @@ public class VecUtils {
 	/**
 	 * Identify the min value in the vector
 	 * @param a
+	 * @throws IllegalArgumentException if the vector is empty
 	 * @return the min in the vector
 	 */
 	final public static double min(final double[] a) {
@@ -926,6 +1114,7 @@ public class VecUtils {
 	 * Auto selects parallelism or serialism depending on parallel settings in {@link GlobalState}
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the vector dims don't match
 	 * @return the product of two vectors
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
@@ -946,6 +1135,7 @@ public class VecUtils {
 	 * Yields a vector of equal length.
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the vector dims don't match
 	 * @return the product of two vectors
 	 */
 	public static double[] multiplyDistributed(final double[] a, final double[] b) {
@@ -954,11 +1144,12 @@ public class VecUtils {
 	
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Multiply each respective element from two vectors in a serial fashion. 
+	 * Yields a vector of equal length.
 	 * @param a
 	 * @param b
-	 * @return
+	 * @throws DimensionMismatchException if the vector dims don't match
+	 * @return the product of two vectors
 	 */
 	public static double[] multiplyForceSerial(final double[] a, final double[] b) {
 		checkDimsPermitEmpty(a, b);
@@ -998,11 +1189,9 @@ public class VecUtils {
 	}
 	
 	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
+	 * Count the nans in a vector in a serial fashion
 	 * @param a
-	 * @param b
-	 * @return
+	 * @return the number of nans in the vector
 	 */
 	public static int nanCountForceSerial(final double[] a) {
 		int ct = 0;
@@ -1013,12 +1202,14 @@ public class VecUtils {
 		return ct;
 	}
 	
+	
 	/**
 	 * Identify the max value in the vector, excluding NaNs
 	 * @param a
-	 * @return the max in the vector
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the max in the vector excluding NaNs; returns NaN if completely NaN vector
 	 */
-	public static double nanMax(final double[] a) {
+	 public static double nanMax(final double[] a) {
 		checkDims(a);
 		
 		double max = GlobalState.Mathematics.SIGNED_MIN;
@@ -1035,7 +1226,8 @@ public class VecUtils {
 	/**
 	 * Identify the min value in the vector, excluding NaNs
 	 * @param a
-	 * @return the min in the vector
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return the min in the vector excluding NaNs; returns NaN if completely NaN vector
 	 */
 	public static double nanMin(final double[] a) {
 		checkDims(a);
@@ -1054,7 +1246,7 @@ public class VecUtils {
 	/**
 	 * Calculate the mean of the vector, excluding NaNs
 	 * @param a
-	 * @return the mean of the vector
+	 * @return the mean in the vector excluding NaNs; returns NaN if completely NaN vector
 	 */
 	public static double nanMean(final double[] a) {
 		double sum = 0;
@@ -1072,9 +1264,10 @@ public class VecUtils {
 	/**
 	 * Calculate the median of the vector, excluding NaNs
 	 * @param a
-	 * @return the median of the vector
+	 * @return the median in the vector excluding NaNs; returns NaN if completely NaN vector
 	 */
 	public static double nanMedian(final double[] a) {
+		// handles case of whether vector length 1
 		return median(completeCases(a));
 	}
 	
@@ -1137,6 +1330,7 @@ public class VecUtils {
 		
 		return !seenNonNan ? Double.NaN : sum / (a.length - (n_minus_one ? 1 : 0));
 	}
+	
 	
 	/**
 	 * Scalar divides a vector by its magnitude

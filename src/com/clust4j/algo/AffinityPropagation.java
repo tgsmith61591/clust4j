@@ -36,15 +36,12 @@ import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_PO
  *
  */
 public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, BaseClassifier, CentroidLearner {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1986169131867013043L;
 	
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
 	final public static int DEF_ITER_BREAK = 15;
 	final public static int DEF_MAX_ITER = 200;
-	final public static double DEF_MIN_CHANGE = 0d;
+	final public static double DEF_MIN_CHANGE = 0.0;
 	final public static double DEF_DAMPING = 0.5;
 	/** By default uses minute Gaussian smoothing. It is recommended this remain
 	 *  true, but the {@link AffinityPropagationPlanner#useGaussianSmoothing(boolean)}
@@ -434,7 +431,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
 					
 					if(iterCt % 25 == 0 && iterCt != 0)
-						info("iteration " + iterCt);
+						info("[working update] training iteration " + iterCt + " (average "
+							+ "iteration time = " + LogTimeFormatter
+							.millis((long)((double)(System.currentTimeMillis()-iterStart)/(double)iterCt), 
+								false) + ")");
 					
 					// Reassign tmp, create vector of arg maxes. Can
 					// assign tmp like this:

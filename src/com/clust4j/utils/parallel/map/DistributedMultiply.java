@@ -33,6 +33,6 @@ final public class DistributedMultiply extends DualVectorMapTaskOperator {
     }
 
     void dimCheck(double[] a, double[] b) {
-    	VecUtils.checkDimsPermitEmpty(array);
+    	VecUtils.checkDimsPermitEmpty(a, b);
     }
 }

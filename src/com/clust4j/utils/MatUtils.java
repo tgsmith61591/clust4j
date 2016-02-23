@@ -16,6 +16,14 @@ import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
 
+/**
+ * A number of algorithms in clust4j utilize linear algebraic functions
+ * or apply functions across a matrix. This utility class provides mathematical
+ * functions for applications across matrices.
+ * @see NonUniformMatrixException
+ * @see DimensionMismatchException
+ * @author Taylor G Smith
+ */
 public class MatUtils {
 	final static String MAT_DIM_ERR_MSG = "illegal mat dim: ";
 	
@@ -23,13 +31,24 @@ public class MatUtils {
 	public final static int BLOCK_MAT_THRESH = 1000;
 	public final static int MIN_ACCEPTABLE_MAT_LEN = 1;
 	
+	/**
+	 * A number of axis-wise operations require an
+	 * axis argument. This set of enums indicates whether
+	 * to apply a function of the rows or columns of a matrix
+	 * @author Taylor G Smith
+	 */
 	public static enum Axis {
 		ROW, COL
 	}
 	
 	
 	/**
-	 * Create a boolean matrix
+	 * Create a boolean masking matrix to be used in the 
+	 * {@link MatUtils#where(MatSeries, double[][], double[][])} family
+	 * of methods.
+	 * @throws IllegalArgumentException if the input mat has no rows
+	 * @throws NonUniformMatrixException if input mat is not uniform
+	 * @throws DimensionMismatchException if the input vector does not match mat col dims
 	 * @author Taylor G Smith
 	 */
 	public static class MatSeries extends Series<boolean[][]> {
@@ -37,12 +56,22 @@ public class MatUtils {
 		final int m, n;
 		
 		private MatSeries(double[][] x) {
-			checkDims(x);
+			checkDimsForUniformity(x);
+			
 			m = x.length;
 			n = x[0].length;
 			mat = new boolean[m][n];
 		}
 		
+		/**
+		 * Constructor for an input matrix 
+		 * evaluated against one static value
+		 * @param x
+		 * @param in
+		 * @param val
+		 * @throws IllegalArgumentException if the matrix has no rows
+		 * @throws NonUniformMatrixException if the matrix is non-uniform
+		 */
 		public MatSeries(double[][] x, Inequality in, double val) {
 			this(x);
 			
@@ -51,9 +80,20 @@ public class MatUtils {
 					mat[i][j] = eval(x[i][j], in, val);
 		}
 		
+		/**
+		 * Constructor for an input matrix
+		 * evaluated on the column axis against an input vector
+		 * @param a
+		 * @param in
+		 * @param x
+		 * @throws IllegalArgumentException if the matrix has no rows
+		 * @throws NonUniformMatrixException if the matrix is non-uniform
+		 * @throws DimensionMismatchException if the dims of the vec don't match the mat col dims
+		 */
 		public MatSeries(double[] a, Inequality in, double[][] x) {
 			this(x);
 			
+			// Implicitly handles case of empty vec (we know x is not empty here)
 			if(a.length != n)
 				throw new DimensionMismatchException(a.length, n);
 			for(int i = 0; i < m; i++)
@@ -61,11 +101,17 @@ public class MatUtils {
 					mat[i][j] = eval(a[j], in, x[i][j]);
 		}
 		
+		/**
+		 * Get the mask matrix
+		 */
 		@Override
 		public boolean[][] get() {
 			return copy(mat);
 		}
 		
+		/**
+		 * Get the reference of the mask matrix
+		 */
 		@Override
 		public boolean[][] getRef() {
 			return mat;
@@ -73,11 +119,19 @@ public class MatUtils {
 	}
 	
 	
-	
+	/**
+	 * Operator enums for scalar operations
+	 * @author Taylor G Smith
+	 */
 	static enum Operator {
 		ADD, DIV, MULT, SUB
 	}
 	
+	/**
+	 * Determine whether the col dims of A are equal to the row dims of B
+	 * @param a
+	 * @param b
+	 */
 	final static public void checkMultipliability(final double[][] a, final double[][] b) {
 		checkDims(a);
 		checkDims(b);
@@ -296,10 +350,9 @@ public class MatUtils {
 	 * AbstractRealMatrix won't allow any empty rows
 	 */
 	final static public void checkDims(final AbstractRealMatrix a) {
-		int m = a.getRowDimension(), n = a.getColumnDimension();
-		
+		int m = a.getRowDimension();
 		if(m < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + m);
-		if(n < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + n);
+		//if(n < MIN_ACCEPTABLE_MAT_LEN) throw new IllegalArgumentException(MAT_DIM_ERR_MSG + n);
 	}
 	
 	final static public void checkDims(final AbstractRealMatrix a, final AbstractRealMatrix b) {
@@ -309,10 +362,8 @@ public class MatUtils {
 		int m1 = a.getRowDimension(), m2 = b.getRowDimension();
 		int n1 = a.getColumnDimension(), n2 = b.getColumnDimension();
 		
-		if(m1 != m2)
-			throw new DimensionMismatchException(m1, m2);
-		if(n1 != n2)
-			throw new DimensionMismatchException(n1, n2);
+		if(m1 != m2) throw new DimensionMismatchException(m1, m2);
+		if(n1 != n2) throw new DimensionMismatchException(n1, n2);
 	}
 	
 	
@@ -1224,23 +1275,36 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Repeat a value into an MxN matrix
+	 * @param val - the value
+	 * @param m - num rows
+	 * @param n - num cols
+	 * @throws IllegalArgumentException if m <= 0 or n is less than 0
+	 * @return a MxN matrix
+	 */
 	public static double[][] rep(final double val, final int m, final int n) {
-		if(m < 0 || n < 0)
+		if(n < 0)
 			throw new IllegalArgumentException("illegal dimension");
-		final double[][] out = new double[m][n];
-		for(int i = 0; i < m; i++)
-			out[i] = VecUtils.rep(val, n);
-		return out;
+		return rep(VecUtils.rep(val, n), m);
 	}
 	
+	/**
+	 * Repeat a vector into a matrix of M rows
+	 * @param vec - the vector
+	 * @param m - num rows
+	 * @throws IllegalArgumentException if m is <= 0
+	 * @return a MxN matrix
+	 */
 	public static double[][] rep(final double[] vec, final int m) {
-		VecUtils.checkDims(vec);
-		
-		if(m < 0)
+		VecUtils.checkDimsPermitEmpty(vec);
+		if(m <= 0)
 			throw new IllegalArgumentException("illegal dimension");
+		
 		final double[][] out = new double[m][vec.length];
 		for(int i = 0; i < m; i++)
 			out[i] = VecUtils.copy(vec);
+		
 		return out;
 	}
 	
@@ -1331,22 +1395,39 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Compute the mean of each row into a vector of length M.
+	 * @param data
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the row means
+	 */
 	public static double[] rowMeans(final double[][] data) {
-		checkDims(data);
-		
-		final double[] out = new double[data.length];
-		for(int i = 0; i < out.length; i++)
-			out[i] = VecUtils.mean(data[i]);
-		
-		return out;
+		return rowMeansSums(data, true);
 	}
 	
+	/**
+	 * Compute the sum of each row into a vector of length M.
+	 * @param data
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the row sums
+	 */
 	public static double[] rowSums(final double[][] data) {
-		checkDims(data);
+		return rowMeansSums(data, false);
+	}
+	
+	/**
+	 * Compute the sum or mean of each row into a vector of length M.
+	 * @param data
+	 * @param mean
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the row sums or means
+	 */
+	private static double[] rowMeansSums(final double[][] data, final boolean mean) {
+		checkDimsPermitEmpty(data);
 		
 		final double[] out = new double[data.length];
 		for(int i = 0; i < out.length; i++)
-			out[i] = VecUtils.sum(data[i]);
+			out[i] = mean ? VecUtils.mean(data[i]) : VecUtils.sum(data[i]);
 		
 		return out;
 	}
@@ -1356,49 +1437,91 @@ public class MatUtils {
 	 * @param data
 	 * @param vector
 	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @throws DimensionMismatchException if the vector does not match the axis dimensions
 	 * @return the scalar-operated matrix
 	 */
 	public static double[][] scalarAdd(final double[][] data, final double[] vector, final Axis axis) {
 		return scalarOperate(data, vector, axis, Operator.ADD);
 	}
 	
+	/**
+	 * Scalar add a value to a matrix
+	 * @param data
+	 * @param scalar
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the scalar-operated matrix
+	 */
 	public static double[][] scalarAdd(final double[][] data, final double scalar) {
 		return scalarOperate(data, scalar, Operator.ADD);
 	}
 	
 	/**
-	 * Scalar divide a vector axis-wise to a matrix
+	 * Scalar divide a matrix axis-wise by a vector
 	 * @param data
 	 * @param vector
 	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @throws DimensionMismatchException if the vector does not match the axis dimensions
 	 * @return the scalar-operated matrix
 	 */
 	public static double[][] scalarDivide(final double[][] data, final double[] vector, final Axis axis) {
 		return scalarOperate(data, vector, axis, Operator.DIV);
 	}
 	
+	/**
+	 * Scalar divide each value in a matrix by a scalar value
+	 * @param data
+	 * @param scalar
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the scalar-operated matrix
+	 */
 	public static double[][] scalarDivide(final double[][] data, final double scalar) {
 		return scalarOperate(data, scalar, Operator.DIV);
 	}
 	
 	/**
-	 * Scalar multiply a vector axis-wise to a matrix
+	 * Scalar multiply a matrix axis-wise by a vector
 	 * @param data
 	 * @param vector
 	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @throws DimensionMismatchException if the vector does not match the axis dimensions
 	 * @return the scalar-operated matrix
 	 */
 	public static double[][] scalarMultiply(final double[][] data, final double[] vector, final Axis axis) {
 		return scalarOperate(data, vector, axis, Operator.MULT);
 	}
 	
+	/**
+	 * Scalar multiply an entire matrix by a value
+	 * @param data
+	 * @param scalar
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the scalar-operated matrix
+	 */
 	public static double[][] scalarMultiply(final double[][] data, final double scalar) {
 		return scalarOperate(data, scalar, Operator.MULT);
 	}
 	
+	/**
+	 * Perform the scalar operation from vectors
+	 * @param data
+	 * @param vector
+	 * @param axis
+	 * @param op
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @throws DimensionMismatchException if the vector does not match the axis dimensions
+	 * @return the matrix
+	 */
 	private static double[][] scalarOperate(final double[][] data, final double[] vector, final Axis axis, Operator op) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		
+		// We check for uniformity, so we can declare n here confidently
 		final int m = data.length, n = data[0].length;
 		
 		final double[][] out = new double[m][n];
@@ -1434,23 +1557,42 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Perform the scalar operation from scalar values
+	 * @param data
+	 * @param scalar
+	 * @param op
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the matrix
+	 */
 	private static double[][] scalarOperate(final double[][] data, final double scalar, final Operator op) {
-		checkDims(data);
+		checkDimsPermitEmpty(data);
 		
-		final int m=data.length, n=data[0].length;
-		final double[][] copy = new double[m][n];
+		final int m=data.length;
+		final double[][] copy = new double[m][];
 		
-		for(int i = 0; i < m; i++)
+		for(int i = 0; i < m; i++) {
+			int n = data[i].length;
+			copy[i] = new double[n];
+			
 			for(int j = 0; j < n; j++) {
 				copy[i][j] = op.equals(Operator.ADD) ? data[i][j] + scalar :
 								op.equals(Operator.DIV) ? data[i][j] / scalar :
 									op.equals(Operator.MULT) ? data[i][j] * scalar :
 										data[i][j] - scalar;
 			}
+		}
 		
 		return copy;
 	}
 	
+	/**
+	 * Scalar subtract a value from a matrix
+	 * @param data
+	 * @param scalar
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @return the scalar-operated matrix
+	 */
 	public static double[][] scalarSubtract(final double[][] data, final double scalar) {
 		return scalarOperate(data, scalar, Operator.SUB);
 	}
@@ -1460,79 +1602,152 @@ public class MatUtils {
 	 * @param data
 	 * @param vector
 	 * @param axis - whether each element in the vector constitutes a row or column
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @throws DimensionMismatchException if the vector does not match the axis dimensions
 	 * @return the scalar-operated matrix
 	 */
 	public static double[][] scalarSubtract(final double[][] data, final double[] vector, final Axis axis) {
 		return scalarOperate(data, vector, axis, Operator.SUB);
 	}
 	
+	/**
+	 * Set the column within a matrix in place.
+	 * @param a
+	 * @param idx
+	 * @param v
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws NonUniformMatrixException if the matrix is not uniform
+	 * @throws IndexOutOfBoundsException if idx is less than 0 or greater than the col dims
+	 * @throws DimensionMismatchException if the dimensions of v do not match row dims of the matrix
+	 */
 	public static void setColumnInPlace(final double[][] a, final int idx, final double[] v) {
-		checkDims(a);
+		checkDimsForUniformity(a);
 		
 		final int m = a.length, n = a[0].length;
-		VecUtils.checkDims(getColumn(a, 0), v);
-		
 		if(idx < 0 || idx >= n)
 			throw new IndexOutOfBoundsException("illegal idx: " + idx);
+		if(v.length != m)
+			throw new DimensionMismatchException(m, v.length);
 		
 		for(int i = 0; i < m; i++)
 			a[i][idx] = v[i];
 	}
 	
+	/**
+	 * Set the row within a matrix in place
+	 * @param a
+	 * @param idx
+	 * @param v
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws IndexOutOfBoundsException if idx is less than 0 or greater than row dims
+	 * @throws DimensionMismatchException if the dims of v do not match col dims of the matrix
+	 */
 	public static void setRowInPlace(final double[][] a, final int idx, final double[] v) {
-		checkDims(a);
+		checkDimsPermitEmpty(a);
 		
-		final int m = a.length, n = a[0].length;
-		VecUtils.checkDims(a[0], v);
-
+		final int m = a.length;
 		if(idx < 0 || idx >= m)
 			throw new IndexOutOfBoundsException("illegal idx: " + idx);
+		
+		final int n = a[idx].length;
+		if(v.length != n)
+			throw new DimensionMismatchException(n, v.length);
 		
 		for(int i = 0; i < n; i++)
 			a[idx][i] = v[i];
 	}
 	
+	/**
+	 * Sort a double matrix ascending by the {@link VecUtils#argSort(double[])} method
+	 * @param data
+	 * @param col - the column used for sorting
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws IndexOutOfBoundsException if the col idx is < 0 or >= col dims of the matrix
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the sorted matrix
+	 */
 	public static double[][] sortAscByCol(final double[][] data, final int col) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		int[] sortedArgs = VecUtils.argSort(MatUtils.getColumn(data, col));
 		return MatUtils.reorder(data, sortedArgs);
 	}
 	
+	/**
+	 * Sort an int matrix ascending by the {@link VecUtils#argSort(int[])} method
+	 * @param data
+	 * @param col - the column used for sorting
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws IndexOutOfBoundsException if the col idx is < 0 or >= col dims of the matrix
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the sorted matrix
+	 */
 	public static int[][] sortAscByCol(final int[][] data, final int col) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		int[] sortedArgs = VecUtils.argSort(MatUtils.getColumn(data, col));
 		return MatUtils.reorder(data, sortedArgs);
 	}
 	
+	/**
+	 * Sort a double matrix descending by the {@link VecUtils#argSort(double[])} method
+	 * @param data
+	 * @param col - the column used for sorting
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws IndexOutOfBoundsException if the col idx is < 0 or >= col dims of the matrix
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the sorted matrix
+	 */
 	public static double[][] sortDescByCol(final double[][] data, final int col) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		int[] sortedArgs = VecUtils.reverseSeries(VecUtils.argSort(MatUtils.getColumn(data, col)));
 		return MatUtils.reorder(data, sortedArgs);
 	}
 	
+	/**
+	 * Sort an int matrix descending by the {@link VecUtils#argSort(int[])} method
+	 * @param data
+	 * @param col - the column used for sorting
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @throws IndexOutOfBoundsException if the col idx is < 0 or >= col dims of the matrix
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the sorted matrix
+	 */
 	public static int[][] sortDescByCol(final int[][] data, final int col) {
-		checkDims(data);
+		checkDimsForUniformity(data);
 		int[] sortedArgs = VecUtils.reverseSeries(VecUtils.argSort(MatUtils.getColumn(data, col)));
 		return MatUtils.reorder(data, sortedArgs);
 	}
 	
+	/**
+	 * Subtract one matrix from another
+	 * @param a - the subtractor (subtract B from A)
+	 * @param b - the subtracted (subtracted from A)
+	 * @throws IllegalArgumentException if there are no rows in either A or B
+	 * @throws DimensionMismatchException if the dims of A do not match those of B
+	 * @return the difference matrix
+	 */
 	public static final double[][] subtract(final double[][] a, final double[][] b) {
-		checkDims(a);
-		checkDims(b);
+		checkDimsPermitEmpty(a, b);
+		final int m = a.length;
+		final double[][] c = new double[m][];
 		
-		final int m = a.length, n = a[0].length;
-		if(b.length != m)
-			throw new DimensionMismatchException(b.length, m);
-		if(b[0].length != n)
-			throw new DimensionMismatchException(b[0].length, n);
+		for(int i = 0; i < m; i++) {
+			int n = a[i].length;
+			c[i] = new double[n];
 			
-		final double[][] c = new double[m][n];
-		for(int i = 0; i < m; i++)
 			for(int j = 0; j < n; j++)
 				c[i][j] = a[i][j] - b[i][j];
+		}
+		
 		return c;
 	}
 	
+	/**
+	 * Convert an int matrix to a double matrix
+	 * @param mat
+	 * @throws IllegalArgumentException if there are no rows in the matrix
+	 * @return the double matrix
+	 */
 	public static double[][] toDouble(int[][] mat) {
 		// Allow jagged arrays
 		checkDimsPermitEmpty(mat);
@@ -1541,6 +1756,7 @@ public class MatUtils {
 		double[][] out = new double[m][];
 		for(int i = 0; i < m; i++) {
 			out[i] = new double[mat[i].length];
+			
 			for(int j = 0; j < out[i].length; j++)
 				out[i][j] = (double)mat[i][j];
 		}
@@ -1548,10 +1764,20 @@ public class MatUtils {
 		return out;
 	}
 	
+	/**
+	 * Perform a matrix transposition.
+	 * @param a
+	 * @throws IllegalArgumentException if the matrix has no rows or if cols are empty
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the transposed (NxM) matrix
+	 */
 	public static double[][] transpose(final double[][] a) {
-		checkDims(a);
+		checkDimsForUniformity(a);
 		
 		final int m = a.length, n = a[0].length;
+		if(n == 0)
+			throw new IllegalArgumentException("cannot transpose empty cols");
+		
 		final double[][] t = new double[n][m];
 		for(int i = 0; i < m; i++)
 			for(int j = 0; j < n; j++)
@@ -1559,6 +1785,12 @@ public class MatUtils {
 		return t;
 	}
 	
+	/**
+	 * Transpose a vector into a Nx1 matrix
+	 * @param a
+	 * @throws IllegalArgumentException if the vector is empty
+	 * @return a single column matrix
+	 */
 	public static double[][] transpose(final double[] a) {
 		VecUtils.checkDims(a);
 		
@@ -1570,11 +1802,23 @@ public class MatUtils {
 		return r;
 	}
 
+	/**
+	 * Given two matrices, X & Y, and a {@link MatSeries} mask, construct a new
+	 * M x N matrix, Z, such that <tt>Z[i][j] = X[i][j]</tt> if <tt>mask[i][j]</tt> 
+	 * is <tt>true</tt>, else <tt>Y[i][j]</tt>.
+	 * @param series
+	 * @param x
+	 * @param y
+	 * @throws IllegalArgumentException if x or y has no rows
+	 * @throws NonUniformMatrixException if x or y is not uniform
+	 * @throws DimensionMismatch exception if the dims of X, Y or the series don't match
+	 * @return the matrix Z
+	 */
 	public static double[][] where(final MatSeries series, double[][] x, double[][] y) {
 		checkDimsForUniformity(x, y);
 		
 		final int m = x.length, n = x[0].length;
-		final boolean[][] ser = series.get();
+		final boolean[][] ser = series.getRef(); // we can safely get the ref since not assigning...
 		
 		checkDims(ser);
 		if(ser.length != m)
@@ -1590,16 +1834,55 @@ public class MatUtils {
 		return result;
 	}
 	
+	/**
+	 * Given a vector, X, repeated into an M x N matrix (X'), another matrix, Y, 
+	 * and a {@link MatSeries} mask, construct a new M x N matrix, Z, 
+	 * such that <tt>Z[i][j] = X'[i][j]</tt> if <tt>mask[i][j]</tt> 
+	 * is <tt>true</tt>, else <tt>Y[i][j]</tt>.
+	 * @param series
+	 * @param x
+	 * @param y
+	 * @throws IllegalArgumentException if x or y has no rows
+	 * @throws NonUniformMatrixException if x or y is not uniform
+	 * @throws DimensionMismatch exception if the dims of X, Y or the series don't match
+	 * @return the matrix Z
+	 */
 	public static double[][] where(final MatSeries series, double[] x, double[][] y) {
-		return where(series, rep(x, series.get().length), y);
+		return where(series, rep(x, series.getRef().length), y);
 	}
 	
+	/**
+	 * Given a matrix, X, a vector, Y, repeated into an M x N matrix (Y'),
+	 * and a {@link MatSeries} mask, construct a new M x N matrix, Z, 
+	 * such that <tt>Z[i][j] = X[i][j]</tt> if <tt>mask[i][j]</tt> 
+	 * is <tt>true</tt>, else <tt>Y'[i][j]</tt>.
+	 * @param series
+	 * @param x
+	 * @param y
+	 * @throws IllegalArgumentException if x or y has no rows
+	 * @throws NonUniformMatrixException if x or y is not uniform
+	 * @throws DimensionMismatch exception if the dims of X, Y or the series don't match
+	 * @return the matrix Z
+	 */
 	public static double[][] where(final MatSeries series, double[][] x, double[] y) {
-		return where(series, x, rep(y, series.get().length));
+		return where(series, x, rep(y, series.getRef().length));
 	}
 	
+	/**
+	 * Given two vectors, X & Y, repeated into two M x N matrices (X', Y'),
+	 * and a {@link MatSeries} mask, construct a new M x N matrix, Z, 
+	 * such that <tt>Z[i][j] = X'[i][j]</tt> if <tt>mask[i][j]</tt> 
+	 * is <tt>true</tt>, else <tt>Y'[i][j]</tt>.
+	 * @param series
+	 * @param x
+	 * @param y
+	 * @throws IllegalArgumentException if x or y has no rows
+	 * @throws NonUniformMatrixException if x or y is not uniform
+	 * @throws DimensionMismatch exception if the dims of X, Y or the series don't match
+	 * @return the matrix Z
+	 */
 	public static double[][] where(final MatSeries series, double[] x, double[] y) {
 		VecUtils.checkDims(x,y);
-		return where(series, rep(x, series.get().length), rep(y, series.get().length));
+		return where(series, rep(x, series.getRef().length), rep(y, series.getRef().length));
 	}
 }

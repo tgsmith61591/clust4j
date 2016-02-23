@@ -16,9 +16,10 @@ public class DistributedEqualityTest extends VectorReduceTask<Boolean> {
 	DistributedEqualityTest(double[] arr_a, double[] arr_b, double tolerance, int lo, int hi) {
 		super(arr_a, lo, hi);
 		
-		VecUtils.checkDims(arr_a, arr_b);
+		VecUtils.checkDimsPermitEmpty(arr_a, arr_b);
 		if(tolerance < 0)
 			throw new IllegalArgumentException("tolerance cannot be less than 0");
+		
 		this.tolerance = tolerance;
 		this.arr_b = arr_b;
 	}

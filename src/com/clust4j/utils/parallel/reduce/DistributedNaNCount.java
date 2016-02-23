@@ -29,8 +29,6 @@ final public class DistributedNaNCount extends ReduceTaskOperator<Integer> {
 	}
 	
 	public static int operate(double[] array) {
-		if(array.length == 0)
-			return 0;
 		return getThreadPool().invoke(new DistributedNaNCount(array,0,array.length));
 	}
 

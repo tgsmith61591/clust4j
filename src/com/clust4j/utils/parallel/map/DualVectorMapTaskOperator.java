@@ -14,8 +14,7 @@ abstract class DualVectorMapTaskOperator extends DualVectorMapTask {
 	 */
 	private static final long serialVersionUID = 6003468790911249385L;
 
-	DualVectorMapTaskOperator(double[] arr, double[] arr_b, double[] result, int lo,
-			int hi) {
+	DualVectorMapTaskOperator(double[] arr, double[] arr_b, double[] result, int lo, int hi) {
 		super(arr, arr_b, result, lo, hi);
 	}
 
