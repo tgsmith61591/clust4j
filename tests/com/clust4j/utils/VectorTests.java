@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
@@ -670,5 +671,13 @@ public class VectorTests {
 		assertTrue(VecUtils.nanCount(a) == 0);
 		assertTrue(VecUtils.nanCountForceSerial(a) == 0);
 		assertTrue(VecUtils.nanCountDistributed(a) == 0);
+	}
+	
+	@Test
+	public void testPermutation() {
+		final int[] a = new int[]{1,2,3,4,5,6};
+		assertTrue(VecUtils.permutation(a).length == 6);
+		assertTrue(VecUtils.permutation(a,new Random()).length == 6);
+		assertTrue(VecUtils.equalsExactly(VecUtils.permutation(new int[]{}), new int[]{}));
 	}
 }

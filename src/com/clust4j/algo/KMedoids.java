@@ -409,7 +409,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				wrapItUp(start);
 				
 				
-				cost = oldCost;
+				tssCost = oldCost;
 				
 				// Force GC to save space efficiency
 				seen_medoid_combos = null;
@@ -475,6 +475,6 @@ public class KMedoids extends AbstractCentroidClusterer {
 	}
 	
 	public double totalCost() {
-		return cost;
+		return tssCost;
 	}
 }

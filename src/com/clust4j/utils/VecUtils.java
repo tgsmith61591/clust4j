@@ -1403,6 +1403,38 @@ public class VecUtils {
 	}
 	
 	/**
+	 * Shuffle in the input
+	 * @param in
+	 * @return a shuffled int array
+	 */
+	public static int[] permutation(final int[] in) {
+		return permutation(in, GlobalState.DEFAULT_RANDOM_STATE);
+	}
+	
+	/**
+	 * Shuffle in the input
+	 * @param in
+	 * @param rand - a random seed
+	 * @return a shuffled int array
+	 */
+	public static int[] permutation(final int[] in, final Random rand) {
+		checkDimsPermitEmpty(in);
+
+		final int m = in.length;
+		ArrayList<Integer> recordIndices = new ArrayList<Integer>(m);
+		
+		for(int i = 0; i < m; i++) 
+			recordIndices.add(i);
+		
+		Collections.shuffle(recordIndices, rand);
+		final int[] out = new int[m];
+		for(int i = 0; i < m; i++)
+			out[i] = recordIndices.get(i);
+		
+		return out;
+	}
+	
+	/**
 	 * Returns a vector of the max parallel elements in each respective vector
 	 * @param a
 	 * @param b

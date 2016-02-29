@@ -1,10 +1,10 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.metrics.SilhouetteScore;
 import com.clust4j.metrics.UnsupervisedIndexAffinity;
@@ -25,7 +25,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final protected int m;
 	
 	volatile protected boolean converged = false;
-	volatile protected double cost;
+	volatile protected double tssCost;
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
 	
@@ -67,6 +67,19 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 
 
 
+	/**
+	 * Returns a matrix with a reference to centroids. Use with care.
+	 * @return Array2DRowRealMatrix
+	 */
+	protected Array2DRowRealMatrix centroidsToMatrix() {
+		double[][] c = new double[k][];
+		
+		int i = 0;
+		for(double[] row: centroids)
+			c[i++] = row;
+		
+		return new Array2DRowRealMatrix(c, false);
+	}
 	
 	@Override
 	public boolean didConverge() {
@@ -114,21 +127,15 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final private int[] initCentroids() {
 		// Initialize centroids with K random records
 		// Creates a list of integer sequence 0 -> nrow(data), then shuffles it
-		// and takes the first K indices as the centroid records. Then manually
-		// sets recordIndices to null to invoke GC to free up space
-		ArrayList<Integer> recordIndices = new ArrayList<Integer>();
-		for(int i = 0; i < m; i++) 
-			recordIndices.add(i);
-		
-		Collections.shuffle(recordIndices, getSeed());
+		// and takes the first K indices as the centroid records.
+		final int[] recordIndices = VecUtils.permutation(VecUtils.arange(m), getSeed());
 		
 		final int[] cent_indices = new int[k];
 		for(int i = 0; i < k; i++) {
-			centroids.add(data.getRow(recordIndices.get(i)));
-			cent_indices[i] = recordIndices.get(i);
+			centroids.add(data.getRow(recordIndices[i]));
+			cent_indices[i] = recordIndices[i];
 		}
 		
-		recordIndices = null;
 		return cent_indices;
 	}
 	
@@ -156,7 +163,4 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		// Propagates ModelNotFitException
 		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
 	}
-	
-	
-	abstract TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace();
 }

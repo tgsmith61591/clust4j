@@ -12,6 +12,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.SupervisedEvaluationMetric;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.DistanceMetric;
+import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
@@ -375,11 +376,20 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 
 	@Override
 	public int[] predict(AbstractRealMatrix newData) {
+		return predict(newData.getData()).getKey();
+	}
+	
+	/**
+	 * To be used from {@link KMeans}
+	 * @param data
+	 * @return
+	 */
+	protected EntryPair<int[], double[]> predict(double[][] data) {
 		if(null == centroids)
 			throw new ModelNotFitException("model not yet fit");
 		
-		double[][] data = newData.getData();
-		int[] predictions = new int[newData.getRowDimension()];
+		int[] predictions = new int[data.length];
+		double[] dists = new double[data.length];
 		double[] row, centroid;
 		
 		for(int i = 0; i < data.length; i++) {
@@ -399,8 +409,9 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 			}
 			
 			predictions[i] = nearestLabel;
+			dists[i] = minDist;
 		}
 		
-		return encoder.reverseTransform(predictions);
+		return new EntryPair<>(encoder.reverseTransform(predictions), dists);
 	}
 }

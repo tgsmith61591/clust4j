@@ -137,4 +137,31 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest {
 		assertTrue(nn2.equals(nn));
 		Files.delete(TestSuite.path);
 	}
+	
+	@Test
+	public void testCentroidViabilityKMeans() {
+		final double[][] X = new double[][]{
+			new double[]{0,0,0},
+			new double[]{4,4,4},
+			new double[]{8,8,8}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(X, false);
+		NearestCentroid nn = new NearestCentroid(mat, new int[]{0,1,2},
+			new NearestCentroid.NearestCentroidPlanner()
+				.setVerbose(true)
+				.setScale(false)).fit();
+		
+		Array2DRowRealMatrix Y = new Array2DRowRealMatrix(
+			new double[][]{
+				new double[]{0,0,0},
+				new double[]{1,1,1},
+				new double[]{4,4,4},
+				new double[]{5,5,5},
+				new double[]{8,8,8},
+				new double[]{9,9,9}
+			}, false);
+		
+		assertTrue(VecUtils.equalsExactly(nn.predict(Y), new int[]{0,0,1,1,2,2}));
+	}
 }

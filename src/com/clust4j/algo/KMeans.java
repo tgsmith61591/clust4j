@@ -7,11 +7,14 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
+import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
@@ -29,9 +32,7 @@ public class KMeans extends AbstractCentroidClusterer {
 	final public static int DEF_MAX_ITER = 100;
 	/** Number of times to run with different seeds */
 	final public static int DEF_NUM_INIT_SEEDS = 10;
-	
-	
-	final private int numSeeds;
+	final int numSeeds;
 	
 	
 	public KMeans(final AbstractRealMatrix data) {
@@ -171,204 +172,144 @@ public class KMeans extends AbstractCentroidClusterer {
 	}
 	
 	
-	
-	
-	final TreeMap<Integer, ArrayList<Integer>> assignClustersAndLabelsInPlace() {
-		/* Key is the closest centroid, value is the records that belong to it */
-		TreeMap<Integer, ArrayList<Integer>> cent = new TreeMap<Integer, ArrayList<Integer>>();
-		
-		/* Loop over each record in the matrix */
-		for(int rec = 0; rec < m; rec++) {
-			final double[] record = data.getRow(rec);
-			int closest_cent = predictCentroid(record);
-			
-			labels[rec] = closest_cent;
-			if(cent.get(closest_cent) == null)
-				cent.put(closest_cent, new ArrayList<Integer>());
-			
-			cent.get(closest_cent).add(rec);
-		}
-		
-		return cent;
-	}
-	
-	
-	/**
-	 * Calculates the SSE within the provided cluster
-	 * @param inCluster
-	 * @return Sum of Squared Errors
-	 */
-	private final double getCost(final ArrayList<Integer> inCluster, final double[] newCentroid) {
-		// Now calc the SSE in cluster i
-		double sumI = 0;
-		final int n = newCentroid.length;
-		for(Integer rec : inCluster) { // Row nums of belonging records
-			final double[] record = data.getRow(rec);
-			for(int j = 0; j < n; j++) {
-				final double diff = record[j] - newCentroid[j];
-				sumI += diff * diff;
-			}
-		}
-		
-		return sumI;
-	}
-	
 	@Override
 	public String getName() {
 		return "KMeans";
 	}
-
-	private double[] idNewCentroid(ArrayList<Integer> inCluster) {
-		final int n = data.getColumnDimension();
-		final double[] newCentroid = new double[n];
-		
-		// Put col sums of belonging records in newCentroid
-		for(Integer rec : inCluster) { // Row nums of belonging records
-			final double[] record = data.getRow(rec);
-			for(int j = 0; j < n; j++)
-				newCentroid[j] += record[j];
-		}
-		
-		// Set newCentroid to means
-		for(int j = 0; j < n; j++)
-			newCentroid[j] /= (double) inCluster.size();
-		
-		return newCentroid;
-	}
 	
-	final private KMeans fit2() {
+	@Override
+	final public KMeans fit() {
 		synchronized(this) {
 			
 			try {
 				if(null != labels) // already fit
 					return this;
 				
-				// TODO fit by expectation maximization
+				
+				final double[][] X = data.getData();
+				final int n = data.getColumnDimension();
 				
 				
-				return this;
-				
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			}
-		}
-	}
-	
-	@Override
-	final public KMeans fit() {
-		synchronized(this) { // Must be synchronized because alters internal structs
-			
-			try {
-				if(null!=labels) // Already have fit this model
-					return this;
-				
-	
-				final long start = System.currentTimeMillis();
-				info("beginning training segmentation for K = " + k);
+				// Corner case: K = 1
+				if(1 == k) {
+					labels = VecUtils.repInt(0, m);
+					double[] center_record = MatUtils.meanRecord(X);
 					
-				
-				Double oldCost = null;
-				labels = new int[m];
-				
-				// Enclose in for loop to ensure completes in proper iterations
-				long iterStart = System.currentTimeMillis();
-				
-				
-				OuterLoop:
-				for(iter = 0; iter < maxIter; iter++) {
-					
-					
-					if(iter%10 == 0)  {
-						info("training iteration " + iter +
-								"; current system cost = " + 
-								oldCost ); //+ "; " + centroidsToString());
-					}
-					
-					
-					/* Key is the closest centroid, value is the records that belong to it */
-					cent_to_record = assignClustersAndLabelsInPlace();
-						
-					
-					
-					// Now reassign centroids based on records inside cluster
-					ArrayList<double[]> newCentroids = new ArrayList<double[]>();
-					double newCost = 0;
-					
-					/* Iterate over each centroid, calculate barycentric mean of
-					 * the points that belong in that cluster as the new centroid */
-					for(int i = 0; i < k; i++) {
-						
-						/* The record numbers that belong to this cluster */
-						final ArrayList<Integer> inCluster = cent_to_record.get(i);
-						final double[] newCentroid = idNewCentroid(inCluster);
-						newCentroids.add(newCentroid);
-						newCost += getCost(inCluster, newCentroid);
-					}
-					
-					
-					// move current newSSE to oldSSE, check stopping condition...
-					centroids = newCentroids;
-					cost = newCost;
-					
-					if(null == oldCost) { // First iteration
-						oldCost = newCost;
-					} else { // At least second iteration, can check delta
-						// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
-						// otherwise update new SSE and continue.
-						if( FastMath.abs(oldCost - newCost) < tolerance ) {
-							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
-								LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/
-									(double)(iter+1)), false) + ")");
-							
-							converged = true;
-							iter++; // Track iters used
-							
-							break OuterLoop;
-						} else {
-							oldCost = newCost;
+					tssCost = 0;
+					double diff;
+					for(double[] d: X) {
+						for(int j = 0; j < n; j++) {
+							diff = d[j] - center_record[j];
+							tssCost += diff * diff;
 						}
 					}
-				} // End iter for
+					
+					converged = true;
+					warn("k=1; converged immediately with a cost of "+tssCost);
+					return this;
+				}
 				
 				
-				info("Total system cost: " + cost);
+				
+				// Nearest centroid model to predict labels
+				NearestCentroid model;
+				EntryPair<int[], double[]> label_dist;
+				
+				
+				// Keep track of TSS
+				tssCost = Double.NaN;
+				ArrayList<double[]> new_centroids;
+				
+				
+				final long start = System.currentTimeMillis();
+				for(iter = 0; iter < maxIter; iter++) {
+					
+					// Get labels for nearest centroids
+					model = new NearestCentroid(centroidsToMatrix(), 
+						VecUtils.arange(k), new NearestCentroidPlanner()
+							.setScale(false) // already scaled maybe
+							.setSeed(getSeed())
+							.setSep(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+					label_dist = model.predict(X);
+					labels = label_dist.getKey();
+					
+					
+					// Start by computing TSS using barycentric dist
+					double system_cost = 0.0;
+					double[] centroid, new_centroid;
+					new_centroids = new ArrayList<>(k);
+					for(int i = 0; i < k; i++) {
+						centroid = centroids.get(i);
+						new_centroid = new double[n];
+						
+						// Compute the current cost for each cluster,
+						// break if difference in TSS < tol. Otherwise
+						// update the centroids to means of clusters.
+						// We can compute what the new clusters will be
+						// here, but don't assign yet
+						int label, count = 0;
+						double clust_cost = 0;
+						for(int row = 0; row < m; row++) {
+							label = labels[row];
+							double diff;
+							
+							if(label == i) {
+								for(int j = 0; j < n; j++) {
+									new_centroid[j] += X[row][j];
+									diff = X[row][j] - centroid[j];
+									clust_cost += diff * diff;
+								}
+								
+								// number in cluster
+								count++;
+							}
+						}
+						
+						// Update the new centroid (currently a sum) to be a mean
+						for(int j = 0; j < n; j++)
+							new_centroid[j] /= (double)count;
+						new_centroids.add(new_centroid);
+						
+						// Update system cost
+						system_cost += clust_cost;
+					}
+					
+					
+					// Check for convergence
+					if(!Double.isNaN(tssCost) && FastMath.abs(tssCost - system_cost) < tolerance) {
+						// Did converge
+						converged = true;
+						iter++; // Going to break and miss this..
+						break;
+						
+					} else {
+						tssCost = system_cost;
+						centroids = new_centroids;
+					}
+				}
+				
+				
+				info("Total system cost: " + tssCost);
 				if(!converged) warn("algorithm did not converge");
 				wrapItUp(start);
 				
 				
 				reorderLabels();
 				return this;
+				
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
 				throw e;
-			}
+			} // end try/catch
 			
-		} // End synchronized
-		
-	} // End train
+		} // end sync
+	}
 	
 
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
-	}
-	
-	private int predictCentroid(final double[] newRecord) {
-		int nearestLabel = 0;
-		double shortestDist = Double.MAX_VALUE;
-		double[] cent;
-		for(int i = 0; i < k; i++) {
-			cent = centroids.get(i);
-			double dist = getSeparabilityMetric().getDistance(newRecord, cent);
-			
-			if(dist < shortestDist) {
-				shortestDist = dist;
-				nearestLabel = i;
-			}
-		}
-
-		return nearestLabel;
 	}
 	
 	final private void reorderLabels() {
@@ -396,6 +337,6 @@ public class KMeans extends AbstractCentroidClusterer {
 	}
 
 	public double totalCost() {
-		return cost;
+		return tssCost;
 	}
 }
