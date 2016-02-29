@@ -42,24 +42,81 @@ public abstract class Kernel implements SimilarityMetric {
 	}
 	
 	
-	public double[][] kernelDistanceMatrix(final AbstractRealMatrix a) {
-		return kernelDistanceMatrix(a.getData());
+	/**
+	 * Returns an upper triangular distance matrix computed using this kernel
+	 * @param a
+	 * @return UT dist matrix
+	 */
+	public double[][] kernelDistanceMatrixUT(final AbstractRealMatrix a) {
+		return kernelDistanceMatrixUT(a.getData());
 	}
 	
-	public double[][] kernelDistanceMatrix(final double[][] data) {
+	/**
+	 * Returns an upper triangular distance matrix computed using this kernel
+	 * @param data
+	 * @return UT dist matrix
+	 */
+	public double[][] kernelDistanceMatrixUT(final double[][] data) {
 		return ClustUtils.distanceUpperTriangMatrix(data, this);
 	}
 	
-	
-	public double[][] kernelSimilarityMatrix(final AbstractRealMatrix a) {
-		return kernelSimilarityMatrix(a.getData());
+	/**
+	 * Returns a full distance matrix computed using this kernel
+	 * @param a
+	 * @return full dist matrix
+	 */
+	public double[][] kernelDistanceMatrixFull(final AbstractRealMatrix a) {
+		return kernelDistanceMatrixFull(a.getData());
 	}
 	
-	public double[][] kernelSimilarityMatrix(final double[][] data) {
+	/**
+	 * Returns a full distance matrix computed using this kernel
+	 * @param data
+	 * @return full dist matrix
+	 */
+	public double[][] kernelDistanceMatrixFull(final double[][] data) {
+		return ClustUtils.distanceFullMatrix(data, this);
+	}
+	
+	/**
+	 * Returns an upper triangular similarity matrix computed using this kernel
+	 * @param a
+	 * @return UT similarity matrix
+	 */
+	public double[][] kernelSimilarityMatrixUT(final AbstractRealMatrix a) {
+		return kernelSimilarityMatrixUT(a.getData());
+	}
+	
+	/**
+	 * Returns an upper triangular similarity matrix computed using this kernel
+	 * @param data
+	 * @return UT similarity matrix
+	 */
+	public double[][] kernelSimilarityMatrixUT(final double[][] data) {
 		return ClustUtils.similarityUpperTriangMatrix(data, this);
 	}
 	
+	/**
+	 * Returns a full similarity matrix computed using this kernel
+	 * @param a
+	 * @return full similarity matrix
+	 */
+	public double[][] kernelSimilarityMatrixFull(final AbstractRealMatrix a) {
+		return kernelSimilarityMatrixFull(a.getData());
+	}
 	
+	/**
+	 * Returns a full similarity matrix computed using this kernel
+	 * @param data
+	 * @return full similarity matrix
+	 */
+	public double[][] kernelSimilarityMatrixFull(final double[][] data) {
+		return ClustUtils.similarityFullMatrix(data, this);
+	}
+	
+	/**
+	 * Returns the name of the kernel
+	 */
 	@Override
 	public String toString() {
 		return getName();

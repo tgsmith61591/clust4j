@@ -263,5 +263,4 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		assertTrue(km.equals(km2));
 		Files.delete(TestSuite.path);
 	}
-	
 }

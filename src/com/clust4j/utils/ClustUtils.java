@@ -88,6 +88,7 @@ public class ClustUtils {
 	public static double[][] distanceFullMatrix(final double[][] data, GeometricallySeparable dist) {
 		final int m = data.length;
 		
+		// Runs in O(m choose 2)
 		final double[][] dist_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++) {
 			for(int j = i + 1; j < m; j++) {
@@ -96,6 +97,10 @@ public class ClustUtils {
 				dist_mat[j][i] = d;
 			}
 		}
+		
+		// One extra pass of M for the diagonal
+		for(int i = 0; i < m; i++)
+			dist_mat[i][i] = dist.getDistance(data[i], data[i]);
 		
 		return dist_mat;
 	}
@@ -227,6 +232,7 @@ public class ClustUtils {
 	public static double[][] similarityFullMatrix(final double[][] data, SimilarityMetric sim) {
 		final int m = data.length;
 		
+		// Runs in O(m choose 2)
 		final double[][] dist_mat = new double[m][m];
 		for(int i = 0; i < m - 1; i++) {
 			for(int j = i + 1; j < m; j++) {
@@ -235,6 +241,10 @@ public class ClustUtils {
 				dist_mat[j][i] = d;
 			}
 		}
+		
+		// One extra pass of M for the diagonal
+		for(int i = 0; i < m; i++)
+			dist_mat[i][i] = sim.getSimilarity(data[i], data[i]);
 		
 		return dist_mat;
 	}

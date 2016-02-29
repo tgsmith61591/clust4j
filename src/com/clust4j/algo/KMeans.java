@@ -24,13 +24,14 @@ import com.clust4j.utils.GeometricallySeparable;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public class KMeans extends AbstractCentroidClusterer {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
+	/** Number of times to run with different seeds */
+	final public static int DEF_NUM_INIT_SEEDS = 10;
 	
+	
+	final private int numSeeds;
 	
 	
 	public KMeans(final AbstractRealMatrix data) {
@@ -43,18 +44,22 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
 		super(data, planner);
+		this.numSeeds = planner.numSeeds;
 	}
 	
 	
 	public static class KMeansPlanner extends CentroidClustererPlanner {
+		private static final long serialVersionUID = -813106538623499760L;
+		
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_MIN_CHNG;
+		private double minChange = DEF_TOLERANCE;
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private int k = DEF_K;
+		private int numSeeds = DEF_NUM_INIT_SEEDS;
 		
 		public KMeansPlanner() { }
 		public KMeansPlanner(int k) {
@@ -75,7 +80,8 @@ public class KMeans extends AbstractCentroidClusterer {
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setNumSeeds(numSeeds);
 		}
 		
 		@Override
@@ -89,7 +95,7 @@ public class KMeans extends AbstractCentroidClusterer {
 		}
 		
 		@Override
-		public double getMinChange() {
+		public double getConvergenceTolerance() {
 			return minChange;
 		}
 		
@@ -126,6 +132,11 @@ public class KMeans extends AbstractCentroidClusterer {
 
 		public KMeansPlanner setMinChangeStoppingCriteria(final double min) {
 			this.minChange = min;
+			return this;
+		}
+		
+		public KMeansPlanner setNumSeeds(int n) {
+			this.numSeeds = n;
 			return this;
 		}
 		
@@ -225,6 +236,25 @@ public class KMeans extends AbstractCentroidClusterer {
 		return newCentroid;
 	}
 	
+	final private KMeans fit2() {
+		synchronized(this) {
+			
+			try {
+				if(null != labels) // already fit
+					return this;
+				
+				// TODO fit by expectation maximization
+				
+				
+				return this;
+				
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			}
+		}
+	}
+	
 	@Override
 	final public KMeans fit() {
 		synchronized(this) { // Must be synchronized because alters internal structs
@@ -286,7 +316,7 @@ public class KMeans extends AbstractCentroidClusterer {
 					} else { // At least second iteration, can check delta
 						// Evaluate new SSE vs. old SSE. If meets stopping criteria, break,
 						// otherwise update new SSE and continue.
-						if( FastMath.abs(oldCost - newCost) < minChange ) {
+						if( FastMath.abs(oldCost - newCost) < tolerance ) {
 							info("training reached convergence at iteration "+ iter + " (avg iteration time: " + 
 								LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/
 									(double)(iter+1)), false) + ")");

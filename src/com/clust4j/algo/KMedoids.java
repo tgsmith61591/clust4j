@@ -74,9 +74,11 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	public static class KMedoidsPlanner extends CentroidClustererPlanner {
+		private static final long serialVersionUID = -3288579217568576647L;
+		
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_MIN_CHNG;
+		private double minChange = DEF_TOLERANCE;
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
@@ -116,7 +118,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 		}
 		
 		@Override
-		public double getMinChange() {
+		public double getConvergenceTolerance() {
 			return minChange;
 		}
 		
@@ -377,7 +379,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 					}
 				
 					// Check for stopping condition
-					if( FastMath.abs(oldCost - min_cost) < minChange) { // convergence!
+					if( FastMath.abs(oldCost - min_cost) < tolerance) { // convergence!
 						// new_cost may sometimes retain Double.MAX_VALUE if never reassigned
 						// in above loop, which means system hasn't changed and min is actually
 						// the OLD cost

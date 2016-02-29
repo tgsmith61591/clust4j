@@ -40,7 +40,7 @@ public class CircularKernel extends RadialBasisKernel {
 		
 		/* Back segment */
 		final double first = twoOverPi * lpOverSig;
-		final double second = FastMath.sqrt(1 - FastMath.pow(lpOverSig, 2));
+		final double second = FastMath.sqrt(1.0 - FastMath.pow(lpOverSig, 2));
 		final double back = first * second;
 		
 		return front - back;

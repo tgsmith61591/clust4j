@@ -16,11 +16,11 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		implements CentroidLearner, Convergeable, UnsupervisedClassifier {
 	
 	private static final long serialVersionUID = -424476075361612324L;
-	final public static double DEF_MIN_CHNG = 0.005;
+	final public static double DEF_TOLERANCE = 0.005;
 	final public static int DEF_K = Neighbors.DEF_K;
 	
 	final protected int maxIter;
-	final protected double minChange;
+	final protected double tolerance;
 	final protected int[] init_centroid_indices;
 	final protected int m;
 	
@@ -40,14 +40,14 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		super(data, planner, planner.getK());
 		
 		this.maxIter = planner.getMaxIter();
-		this.minChange = planner.getMinChange();
+		this.tolerance = planner.getConvergenceTolerance();
 		this.m = data.getRowDimension();
 		
 		if(maxIter < 0)	throw new IllegalArgumentException("maxIter must exceed 0");
-		if(minChange<0)	throw new IllegalArgumentException("minChange must exceed 0");
+		if(tolerance<0)	throw new IllegalArgumentException("minChange must exceed 0");
 		
 		meta("maxIter="+maxIter);
-		meta("minChange="+minChange);
+		meta("minChange="+tolerance);
 		
 		this.init_centroid_indices = initCentroids();
 	}
@@ -56,11 +56,12 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	public static abstract class CentroidClustererPlanner 
 			extends BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
+			implements UnsupervisedClassifierPlanner, ConvergeablePlanner {
+		private static final long serialVersionUID = -1984508955251863189L;
 		
 		abstract public int getK();
-		abstract public int getMaxIter();
-		abstract public double getMinChange();
+		@Override abstract public int getMaxIter();
+		@Override abstract public double getConvergenceTolerance();
 	}
 	
 
@@ -103,7 +104,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	@Override
 	public double getConvergenceTolerance() {
-		return minChange;
+		return tolerance;
 	}
 	
 	/**

@@ -1,6 +1,6 @@
 package com.clust4j.kernel;
 
-public abstract class ConstantKernel extends Kernel {
+abstract class ConstantKernel extends Kernel {
 	/**
 	 * 
 	 */
