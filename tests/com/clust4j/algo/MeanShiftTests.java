@@ -39,7 +39,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
 		assertTrue(ms.getNumberOfNoisePoints() == 0);
-		assertFalse(ms.hasWarnings());
+		assertTrue(ms.hasWarnings()); // will be because we don't standardize
 	}
 	
 	@Test
@@ -69,7 +69,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			.MeanShiftPlanner(0.05)
 				.setVerbose(true)).fit();
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
-		assertFalse(ms.hasWarnings());
+		assertTrue(ms.hasWarnings()); // will because not normalizing
 	}
 	
 	@Test

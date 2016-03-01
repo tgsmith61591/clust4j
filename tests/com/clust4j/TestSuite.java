@@ -23,9 +23,7 @@ import com.clust4j.algo.NNHSTests;
 import com.clust4j.algo.NearestCentroidTests;
 import com.clust4j.algo.NearestNeighborsTests;
 import com.clust4j.algo.TestLabelEncoder;
-import com.clust4j.algo.TestNearestCentroid;
 import com.clust4j.algo.RadiusNeighborsTests;
-import com.clust4j.algo.TestNearestNeighbors;
 import com.clust4j.algo.pipeline.PipelineTest;
 import com.clust4j.algo.preprocess.ImputationTests;
 import com.clust4j.algo.preprocess.PreProcessorTests;
@@ -72,8 +70,6 @@ import com.clust4j.utils.parallel.ParallelTests;
 	TestGlobals.class,
 	TestLabelEncoder.class,
 	TestMetrics.class,
-	TestNearestCentroid.class,
-	TestNearestNeighbors.class,
 	TestUtils.class,
 	VectorTests.class
 })
