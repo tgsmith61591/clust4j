@@ -6,6 +6,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.log.LogTimer;
 import com.clust4j.sample.Bootstrapper;
 import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
@@ -138,6 +139,7 @@ public class BootstrapImputation extends MatrixImputation {
 	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
+		final LogTimer timer = new LogTimer();
 		final boolean mean = ctm.equals(CentralTendencyMethod.MEAN);
 		final double[][] complete = MatUtils.completeCases(dat);
 		
@@ -184,6 +186,7 @@ public class BootstrapImputation extends MatrixImputation {
 			info("(" + getName() + ") " + nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (imputation value="+mean+")");
 		}
 		
+		sayBye(timer);
 		return copy;
 	}
 }

@@ -5,4 +5,6 @@ public interface Timer {
 	public long nanos();
 	public String startAsString();
 	public String startAsShortString();
+	public String nowAsString();
+	public String nowAsShortString();
 }

@@ -2,7 +2,6 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -10,6 +9,7 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.log.LogTimer;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
@@ -205,7 +205,7 @@ public class KMeans extends AbstractCentroidClusterer {
 					}
 					
 					converged = true;
-					warn("k=1; converged immediately with a cost of "+tssCost);
+					warn("k=1; converged immediately with a TSS of "+tssCost);
 					return this;
 				}
 				
@@ -216,12 +216,12 @@ public class KMeans extends AbstractCentroidClusterer {
 				EntryPair<int[], double[]> label_dist;
 				
 				
-				// Keep track of TSS
+				// Keep track of TSS (sum of barycentric distances)
 				tssCost = Double.NaN;
 				ArrayList<double[]> new_centroids;
 				
 				
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				for(iter = 0; iter < maxIter; iter++) {
 					
 					// Get labels for nearest centroids
@@ -232,6 +232,8 @@ public class KMeans extends AbstractCentroidClusterer {
 							.setSep(getSeparabilityMetric())
 							.setVerbose(false)).fit();
 					label_dist = model.predict(X);
+					
+					// unpack the EntryPair
 					labels = label_dist.getKey();
 					
 					
@@ -292,10 +294,10 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				info("Total system cost: " + tssCost);
 				if(!converged) warn("algorithm did not converge");
-				wrapItUp(start);
+				sayBye(timer);
 				
 				
-				reorderLabels();
+				reorderLabelsAndCentroids();
 				return this;
 				
 			} catch(OutOfMemoryError | StackOverflowError e) {
@@ -312,7 +314,8 @@ public class KMeans extends AbstractCentroidClusterer {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
 	
-	final private void reorderLabels() {
+	final private void reorderLabelsAndCentroids() {
+		/*
 		// Now rearrange labels in order... first get unique labels in order of appearance
 		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
 		for(int label: labels) {
@@ -334,9 +337,20 @@ public class KMeans extends AbstractCentroidClusterer {
 		labels = newLabels;
 		cent_to_record = null;
 		centroids = new ArrayList<>(newCentroids.values());
+		*/
+		
+		final LabelEncoder encoder = new LabelEncoder(labels).fit();
+		labels =  encoder.getEncodedLabels();
+		
+		// also reorder centroids... takes O(2K) passes
+		final double[][] tmpCentroids = new double[k][];
+		for(int i = 0; i < k; i++)
+			tmpCentroids[encoder.encodeOrNull(i)] = centroids.get(i);
+		for(int i = 0; i < k; i++)
+			centroids.set(i, tmpCentroids[i]);
 	}
 
-	public double totalCost() {
+	public double totalSumOfSquares() {
 		return tssCost;
 	}
 }

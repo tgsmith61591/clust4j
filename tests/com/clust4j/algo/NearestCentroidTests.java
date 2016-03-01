@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
@@ -77,11 +76,13 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest {
 	
 	@Test
 	public void testWarn() {
+		/*// We need to allow this behavior now that NC used in KMeans
 		NearestCentroid nn =
 			new NearestCentroid(data_, target_, 
 				new NearestCentroid.NearestCentroidPlanner()
 					.setSep(new GaussianKernel()));
 		assertTrue(nn.hasWarnings());
+		*/
 	}
 	
 	@Test

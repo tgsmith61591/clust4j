@@ -6,6 +6,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.log.LogTimer;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
@@ -197,7 +198,8 @@ public class NearestNeighbors extends Neighbors {
 					return this;
 				
 				int nNeighbors = kNeighbors + 1;
-				long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
+				
 				info("querying tree for nearest neighbors");
 				Neighborhood initRes = new Neighborhood(
 					tree.query(fit_X, nNeighbors, 
@@ -262,7 +264,7 @@ public class NearestNeighbors extends Neighbors {
 					MatUtils.reshape(indOut,  m, nNeighbors - 1));
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

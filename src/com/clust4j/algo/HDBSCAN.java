@@ -17,6 +17,7 @@ import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
@@ -1266,7 +1267,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 					return this;
 				
 				// First get the dist matrix
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				
 				// Meant to prevent multiple .getData() copy calls
 				dataData = data.getData();
@@ -1313,21 +1314,18 @@ public class HDBSCAN extends AbstractDBSCAN {
 						throw new InternalError("illegal algorithm");
 				}
 				
-				long treeStart = System.currentTimeMillis();
+				LogTimer treeTimer = new LogTimer();
 				final double[][] build = tree.link(); // returns the result of the label(..) function
-				info("completed tree building in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-treeStart, false) + 
-						System.lineSeparator());
+				wallInfo(timer, "completed tree building in " + treeTimer.formatTime());
 				
 
 				info("converting tree to labels ("+build.length+" x "+build[0].length+")");
-				long labSt = System.currentTimeMillis();
+				LogTimer labTimer = new LogTimer();
 				labels = treeToLabels(dataData, build, min_cluster_size, this);
 				
 				
 				// Wrap up...
-				info("completed cluster labeling in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-labSt, false));
+				wallInfo(timer, "completed cluster labeling in " + labTimer.formatTime());
 				
 				
 				// Count missing
@@ -1342,7 +1340,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 						" classified noise");
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				
 				// Clean anything with big overhead..
 				dataData = null;

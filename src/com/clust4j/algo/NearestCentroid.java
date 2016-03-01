@@ -9,15 +9,22 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.SupervisedEvaluationMetric;
 import com.clust4j.utils.Distance;
-import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
+/**
+ * A supervised clustering algorithm used to predict a record's membership 
+ * within a series of centroids. Note that this class implicitly utilizes
+ * {@link LabelEncoder}, and will throw an {@link IllegalArgumentException} for
+ * instances where the labels are of a single class.
+ * @author Taylor G Smith
+ */
 public class NearestCentroid extends AbstractClusterer implements SupervisedClassifier, CentroidLearner {
 	private static final long serialVersionUID = 8136673281643080951L;
 	
@@ -28,16 +35,32 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	private final int numClasses;
 	private final LabelEncoder encoder;
 	
+	
 	// State set in fit method
 	volatile private int[] labels = null;
 	volatile private ArrayList<double[]> centroids = null;
 	
-	
-	
+	/**
+	 * Default constructor. Builds an instance of {@link NearestCentroid}
+	 * with the default {@link NearestCentroidPlanner}
+	 * @param data
+	 * @param y
+	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
+	 * @throws IllegalArgumentException if there is only one unique class in y
+	 */
 	public NearestCentroid(AbstractRealMatrix data, int[] y) {
 		this(data, y, new NearestCentroidPlanner());
 	}
 	
+	/**
+	 * Builds an instance of {@link NearestCentroid}
+	 * with an existing instance of {@link NearestCentroidPlanner}
+	 * @param data
+	 * @param y
+	 * @param planner
+	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
+	 * @throws IllegalArgumentException if there is only one unique class in y
+	 */
 	public NearestCentroid(AbstractRealMatrix data, int[] y, NearestCentroidPlanner planner) {
 		super(data, planner);
 
@@ -55,7 +78,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 			this.encoder = new LabelEncoder(y).fit();
 		} catch(IllegalArgumentException e) {
 			error(e.getMessage());
-			throw new IllegalArgumentException(e.getMessage(), e);
+			throw new IllegalArgumentException("Error in NearestCentroid: " + e.getMessage(), e);
 		}
 		
 		
@@ -63,13 +86,14 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		this.y_truth = VecUtils.copy(y);
 		this.y_encodings = encoder.getEncodedLabels();
 		
-		
+		/*
 		if(!(planner.getSep() instanceof DistanceMetric)) {
 			err = "only distance metrics permitted for NearestCentroid; "
 				+ "falling back to default: " + DEF_DIST;
 			warn(err);
 			super.setSeparabilityMetric(DEF_DIST);
 		}
+		*/
 		
 		this.shrinkage = planner.shrinkage;
 		meta("shrinkage param="+shrinkage);
@@ -225,7 +249,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 					return this;
 				
 				
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				this.centroids = new ArrayList<double[]>(numClasses);
 				final int[] nk = new int[numClasses]; // the count of clusters in each class
 				
@@ -282,7 +306,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 				info("model score ("+DEF_SUPERVISED_METRIC+"): " + score());
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

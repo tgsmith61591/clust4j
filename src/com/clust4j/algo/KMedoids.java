@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.VecUtils;
@@ -293,7 +294,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 					return this;
 				
 				info("beginning training segmentation for K = " + k);
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
+				final long start = timer._start;
 				
 				// Compute distance matrix, which is O(N^2) space, O(Nc2) time
 				// We do this in KMedoids and not KMeans, because KMedoids uses
@@ -406,9 +408,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 				if(!converged) // KMedoids should always converge...
 					warn("algorithm did not converge");
 				
-				wrapItUp(start);
 				
-				
+				sayBye(timer);
 				tssCost = oldCost;
 				
 				// Force GC to save space efficiency

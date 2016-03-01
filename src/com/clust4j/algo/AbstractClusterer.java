@@ -16,6 +16,7 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.Distance;
@@ -144,9 +145,10 @@ public abstract class AbstractClusterer
 		
 		
 		// Scale if needed
-		if(!planner.getScale())
+		if(!planner.getScale()) {
 			this.data = (AbstractRealMatrix) data.copy();
-		else {
+			metaWarn("feature normalization option is set to false; this is discouraged");
+		} else {
 			meta("normalizing matrix columns", planner.getNormalizer().toString());
 			this.data = planner.getNormalizer().operate(data);
 		}
@@ -308,17 +310,40 @@ public abstract class AbstractClusterer
 		if(verbose) Log.debug(getLoggerTag(), msg);
 	}
 	
+	@Override public void wallInfo(LogTimer timer, String info) {
+		if(verbose) info(timer.wallMsg() + info);
+	}
+	
+	/**
+	 * Write the time the algorithm took to complete
+	 * @param start
+	 */
+	@Override public void sayBye(final LogTimer timer) {
+		final long start = timer._start;
+		wallInfo(timer, "model "+getKey()+" completed in " + 
+			LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+			System.lineSeparator());
+	}
+	
 	/**
 	 * Log info related to the internal state 
 	 * of the model (not progress)
 	 * @param msg
 	 */
-	public void meta(final String msg) {
+	void meta(final String msg) {
 		meta(msg, getName());
 	}
 	
-	public void meta(final String msg, final String nm) {
+	void meta(final String msg, final String nm) {
 		info("[meta "+nm+"] " + msg);
+	}
+	
+	void metaWarn(final String msg) {
+		metaWarn(msg, getName());
+	}
+	
+	void metaWarn(final String msg, final String nm) {
+		warn("[meta "+nm+"] " + msg);
 	}
 	
 	/**
@@ -351,15 +376,5 @@ public abstract class AbstractClusterer
 	
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
 		this.dist = sep;
-	}
-	
-	/**
-	 * Write the time the algorithm took to complete
-	 * @param start
-	 */
-	final void wrapItUp(long start) {
-		info("model "+getKey()+" completed in " + 
-			LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-			System.lineSeparator());
 	}
 }

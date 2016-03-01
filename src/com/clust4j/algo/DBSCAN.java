@@ -8,7 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
@@ -230,7 +230,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// First get the dist matrix
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
 				final int m = dist_mat.length;
 				
@@ -238,13 +238,12 @@ public class DBSCAN extends AbstractDBSCAN {
 				// Log info...
 				info("calculated " + 
 					m + " x " + m + 
-					" distance matrix in " + 
-					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+					" distance matrix in " + timer.formatTime());
 				
 				info("computing density neighborhood for each point (eps=" + eps + ")");
 				
 				// Do the neighborhood assignments, get sample weights, find core samples..
-				final long neighbStart = System.currentTimeMillis();
+				final LogTimer neighbTimer = new LogTimer();
 				labels = new int[m]; // Initialize labels...
 				sampleWeights = new double[m]; // Init sample weights...
 				coreSamples = new boolean[m];
@@ -284,15 +283,14 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// Log checkpoint
-				info("completed density neighborhood calculations in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-neighbStart, false));
+				wallInfo(timer, "completed density neighborhood calculations in " + neighbTimer.formatTime());
 				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
 				info("identifying cluster labels");
 				
 				
 				// Label the points...
 				int nextLabel = 0, v;
-				final long clustStart = System.currentTimeMillis();
+				final LogTimer clustTimer = new LogTimer();
 				final Stack<Integer> stack = new Stack<>();
 				int[] neighb;
 				
@@ -335,8 +333,8 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// Wrap up...
-				info("completed cluster labeling in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				wallInfo(timer, "completed cluster labeling in " + 
+					clustTimer.formatTime());
 				
 				
 				// Count missing
@@ -349,7 +347,7 @@ public class DBSCAN extends AbstractDBSCAN {
 					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
 						" classified noise");
 				
-				wrapItUp(start);
+				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

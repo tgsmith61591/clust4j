@@ -11,6 +11,7 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
@@ -328,7 +329,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				
 				// Init labels
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				labels = new int[m];
 				String error;
 				
@@ -407,8 +408,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 								
 						// Update
-						info("matrix product computed in " + 
-							LogTimeFormatter.millis(System.currentTimeMillis()-multStart, false));
+						info("matrix product computed in " + timer.formatTime(timer.now(), multStart));
 					} catch(DimensionMismatchException e) {
 						error = e.getMessage();
 						error(error);
@@ -431,7 +431,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
 					
 					if(iterCt % 25 == 0 && iterCt != 0)
-						info("[working update] training iteration " + iterCt + " (average "
+						wallInfo(timer, "training iteration " + iterCt + " (average "
 							+ "iteration time = " + LogTimeFormatter
 							.millis((long)((double)(System.currentTimeMillis()-iterStart)/(double)iterCt), 
 								false) + ")");
@@ -587,8 +587,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 						if((converged && numClusters > 0) || iterCt == maxIter) {
 							iterCt++;
-							info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
-								" (avg iteration time: " + LogTimeFormatter.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
+							wallInfo(timer, "converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
+								" (avg iteration time: " + LogTimeFormatter
+									.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
 							break;
 						} // Else did not converge...
 					} // End outer if
@@ -721,7 +722,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				}
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				
 				// Clean up
 				sim_mat = null;

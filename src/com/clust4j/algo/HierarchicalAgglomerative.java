@@ -11,6 +11,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.ClustUtils;
@@ -237,12 +238,12 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			for(i = 0; i < n; i++) 
 				id_map[i] = i;
 			
-			long start = System.currentTimeMillis();
+			LogTimer link_timer = new LogTimer();
 			int incrementor = n/5, pct = 1;
 			for(k = 0; k < n - 1; k++) {
 				if(incrementor>0 && k%incrementor == 0)
-					ref.info("node mapping progress - " + 20*pct++ + "% ("+
-						LogTimeFormatter.millis( System.currentTimeMillis()-start , false)+")");
+					ref.wallInfo(link_timer, "node mapping progress - " + 20*pct++ + "% (total link time: "+
+						link_timer.formatTime()+")");
 				
 				// get two closest x, y
 				current_min = Double.POSITIVE_INFINITY;
@@ -485,7 +486,9 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				return this;
 			
 			try {
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
+				final long start = timer._start;
+				
 				labels = new int[m];
 				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
 				
@@ -530,7 +533,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				reorderLabels();
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				dist_vec = null;
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {

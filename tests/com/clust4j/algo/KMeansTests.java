@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -17,6 +18,7 @@ import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
+import com.clust4j.utils.VecUtils;
 
 public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
@@ -171,9 +173,9 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			assertTrue(km.didConverge());
 
 			System.out.println(Arrays.toString(km.getLabels()));
-			System.out.println(km.totalCost());
+			System.out.println(km.totalSumOfSquares());
 			if(b)
-				assertTrue(km.totalCost() == 9.0);
+				assertTrue(km.totalSumOfSquares() == 9.0);
 		}
 		
 		// Test predict function -- no longer part of API
@@ -226,6 +228,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 					.setVerbose(true)
 				);
 		km.fit();
+		System.out.println();
 	}
 	
 	@Test
@@ -242,8 +245,8 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 					.setVerbose(true)
 					.setScale(false));
 			km.fit();
+			System.out.println();
 		}
-		System.out.println();
 	}
 
 	@Test
@@ -253,14 +256,34 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			new KMeans.KMeansPlanner(3)
 				.setScale(true)
 				.setVerbose(true)).fit();
+		System.out.println();
 		
-		final double c = km.totalCost();
+		final double c = km.totalSumOfSquares();
 		km.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
 		KMeans km2 = (KMeans)KMeans.loadModel(new FileInputStream(TestSuite.tmpSerPath));
-		assertTrue(km2.totalCost() == c);
+		assertTrue(km2.totalSumOfSquares() == c);
 		assertTrue(km.equals(km2));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test
+	public void testLabelCentroidReordering() {
+		final double[][] data = new double[][] {
+			new double[] {0.000, 	 0.000,     0.000},
+			new double[] {1.500,     1.500,     1.500},
+			new double[] {3.000,     3.000,     3.000}
+		};
+			
+		final KMeans km = new KMeans(new Array2DRowRealMatrix(data,false), 3).fit();
+
+		// the labels should correspond to the index of centroid...
+		assertTrue(VecUtils.equalsExactly(km.getLabels(), new int[]{ 0,1,2 }));
+		final ArrayList<double[]> centroids = km.getCentroids();
+		
+		for(int i = 0; i < centroids.size(); i++) {
+			assertTrue(VecUtils.equalsExactly(data[i], centroids.get(i)));
+		}
 	}
 }

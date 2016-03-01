@@ -14,7 +14,7 @@ import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.kernel.GaussianKernel;
-import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.IllegalClusterStateException;
@@ -411,7 +411,7 @@ public class MeanShift
 				
 				
 				int tries = 0;
-				final long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				info("identifying neighborhoods within bandwidth");
 				
 
@@ -560,7 +560,7 @@ public class MeanShift
 				
 				
 				// Get the nearest...
-				final long clustStart = System.currentTimeMillis();
+				final LogTimer clustTimer = new LogTimer();
 				Neighborhood knrst = nn.getNeighbors(data);
 				labels = MatUtils.flatten(knrst.getIndices());
 				
@@ -592,11 +592,10 @@ public class MeanShift
 				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
 				
 				
-				info("completed cluster labeling in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-clustStart, false));
+				wallInfo(timer, "completed cluster labeling in " + clustTimer.formatTime());
 				
 				
-				wrapItUp(start);
+				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

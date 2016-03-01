@@ -5,6 +5,8 @@ import java.util.Random;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.log.Log;
+import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
@@ -104,5 +106,20 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 	
 	@Override public void debug(String msg) {
 		if(verbose) Log.debug(getLoggerTag(), msg);
+	}
+	
+	@Override public void wallInfo(LogTimer timer, String info) {
+		if(verbose) info(timer.wallMsg() + info);
+	}
+	
+	/**
+	 * Write the time the algorithm took to complete
+	 * @param start
+	 */
+	@Override public void sayBye(final LogTimer timer) {
+		final long start = timer._start;
+		wallInfo(timer, "imputation task completed in " + 
+			LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
+			System.lineSeparator());
 	}
 }

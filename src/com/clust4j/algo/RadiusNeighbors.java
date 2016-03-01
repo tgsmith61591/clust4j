@@ -6,6 +6,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.log.LogTimer;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
@@ -192,7 +193,7 @@ public class RadiusNeighbors extends Neighbors {
 				if(null != res)
 					return this;
 				
-				long start = System.currentTimeMillis();
+				final LogTimer timer = new LogTimer();
 				info("querying tree for nearest neighbors");
 				Neighborhood initRes = new Neighborhood(tree.queryRadius(fit_X, radius, false));
 				
@@ -236,7 +237,7 @@ public class RadiusNeighbors extends Neighbors {
 				info("computing neighborhoods");
 				res = new Neighborhood(dists, indices);
 				
-				wrapItUp(start);
+				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");

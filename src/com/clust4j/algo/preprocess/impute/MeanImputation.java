@@ -5,6 +5,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.MatUtils;
 
@@ -83,6 +84,7 @@ public class MeanImputation extends MatrixImputation {
 	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
+		final LogTimer timer = new LogTimer();
 		final double[][] copy = MatUtils.copy(dat);
 		final int m = dat.length, n = dat[0].length;
 		info("(" + getName() + ") performing mean imputation on " + m + " x " + n + " dataset");
@@ -109,6 +111,7 @@ public class MeanImputation extends MatrixImputation {
 			info("(" + getName() + ") " + nanCt + " NaN" + (nanCt!=1?"s":"") + " identified in column " + col + " (column mean="+mean+")");
 		}
 		
+		sayBye(timer);
 		return copy;
 	}
 }

@@ -33,23 +33,8 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		this.radius = planner.getRadius();
 		this.leafSize = planner.getLeafSize();
 		
-		// These can't happen given the new class structure
-		/*
-		if(null == kNeighbors && null == radius)
-			throw new IllegalArgumentException("k value or radius required");
-		else if(null != kNeighbors && null != radius)
-			throw new IllegalArgumentException("only k value (x)or radius value needed, not both");
-		*/
-		
 		radiusMode = null != radius;
 		
-		// These need to be handled in the sub classes..
-		/*
-		if(radiusMode && radius < 0)
-			throw new IllegalArgumentException("radius must be positive");
-		if((!radiusMode) && kNeighbors < 0)
-			throw new IllegalArgumentException("k must be positive");
-		*/
 		
 		if(!(planner.getSep() instanceof DistanceMetric)) {
 			warn(planner.getSep() + " not a valid metric. Falling back to default: " + DEF_DIST);

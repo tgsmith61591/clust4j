@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.Neighbors;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.GeometricallySeparable;
@@ -111,6 +112,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 	public double[][] operate(final double[][] dat) {
 		checkMat(dat);
 		
+		final LogTimer timer = new LogTimer();
 		final int m = dat.length, n = dat[0].length, nc;
 		final double[][] copy = MatUtils.copy(dat);
 		
@@ -201,7 +203,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 				" position" + (replacements!=1?"s":""));
 		}
 		
-		
+		sayBye(timer);
 		return copy;
 	}
 	
