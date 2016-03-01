@@ -5,11 +5,11 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Loggable;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.DeepCloneable;
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;

@@ -2,7 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.SupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
 
 public interface SupervisedClassifier extends BaseClassifier {
 	public int[] getTrainingLabels();

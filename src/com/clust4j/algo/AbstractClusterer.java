@@ -14,18 +14,18 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.NaNException;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.DeepCloneable;
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.DistanceMetric;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
-import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.TableFormatter;
 
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;

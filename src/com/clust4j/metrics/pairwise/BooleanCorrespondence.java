@@ -1,4 +1,9 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
+
+import com.clust4j.utils.EntryPair;
+import com.clust4j.utils.QuadTup;
+import com.clust4j.utils.TriTup;
+import com.clust4j.utils.VecUtils;
 
 class BooleanCorrespondence {
 	

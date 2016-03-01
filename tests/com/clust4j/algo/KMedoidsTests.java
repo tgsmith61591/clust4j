@@ -19,7 +19,7 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.LaplacianKernel;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
 
 public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();

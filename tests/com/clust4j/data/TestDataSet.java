@@ -16,7 +16,7 @@ import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.MeanShift;
 import com.clust4j.algo.UnsupervisedClassifier;
-import com.clust4j.utils.IllegalClusterStateException;
+import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 

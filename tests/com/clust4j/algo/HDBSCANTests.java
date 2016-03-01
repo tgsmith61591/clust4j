@@ -21,7 +21,7 @@ import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.MatUtils;

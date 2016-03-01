@@ -14,6 +14,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.util.Precision;
 
+import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
 
 /**

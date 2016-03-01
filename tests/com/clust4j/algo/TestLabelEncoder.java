@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public class TestLabelEncoder {

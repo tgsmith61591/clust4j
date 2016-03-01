@@ -8,10 +8,10 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
-import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighbors extends Neighbors {

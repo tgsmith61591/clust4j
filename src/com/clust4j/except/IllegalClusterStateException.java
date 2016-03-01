@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.except;
 
 public class IllegalClusterStateException extends IllegalStateException {
 

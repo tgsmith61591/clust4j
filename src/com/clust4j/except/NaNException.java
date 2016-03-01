@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.except;
 
 /**
  * Generally thrown in the presence of a {@link Double#NaN}

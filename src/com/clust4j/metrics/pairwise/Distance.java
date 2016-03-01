@@ -1,6 +1,10 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
 
 import org.apache.commons.math3.util.FastMath;
+
+import com.clust4j.utils.QuadTup;
+import com.clust4j.utils.TriTup;
+import com.clust4j.utils.VecUtils;
 
 public enum Distance implements DistanceMetric, java.io.Serializable {
 	

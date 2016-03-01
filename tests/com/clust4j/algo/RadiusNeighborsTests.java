@@ -18,10 +18,10 @@ import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.data.ExampleDataSets;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
 
 public class RadiusNeighborsTests implements ClusterTest {
 	final static Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();

@@ -1,4 +1,4 @@
-package com.clust4j.metrics;
+package com.clust4j.metrics.scoring;
 
 import static org.junit.Assert.*;
 
@@ -7,7 +7,9 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.scoring.ClassificationScoring;
+import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.utils.VecUtils;
 
 public class TestMetrics {

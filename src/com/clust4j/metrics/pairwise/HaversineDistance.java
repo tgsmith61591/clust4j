@@ -1,6 +1,8 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
 
 import org.apache.commons.math3.util.FastMath;
+
+import com.clust4j.utils.VecUtils;
 
 public class HaversineDistance implements DistanceMetric {
 	private static final long serialVersionUID = 9967023367578521L;

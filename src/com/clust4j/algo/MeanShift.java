@@ -13,17 +13,16 @@ import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.IllegalClusterStateException;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.IllegalClusterStateException;
 import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
-import com.clust4j.utils.NoiseyClusterer;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -47,7 +46,6 @@ public class MeanShift
 	
 	final public static double DEF_BANDWIDTH = 5.0;
 	final public static int DEF_MAX_ITER = 300;
-	final public static double DEF_MIN_CHANGE = 0d;
 	final public static int DEF_MIN_BIN_FREQ = 1;
 	final public static int NOISE_CLASS = -1;
 	final static int maxTries = 4;
@@ -263,7 +261,7 @@ public class MeanShift
 		private double bandwidth = DEF_BANDWIDTH;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_MIN_CHANGE;
+		private double minChange = DEF_TOL;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private double[][] seeds = null;

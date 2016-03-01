@@ -15,9 +15,9 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.utils.Distance;
+import com.clust4j.except.ModelNotFitException;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest {
@@ -96,7 +96,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		assertTrue(ms1.didConverge());
 		assertTrue(MatUtils.equalsExactly(ms1.getKernelSeeds(), train_array));
 		assertTrue(ms1.getMaxIter() == MeanShift.DEF_MAX_ITER);
-		assertTrue(ms1.getConvergenceTolerance() == MeanShift.DEF_MIN_CHANGE);
+		assertTrue(ms1.getConvergenceTolerance() == MeanShift.DEF_TOL);
 		assertTrue(ms.getNumberOfIdentifiedClusters() == ms1.getNumberOfIdentifiedClusters());
 		assertTrue(VecUtils.equalsExactly(ms.getLabels(), ms1.getLabels()));
 		
@@ -125,7 +125,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	}
 	
 	// Hard condition to force..
-	@Test(expected=com.clust4j.utils.IllegalClusterStateException.class)
+	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
 	public void MeanShiftTest4() {
 		DataSet iris = ExampleDataSets.IRIS;
 		final Array2DRowRealMatrix data = iris.getData();

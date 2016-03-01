@@ -12,6 +12,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.data.ExampleDataSets;
+import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.log.Log;
 import com.clust4j.utils.MatUtils.Axis;
 import com.clust4j.utils.MatUtils.MatSeries;

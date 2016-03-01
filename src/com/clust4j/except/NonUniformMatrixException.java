@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.except;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 

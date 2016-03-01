@@ -11,6 +11,9 @@ import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
+
 public class ClustUtils {
 	/**
 	 * This utility class is used in some cluster classes to keep

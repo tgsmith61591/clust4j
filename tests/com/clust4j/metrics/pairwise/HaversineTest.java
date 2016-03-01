@@ -1,4 +1,4 @@
-package com.clust4j.algo;
+package com.clust4j.metrics.pairwise;
 
 import static org.junit.Assert.*;
 
@@ -7,9 +7,12 @@ import java.util.Arrays;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.algo.AbstractCentroidClusterer;
+import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
-import com.clust4j.utils.HaversineDistance;
+import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.utils.VecUtils;
 
 public class HaversineTest {

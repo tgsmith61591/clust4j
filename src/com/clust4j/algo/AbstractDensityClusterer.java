@@ -2,7 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.utils.SimilarityMetric;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 
 public abstract class AbstractDensityClusterer extends AbstractAutonomousClusterer {
 	/**

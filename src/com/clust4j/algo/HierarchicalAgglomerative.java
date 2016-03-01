@@ -11,14 +11,14 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.utils.Named;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -216,7 +216,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	
 	
 	
-	abstract class HierarchicalDendrogram implements java.io.Serializable {
+	abstract class HierarchicalDendrogram implements java.io.Serializable, Named {
 		private static final long serialVersionUID = 5295537901834851676L;
 		public final Loggable ref;
 		public final GeometricallySeparable dist;
@@ -330,6 +330,11 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 								 (ni + ny) * t * dy * dy -
 								 ni * t * current_min * current_min);
 		}
+		
+		@Override
+		public String getName() {
+			return "Ward Tree";
+		}
 	}
 	
 	abstract class LinkageTree extends HierarchicalDendrogram {
@@ -347,6 +352,11 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			double current_min, int nx, int ny, int ni) {
 			return (nx * dx + ny * dy) / (double)(nx + ny);
 		}
+		
+		@Override
+		public String getName() {
+			return "Avg Linkage Tree";
+		}
 	}
 	
 	class CompleteLinkageTree extends LinkageTree {
@@ -358,6 +368,11 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		protected double getDist(double dx, double dy, 
 			double current_min, int nx, int ny, int ni) {
 			return FastMath.max(dx, dy);
+		}
+		
+		@Override
+		public String getName() {
+			return "Complete Linkage Tree";
 		}
 	}
 	
@@ -505,7 +520,6 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			try {
 				info("Model fit:");
 				final LogTimer timer = new LogTimer();
-				final long start = timer._start;
 				
 				labels = new int[m];
 				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
@@ -513,27 +527,20 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				// Log info...
 				info("calculated " + 
 					m + " x " + m + 
-					" distance matrix in " + 
-					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+					" distance matrix in " + timer.toString());
 				
 				
 				
 				// Get the tree class for logging...
-				Class<? extends HierarchicalDendrogram> clz = null;
+				LogTimer treeTimer = new LogTimer();
 				switch(linkage) {
 					case WARD:
-						clz = WardTree.class;
-						info("constructing HierarchicalDendrogram: " + clz.getName());
 						tree = new WardTree();
 						break;
 					case AVERAGE:
-						clz = AverageLinkageTree.class;
-						info("constructing HierarchicalDendrogram: " + clz.getName());
 						tree = new AverageLinkageTree();
 						break;
 					case COMPLETE:
-						clz = CompleteLinkageTree.class;
-						info("constructing HierarchicalDendrogram: " + clz.getName());
 						tree = new CompleteLinkageTree();
 						break;
 					default:
@@ -542,6 +549,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				
 				
 				// Tree build
+				info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
 				double[][] children = tree.linkage();
 				
 				

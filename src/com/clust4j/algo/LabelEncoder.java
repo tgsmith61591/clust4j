@@ -3,7 +3,7 @@ package com.clust4j.algo;
 import java.util.LinkedHashSet;
 import java.util.TreeMap;
 
-import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public class LabelEncoder extends BaseModel implements java.io.Serializable {

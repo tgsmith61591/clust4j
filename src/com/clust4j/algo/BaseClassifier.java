@@ -1,9 +1,9 @@
 package com.clust4j.algo;
 
-import com.clust4j.metrics.ClassificationScoring;
-import com.clust4j.metrics.SilhouetteScore;
-import com.clust4j.metrics.SupervisedEvaluationMetric;
-import com.clust4j.metrics.UnsupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.ClassificationScoring;
+import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.UnsupervisedEvaluationMetric;
 
 /**
  * An interface for classifiers, both supervised and unsupervised.

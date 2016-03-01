@@ -1,4 +1,4 @@
-package com.clust4j.metrics;
+package com.clust4j.metrics.scoring;
 
 import java.util.HashSet;
 import java.util.TreeMap;

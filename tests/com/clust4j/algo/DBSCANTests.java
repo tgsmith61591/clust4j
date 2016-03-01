@@ -18,7 +18,7 @@ import com.clust4j.algo.DBSCAN.DBSCANPlanner;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.RadialBasisKernel;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
 
 public class DBSCANTests implements ClusterTest, ClassifierTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();

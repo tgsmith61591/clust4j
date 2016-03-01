@@ -3,10 +3,10 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.DistanceMetric;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.ModelNotFitException;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 abstract public class Neighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 527294226423813447L;

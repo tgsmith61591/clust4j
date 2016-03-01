@@ -1,6 +1,4 @@
-package com.clust4j.utils;
-import com.clust4j.algo.DBSCAN;
-import com.clust4j.algo.MeanShift;
+package com.clust4j.algo;
 
 /**
  * Any cluster that does not force a prediction for every

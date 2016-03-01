@@ -7,8 +7,8 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.algo.DBSCAN;
+import com.clust4j.except.NaNException;
 import com.clust4j.utils.MatrixFormatter;
-import com.clust4j.utils.NaNException;
 
 public class ClustTests {
 	{ // initializer

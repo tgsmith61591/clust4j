@@ -1,4 +1,4 @@
-package com.clust4j.metrics;
+package com.clust4j.metrics.scoring;
 
 public enum ClassificationScoring implements SupervisedEvaluationMetric {
 	ACCURACY {

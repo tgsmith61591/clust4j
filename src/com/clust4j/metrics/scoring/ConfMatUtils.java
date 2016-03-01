@@ -1,4 +1,4 @@
-package com.clust4j.metrics;
+package com.clust4j.metrics.scoring;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 

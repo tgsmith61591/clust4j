@@ -8,13 +8,13 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.Neighbors;
+import com.clust4j.except.IllegalClusterStateException;
+import com.clust4j.except.NaNException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.IllegalClusterStateException;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.NaNException;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighborImputation extends MatrixImputation {

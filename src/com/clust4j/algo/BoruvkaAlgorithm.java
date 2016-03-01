@@ -7,8 +7,8 @@ import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Loggable;
+import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.DistanceMetric;
 import com.clust4j.utils.VecUtils;
 
 class BoruvkaAlgorithm implements java.io.Serializable {

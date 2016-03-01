@@ -5,6 +5,8 @@ package com.clust4j.algo;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
 public interface Convergeable extends ConvergeablePlanner {
+	public static final double DEF_TOL = 0.0;
+	
 	/**
 	 * Returns whether the algorithm has converged yet.
 	 * If the algorithm has yet to be fit, it will return false.

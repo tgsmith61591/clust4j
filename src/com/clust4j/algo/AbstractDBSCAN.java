@@ -3,7 +3,6 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.utils.NoiseyClusterer;
 
 abstract class AbstractDBSCAN extends AbstractDensityClusterer implements NoiseyClusterer {
 	private static final long serialVersionUID = 5247910788105653778L;

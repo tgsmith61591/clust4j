@@ -7,10 +7,10 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Loggable;
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.DistanceMetric;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
 
 public class KDTree extends NearestNeighborHeapSearch {
 	private static final long serialVersionUID = -3744545394278454548L;

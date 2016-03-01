@@ -10,14 +10,14 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
-import com.clust4j.utils.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
@@ -42,7 +42,6 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
 	final public static int DEF_ITER_BREAK = 15;
 	final public static int DEF_MAX_ITER = 200;
-	final public static double DEF_MIN_CHANGE = 0.0;
 	final public static double DEF_DAMPING = 0.5;
 	/** By default uses minute Gaussian smoothing. It is recommended this remain
 	 *  true, but the {@link AffinityPropagationPlanner#useGaussianSmoothing(boolean)}
@@ -157,7 +156,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			implements UnsupervisedClassifierPlanner {
 		
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_MIN_CHANGE;
+		private double minChange = DEF_TOL;
 		private int iterBreak = DEF_ITER_BREAK;
 		
 		private double damping = DEF_DAMPING;

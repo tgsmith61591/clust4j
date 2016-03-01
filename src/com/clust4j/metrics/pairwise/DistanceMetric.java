@@ -1,6 +1,6 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
 
-import com.clust4j.utils.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
 
 public interface DistanceMetric extends GeometricallySeparable {
 	public static final double DEFAULT_P = 2.0;

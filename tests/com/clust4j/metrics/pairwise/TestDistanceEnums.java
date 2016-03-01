@@ -1,13 +1,14 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.HaversineDistance.DistanceUnit;
-import com.clust4j.utils.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.HaversineDistance.DistanceUnit;
 
 public class TestDistanceEnums {
 

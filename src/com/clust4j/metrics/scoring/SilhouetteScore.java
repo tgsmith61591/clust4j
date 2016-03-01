@@ -1,4 +1,4 @@
-package com.clust4j.metrics;
+package com.clust4j.metrics.scoring;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -9,8 +9,8 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.LabelEncoder;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 

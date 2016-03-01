@@ -1,4 +1,6 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
+
+import com.clust4j.utils.Named;
 
 public interface GeometricallySeparable extends java.io.Serializable, Named {
 	/**

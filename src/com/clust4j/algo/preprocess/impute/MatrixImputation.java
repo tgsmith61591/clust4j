@@ -4,11 +4,11 @@ import java.util.Random;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.except.NaNException;
 import com.clust4j.log.Log;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 
 /**

@@ -2,9 +2,9 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.SilhouetteScore;
-import com.clust4j.metrics.UnsupervisedIndexAffinity;
-import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 
 public abstract class AbstractAutonomousClusterer extends AbstractClusterer implements UnsupervisedClassifier {
 	/**

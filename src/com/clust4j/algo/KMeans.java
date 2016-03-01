@@ -8,12 +8,12 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
-import com.clust4j.utils.Distance;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -50,7 +50,7 @@ public class KMeans extends AbstractCentroidClusterer {
 		
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_TOLERANCE;
+		private double minChange = DEF_CONVERGENCE_TOLERANCE;
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
@@ -276,15 +276,16 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				
 				info("Total sum of squares: " + tssCost);
-				if(!converged) warn("algorithm did not converge");
+				if(!converged) 
+					warn("algorithm did not converge");
 				else info("algorithm converged in " + iter + " iteration" + (iter!=1?"s":""));
 					
 				
 				// wrap things up..
+				reorderLabelsAndCentroids();
 				sayBye(timer);
 				
 				
-				reorderLabelsAndCentroids();
 				return this;
 				
 			} catch(OutOfMemoryError | StackOverflowError e) {

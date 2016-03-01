@@ -16,9 +16,9 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.utils.Distance;
+import com.clust4j.except.ModelNotFitException;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public class NearestCentroidTests implements ClassifierTest, ClusterTest {

@@ -2,15 +2,14 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.SilhouetteScore;
-import com.clust4j.metrics.UnsupervisedIndexAffinity;
-import com.clust4j.utils.Distance;
-import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.Hierarchical;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 
 abstract public class HierarchicalClusterer 
 		extends AbstractPartitionalClusterer 
-		implements UnsupervisedClassifier, Hierarchical {
+		implements UnsupervisedClassifier {
 	
 	
 	private static final long serialVersionUID = -1248722938839039425L;
@@ -39,9 +38,9 @@ abstract public class HierarchicalClusterer
 		checkLinkage(this, linkage);
 	}
 	
-	protected static void checkLinkage(AbstractClusterer algo, Linkage link) {
-		Hierarchical hier = (Hierarchical)algo;
-		Linkage linkage = hier.getLinkage();
+	protected static void checkLinkage(HierarchicalClusterer algo, Linkage link) {
+		Linkage linkage = algo.getLinkage();
+		
 		if(null == linkage) {
 			String e = "null linkage passed to planner";
 			algo.error(e);
@@ -57,13 +56,12 @@ abstract public class HierarchicalClusterer
 	
 	abstract public static class BaseHierarchicalPlanner 
 			extends BaseClustererPlanner 
-			implements Hierarchical, UnsupervisedClassifierPlanner {
+			implements UnsupervisedClassifierPlanner {
 		
-		@Override abstract public Linkage getLinkage();
+		abstract public Linkage getLinkage();
 		abstract public BaseHierarchicalPlanner setLinkage(Linkage linkage);
 	}
 	
-	@Override
 	public Linkage getLinkage() {
 		return linkage;
 	}

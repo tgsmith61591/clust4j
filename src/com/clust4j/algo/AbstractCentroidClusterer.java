@@ -7,18 +7,18 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.GlobalState;
-import com.clust4j.metrics.SilhouetteScore;
-import com.clust4j.metrics.UnsupervisedIndexAffinity;
-import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.except.ModelNotFitException;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractCentroidClusterer extends AbstractPartitionalClusterer 
 		implements CentroidLearner, Convergeable, UnsupervisedClassifier {
 	
 	private static final long serialVersionUID = -424476075361612324L;
-	final public static double DEF_TOLERANCE = 0.005;
+	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
 	final public static int DEF_K = Neighbors.DEF_K;
 	
 	final protected int maxIter;

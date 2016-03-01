@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j.metrics.pairwise;
 
 public interface SimilarityMetric extends GeometricallySeparable, java.io.Serializable { 
 	/**

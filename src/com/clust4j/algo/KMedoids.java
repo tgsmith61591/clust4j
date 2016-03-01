@@ -13,11 +13,11 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.ClustUtils;
-import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.ClustUtils.SortedHashableIntSet;
-import com.clust4j.utils.Distance;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-medoids">KMedoids</a> is
@@ -79,7 +79,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 		
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_TOLERANCE;
+		private double minChange = DEF_CONVERGENCE_TOLERANCE;
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
