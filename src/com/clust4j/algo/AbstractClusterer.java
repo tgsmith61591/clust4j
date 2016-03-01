@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.NumberFormat;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
@@ -15,7 +16,6 @@ import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
-import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
@@ -26,6 +26,7 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.NaNException;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.SimilarityMetric;
+import com.clust4j.utils.TableFormatter;
 
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 
@@ -44,7 +45,7 @@ public abstract class AbstractClusterer
 		implements Loggable, Named, java.io.Serializable {
 	
 	private static final long serialVersionUID = -3623527903903305017L;
-	
+	final static TableFormatter formatter;
 	
 	/** The default {@link FeatureNormalization} enum to use. 
 	 *  The default is {@link FeatureNormalization#STANDARD_SCALE} */
@@ -71,6 +72,8 @@ public abstract class AbstractClusterer
 	private final Random seed;
 	/** Verbose for heavily logging */
 	final private boolean verbose;
+	/** Whether we scale or not */
+	final boolean normalized;
 	
 	
 	
@@ -107,6 +110,16 @@ public abstract class AbstractClusterer
 	
 	
 	
+	// Initializers
+	static {
+		NumberFormat nf = NumberFormat.getInstance(TableFormatter.DEFAULT_LOCALE);
+		nf.setMaximumFractionDigits(5);
+		formatter = new TableFormatter(nf);
+		formatter.leadWithEmpty = false;
+		formatter.setWhiteSpace(1);
+	}
+	
+	
 	
 	/**
 	 * Base clusterer constructor. Sets up the distance measure,
@@ -120,7 +133,6 @@ public abstract class AbstractClusterer
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
 		this.seed = planner.getSeed();
-		boolean similarity = this.dist instanceof SimilarityMetric; // Avoid later check
 		
 		// Handle data, now...
 		handleData(data);
@@ -130,27 +142,19 @@ public abstract class AbstractClusterer
 				" clustering with " + data.getRowDimension() + 
 				" x " + data.getColumnDimension() + " data matrix");
 		
-		if(this.dist instanceof Kernel) {
+		if(this.dist instanceof Kernel)
 			warn("running " + getName() + " in Kernel mode can be an expensive option");
-		}
-		
-		
-		String clzNm = "AbstractClusterer";
-		meta("model key="+modelKey, clzNm);
-		meta((similarity ? "similarity" : "distance") + 
-				" metric=" + dist.getName(), clzNm);
-		meta("scale="+planner.getScale(), clzNm);
-		meta("force_parallelism="+GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE, clzNm);
-		meta("allow_auto_parallelism="+GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM, clzNm);
-		
 		
 		// Scale if needed
-		if(!planner.getScale()) {
+		this.normalized = planner.getScale();
+		
+		if(!normalized) {
 			this.data = (AbstractRealMatrix) data.copy();
 			metaWarn("feature normalization option is set to false; this is discouraged");
 		} else {
-			meta("normalizing matrix columns", planner.getNormalizer().toString());
+			final LogTimer scaleTimer = new LogTimer();
 			this.data = planner.getNormalizer().operate(data);
+			meta("normalized matrix columns in " + scaleTimer.toString(), planner.getNormalizer().toString());
 		}
 	} // End constructor
 	
@@ -279,15 +283,6 @@ public abstract class AbstractClusterer
 	}
 	
 	
-	/** 
-	 * Fits the model. In order to fit the style of clust4j,
-	 * the execution of this method should be synchronized on 'this'. This
-	 * is due to the volatile nature of many of the instance class variables.
-	 */
-	@Override abstract public AbstractClusterer fit();
-	
-	
-	
 	/* -- LOGGER METHODS --  */
 	@Override public void error(String msg) {
 		if(verbose) Log.err(getLoggerTag(), msg);
@@ -316,13 +311,18 @@ public abstract class AbstractClusterer
 	
 	/**
 	 * Write the time the algorithm took to complete
-	 * @param start
+	 * @param timer
 	 */
 	@Override public void sayBye(final LogTimer timer) {
-		final long start = timer._start;
-		wallInfo(timer, "model "+getKey()+" completed in " + 
-			LogTimeFormatter.millis(System.currentTimeMillis()-start, false) + 
-			System.lineSeparator());
+		info("model "+getKey()+" completed in " + timer.toString());
+	}
+	
+	final void logModelSummary() {
+		info("Model Summary:");
+		final String sep = System.getProperty("line.separator");
+		final String[] summary = modelSummary().split(sep);
+		for(String line: summary)
+			info(line);
 	}
 	
 	/**
@@ -377,4 +377,14 @@ public abstract class AbstractClusterer
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
 		this.dist = sep;
 	}
+	
+	
+
+	/** 
+	 * Fits the model. In order to fit the style of clust4j,
+	 * the execution of this method should be synchronized on 'this'. This
+	 * is due to the volatile nature of many of the instance class variables.
+	 */
+	@Override abstract public AbstractClusterer fit();
+	abstract String modelSummary();
 }

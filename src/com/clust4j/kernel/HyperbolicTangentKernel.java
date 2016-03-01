@@ -50,7 +50,7 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 
 	@Override
 	public String getName() {
-		return "HyperbolicTangent (Sigmoid) Kernel";
+		return "Sigmoid (tanh) Kernel";
 	}
 	
 	public double getAlpha() {

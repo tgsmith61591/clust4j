@@ -475,6 +475,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest {
 			new HDBSCAN.HDBSCANPlanner(1)
 				.setVerbose(true)
 				.setScale(true)).fit();
+		System.out.println();
 
 		final int[] labels = hd.getLabels();
 		hd.saveModel(new FileOutputStream(TestSuite.tmpSerPath));

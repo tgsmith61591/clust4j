@@ -27,7 +27,7 @@ public class TableFormatter {
     /** The default column separator: "". */
     protected static final String DEFAULT_COLUMN_SEPARATOR = "";
     /** The default locale */
-    protected static final Locale DEFAULT_LOCALE = Locale.US;
+    public static final Locale DEFAULT_LOCALE = Locale.US;
     /** The default number format */
     protected static final NumberFormat DEFAULT_NUMBER_FORMAT = NumberFormat.getInstance(DEFAULT_LOCALE); 
     /** The default whitespace between columns */
@@ -53,13 +53,15 @@ public class TableFormatter {
     /** The format used for components. */
     protected final NumberFormat format;
     /** The whitespace between cols */
-    protected final int whiteSpace;
+    protected int whiteSpace;
 	/** Line sep */
     protected final String lineSep;
 	/** Between col string constructed from whitespace and char */
-    protected final String colSepStr;
+    protected String colSepStr;
 	/** Column alignment for printing */
 	protected ColumnAlignment align = DEFAULT_ALIGNMENT;
+	public boolean leadWithEmpty = true;
+	
 	
     public TableFormatter() {
     	this(DEFAULT_NUMBER_FORMAT);
@@ -87,9 +89,7 @@ public class TableFormatter {
     	this.rowSeparator = rowSep;
     	
     	this.columnSeparator = colSep;
-    	this.whiteSpace = whiteSpace%2==0 ? whiteSpace : whiteSpace + 1;
-    	String ws = getAppenderOfLen(this.whiteSpace/2);
-    	this.colSepStr = ws + this.columnSeparator + ws; //"  |  " or the likes
+    	setWhiteSpace(whiteSpace);
     	
     	this.format = format;
     	this.lineSep = System.getProperty("line.separator");
@@ -121,7 +121,7 @@ public class TableFormatter {
     		numRows = rows;
     	
     	StringBuilder output = new StringBuilder();
-    	output.append(prefix+lineSep);
+    	output.append(prefix + (leadWithEmpty ? lineSep : ""));
 
     	final Object[][] data = new Object[numRows][];
     	for(int i = 0; i < numRows; i++) {
@@ -257,6 +257,12 @@ public class TableFormatter {
     
     private static boolean isNumeric(Object o) {
     	return (o instanceof Number);
+    }
+    
+    public void setWhiteSpace(int n) {
+    	this.whiteSpace = n%2==0 ? n : n + 1;
+    	String ws = getAppenderOfLen(this.whiteSpace/2);
+    	this.colSepStr = ws + this.columnSeparator + ws; //"  |  " or the likes
     }
     
     public void toggleAlignment() {

@@ -1,9 +1,11 @@
 package com.clust4j.algo;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimer;
@@ -30,11 +32,29 @@ public class NearestNeighbors extends Neighbors {
 		super(data, planner);
 		if(kNeighbors < 1) throw new IllegalArgumentException("k must be positive");
 		if(kNeighbors > m) throw new IllegalArgumentException("k must be <= number of samples");
+		logModelSummary();
 	}
 	
 	private static void validateK(int k, int m) {
 		if(k < 1) throw new IllegalArgumentException("k must be positive");
 		if(k > m) throw new IllegalArgumentException("k must be < number of samples");
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Algo","K","Scale","Force Par.","Allow Par."
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),
+			alg, kNeighbors, normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 	
@@ -196,7 +216,8 @@ public class NearestNeighbors extends Neighbors {
 			try {
 				if(null != res)
 					return this;
-				
+
+				info("Model fit:");
 				int nNeighbors = kNeighbors + 1;
 				final LogTimer timer = new LogTimer();
 				

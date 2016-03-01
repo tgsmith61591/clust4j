@@ -6,9 +6,11 @@ import java.util.TreeMap;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.metrics.SilhouetteScore;
 import com.clust4j.metrics.UnsupervisedIndexAffinity;
 import com.clust4j.utils.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
@@ -25,7 +27,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final protected int m;
 	
 	volatile protected boolean converged = false;
-	volatile protected double tssCost;
+	volatile protected double tssCost = Double.NaN;
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
 	
@@ -46,10 +48,26 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		if(maxIter < 0)	throw new IllegalArgumentException("maxIter must exceed 0");
 		if(tolerance<0)	throw new IllegalArgumentException("minChange must exceed 0");
 		
-		meta("maxIter="+maxIter);
-		meta("minChange="+tolerance);
-		
 		this.init_centroid_indices = initCentroids();
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","K","Scale","Force Par.","Allow Par.","Max Iter","Tolerance"
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+			maxIter,
+			tolerance
+		});
+		
+		return formatter.format(formattable);
 	}
 
 	
@@ -62,6 +80,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		abstract public int getK();
 		@Override abstract public int getMaxIter();
 		@Override abstract public double getConvergenceTolerance();
+		abstract public CentroidClustererPlanner setConvergenceCriteria(final double min);
 	}
 	
 
@@ -139,6 +158,27 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return cent_indices;
 	}
 	
+	/**
+	 * In the corner case that k = 1, the {@link LabelEncoder}
+	 * won't work, so we need to label everything as 0 and immediately return
+	 */
+	final void labelFromSingularK(final double[][] X) {
+		labels = VecUtils.repInt(0, m);
+		double[] center_record = MatUtils.meanRecord(X);
+		
+		tssCost = 0;
+		double diff;
+		for(double[] d: X) {
+			for(int j = 0; j < data.getColumnDimension(); j++) {
+				diff = d[j] - center_record[j];
+				tssCost += diff * diff;
+			}
+		}
+		
+		converged = true;
+		warn("k=1; converged immediately with a TSS of "+tssCost);
+	}
+	
 	@Override
 	public int itersElapsed() {
 		return iter;
@@ -163,4 +203,20 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		// Propagates ModelNotFitException
 		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
 	}
+	
+	/**
+	 * Return the cost of the entire clustering system. For KMeans, this
+	 * equates to total sum of squares
+	 * @return system cost
+	 */
+	public double totalCost() {
+		return tssCost;
+	}
+	
+	/**
+	 * Reorder the labels in order of appearance using the 
+	 * {@link LabelEncoder}. Also reorder the centroids to correspond
+	 * with new label order
+	 */
+	abstract void reorderLabelsAndCentroids();
 }

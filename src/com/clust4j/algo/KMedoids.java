@@ -100,7 +100,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 		public KMedoidsPlanner copy() {
 			return new KMedoidsPlanner(k)
 				.setMaxIter(maxIter)
-				.setMinChangeStoppingCriteria(minChange)
+				.setConvergenceCriteria(minChange)
 				.setScale(scale)
 				.setSep(dist)
 				.setVerbose(verbose)
@@ -154,7 +154,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 			return this;
 		}
 
-		public KMedoidsPlanner setMinChangeStoppingCriteria(final double min) {
+		@Override
+		public KMedoidsPlanner setConvergenceCriteria(final double min) {
 			this.minChange = min;
 			return this;
 		}
@@ -292,25 +293,29 @@ public class KMedoids extends AbstractCentroidClusterer {
 			try {
 				if(null!=labels) // Already have fit this model
 					return this;
-				
-				info("beginning training segmentation for K = " + k);
+
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
-				final long start = timer._start;
+				final double[][] X = data.getData();
 				
-				// Compute distance matrix, which is O(N^2) space, O(Nc2) time
+				// Corner case: K = 1
+				if(1 == k) {
+					labelFromSingularK(X);
+					sayBye(timer);
+					return this;
+				}
+				
+				
 				// We do this in KMedoids and not KMeans, because KMedoids uses
 				// real points as medoids and not means for centroids, thus
 				// the recomputation of distances is unnecessary with the dist mat
-				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+				dist_mat = ClustUtils.distanceUpperTriangMatrix(X, getSeparabilityMetric());
 				
-				/*System.out.println(new MatrixFormatter()
-					.format(new Array2DRowRealMatrix(dist_mat, false)));*/
 				
 				
 				info("calculated " + 
 					m + " x " + m + 
-					" distance matrix in " + 
-					LogTimeFormatter.millis( System.currentTimeMillis()-start , false));
+					" distance matrix in " + timer.toString());
 	
 				// Clusters initialized with randoms already in super
 				// Initialize labels
@@ -417,7 +422,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				dist_mat = null;
 				
 				
-				reorderLabels();
+				reorderLabelsAndCentroids();
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
 				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
@@ -445,7 +450,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
 	}
 	
-	final private void reorderLabels() {
+	@Override
+	final void reorderLabelsAndCentroids() {
 		// Assign medoid indices records to centroids
 		centroids = new ArrayList<>();
 		
@@ -473,9 +479,5 @@ public class KMedoids extends AbstractCentroidClusterer {
 		labels = newLabels;
 		cent_to_record = null;
 		centroids = new ArrayList<>(newCentroids.values());
-	}
-	
-	public double totalCost() {
-		return tssCost;
 	}
 }

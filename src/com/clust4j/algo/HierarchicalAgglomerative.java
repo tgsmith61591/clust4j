@@ -9,6 +9,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
@@ -82,9 +83,25 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		this.m = data.getRowDimension();
 		this.num_clusters = planner.num_clusters;
 		
-		meta("Linkage="+linkage);
-		meta("Num clusters="+num_clusters);
-		trace(getName()+" clustering has a runtime of O(N^2)");
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Linkage","Scale","Force Par.","Allow Par.","Num. Clusters"
+		});
+		
+		formattable.add(new Object[]{
+			data.getRowDimension(),data.getColumnDimension(),
+			getSeparabilityMetric(),linkage,normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+			num_clusters
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 	
@@ -486,6 +503,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				return this;
 			
 			try {
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				final long start = timer._start;
 				

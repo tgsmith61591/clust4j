@@ -7,6 +7,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
@@ -248,7 +249,8 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 				if(null != labels) // already fit
 					return this;
 				
-				
+
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				this.centroids = new ArrayList<double[]>(numClasses);
 				final int[] nk = new int[numClasses]; // the count of clusters in each class
@@ -349,6 +351,22 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	// Tested: passing
 	static double[][] mmsOuterProd(double[] m, double[] s) {
 		return VecUtils.outerProduct(m, s);
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Num Classes","Scale","Force Par.","Allow Par."
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 	// Tested: passing

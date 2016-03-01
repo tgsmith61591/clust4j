@@ -1,9 +1,11 @@
 package com.clust4j.algo;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimer;
@@ -27,11 +29,30 @@ public class RadiusNeighbors extends Neighbors {
 	public RadiusNeighbors(AbstractRealMatrix data, RadiusNeighborsPlanner planner) {
 		super(data, planner);
 		validateRadius(planner.radius);
+		logModelSummary();
 	}
 	
 	static void validateRadius(double radius) {
 		if(radius <= 0) throw new IllegalArgumentException("radius must be positive");
 	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Algo","Radius","Scale","Force Par.","Allow Par."
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),
+			alg, radius, normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+		});
+		
+		return formatter.format(formattable);
+	}
+	
 
 	
 	
@@ -192,7 +213,8 @@ public class RadiusNeighbors extends Neighbors {
 			try {
 				if(null != res)
 					return this;
-				
+
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				info("querying tree for nearest neighbors");
 				Neighborhood initRes = new Neighborhood(tree.queryRadius(fit_X, radius, false));

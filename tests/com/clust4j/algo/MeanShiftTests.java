@@ -36,6 +36,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		MeanShift ms = new MeanShift(mat, new MeanShift
 			.MeanShiftPlanner(0.5)
 				.setVerbose(true)).fit();
+		System.out.println();
 		
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
 		assertTrue(ms.getNumberOfNoisePoints() == 0);
@@ -133,6 +134,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			new MeanShift.MeanShiftPlanner()
 				.setScale(true)
 				.setVerbose(true)).fit();
+		System.out.println();
 	}
 
 	
@@ -157,6 +159,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		final double[][] x = TestSuite.bigMatrix;
 		MeanShift ms = new MeanShift(new Array2DRowRealMatrix(x), 
 			new MeanShiftPlanner().setVerbose(true)).fit();
+		System.out.println();
 		assertTrue(ms.itersElapsed() >= 1);
 		ms.fit(); // re-fit
 	}
@@ -243,6 +246,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		MeanShift ms = new MeanShift(data_,
 			new MeanShiftPlanner(0.5)
 				.setVerbose(true)).fit();
+		System.out.println();
 		
 		final double n = ms.getNumberOfNoisePoints();
 		ms.saveModel(new FileOutputStream(TestSuite.tmpSerPath));

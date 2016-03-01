@@ -13,8 +13,8 @@ public interface Convergeable extends ConvergeablePlanner {
 	public boolean didConverge();
 	
 	/**
-	 * 
-	 * @return
+	 * Get the count of iterations performed by the <tt>fit()</tt> method
+	 * @return how many iterations were performed
 	 */
 	public int itersElapsed();
 }

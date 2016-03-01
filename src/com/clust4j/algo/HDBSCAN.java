@@ -121,11 +121,25 @@ public class HDBSCAN extends AbstractDBSCAN {
 			setSeparabilityMetric(DEF_DIST);
 		}
 		
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Algo.","Scale","Force Par.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
+		});
 		
-		meta("min_cluster_size="+min_cluster_size);
-		meta("min_pts="+planner.minPts);
-		meta("algorithm="+algo);
-		meta("alpha="+alpha);
+		formattable.add(new Object[]{
+			data.getRowDimension(),data.getColumnDimension(),
+			getSeparabilityMetric(),algo,normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+			minPts, min_cluster_size,alpha
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 	
@@ -943,13 +957,11 @@ public class HDBSCAN extends AbstractDBSCAN {
 	class GenericTree extends HDBSCANLinkageTree implements ExplicitMutualReachability {
 		GenericTree() {
 			super();
-			long s = System.currentTimeMillis();
 			
 			// The generic implementation requires the computation of an UT dist mat
+			final LogTimer s = new LogTimer();
 			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-			info("completed distance matrix computation in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-s, false) + 
-					System.lineSeparator());
+			info("completed distance matrix computation in " + s.toString());
 		}
 		
 		@Override
@@ -1267,6 +1279,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 					return this;
 				
 				// First get the dist matrix
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				
 				// Meant to prevent multiple .getData() copy calls
@@ -1316,7 +1329,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 				
 				LogTimer treeTimer = new LogTimer();
 				final double[][] build = tree.link(); // returns the result of the label(..) function
-				wallInfo(timer, "completed tree building in " + treeTimer.formatTime());
+				info("completed tree building in " + treeTimer.toString());
 				
 
 				info("converting tree to labels ("+build.length+" x "+build[0].length+")");
@@ -1325,11 +1338,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 				
 				
 				// Wrap up...
-				wallInfo(timer, "completed cluster labeling in " + labTimer.formatTime());
+				info("completed cluster labeling in " + labTimer.toString());
 				
 				
 				// Count missing
-				info("counting number of noise records");
 				numNoisey = 0;
 				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
 				

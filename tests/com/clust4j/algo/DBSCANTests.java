@@ -67,6 +67,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest {
 		new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.05)
 			.setScale(true)
 			.setVerbose(true)).fit();
+		System.out.println();
 	}
 	
 	@Test
@@ -86,6 +87,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest {
 			.setMinPts(1)
 			.setVerbose(true))
 				.fit();
+		System.out.println();
 		
 		assertTrue(db.getNumberOfIdentifiedClusters() > 0);
 		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
@@ -109,6 +111,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest {
 			.setMinPts(1)
 			.setVerbose(true))
 				.fit();
+		System.out.println();
 		
 		assertTrue(db.getNumberOfIdentifiedClusters() == 2);
 		assertTrue(db.getLabels()[1] == db.getLabels()[2]);
@@ -125,6 +128,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest {
 				.DBSCANPlanner()
 					.setVerbose(true))
 				.fit();
+			System.out.println();
 		} catch(OutOfMemoryError | StackOverflowError e) {
 			return; // Not enough heap space..
 		}
@@ -151,6 +155,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest {
 				.setScale(true)
 				.setMinPts(1)
 				.setVerbose(true)).fit();
+		System.out.println();
 		
 		int a = db.getNumberOfNoisePoints();
 		db.saveModel(new FileOutputStream(TestSuite.tmpSerPath));

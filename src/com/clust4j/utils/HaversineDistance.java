@@ -62,14 +62,17 @@ public class HaversineDistance implements DistanceMetric {
 		return d;
 	}
 	
-	
 	private static double haversine(double val) {
 		return FastMath.pow(FastMath.sin(val / 2d), 2);
 	}
-
 	
 	@Override
 	public String getName() {
 		return "Haversine";
+	}
+	
+	@Override
+	public String toString() {
+		return getName();
 	}
 }

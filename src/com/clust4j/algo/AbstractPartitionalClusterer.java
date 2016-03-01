@@ -22,7 +22,6 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 			throw new IllegalArgumentException("k exceeds number of records");
 		
 		this.k = k;
-		meta("K="+k);
 	} // End constructor
 	
 	public int getK() {

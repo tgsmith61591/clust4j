@@ -6,11 +6,11 @@ import java.util.Stack;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.GeometricallySeparable;
 import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
@@ -35,6 +35,7 @@ public class DBSCAN extends AbstractDBSCAN {
 	 * 
 	 */
 	private static final long serialVersionUID = 6749407933012974992L;
+	final private int m;
 	
 	// Race conditions exist in retrieving either one of these...
 	private volatile int[] labels = null;
@@ -42,15 +43,6 @@ public class DBSCAN extends AbstractDBSCAN {
 	private volatile boolean[] coreSamples = null;
 	private volatile int numClusters;
 	private volatile int numNoisey;
-	
-	/**
-	 * Upper triangular, M x M matrix denoting distances between records.
-	 * Is only populated during training phase and then set to null for 
-	 * garbage collection, as a large-M matrix has a high space footprint: O(N^2).
-	 * This is only needed during training and then can safely be collected
-	 * to free up heap space.
-	 */
-	private double[][] dist_mat = null;
 	
 	
 	/**
@@ -182,12 +174,7 @@ public class DBSCAN extends AbstractDBSCAN {
 	 */
 	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
 		super(data, planner);
-		
-
-		this.eps = planner.eps;
-		meta("epsilon="+eps);
-		meta("min_pts="+minPts);
-		
+		m = data.getRowDimension();
 		
 		// Error handle...
 		String e;
@@ -196,6 +183,25 @@ public class DBSCAN extends AbstractDBSCAN {
 			error(e);
 			throw new IllegalArgumentException(e);
 		}
+		
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Force Par.","Allow Par."
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),
+			eps, minPts, normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 
@@ -230,17 +236,8 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// First get the dist matrix
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
-				dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-				final int m = dist_mat.length;
-				
-				
-				// Log info...
-				info("calculated " + 
-					m + " x " + m + 
-					" distance matrix in " + timer.formatTime());
-				
-				info("computing density neighborhood for each point (eps=" + eps + ")");
 				
 				// Do the neighborhood assignments, get sample weights, find core samples..
 				final LogTimer neighbTimer = new LogTimer();
@@ -250,8 +247,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// Fit the nearest neighbor model...
-				info("fitting nearest neighbor density model");
-				
+				final LogTimer rnTimer = new LogTimer();
 				final RadiusNeighbors rnModel = new RadiusNeighbors(data,
 					new RadiusNeighborsPlanner(eps)
 						.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
@@ -260,6 +256,8 @@ public class DBSCAN extends AbstractDBSCAN {
 						.setNormalizer(normer) // Don't really need because not normalizing...
 						.setVerbose(false))
 					.fit();
+				
+				info("fit RadiusNeighbors model in " + rnTimer.toString());
 				int[][] nearest = rnModel.getNeighbors().getIndices();
 				
 				
@@ -283,19 +281,19 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// Log checkpoint
-				wallInfo(timer, "completed density neighborhood calculations in " + neighbTimer.formatTime());
+				info("completed density neighborhood calculations in " + neighbTimer.toString());
 				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
-				info("identifying cluster labels");
 				
 				
 				// Label the points...
 				int nextLabel = 0, v;
-				final LogTimer clustTimer = new LogTimer();
 				final Stack<Integer> stack = new Stack<>();
 				int[] neighb;
 				
-				
+				LogTimer stackTimer;
 				for(int i = 0; i < m; i++) {
+					stackTimer = new LogTimer();
+					
 					// Want to look at unlabeled OR core points...
 					if(labels[i] != NOISE_CLASS || !coreSamples[i])
 						continue;
@@ -320,7 +318,7 @@ public class DBSCAN extends AbstractDBSCAN {
 						
 						//System.out.println(stack);
 						if(stack.size() == 0) {
-							info("completed stack for clusterLabel " + nextLabel);
+							info("completed stack for clusterLabel " + nextLabel + " in " + stackTimer.toString());
 							break;
 						}
 						
@@ -331,14 +329,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				}
 				
 				
-				
-				// Wrap up...
-				wallInfo(timer, "completed cluster labeling in " + 
-					clustTimer.formatTime());
-				
-				
 				// Count missing
-				info("counting number of noise records");
 				numNoisey = 0;
 				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
 				

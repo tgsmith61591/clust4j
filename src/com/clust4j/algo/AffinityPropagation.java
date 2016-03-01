@@ -66,7 +66,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	private final int m;
 	
 	/** Min change convergence criteria */
-	private final double minChange;
+	private final double tolerance;
 	
 	/** Class labels */
 	private volatile int[] labels = null;
@@ -117,23 +117,36 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		this.damping = planner.damping;
 		this.iterBreak = planner.iterBreak;
 		this.m = data.getRowDimension();
-		this.minChange = planner.minChange;
+		this.tolerance = planner.minChange;
 		this.maxIter = planner.maxIter;
 		this.addNoise = planner.addNoise;
 		
 		if(maxIter < 0)	throw new IllegalArgumentException("maxIter must exceed 0");
-		if(minChange<0)	throw new IllegalArgumentException("minChange must exceed 0");
+		if(tolerance<0)	throw new IllegalArgumentException("minChange must exceed 0");
 		if(iterBreak<0)	throw new IllegalArgumentException("iterBreak must exceed 0");
-		
-		
-		meta("damping="+damping);
-		meta("maxIter="+maxIter);
-		meta("minChange="+minChange);
-		meta("addNoise="+addNoise);
 		
 		if(!addNoise) {
 			warn("not scaling with Gaussian noise can cause the algorithm not to converge");
 		}
+		
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Damping","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Add Noise"
+		});
+		
+		formattable.add(new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+			maxIter, tolerance, addNoise
+		});
+		
+		return formatter.format(formattable);
 	}
 	
 	
@@ -300,7 +313,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 	@Override
 	public double getConvergenceTolerance() {
-		return minChange;
+		return tolerance;
 	}
 
 	@Override
@@ -329,6 +342,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				
 				// Init labels
+				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				labels = new int[m];
 				String error;
@@ -380,15 +394,14 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					tiny_scaled = MatUtils.scalarAdd(tiny_scaled, GlobalState.Mathematics.TINY*100);
 					
 					info("removing matrix degeneracies; scaling with minute Gaussian noise");
-					long gausStart = System.currentTimeMillis();
+					LogTimer gausStart = new LogTimer();
 					double[][] noise = MatUtils.randomGaussian(m, m, getSeed());
-					info("Gaussian noise matrix computed in " + 
-						LogTimeFormatter.millis(System.currentTimeMillis()-gausStart, false));
+					info("Gaussian noise matrix computed in " + gausStart.toString());
 					double[][] noiseMatrix = null;
 					
 					
 					try {
-						long multStart = System.currentTimeMillis();
+						LogTimer multStart = new LogTimer();
 						info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
 						
 						
@@ -408,7 +421,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 								
 						// Update
-						info("matrix product computed in " + timer.formatTime(timer.now(), multStart));
+						info("matrix product computed in " + multStart.toString());
 					} catch(DimensionMismatchException e) {
 						error = e.getMessage();
 						error(error);
@@ -427,7 +440,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[] sum_e;
 				
 				info("beginning affinity computations");
-				long iterStart = System.currentTimeMillis();
+				final LogTimer iterTimer = new LogTimer();
+				long iterStart = iterTimer._start;
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
 					
 					if(iterCt % 25 == 0 && iterCt != 0)
@@ -522,7 +536,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					//		A	= MatUtils.scalarMultiply(A, damping);
 					//		A	= MatUtils.subtract(A, tmp);
 					//
-					// But it requires two extra MXM passes, which can be costly...
+					// But it requires two extra MXM passes, which can be costly... O(2M^2)
 					// We know A & tmp are both m X m, so we can combine the 
 					// three steps all together...
 					
@@ -587,9 +601,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 						if((converged && numClusters > 0) || iterCt == maxIter) {
 							iterCt++;
-							wallInfo(timer, "converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
-								" (avg iteration time: " + LogTimeFormatter
-									.millis( (long) ((long)(System.currentTimeMillis()-iterStart)/(double)iterCt), false) + ")");
+							info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
+								" in " + iterTimer.toString());
 							break;
 						} // Else did not converge...
 					} // End outer if

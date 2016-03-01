@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
@@ -59,7 +60,7 @@ public class MeanShift
 	private final int maxIter;
 	
 	/** Min change convergence criteria */
-	private final double minChange;
+	private final double tolerance;
 	
 	/** The kernel bandwidth (volatile because can change in sync method) */
 	volatile private double bandwidth;
@@ -72,6 +73,9 @@ public class MeanShift
 	
 	/** Num rows, cols */
 	private final int m, n;
+	
+	/** Whether bandwidth is auto-estimated */
+	private final boolean autoEstimate;
 
 	
 	/** Track convergence */
@@ -148,21 +152,40 @@ public class MeanShift
 		
 		
 		this.maxIter = planner.maxIter;
-		this.minChange = planner.minChange;
+		this.tolerance = planner.minChange;
 		this.m = seeds.length; //data.getRowDimension();
 		
 
-		if(planner.autoEstimateBW) info("auto-estimating kernel bandwidth");
-		this.bandwidth = planner.autoEstimateBW ? 
+		this.autoEstimate = planner.autoEstimateBW;
+		final LogTimer aeTimer = new LogTimer();
+		this.bandwidth = autoEstimate ? 
 			autoEstimateBW(this.data, // Needs to be 'this' because might be stdized
 				planner.autoEstimateBWQuantile, 
 				planner.getSep(), planner.seed) : 
 				planner.bandwidth;
+			
+		if(autoEstimate) info("bandwidth auto-estimated in " + aeTimer.toString());
+		logModelSummary();
+	}
+	
+	@Override
+	String modelSummary() {
+		final ArrayList<Object[]> formattable = new ArrayList<>();
+		formattable.add(new Object[]{
+			"Num Rows","Num Cols","Metric","Bandwidth","Scale","Force Par.","Allow Par.","Max Iter.","Tolerance"
+		});
 		
+		formattable.add(new Object[]{
+			data.getRowDimension(),data.getColumnDimension(),
+			getSeparabilityMetric(),
+			(autoEstimate ? "(auto) " : "") + bandwidth,
+			normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+			maxIter, tolerance
+		});
 		
-		meta((planner.autoEstimateBW ? "(auto-estimated) " : "") + "bandwidth="+bandwidth);
-		meta("maxIter="+maxIter);
-		meta("minChange="+minChange);
+		return formatter.format(formattable);
 	}
 	
 	static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
@@ -353,19 +376,21 @@ public class MeanShift
 	}
 	
 	
+	/**
+	 * Get the kernel bandwidth
+	 * @return kernel bandwidth
+	 */
 	public double getBandwidth() {
 		return bandwidth;
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public boolean didConverge() {
 		return converged;
 	}
 	
-	/**
-	 * Returns the max number of iterations 
-	 * required for algorithm convergence
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public int itersElapsed() {
 		return itersElapsed;
@@ -378,15 +403,17 @@ public class MeanShift
 	public double[][] getKernelSeeds() {
 		return MatUtils.copy(seeds);
 	}
-	
+
+	/** {@inheritDoc} */
 	@Override
 	public int getMaxIter() {
 		return maxIter;
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public double getConvergenceTolerance() {
-		return minChange;
+		return tolerance;
 	}
 
 	@Override
@@ -409,7 +436,8 @@ public class MeanShift
 				if(null!=labels) // Already fit this model
 					return this;
 				
-				
+
+				info("Model fit:");
 				int tries = 0;
 				final LogTimer timer = new LogTimer();
 				info("identifying neighborhoods within bandwidth");
@@ -592,7 +620,7 @@ public class MeanShift
 				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
 				
 				
-				wallInfo(timer, "completed cluster labeling in " + clustTimer.formatTime());
+				info("completed cluster labeling in " + clustTimer.toString());
 				
 				
 				sayBye(timer);
@@ -678,7 +706,7 @@ public class MeanShift
 			norm = FastMath.sqrt(norm);
 			
 			// Check stopping criteria
-			if( norm < minChange || 
+			if( norm < tolerance || 
 					completed_iterations == maxIter )
 				return new EntryPair<double[], Integer>(seed, i_nbrs.length);
 			completed_iterations++;

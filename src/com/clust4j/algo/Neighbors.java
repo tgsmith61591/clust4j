@@ -22,6 +22,7 @@ abstract public class Neighbors extends BaseNeighborsModel {
 	final boolean radiusMode;
 	final int leafSize, m;
 	final double[][] fit_X;
+	final BaseNeighborsModel.Algorithm alg;
 
 	volatile Neighborhood res;
 	
@@ -46,7 +47,8 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		
 		
 		GeometricallySeparable sep = this.getSeparabilityMetric();
-		switch(planner.getAlgorithm()) {
+		this.alg = planner.getAlgorithm();
+		switch(alg) {
 			// We can cast to DistanceMetric at this point
 			case KD_TREE:	
 				tree = new KDTree(data,  leafSize, (DistanceMetric)sep, this);

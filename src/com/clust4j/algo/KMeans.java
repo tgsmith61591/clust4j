@@ -13,7 +13,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.utils.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.GeometricallySeparable;
-import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -30,9 +30,6 @@ public class KMeans extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
-	/** Number of times to run with different seeds */
-	final public static int DEF_NUM_INIT_SEEDS = 10;
-	final int numSeeds;
 	
 	
 	public KMeans(final AbstractRealMatrix data) {
@@ -45,7 +42,6 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
 		super(data, planner);
-		this.numSeeds = planner.numSeeds;
 	}
 	
 	
@@ -60,7 +56,6 @@ public class KMeans extends AbstractCentroidClusterer {
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private int k = DEF_K;
-		private int numSeeds = DEF_NUM_INIT_SEEDS;
 		
 		public KMeansPlanner() { }
 		public KMeansPlanner(int k) {
@@ -76,13 +71,12 @@ public class KMeans extends AbstractCentroidClusterer {
 		public KMeansPlanner copy() {
 			return new KMeansPlanner(k)
 				.setMaxIter(maxIter)
-				.setMinChangeStoppingCriteria(minChange)
+				.setConvergenceCriteria(minChange)
 				.setScale(scale)
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
-				.setNormalizer(norm)
-				.setNumSeeds(numSeeds);
+				.setNormalizer(norm);
 		}
 		
 		@Override
@@ -131,13 +125,9 @@ public class KMeans extends AbstractCentroidClusterer {
 			return this;
 		}
 
-		public KMeansPlanner setMinChangeStoppingCriteria(final double min) {
+		@Override
+		public KMeansPlanner setConvergenceCriteria(final double min) {
 			this.minChange = min;
-			return this;
-		}
-		
-		public KMeansPlanner setNumSeeds(int n) {
-			this.numSeeds = n;
 			return this;
 		}
 		
@@ -185,27 +175,17 @@ public class KMeans extends AbstractCentroidClusterer {
 				if(null != labels) // already fit
 					return this;
 				
-				
+
+				info("Model fit:");
+				final LogTimer timer = new LogTimer();
 				final double[][] X = data.getData();
 				final int n = data.getColumnDimension();
 				
 				
 				// Corner case: K = 1
 				if(1 == k) {
-					labels = VecUtils.repInt(0, m);
-					double[] center_record = MatUtils.meanRecord(X);
-					
-					tssCost = 0;
-					double diff;
-					for(double[] d: X) {
-						for(int j = 0; j < n; j++) {
-							diff = d[j] - center_record[j];
-							tssCost += diff * diff;
-						}
-					}
-					
-					converged = true;
-					warn("k=1; converged immediately with a TSS of "+tssCost);
+					labelFromSingularK(X);
+					sayBye(timer);
 					return this;
 				}
 				
@@ -221,7 +201,6 @@ public class KMeans extends AbstractCentroidClusterer {
 				ArrayList<double[]> new_centroids;
 				
 				
-				final LogTimer timer = new LogTimer();
 				for(iter = 0; iter < maxIter; iter++) {
 					
 					// Get labels for nearest centroids
@@ -292,7 +271,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				}
 				
 				
-				info("Total system cost: " + tssCost);
+				info("Total sum of squares: " + tssCost);
 				if(!converged) warn("algorithm did not converge");
 				sayBye(timer);
 				
@@ -314,30 +293,10 @@ public class KMeans extends AbstractCentroidClusterer {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
 	
-	final private void reorderLabelsAndCentroids() {
-		/*
-		// Now rearrange labels in order... first get unique labels in order of appearance
-		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
-		for(int label: labels) {
-			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
-				orderOfLabels.add(label);
-		}
-		
-		final int[] newLabels = new int[m];
-		final TreeMap<Integer, double[]> newCentroids = new TreeMap<>();
-		for(int i = 0; i < m; i++) {
-			final Integer idx = orderOfLabels.indexOf(labels[i]);
-			newLabels[i] = idx;
-			
-			if(!newCentroids.containsKey(idx))
-				newCentroids.put(idx, centroids.get(labels[i]));
-		}
-		
-		// Reassign labels...
-		labels = newLabels;
-		cent_to_record = null;
-		centroids = new ArrayList<>(newCentroids.values());
-		*/
+	@Override
+	final void reorderLabelsAndCentroids() {
+		if(null == labels)
+			throw new ModelNotFitException("model not yet fit");
 		
 		final LabelEncoder encoder = new LabelEncoder(labels).fit();
 		labels =  encoder.getEncodedLabels();
@@ -349,8 +308,5 @@ public class KMeans extends AbstractCentroidClusterer {
 		for(int i = 0; i < k; i++)
 			centroids.set(i, tmpCentroids[i]);
 	}
-
-	public double totalSumOfSquares() {
-		return tssCost;
-	}
+	
 }
