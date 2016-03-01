@@ -254,25 +254,33 @@ public class KMeans extends AbstractCentroidClusterer {
 						
 						// Update system cost
 						system_cost += clust_cost;
-					}
+						
+					} // end centroid re-assignment
+					
+					
+					// Assign new centroids
+					centroids = new_centroids;
+					double diff = tssCost - system_cost;	// results in NaN on first iteration
+					tssCost = system_cost;
 					
 					
 					// Check for convergence
-					if(!Double.isNaN(tssCost) && FastMath.abs(tssCost - system_cost) < tolerance) {
+					if( FastMath.abs(diff) < tolerance ) {	// NaN always returns false in comparison
 						// Did converge
 						converged = true;
 						iter++; // Going to break and miss this..
 						break;
-						
-					} else {
-						tssCost = system_cost;
-						centroids = new_centroids;
 					}
-				}
+					
+				} // end iterations
 				
 				
 				info("Total sum of squares: " + tssCost);
 				if(!converged) warn("algorithm did not converge");
+				else info("algorithm converged in " + iter + " iteration" + (iter!=1?"s":""));
+					
+				
+				// wrap things up..
 				sayBye(timer);
 				
 				

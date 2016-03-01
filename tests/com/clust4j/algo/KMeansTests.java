@@ -286,4 +286,11 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			assertTrue(VecUtils.equalsExactly(data[i], centroids.get(i)));
 		}
 	}
+	
+	@Test
+	public void assertNaN() {
+		assertTrue(Double.isNaN(Double.NaN - 5.0));
+		assertFalse(Double.NaN < 5.0);
+		assertFalse(Double.NaN > 5.0);
+	}
 }
