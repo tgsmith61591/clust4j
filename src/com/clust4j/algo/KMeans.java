@@ -48,6 +48,7 @@ public class KMeans extends AbstractCentroidClusterer {
 	public static class KMeansPlanner extends CentroidClustererPlanner {
 		private static final long serialVersionUID = -813106538623499760L;
 		
+		private InitializationStrategy strat = DEF_INIT;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_CONVERGENCE_TOLERANCE;
@@ -76,12 +77,18 @@ public class KMeans extends AbstractCentroidClusterer {
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setInitializationStrategy(strat);
 		}
 		
 		@Override
 		public int getK() {
 			return k;
+		}
+		
+		@Override
+		public InitializationStrategy getInitializationStrategy() {
+			return strat;
 		}
 		
 		@Override
@@ -128,6 +135,12 @@ public class KMeans extends AbstractCentroidClusterer {
 		@Override
 		public KMeansPlanner setConvergenceCriteria(final double min) {
 			this.minChange = min;
+			return this;
+		}
+		
+		@Override
+		public KMeansPlanner setInitializationStrategy(InitializationStrategy init) {
+			this.strat = init;
 			return this;
 		}
 		

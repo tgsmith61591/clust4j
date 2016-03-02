@@ -77,6 +77,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	public static class KMedoidsPlanner extends CentroidClustererPlanner {
 		private static final long serialVersionUID = -3288579217568576647L;
 		
+		private InitializationStrategy strat = DEF_INIT;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_CONVERGENCE_TOLERANCE;
@@ -105,7 +106,13 @@ public class KMedoids extends AbstractCentroidClusterer {
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setInitializationStrategy(strat);
+		}
+		
+		@Override
+		public InitializationStrategy getInitializationStrategy() {
+			return strat;
 		}
 		
 		@Override
@@ -157,6 +164,12 @@ public class KMedoids extends AbstractCentroidClusterer {
 		@Override
 		public KMedoidsPlanner setConvergenceCriteria(final double min) {
 			this.minChange = min;
+			return this;
+		}
+		
+		@Override
+		public KMedoidsPlanner setInitializationStrategy(InitializationStrategy init) {
+			this.strat = init;
 			return this;
 		}
 		

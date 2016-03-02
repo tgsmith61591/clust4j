@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -20,7 +21,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	private static final long serialVersionUID = -424476075361612324L;
 	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
 	final public static int DEF_K = Neighbors.DEF_K;
+	final public static InitializationStrategy DEF_INIT = InitializationStrategy.KM_AUGMENTED;
 	
+	final protected InitializationStrategy init;
 	final protected int maxIter;
 	final protected double tolerance;
 	final protected int[] init_centroid_indices;
@@ -36,19 +39,47 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	volatile protected TreeMap<Integer, ArrayList<Integer>> cent_to_record = null;
 
 	
+	static interface Initializer { int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed); }
+	public static enum InitializationStrategy implements java.io.Serializable, Initializer {
+		RANDOM {
+			@Override public int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed) {
+				final int m = X.length;
+				final int[] recordIndices = VecUtils.permutation(VecUtils.arange(m), seed);
+				final int[] cent_indices = new int[k];
+				for(int i = 0; i < k; i++)
+					cent_indices[i] = recordIndices[i];
+				return cent_indices;
+			}
+		},
+		
+		KM_AUGMENTED {
+			@Override public int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed) {
+				// TODO
+				return RANDOM.getInitialCentroidSeeds(X, k, seed);
+			}
+		}
+	}
+	
+	
 	
 	public AbstractCentroidClusterer(AbstractRealMatrix data,
 			CentroidClustererPlanner planner) {
 		super(data, planner, planner.getK());
 		
+		this.init = planner.getInitializationStrategy();
 		this.maxIter = planner.getMaxIter();
 		this.tolerance = planner.getConvergenceTolerance();
 		this.m = data.getRowDimension();
 		
 		if(maxIter < 0)	throw new IllegalArgumentException("maxIter must exceed 0");
 		if(tolerance<0)	throw new IllegalArgumentException("minChange must exceed 0");
+
+		// set centroids
+		this.init_centroid_indices = init.getInitialCentroidSeeds(
+			this.data.getData(), k, getSeed());
+		for(int i: this.init_centroid_indices)
+			centroids.add(this.data.getRow(i));
 		
-		this.init_centroid_indices = initCentroids();
 		logModelSummary();
 	}
 	
@@ -80,7 +111,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		abstract public int getK();
 		@Override abstract public int getMaxIter();
 		@Override abstract public double getConvergenceTolerance();
+		abstract public InitializationStrategy getInitializationStrategy();
 		abstract public CentroidClustererPlanner setConvergenceCriteria(final double min);
+		abstract public CentroidClustererPlanner setInitializationStrategy(final InitializationStrategy strat);
 	}
 	
 
@@ -137,25 +170,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	public double getConvergenceTolerance() {
 		return tolerance;
-	}
-	
-	/**
-	 * Returns the ordered indices of the centroids
-	 * @return
-	 */
-	final private int[] initCentroids() {
-		// Initialize centroids with K random records
-		// Creates a list of integer sequence 0 -> nrow(data), then shuffles it
-		// and takes the first K indices as the centroid records.
-		final int[] recordIndices = VecUtils.permutation(VecUtils.arange(m), getSeed());
-		
-		final int[] cent_indices = new int[k];
-		for(int i = 0; i < k; i++) {
-			centroids.add(data.getRow(recordIndices[i]));
-			cent_indices[i] = recordIndices[i];
-		}
-		
-		return cent_indices;
 	}
 	
 	/**
