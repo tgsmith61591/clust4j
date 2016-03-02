@@ -125,13 +125,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Algo.","Scale","Force Par.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			data.getRowDimension(),data.getColumnDimension(),
 			getSeparabilityMetric(),algo,normalized,
 			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
@@ -139,7 +136,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			minPts, min_cluster_size,alpha
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 	

@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.clust4j.algo.KMeans;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.TableFormatter.Table;
 import com.clust4j.utils.VecUtils;
 
 public class KernelTestCases {
@@ -24,7 +25,7 @@ public class KernelTestCases {
 		return a;
 	}
 	
-	public static String formatKernelMatrix(final double[][] data, final Kernel kernel) {
+	public static Table formatKernelMatrix(final double[][] data, final Kernel kernel) {
 		return formatter.format(new Array2DRowRealMatrix(kernel.kernelSimilarityMatrixUT(data), false));
 	}
 	
@@ -124,7 +125,6 @@ public class KernelTestCases {
 			new double[]{0.6703200460356393, 1.0, 0.951229424500714 },
 			new double[]{0.522045776761016, 0.951229424500714, 1.0  }
 		}));
-		
 		
 		
 		// Test with KMEANS

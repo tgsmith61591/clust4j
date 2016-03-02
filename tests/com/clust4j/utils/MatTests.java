@@ -3003,4 +3003,101 @@ public class MatTests {
 		Array2DRowRealMatrix matrix2 = new Array2DRowRealMatrix(new double[5][3], false);
 		MatUtils.checkDims(matrix1, matrix2);
 	}
+	
+	@Test
+	public void testSum() {
+		double[][] d = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6}
+		};
+		
+		assertTrue(MatUtils.sum(d) == 21.0);
+		
+		// Test with one empty row (also non-uniform)
+		d = new double[][]{
+			new double[]{1,2,3},
+			new double[]{}
+		};
+		
+		assertTrue(MatUtils.sum(d) == 6.0);
+		
+		// Test empty
+		d = new double[][]{
+			new double[]{},
+			new double[]{}
+		};
+		
+		assertTrue(MatUtils.sum(d) == 0.0);
+		
+		d = new double[][]{
+		};
+		
+		boolean failed = false;
+		try {
+			MatUtils.sum(d);
+		} catch(IllegalArgumentException e) {
+			failed = true;
+		} finally {
+			if(!failed)
+				fail();
+		}
+	}
+	
+	@Test
+	public void testCumSum() {
+		double[][] d = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6}
+		};
+		
+		assertTrue(VecUtils.equalsExactly(MatUtils.cumSum(d), new double[]{
+			1,3,6,10,15,21
+		}));
+		
+		// Test with one empty row (also non-uniform)
+		d = new double[][]{
+			new double[]{1,2,3},
+			new double[]{}
+		};
+		
+		boolean failed = false;
+		try {
+			MatUtils.cumSum(d);
+		} catch(NonUniformMatrixException e) {
+			failed = true;
+		} finally {
+			if(!failed)
+				fail();
+			else failed = false; // reset
+		}
+		
+		// Test empty
+		d = new double[][]{
+			new double[]{},
+			new double[]{}
+		};
+		
+		try {
+			MatUtils.cumSum(d);
+		} catch(IllegalArgumentException e) {
+			failed = true;
+		} finally {
+			if(!failed)
+				fail();
+			else failed = false; // reset
+		}
+		
+		d = new double[][]{
+		};
+		
+		try {
+			MatUtils.cumSum(d);
+		} catch(IllegalArgumentException e) {
+			failed = true;
+		} finally {
+			if(!failed)
+				fail();
+			else failed = false; // reset
+		}
+	}
 }

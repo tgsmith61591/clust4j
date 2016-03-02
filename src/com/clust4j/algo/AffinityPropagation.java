@@ -132,20 +132,17 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Damping","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Add Noise"
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
 			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
 			maxIter, tolerance, addNoise
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 	

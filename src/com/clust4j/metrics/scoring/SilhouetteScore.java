@@ -102,8 +102,22 @@ public class SilhouetteScore implements UnsupervisedEvaluationMetric {
 				
 				else {
 					otherIdxMask = labToIdcs.get(other);
+					
+					
+					/* Get row means. Same as:
 					double[] otherDists = MatUtils.rowMeans(
-							MatUtils.getColumns(currDists, otherIdxMask));
+						MatUtils.getColumns(currDists, otherIdxMask));*/
+					
+					final int maskCt = otherIdxMask.length;
+					double[] otherDists = new double[currDists.length];
+					for(int h = 0; h < otherDists.length; h++) {
+						for(int c= 0; c < maskCt; c++) {
+							otherDists[h] += currDists[h][otherIdxMask[c]];
+							if(c == maskCt - 1)
+								otherDists[h] /= (double)maskCt;
+						}
+					}
+					
 					
 					int k = 0;
 					for(int idx: maskIdcs)

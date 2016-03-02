@@ -20,7 +20,7 @@ import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.metrics.pairwise.Distance;
 
-public class DBSCANTests implements ClusterTest, ClassifierTest {
+public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
 
 

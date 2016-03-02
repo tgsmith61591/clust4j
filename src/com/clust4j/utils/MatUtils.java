@@ -645,6 +645,29 @@ public class MatUtils {
 	}
 	
 	/**
+	 * Compute the cumulative sum of elements within the uniform matrix.
+	 * @param a
+	 * @throws IllegalArgumentException if the matrix is empty or rows are empty
+	 * @throws NonUniformMatrixException if the matrix is non-uniform
+	 * @return the cumsum of the matrix
+	 */
+	public static double[] cumSum(final double[][] a) {
+		checkDimsForUniformity(a);
+		
+		final int m = a.length, n = a[0].length;
+		if(0 == n)
+			throw new IllegalArgumentException("empty rows in cumsum");
+		double[] out = new double[m * n];
+		
+		double running = 0.0;
+		int next = 0;
+		for(int i = 0; i < m; i++)
+			for(int j = 0; j < n; j++)
+				out[next++] = (running += a[i][j]);
+		return out;
+	}
+	
+	/**
 	 * Extract the diagonal vector from a square matrix
 	 * @param data
 	 * @throws NonUniformMatrixException if the matrix is not uniform
@@ -1741,6 +1764,22 @@ public class MatUtils {
 		}
 		
 		return c;
+	}
+	
+	/**
+	 * Compute the sum of all elements in a matrix
+	 * @param a
+	 * @throws IllegalArgumentException if the matrix has no rows
+	 * @return the sum of the matrix
+	 */
+	public static double sum(final double[][] a) {
+		checkDimsPermitEmpty(a);
+		
+		double out = 0.0;
+		for(double[] d: a)
+			out += VecUtils.sum(d);
+		
+		return out;
 	}
 	
 	/**

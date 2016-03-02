@@ -24,7 +24,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class NearestNeighborsTests implements ClusterTest {
+public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
 	
 	@Test

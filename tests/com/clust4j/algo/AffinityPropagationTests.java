@@ -18,7 +18,7 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.utils.MatUtils;
 
-public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest {
+public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
 	
 	@Test

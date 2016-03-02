@@ -14,13 +14,16 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
+import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 import com.clust4j.algo.KMeans.KMeansPlanner;
+import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest {
+public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
 
 	@Test
@@ -292,5 +295,71 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		assertTrue(Double.isNaN(Double.NaN - 5.0));
 		assertFalse(Double.NaN < 5.0);
 		assertFalse(Double.NaN > 5.0);
+	}
+	
+	@Test
+	public void testingKMAug() {
+		double[][] Y = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6},
+			new double[]{7,8,9}
+		};
+		
+		double[][] X = new double[][]{
+			Y[0]
+		};
+		
+		double[][] dists = AbstractCentroidClusterer.eucDists(X, Y);
+		assertTrue(MatUtils.equalsExactly(dists, new double[][]{
+			new double[]{0.0, 27.0, 108.0}
+		}));
+		
+		
+		X = new double[][]{ Y[0], Y[1] };
+		dists = AbstractCentroidClusterer.eucDists(X, Y);
+		assertTrue(MatUtils.equalsExactly(dists, new double[][]{
+			new double[]{0.0, 27.0, 108.0},
+			new double[]{27.0, 0.0, 27.0 }
+		}));
+		
+		X = new double[][]{ Y[0], Y[1], Y[2] };
+		dists = AbstractCentroidClusterer.eucDists(X, Y);
+		assertTrue(MatUtils.equalsExactly(dists, new double[][]{
+			new double[]{0.0, 27.0, 108.0},
+			new double[]{27.0, 0.0, 27.0 },
+			new double[]{108.0, 27.0, 0.0}
+		}));
+	}
+	
+	@Test
+	public void testCumSumSearchSorted() {
+		double[] cumSum = new double[]{
+			0.0, 27.0, 135.0, 162.0, 162.0, 189.0, 297.0, 324.0, 324.0
+		};
+		
+		double[] rands = new double[]{16.57957296,   49.95928975,  266.41666906,  265.12261977};
+		int[] ss = AbstractCentroidClusterer.searchSortedCumSum(cumSum, rands);
+		assertTrue(VecUtils.equalsExactly(ss, new int[]{1,2,6,6}));
+	}
+	
+	@Test
+	public void testOnIris() {
+		DataSet iris = ExampleDataSets.IRIS.shuffle();
+		Array2DRowRealMatrix data = iris.getData();
+		int[] labels = iris.getLabels();
+		
+		InitializationStrategy[] strats = InitializationStrategy.values();
+		
+		for(InitializationStrategy s: strats) {
+			KMeans model = new KMeans(data, new KMeansPlanner(3)
+				.setInitializationStrategy(s)
+				.setScale(true)
+				.setVerbose(true)).fit();
+			
+			System.out.println("Silhouette score: " + model.silhouetteScore());
+			System.out.println("Idx affinity score: " + model.indexAffinityScore(labels));
+			System.out.println();
+		}
+		
 	}
 }

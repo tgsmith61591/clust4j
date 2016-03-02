@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 
+import org.apache.commons.math3.util.FastMath;
+
 public class TableFormatter {
 	public static enum ColumnAlignment {
 		LEFT, 
@@ -35,6 +37,7 @@ public class TableFormatter {
     /** Default column alignment */
     protected static final ColumnAlignment DEFAULT_ALIGNMENT = RIGHT;
     static final String NULL_STR = "--";
+    static final int MIN_WIDTH = 3;
 
     
     
@@ -61,6 +64,8 @@ public class TableFormatter {
 	/** Column alignment for printing */
 	protected ColumnAlignment align = DEFAULT_ALIGNMENT;
 	public boolean leadWithEmpty = true;
+	public char tableBreakChar = '.';
+	
 	
 	
     public TableFormatter() {
@@ -95,106 +100,174 @@ public class TableFormatter {
     	this.lineSep = System.getProperty("line.separator");
     }
     
-    protected String formatNumber(Object o) {
-    	String f;
-    	if(isNumeric(o)) {
-			Double tmpd = ((Number)o).doubleValue();
-			f = tmpd.isNaN() ? "NaN" : 
-				tmpd.isInfinite() ? (tmpd.equals(Double.NEGATIVE_INFINITY) ? "-Inf" : "Inf") : 
-					format.format(tmpd);
-		} else {
-			f = o.toString();
-		}
+    
+    public class Table {
+    	final private String fmt;
+    	/**
+    	 * Some tables are very long and need a break in the middle.
+    	 * After a format, this will generate the appropriate table break.
+    	 */
+    	private String tableBreak;
     	
-    	return f;
+    	
+    	Table(ArrayList<Object[]> matrix, int numRows) {
+    		this.fmt = fmt(matrix, numRows);
+    	}
+    	
+		private String fmt(ArrayList<Object[]> matrix, int numRows) {
+			final int rows = matrix.size();
+			if (numRows < 1)
+				throw new IllegalArgumentException("numrows must exceed 0");
+			else if (numRows > rows)
+				numRows = rows;
+
+			StringBuilder output = new StringBuilder();
+			output.append(prefix + (leadWithEmpty ? lineSep : ""));
+
+			final Object[][] data = new Object[numRows][];
+			for (int i = 0; i < numRows; i++) {
+				Object[] matI = matrix.get(i);
+				data[i] = matI;
+			}
+
+			// Get the max num columns...
+			int largestSoFar = Integer.MIN_VALUE;
+			for (Object[] oo : data)
+				if (oo.length > largestSoFar)
+					largestSoFar = oo.length;
+
+			// Assign as max...
+			final int cols = largestSoFar;
+
+			/* While finding width, go ahead and format */
+			final String[][] formatted = new String[numRows][cols];
+
+			// Need to get the max width for each column
+			ArrayList<Integer> idxToWidth = new ArrayList<Integer>(cols);
+			for (int col = 0; col < cols; col++) {
+				int maxWidth = Integer.MIN_VALUE;
+				for (int row = 0; row < numRows; row++) {
+					String f;
+					int len;
+
+					if (data[row].length <= col) {
+						f = ""; // Set to empty, if not exists...
+					} else {
+						f = formatNumber(data[row][col]);
+					}
+
+					len = f.length();
+					if (len > maxWidth)
+						maxWidth = len;
+					formatted[row][col] = f;
+				}
+
+				idxToWidth.add(FastMath.max(maxWidth, MIN_WIDTH));
+			}
+
+			// Now append plus width, etc.
+			boolean rightJustify = align.equals(RIGHT);
+			for (int row = 0; row < numRows; row++) {
+
+				// Build the break formatter if the first iteration...
+				if (0 == row) {
+					StringBuilder linebreak = new StringBuilder();
+					linebreak.append(rowPrefix);
+
+					for (int col = 0; col < cols; col++) {
+						StringBuilder entry = new StringBuilder();
+
+						char[] filler = new char[MIN_WIDTH];
+						Arrays.fill(filler, tableBreakChar);
+						String f = new String(filler);
+
+						int len = f.length();
+						int colMaxLen = idxToWidth.get(col);
+						int def = colMaxLen - len;
+						String appender = getAppenderOfLen(def);
+
+						if (rightJustify) {
+							entry.append(appender);
+							entry.append(f);
+						} else {
+							entry.append(f);
+							entry.append(appender);
+						}
+
+						linebreak.append(entry.toString()
+								+ (col == cols - 1 ? rowSuffix + lineSep
+										: colSepStr));
+					}
+
+					this.tableBreak = linebreak.toString();
+				}
+
+				StringBuilder rowBuild = new StringBuilder();
+				rowBuild.append(rowPrefix);
+				for (int col = 0; col < cols; col++) {
+					StringBuilder entry = new StringBuilder();
+					String f = formatted[row][col];
+					int len = f.length();
+					int colMaxLen = idxToWidth.get(col);
+					int deficit = colMaxLen - len;
+					String appender = getAppenderOfLen(deficit);
+
+					if (rightJustify) {
+						entry.append(appender);
+						entry.append(f);
+					} else {
+						entry.append(f);
+						entry.append(appender);
+					}
+
+					rowBuild.append(entry.toString()
+							+ (col == cols - 1 ? rowSuffix + lineSep
+									: colSepStr));
+				}
+
+				output.append(rowBuild);
+			}
+
+			output.append(suffix);
+			return output.toString();
+		}
+	    
+	    String formatNumber(Object o) {
+	    	String f;
+	    	if(isNumeric(o)) {
+				Double tmpd = ((Number)o).doubleValue();
+				f = tmpd.isNaN() ? "NaN" : 
+					tmpd.isInfinite() ? (tmpd.equals(Double.NEGATIVE_INFINITY) ? "-Inf" : "Inf") : 
+						format.format(tmpd);
+			} else {
+				f = o.toString();
+			}
+	    	
+	    	return f;
+	    }
+	    
+	    /**
+		 * Some tables are very long and need a break in the middle.
+		 * After a format, this will generate the appropriate table break.
+		 * Otherwise, it will return null.
+		 */
+	    public String getTableBreak() {
+	    	return tableBreak;
+	    }
+    	
+    	@Override
+    	public String toString() {
+    		return fmt;
+    	}
     }
     
-    public String format(ArrayList<Object[]> rows) {
+    
+    public Table format(ArrayList<Object[]> rows) {
     	return format(rows, rows.size());
     }
     
-    public String format(ArrayList<Object[]> matrix, int numRows) {
-    	final int rows = matrix.size();
-    	if(numRows < 1)
-    		throw new IllegalArgumentException("numrows must exceed 0");
-    	else if(numRows > rows)
-    		numRows = rows;
-    	
-    	StringBuilder output = new StringBuilder();
-    	output.append(prefix + (leadWithEmpty ? lineSep : ""));
-
-    	final Object[][] data = new Object[numRows][];
-    	for(int i = 0; i < numRows; i++) {
-    		Object[] matI = matrix.get(i);
-    		data[i] = matI;
-    	}
-    	
-    	// Get the max num columns...
-    	int largestSoFar = Integer.MIN_VALUE;
-    	for(Object[] oo : data)
-    		if(oo.length > largestSoFar)
-    			largestSoFar = oo.length;
-    	
-    	// Assign as max...
-    	final int cols = largestSoFar;
-    	
-    	/* While finding width, go ahead and format */
-    	final String[][] formatted = new String[numRows][cols];
-    	
-    	
-    	// Need to get the max width for each column
-    	ArrayList<Integer> idxToWidth = new ArrayList<Integer>(cols);
-    	for(int col = 0; col < cols; col++) {
-    		int maxWidth = Integer.MIN_VALUE;
-    		for(int row = 0; row < numRows; row++) {
-    			String f;
-    			int len;
-    			
-    			if(data[row].length <= col) {
-    				f = ""; // Set to empty, if not exists...
-    			} else {
-    				f = formatNumber(data[row][col]);
-    			}
-
-    			len = f.length();
-    			if(len > maxWidth)
-    				maxWidth = len;
-    			formatted[row][col] = f;
-    		}
-    		idxToWidth.add(maxWidth);
-    	}
-    	
-    	
-    	// Now append plus width, etc.
-    	boolean rightJustify = align.equals(RIGHT);
-    	for(int row = 0; row < numRows; row++) {
-    		StringBuilder rowBuild = new StringBuilder();
-    		rowBuild.append(rowPrefix);
-    		
-    		for(int col = 0; col < cols; col++) {
-    			StringBuilder entry = new StringBuilder();
-    			String f = formatted[row][col];
-    			int len = f.length();
-    			int colMaxLen = idxToWidth.get(col);
-    			int deficit = colMaxLen - len;
-    			String appender = getAppenderOfLen(deficit);
-    			
-    			if(rightJustify) {
-    				entry.append(appender);
-    				entry.append(f);
-    			} else {
-    				entry.append(f);
-    				entry.append(appender);
-    			}
-    			
-    			rowBuild.append(entry.toString() + (col == cols-1 ? rowSuffix + lineSep : colSepStr));
-    		}
-    		
-    		output.append(rowBuild);
-    	}
-    	
-    	output.append(suffix);
-    	return output.toString();
+    public Table format(ArrayList<Object[]> matrix, int numRows) {
+    	return new Table(matrix, numRows);
     }
     
     

@@ -20,7 +20,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest {
+public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final static Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
 
 	@Test

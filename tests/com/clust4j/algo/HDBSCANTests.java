@@ -30,7 +30,7 @@ import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
 
-public class HDBSCANTests implements ClusterTest, ClassifierTest {
+public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	final Array2DRowRealMatrix DATA = ExampleDataSets.IRIS.getData();
 	final static MatrixFormatter formatter = TestSuite.formatter;
 	final static double[][] dist_mat = new double[][]{

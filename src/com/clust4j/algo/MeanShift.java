@@ -167,13 +167,10 @@ public class MeanShift
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Bandwidth","Scale","Force Par.","Allow Par.","Max Iter.","Tolerance"
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			data.getRowDimension(),data.getColumnDimension(),
 			getSeparabilityMetric(),
 			(autoEstimate ? "(auto) " : "") + bandwidth,
@@ -183,7 +180,7 @@ public class MeanShift
 			maxIter, tolerance
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 	static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {

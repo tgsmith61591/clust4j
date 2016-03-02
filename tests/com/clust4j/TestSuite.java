@@ -34,6 +34,7 @@ import com.clust4j.metrics.pairwise.TestDistanceEnums;
 import com.clust4j.metrics.scoring.TestMetrics;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.BinarySearchTreeTests;
+import com.clust4j.utils.FormatterTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.TestUtils;
@@ -47,6 +48,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	BootstrapTest.class,
 	ClustTests.class,
 	DBSCANTests.class,
+	FormatterTests.class,
 	HaversineTest.class,
 	HDBSCANTests.class,
 	HeapTesting.class,

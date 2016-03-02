@@ -2,12 +2,17 @@ package com.clust4j.algo;
 
 import static org.junit.Assert.*;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
-public class TestLabelEncoder {
+public class TestLabelEncoder implements BaseModelTest {
 
 	@Test
 	public void test1() {
@@ -103,5 +108,20 @@ public class TestLabelEncoder {
 	public void test11() {
 		int[] labels = new int[]{1};
 		new LabelEncoder(labels);
+	}
+
+	@Test
+	@Override
+	public void testSerialization() throws IOException, ClassNotFoundException {
+		LabelEncoder encoder = new LabelEncoder(new int[]{
+			0,1,5,1,2,2,2,0,1,1,5
+		}).fit();
+		
+		final int[] mappings = encoder.getEncodedLabels();
+		encoder.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		assertTrue(TestSuite.file.exists());
+		
+		LabelEncoder encoder2 = (LabelEncoder)LabelEncoder.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		assertTrue(VecUtils.equalsExactly(mappings, encoder2.getEncodedLabels()));
 	}
 }

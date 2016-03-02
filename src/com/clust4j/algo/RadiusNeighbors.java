@@ -1,6 +1,5 @@
 package com.clust4j.algo;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -37,20 +36,17 @@ public class RadiusNeighbors extends Neighbors {
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Algo","Radius","Scale","Force Par.","Allow Par."
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			m,data.getColumnDimension(),getSeparabilityMetric(),
 			alg, radius, normalized,
 			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 

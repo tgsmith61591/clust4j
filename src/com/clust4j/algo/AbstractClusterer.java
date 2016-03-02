@@ -1,10 +1,5 @@
 package com.clust4j.algo;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.text.NumberFormat;
 import java.util.Random;
 import java.util.UUID;
@@ -27,6 +22,7 @@ import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.TableFormatter;
+import com.clust4j.utils.TableFormatter.Table;
 
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 
@@ -317,10 +313,58 @@ public abstract class AbstractClusterer
 		info("model "+getKey()+" completed in " + timer.toString());
 	}
 	
-	final void logModelSummary() {
-		info("Model Summary:");
+	/**
+	 * Used for logging the initialization summary.
+	 */
+	final void logFitSummary(ModelSummary table) {
+		info("--");
+		info("Model Fit Summary:");
+		final Table tab = formatter.format(table);
+		final String fmt = tab.toString();
 		final String sep = System.getProperty("line.separator");
-		final String[] summary = modelSummary().split(sep);
+		final String[] summary = fmt.split(sep);
+		
+		// Sometimes the fit summary can be overwhelmingly long..
+		// Only want to show top few & bottom few. (extra 1 on top for header)
+		final int top = 6, bottom = top - 1;
+		int topThresh = top, bottomThresh;
+		if(summary.length > top + bottom) {
+			// calculate the bottom thresh
+			bottomThresh = summary.length - bottom;
+		} else {
+			topThresh = summary.length;
+			bottomThresh = 0;
+		}
+		
+		
+		int iter = 0;
+		boolean shownBreak = false;
+		for(String line: summary) {
+			if(iter < topThresh || iter > bottomThresh)
+				info(line);
+			else if(!shownBreak) {
+				// first after top thresh
+				info(tab.getTableBreak());
+				shownBreak = true;
+			}
+			
+			iter++;
+		}
+	}
+	
+	/**
+	 * Used for logging the initialization summary
+	 */
+	final void logModelSummary() {
+		info("--");
+		info("Model Init Summary:");
+		final String sep = System.getProperty("line.separator");
+		
+		final String[] summary = formatter
+			.format(modelSummary())
+			.toString()
+			.split(sep);
+		
 		for(String line: summary)
 			info(line);
 	}
@@ -346,34 +390,6 @@ public abstract class AbstractClusterer
 		warn("[meta "+nm+"] " + msg);
 	}
 	
-	/**
-	 * Load a model from a FileInputStream
-	 * @param fos
-	 * @return
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public static AbstractClusterer loadModel(final FileInputStream fis) throws IOException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream(fis);
-        AbstractClusterer ac = (AbstractClusterer) in.readObject();
-        in.close();
-        fis.close();
-        
-        return ac;
-	}
-	
-	/**
-	 * Save a model to FileOutputStream
-	 * @param fos
-	 * @throws IOException
-	 */
-	public void saveModel(final FileOutputStream fos) throws IOException {
-		ObjectOutputStream out = new ObjectOutputStream(fos);
-		out.writeObject(this);
-		out.close();
-		fos.close();
-	}
-	
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
 		this.dist = sep;
 	}
@@ -386,5 +402,5 @@ public abstract class AbstractClusterer
 	 * is due to the volatile nature of many of the instance class variables.
 	 */
 	@Override abstract public AbstractClusterer fit();
-	abstract String modelSummary();
+	abstract ModelSummary modelSummary();
 }

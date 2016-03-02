@@ -188,20 +188,17 @@ public class DBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Force Par.","Allow Par."
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			m,data.getColumnDimension(),getSeparabilityMetric(),
 			eps, minPts, normalized,
 			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 

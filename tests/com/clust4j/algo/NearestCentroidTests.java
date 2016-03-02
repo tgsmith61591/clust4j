@@ -21,7 +21,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class NearestCentroidTests implements ClassifierTest, ClusterTest {
+public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
 	final int[] target_ = ExampleDataSets.IRIS.getLabels();
 

@@ -23,7 +23,7 @@ import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 
-public class RadiusNeighborsTests implements ClusterTest {
+public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	final static Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
 	
 	final static Array2DRowRealMatrix data=

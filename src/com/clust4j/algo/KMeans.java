@@ -189,15 +189,20 @@ public class KMeans extends AbstractCentroidClusterer {
 					return this;
 				
 
-				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				final double[][] X = data.getData();
 				final int n = data.getColumnDimension();
 				
 				
+				// Table for fit summary in end
+				fitSummary = new ModelSummary(fitSummaryHeaders);
+				
+				
 				// Corner case: K = 1
 				if(1 == k) {
 					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, Double.NaN, tssCost });
+					logFitSummary(fitSummary);
 					sayBye(timer);
 					return this;
 				}
@@ -210,6 +215,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				
 				// Keep track of TSS (sum of barycentric distances)
+				double maxCost = Double.NEGATIVE_INFINITY;
 				tssCost = Double.NaN;
 				ArrayList<double[]> new_centroids;
 				
@@ -271,10 +277,21 @@ public class KMeans extends AbstractCentroidClusterer {
 					} // end centroid re-assignment
 					
 					
+					
+					// Add current state to fitSummary
+					fitSummary.add(new Object[]{ iter, converged, maxCost, tssCost });
+					
+					
 					// Assign new centroids
 					centroids = new_centroids;
 					double diff = tssCost - system_cost;	// results in NaN on first iteration
 					tssCost = system_cost;
+					
+					// if diff is NaN, this is the first pass. Max is always first pass
+					if(Double.isNaN(diff))
+						maxCost = tssCost; // should always stay the same..
+					
+					
 					
 					
 					// Check for convergence
@@ -287,15 +304,18 @@ public class KMeans extends AbstractCentroidClusterer {
 					
 				} // end iterations
 				
+
+				// last one...
+				fitSummary.add(new Object[]{ iter, 
+					converged, maxCost, tssCost });
 				
-				info("Total sum of squares: " + tssCost);
-				if(!converged) 
+				if(!converged)
 					warn("algorithm did not converge");
-				else info("algorithm converged in " + iter + " iteration" + (iter!=1?"s":""));
 					
 				
-				// wrap things up..
+				// wrap things up, create summary..
 				reorderLabelsAndCentroids();
+				logFitSummary(fitSummary);
 				sayBye(timer);
 				
 				

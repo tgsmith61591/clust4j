@@ -21,7 +21,7 @@ import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
-public class HierarchicalTests implements ClusterTest, ClassifierTest {
+public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
 	private static Array2DRowRealMatrix matrix = getRandom(250, 10);
 	static final MatrixFormatter formatter = new MatrixFormatter();

@@ -21,7 +21,7 @@ import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.LaplacianKernel;
 import com.clust4j.metrics.pairwise.Distance;
 
-public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest {
+public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
 	
 	/**

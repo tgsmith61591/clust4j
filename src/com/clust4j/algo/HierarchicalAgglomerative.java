@@ -87,13 +87,10 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	}
 	
 	@Override
-	String modelSummary() {
-		final ArrayList<Object[]> formattable = new ArrayList<>();
-		formattable.add(new Object[]{
+	ModelSummary modelSummary() {
+		final ModelSummary summary = new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Linkage","Scale","Force Par.","Allow Par.","Num. Clusters"
-		});
-		
-		formattable.add(new Object[]{
+		}, new Object[]{
 			data.getRowDimension(),data.getColumnDimension(),
 			getSeparabilityMetric(),linkage,normalized,
 			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
@@ -101,7 +98,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			num_clusters
 		});
 		
-		return formatter.format(formattable);
+		return summary;
 	}
 	
 	

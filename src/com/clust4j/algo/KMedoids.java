@@ -307,13 +307,19 @@ public class KMedoids extends AbstractCentroidClusterer {
 				if(null!=labels) // Already have fit this model
 					return this;
 
-				info("Model fit:");
+				
 				final LogTimer timer = new LogTimer();
 				final double[][] X = data.getData();
+				
+
+				// Table for fit summary in end
+				fitSummary = new ModelSummary(fitSummaryHeaders);
 				
 				// Corner case: K = 1
 				if(1 == k) {
 					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, Double.NaN, tssCost });
+					logFitSummary(fitSummary);
 					sayBye(timer);
 					return this;
 				}
