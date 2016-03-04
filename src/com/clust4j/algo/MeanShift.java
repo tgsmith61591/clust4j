@@ -167,20 +167,18 @@ public class MeanShift
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Bandwidth","Scale","Force Par.","Allow Par.","Max Iter.","Tolerance"
-		}, new Object[]{
-			data.getRowDimension(),data.getColumnDimension(),
-			getSeparabilityMetric(),
-			(autoEstimate ? "(auto) " : "") + bandwidth,
-			normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
-			maxIter, tolerance
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Bandwidth","Scale","Force Par.","Allow Par.","Max Iter.","Tolerance"
+			}, new Object[]{
+				data.getRowDimension(),data.getColumnDimension(),
+				getSeparabilityMetric(),
+				(autoEstimate ? "(auto) " : "") + bandwidth,
+				normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				maxIter, tolerance
+			});
 	}
 	
 	static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
@@ -709,6 +707,13 @@ public class MeanShift
 		
 		converged = false;
 		return null; // Default if breaks from inner loop
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		return new Object[]{
+			"Iter. #","Converged","Num. Clusters","Num. Noise"
+		};
 	}
 
 	@Override

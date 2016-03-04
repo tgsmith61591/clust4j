@@ -87,18 +87,16 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Linkage","Scale","Force Par.","Allow Par.","Num. Clusters"
-		}, new Object[]{
-			data.getRowDimension(),data.getColumnDimension(),
-			getSeparabilityMetric(),linkage,normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
-			num_clusters
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Linkage","Scale","Force Par.","Allow Par.","Num. Clusters"
+			}, new Object[]{
+				data.getRowDimension(),data.getColumnDimension(),
+				getSeparabilityMetric(),linkage,normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				num_clusters
+			});
 	}
 	
 	
@@ -658,5 +656,13 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		
 		// Reassign labels...
 		labels = newLabels;
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		// TODO
+		return new Object[]{
+			"TODO:"
+		};
 	}
 }

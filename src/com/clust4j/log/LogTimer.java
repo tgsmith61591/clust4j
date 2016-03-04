@@ -46,7 +46,11 @@ public class LogTimer implements Timer {
 	public String formatTime(long timeStart, long timeEnd) {
 		long te = FastMath.max(timeStart, timeEnd);
 		long ts = FastMath.min(timeStart, timeEnd);
-		return LogTimeFormatter.millis(te - ts, false);
+		return formatTime(te - ts);
+	}
+	
+	public String formatTime(long millis) {
+		return LogTimeFormatter.millis(millis, false);
 	}
 	
 	@Override
@@ -60,7 +64,15 @@ public class LogTimer implements Timer {
 	}
 	
 	private String wallMsg(final long now) {
-		return "(Wall: " + dateFormat.get().format(new Date(now)) + ") ";
+		return "(Wall: " + wallTime(now) + ") ";
+	}
+	
+	public String wallTime() {
+		return wallTime(now());
+	}
+	
+	public String wallTime(long now) {
+		return dateFormat.get().format(new Date(now));
 	}
 	
 	/** return the start time of this timer.**/

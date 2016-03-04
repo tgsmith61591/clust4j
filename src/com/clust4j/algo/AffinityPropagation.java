@@ -11,7 +11,6 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -132,17 +131,15 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Damping","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Add Noise"
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
-			maxIter, tolerance, addNoise
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Damping","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Add Noise"
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				maxIter, tolerance, addNoise
+			});
 	}
 	
 	
@@ -338,7 +335,6 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				
 				// Init labels
-				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				labels = new int[m];
 				String error;
@@ -346,20 +342,18 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				
 				// Calc sim mat to MAXIMIZE VALS
-				final long sim_time = System.currentTimeMillis();
 				if(getSeparabilityMetric() instanceof SimilarityMetric) {
-					info("computing similarity matrix");
 					sim_mat = ClustUtils.similarityFullMatrix(data, (SimilarityMetric)getSeparabilityMetric());
 				} else {
-					info("computing negative distance (pseudo similarity) matrix");
 					sim_mat = MatUtils.negative(ClustUtils.distanceFullMatrix(data, getSeparabilityMetric()));
 				}
-				info("completed similarity computations in " + LogTimeFormatter.millis(System.currentTimeMillis()-sim_time, false));
+				
+				info("completed similarity computations in " + timer.toString());
 				
 				
 				
 				// Extract the upper triangular portion from sim mat, get the median as default pref 
-				info("computing initialization point");
+				LogTimer tmpTimer = new LogTimer();
 				int idx = 0, mChoose2 = ((m*m) - m) / 2;
 				final double[] vals = new double[mChoose2];
 				for(int i = 0; i < m - 1; i++)
@@ -367,13 +361,15 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						vals[idx++] = sim_mat[i][j];
 				
 				final double pref = VecUtils.median(vals);
-				info("pref = "+pref);
+				info("computed initialization point ("+pref+") in " + tmpTimer.toString());
+				
 				
 				
 				// Place pref on diagonal of sim mat
-				info("refactoring similarity matrix diagonal vector");
+				tmpTimer = new LogTimer();
 				for(int i = 0; i < m; i++)
 					sim_mat[i][i] = pref;
+				info("refactored similarity matrix diagonal vector in " + tmpTimer.toString());
 				
 				
 				
@@ -384,20 +380,20 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[][] tmp = new double[m][m]; // Intermediate staging...
 				
 				
+				// Add noise if needed
 				if(addNoise) {
 					// Add some extremely small noise to the similarity matrix
 					double[][] tiny_scaled = MatUtils.scalarMultiply(sim_mat, GlobalState.Mathematics.EPS);
 					tiny_scaled = MatUtils.scalarAdd(tiny_scaled, GlobalState.Mathematics.TINY*100);
 					
-					info("removing matrix degeneracies; scaling with minute Gaussian noise");
-					LogTimer gausStart = new LogTimer();
+					tmpTimer = new LogTimer();
 					double[][] noise = MatUtils.randomGaussian(m, m, getSeed());
-					info("Gaussian noise matrix computed in " + gausStart.toString());
+					info("Gaussian noise matrix computed in " + tmpTimer.toString());
 					double[][] noiseMatrix = null;
 					
 					
 					try {
-						LogTimer multStart = new LogTimer();
+						tmpTimer = new LogTimer();
 						info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
 						
 						
@@ -417,7 +413,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						
 								
 						// Update
-						info("matrix product computed in " + multStart.toString());
+						info("matrix product computed in " + tmpTimer.toString());
 					} catch(DimensionMismatchException e) {
 						error = e.getMessage();
 						error(error);
@@ -435,16 +431,11 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[] Y2;	// vector of maxes post neg inf
 				double[] sum_e;
 				
-				info("beginning affinity computations");
 				final LogTimer iterTimer = new LogTimer();
-				long iterStart = iterTimer._start;
+				wallInfo(iterTimer, "beginning affinity computations");
+				long iterStart = Long.MAX_VALUE;
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
-					
-					if(iterCt % 25 == 0 && iterCt != 0)
-						wallInfo(timer, "training iteration " + iterCt + " (average "
-							+ "iteration time = " + LogTimeFormatter
-							.millis((long)((double)(System.currentTimeMillis()-iterStart)/(double)iterCt), 
-								false) + ")");
+					iterStart = iterTimer.now();
 					
 					// Reassign tmp, create vector of arg maxes. Can
 					// assign tmp like this:
@@ -558,7 +549,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 							A[i][j] = (A[i][j] * damping) - tmp[i][j];
 						}
 						
-						mask[i] = A[i][i] + R[i][i] > 0 ? 1d : 0d;
+						mask[i] = A[i][i] + R[i][i] > 0 ? 1.0 : 0.0;
 					}
 						
 						
@@ -596,16 +587,32 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						converged = maskCt == m;
 						
 						if((converged && numClusters > 0) || iterCt == maxIter) {
-							iterCt++;
 							info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
 								" in " + iterTimer.toString());
 							break;
 						} // Else did not converge...
 					} // End outer if
+					
+					
+					fitSummary.add(new Object[]{
+						iterCt, converged, 
+						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.wallTime()
+					});
 				} // End for
 	
 				
+				
 				if(!converged) warn("algorithm did not converge");
+				else { // needs one last info
+					fitSummary.add(new Object[]{
+						iterCt, converged, 
+						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.wallTime()
+					});
+				}
+				
+				
 				info("labeling clusters from availability and responsibility matrices");
 				
 				
@@ -729,9 +736,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					for(int i = 0; i < m; i++)
 						labels[i] = -1; // Missing
 				}
-				
-				
-				sayBye(timer);
+
 				
 				// Clean up
 				sim_mat = null;
@@ -739,7 +744,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				// Since cachedA/R are volatile, it's more expensive to make potentially hundreds(+)
 				// of writes to a volatile class member. To save this time, reassign A/R only once.
 				cachedA = A;
-				cachedR = R;
+				cachedR = R;				
+				
+				sayBye(timer);
 				
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {
@@ -754,6 +761,13 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	@Override
 	public int getNumberOfIdentifiedClusters() {
 		return numClusters;
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		return new Object[]{
+			"Iter. #","Converged","Iter. Time","Wall"
+		};
 	}
 
 	@Override

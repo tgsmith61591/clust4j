@@ -188,17 +188,15 @@ public class DBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Force Par.","Allow Par."
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),
-			eps, minPts, normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Force Par.","Allow Par."
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),
+				eps, minPts, normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+			});
 	}
 	
 
@@ -233,7 +231,6 @@ public class DBSCAN extends AbstractDBSCAN {
 				
 				
 				// First get the dist matrix
-				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				
 				// Do the neighborhood assignments, get sample weights, find core samples..
@@ -287,7 +284,8 @@ public class DBSCAN extends AbstractDBSCAN {
 				final Stack<Integer> stack = new Stack<>();
 				int[] neighb;
 				
-				LogTimer stackTimer;
+				
+				LogTimer stackTimer = new LogTimer();
 				for(int i = 0; i < m; i++) {
 					stackTimer = new LogTimer();
 					
@@ -299,9 +297,12 @@ public class DBSCAN extends AbstractDBSCAN {
 			        // This is very similar to the classic algorithm for computing connected
 			        // components, the difference being that we label non-core points as
 			        // part of a cluster (component), but don't expand their neighborhoods.
+					int labelCt = 0;
 					while(true) {
-						if(labels[i] == -1) {
+						if(labels[i] == NOISE_CLASS) {
 							labels[i] = nextLabel;
+							labelCt++;
+							
 							if(coreSamples[i]) {
 								neighb = neighborhoods.get(i);
 								
@@ -313,9 +314,12 @@ public class DBSCAN extends AbstractDBSCAN {
 							}
 						}
 						
-						//System.out.println(stack);
+
 						if(stack.size() == 0) {
-							info("completed stack for clusterLabel " + nextLabel + " in " + stackTimer.toString());
+							fitSummary.add(new Object[]{
+								nextLabel, labelCt, stackTimer.formatTime(), stackTimer.wallTime()
+							});
+							
 							break;
 						}
 						
@@ -329,6 +333,14 @@ public class DBSCAN extends AbstractDBSCAN {
 				// Count missing
 				numNoisey = 0;
 				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				
+				
+				// corner case: numNoisey == m (never gets a fit summary)
+				if(numNoisey == m)
+					fitSummary.add(new Object[]{
+						Double.NaN, 0, stackTimer.formatTime(), stackTimer.wallTime()
+					});
+				
 				
 				
 				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
@@ -349,6 +361,13 @@ public class DBSCAN extends AbstractDBSCAN {
 	@Override
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.DBSCAN;
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		return new Object[]{
+			"Cluster #","Num. Core Pts.","Iter. Time","Wall"
+		};
 	}
 	
 	@Override

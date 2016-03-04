@@ -36,17 +36,23 @@ public class RadiusNeighbors extends Neighbors {
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Algo","Radius","Scale","Force Par.","Allow Par."
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),
-			alg, radius, normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Algo","Radius","Scale","Force Par.","Allow Par."
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),
+				alg, radius, normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+			});
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		// TODO
+		return new Object[]{
+			"TODO"
+		};
 	}
 	
 

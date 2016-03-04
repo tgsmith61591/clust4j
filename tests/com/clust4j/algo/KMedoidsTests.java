@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -20,6 +21,7 @@ import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.LaplacianKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.utils.VecUtils;
 
 public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
@@ -199,6 +201,30 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		assertTrue(km.didConverge());
 	}
 	
+	/** Now scale = true and multiclass */
+	@Test
+	public void KMedoidsTest4_5() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.2801,    1.8900002},
+			new double[] {100,       200,       100}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(false));
+		km.fit();
+		
+		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
+		assertTrue(km.didConverge());
+		
+		System.out.println(Arrays.toString(km.getCentroids().get(1)));
+		assertTrue( VecUtils.equalsExactly(km.getCentroids().get(0), data[0]) );
+		assertTrue( VecUtils.equalsExactly(km.getCentroids().get(1), data[1]) );
+		assertTrue( VecUtils.equalsExactly(km.getCentroids().get(2), data[3]) );
+	}
+	
 	// What if k = 1??
 	@Test
 	public void KMedoidsTest5() {
@@ -231,7 +257,8 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			for(int k : ks) {
 				km = new KMedoids(mat, 
 						new KMedoidsPlanner(k)
-							.setScale(b) );
+							.setScale(b)
+							.setVerbose(true));
 				km.fit();
 			}
 		}

@@ -125,18 +125,16 @@ public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Algo.","Scale","Force Par.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
-		}, new Object[]{
-			data.getRowDimension(),data.getColumnDimension(),
-			getSeparabilityMetric(),algo,normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
-			minPts, min_cluster_size,alpha
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Algo.","Scale","Force Par.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
+			}, new Object[]{
+				data.getRowDimension(),data.getColumnDimension(),
+				getSeparabilityMetric(),algo,normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				minPts, min_cluster_size,alpha
+			});
 	}
 	
 	
@@ -1596,5 +1594,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 		final TreeMap<Integer, Double> stability = LinkageTreeUtils.computeStability(condensed);
 		
 		return getLabels(condensed, stability);
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		// TODO
+		return new Object[]{
+			"TODO:"
+		};
 	}
 }

@@ -27,7 +27,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
 	final public static int DEF_K = Neighbors.DEF_K;
 	final public static InitializationStrategy DEF_INIT = InitializationStrategy.KM_AUGMENTED;
-	final static Object[] fitSummaryHeaders;
 	
 	final protected InitializationStrategy init;
 	final protected int maxIter;
@@ -36,21 +35,13 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final protected int m;
 	
 	volatile protected boolean converged = false;
-	volatile protected double tssCost = Double.NaN;
+	volatile protected double cost = Double.NaN;
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
-	volatile ModelSummary fitSummary = null;
 	
 	/** Key is the group label, value is the corresponding centroid */
 	volatile protected ArrayList<double[]> centroids = new ArrayList<double[]>();
 	volatile protected TreeMap<Integer, ArrayList<Integer>> cent_to_record = null;
-	
-	
-	static {
-		fitSummaryHeaders = new Object[]{
-			"Iter. #","Converged","Max Cost","Min Cost"
-		};
-	}
 
 	
 	static interface Initializer { int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed); }
@@ -265,17 +256,15 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","K","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Init."
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
-			maxIter, tolerance, init.toString()
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","K","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Init."
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				maxIter, tolerance, init.toString()
+			});
 	}
 
 	
@@ -357,18 +346,18 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		labels = VecUtils.repInt(0, m);
 		double[] center_record = MatUtils.meanRecord(X);
 		
-		tssCost = 0;
+		cost = 0;
 		double diff;
 		for(double[] d: X) {
 			for(int j = 0; j < data.getColumnDimension(); j++) {
 				diff = d[j] - center_record[j];
-				tssCost += diff * diff;
+				cost += diff * diff;
 			}
 		}
 		
 		iter++;
 		converged = true;
-		warn("k=1; converged immediately with a TSS of "+tssCost);
+		warn("k=1; converged immediately with a TSS of "+cost);
 	}
 	
 	@Override
@@ -402,7 +391,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * @return system cost
 	 */
 	public double totalCost() {
-		return tssCost;
+		return cost;
 	}
 	
 	/**
@@ -410,5 +399,24 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * {@link LabelEncoder}. Also reorder the centroids to correspond
 	 * with new label order
 	 */
-	abstract void reorderLabelsAndCentroids();
+	void reorderLabelsAndCentroids() {
+		if(null == labels)
+			throw new ModelNotFitException("model not yet fit");
+		
+		final LabelEncoder encoder = new LabelEncoder(labels).fit();
+		labels =  encoder.getEncodedLabels();
+		
+		// also reorder centroids... takes O(2K) passes
+		TreeMap<Integer, double[]> tmpCentroids = new TreeMap<>(); 
+		// tm seems like overkill, but since KMedoids labels using the
+		// medoid index, we'll either get NPEs or AIOOBEs if we use the array:
+		// final double[][] tmpCentroids = new double[k][];
+		
+		int j = 0;
+		for(int i: encoder.getClasses())
+			tmpCentroids.put(encoder.encodeOrNull(i), centroids.get(j++));
+		
+		for(int i = 0; i < k; i++)
+			centroids.set(i, tmpCentroids.get(i));
+	}
 }

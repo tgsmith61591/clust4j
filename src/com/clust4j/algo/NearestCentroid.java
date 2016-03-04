@@ -250,7 +250,6 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 					return this;
 				
 
-				info("Model fit:");
 				final LogTimer timer = new LogTimer();
 				this.centroids = new ArrayList<double[]>(numClasses);
 				final int[] nk = new int[numClasses]; // the count of clusters in each class
@@ -339,6 +338,14 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		return dev;
 	}
 	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		// TODO
+		return new Object[]{
+			"TODO"
+		};
+	}
+	
 	// Tested: passing
 	static double[] getMVec(int[] nk, int m) {
 		double[] em = new double[nk.length];
@@ -354,16 +361,14 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Num Classes","Scale","Force Par.","Allow Par."
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Num Classes","Scale","Force Par.","Allow Par."
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+			});
 	}
 	
 	// Tested: passing

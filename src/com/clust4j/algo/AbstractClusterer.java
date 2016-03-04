@@ -75,6 +75,7 @@ public abstract class AbstractClusterer
 	
 	/** Have any warnings occurred -- volatile because can change */
 	volatile private boolean hasWarnings = false;
+	final ModelSummary fitSummary;
 	
 
 	
@@ -152,6 +153,8 @@ public abstract class AbstractClusterer
 			this.data = planner.getNormalizer().operate(data);
 			meta("normalized matrix columns in " + scaleTimer.toString(), planner.getNormalizer().toString());
 		}
+		
+		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 	} // End constructor
 	
 	
@@ -310,16 +313,17 @@ public abstract class AbstractClusterer
 	 * @param timer
 	 */
 	@Override public void sayBye(final LogTimer timer) {
+		logFitSummary();
 		info("model "+getKey()+" completed in " + timer.toString());
 	}
 	
 	/**
 	 * Used for logging the initialization summary.
 	 */
-	final void logFitSummary(ModelSummary table) {
+	private void logFitSummary() {
 		info("--");
 		info("Model Fit Summary:");
-		final Table tab = formatter.format(table);
+		final Table tab = formatter.format(fitSummary);
 		final String fmt = tab.toString();
 		final String sep = System.getProperty("line.separator");
 		final String[] summary = fmt.split(sep);
@@ -402,5 +406,6 @@ public abstract class AbstractClusterer
 	 * is due to the volatile nature of many of the instance class variables.
 	 */
 	@Override abstract public AbstractClusterer fit();
-	abstract ModelSummary modelSummary();
+	protected abstract ModelSummary modelSummary();
+	protected abstract Object[] getModelFitSummaryHeaders();
 }

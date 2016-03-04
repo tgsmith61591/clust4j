@@ -40,17 +40,15 @@ public class NearestNeighbors extends Neighbors {
 	}
 	
 	@Override
-	ModelSummary modelSummary() {
-		final ModelSummary summary = new ModelSummary(new Object[]{
-			"Num Rows","Num Cols","Metric","Algo","K","Scale","Force Par.","Allow Par."
-		}, new Object[]{
-			m,data.getColumnDimension(),getSeparabilityMetric(),
-			alg, kNeighbors, normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-		});
-		
-		return summary;
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+				"Num Rows","Num Cols","Metric","Algo","K","Scale","Force Par.","Allow Par."
+			}, new Object[]{
+				m,data.getColumnDimension(),getSeparabilityMetric(),
+				alg, kNeighbors, normalized,
+				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+			});
 	}
 	
 	
@@ -289,6 +287,14 @@ public class NearestNeighbors extends Neighbors {
 			} // end try/catch
 			
 		} // End synch
+	}
+	
+	@Override
+	final protected Object[] getModelFitSummaryHeaders() {
+		// TODO
+		return new Object[]{
+			"TODO"
+		};
 	}
 	
 	@Override

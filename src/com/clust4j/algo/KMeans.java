@@ -8,7 +8,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -194,15 +193,10 @@ public class KMeans extends AbstractCentroidClusterer {
 				final int n = data.getColumnDimension();
 				
 				
-				// Table for fit summary in end
-				fitSummary = new ModelSummary(fitSummaryHeaders);
-				
-				
 				// Corner case: K = 1
 				if(1 == k) {
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, Double.NaN, tssCost });
-					logFitSummary(fitSummary);
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
@@ -216,7 +210,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				// Keep track of TSS (sum of barycentric distances)
 				double maxCost = Double.NEGATIVE_INFINITY;
-				tssCost = Double.NaN;
+				cost = Double.POSITIVE_INFINITY;
 				ArrayList<double[]> new_centroids;
 				
 				
@@ -279,23 +273,23 @@ public class KMeans extends AbstractCentroidClusterer {
 					
 					
 					// Add current state to fitSummary
-					fitSummary.add(new Object[]{ iter, converged, maxCost, tssCost });
+					fitSummary.add(new Object[]{ iter, converged, maxCost, cost, timer.wallTime() });
 					
 					
 					// Assign new centroids
 					centroids = new_centroids;
-					double diff = tssCost - system_cost;	// results in NaN on first iteration
-					tssCost = system_cost;
+					double diff = cost - system_cost;	// results in Inf on first iteration
+					cost = system_cost;
 					
-					// if diff is NaN, this is the first pass. Max is always first pass
-					if(Double.isNaN(diff))
-						maxCost = tssCost; // should always stay the same..
+					// if diff is Inf, this is the first pass. Max is always first pass
+					if(Double.isInfinite(diff))
+						maxCost = cost; // should always stay the same..
 					
 					
 					
 					
 					// Check for convergence
-					if( FastMath.abs(diff) < tolerance ) {	// NaN always returns false in comparison
+					if( FastMath.abs(diff) < tolerance ) {	// Inf always returns false in comparison
 						// Did converge
 						converged = true;
 						iter++; // Going to break and miss this..
@@ -307,7 +301,7 @@ public class KMeans extends AbstractCentroidClusterer {
 
 				// last one...
 				fitSummary.add(new Object[]{ iter, 
-					converged, maxCost, tssCost });
+					converged, maxCost, cost, timer.wallTime() });
 				
 				if(!converged)
 					warn("algorithm did not converge");
@@ -315,7 +309,6 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				// wrap things up, create summary..
 				reorderLabelsAndCentroids();
-				logFitSummary(fitSummary);
 				sayBye(timer);
 				
 				
@@ -334,21 +327,11 @@ public class KMeans extends AbstractCentroidClusterer {
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.KMEANS;
 	}
-	
+
 	@Override
-	final void reorderLabelsAndCentroids() {
-		if(null == labels)
-			throw new ModelNotFitException("model not yet fit");
-		
-		final LabelEncoder encoder = new LabelEncoder(labels).fit();
-		labels =  encoder.getEncodedLabels();
-		
-		// also reorder centroids... takes O(2K) passes
-		final double[][] tmpCentroids = new double[k][];
-		for(int i = 0; i < k; i++)
-			tmpCentroids[encoder.encodeOrNull(i)] = centroids.get(i);
-		for(int i = 0; i < k; i++)
-			centroids.set(i, tmpCentroids[i]);
+	protected Object[] getModelFitSummaryHeaders() {
+		return new Object[]{
+			"Iter. #","Converged","Max Cost","Min Cost","Wall"
+		};
 	}
-	
 }
