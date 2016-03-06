@@ -18,8 +18,14 @@ public class GeneralizedMinKernel extends MinKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = -3798280254415501176L;
+	public static final double DEF_ALPHA = 1.0;
+	public static final double DEF_BETA = 1.0;
 	private double alpha;
 	private double beta;
+	
+	public GeneralizedMinKernel() {
+		this(DEF_ALPHA, DEF_BETA);
+	}
 	
 	public GeneralizedMinKernel(final double alpha, final double beta) {
 		super();

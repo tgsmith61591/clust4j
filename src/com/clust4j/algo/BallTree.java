@@ -55,6 +55,16 @@ public class BallTree extends NearestNeighborHeapSearch {
 		super(X, leaf_size, dist, logger);
 	}
 	
+	/**
+	 * Constructor with logger and distance metric
+	 * @param X
+	 * @param dist
+	 * @param logger
+	 */
+	public BallTree(final AbstractRealMatrix X, DistanceMetric dist, Loggable logger) {
+		super(X, dist, logger);
+	}
+	
 	
 	
 	@Override

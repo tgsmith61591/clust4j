@@ -203,7 +203,9 @@ public abstract class AbstractClusterer
 				return false;
 			
 			return this.data.equals(a.data)
-				&& this.getClass().equals(a.getClass());
+				&& this.getClass().equals(a.getClass())
+				//&& this.hashCode() == a.hashCode()
+				;
 		}
 		
 		return false;
@@ -247,6 +249,7 @@ public abstract class AbstractClusterer
 	 * Whether the algorithm resulted in any warnings
 	 * @return whether the clustering effort has generated any warnings
 	 */
+	@Override
 	public boolean hasWarnings() {
 		return hasWarnings;
 	}
@@ -259,7 +262,7 @@ public abstract class AbstractClusterer
 			^ (getKey().hashCode())
 			^ (dist instanceof DistanceMetric ? 31 :
 				dist instanceof SimilarityMetric ? 53 : 1)
-			^ (hasWarnings ? 1 : 0)
+			// ^ (hasWarnings ? 1 : 0) // removed because forces state dependency
 			^ seed.hashCode();
 	}
 	

@@ -9,4 +9,5 @@ public interface Loggable {
 	public void sayBye(LogTimer timer);
 	public void wallInfo(LogTimer timer, String msg);
 	public com.clust4j.log.Log.Tag.Algo getLoggerTag();
+	public boolean hasWarnings();
 }

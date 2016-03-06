@@ -134,6 +134,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMeans km = new KMeans(mat, new KMeans.KMeansPlanner(3).setScale(false)).fit();
 		
+		assertTrue(km.getK() == 3);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
 		assertTrue(km.didConverge());
@@ -361,5 +362,17 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			System.out.println();
 		}
 		
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testPartitionalClass1() {
+		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+		new KMeans(data, 0);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testPartitionalClass2() {
+		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+		new KMeans(data, 151);
 	}
 }

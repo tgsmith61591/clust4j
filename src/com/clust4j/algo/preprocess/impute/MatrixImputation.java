@@ -24,6 +24,7 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
 	protected boolean verbose = DEF_VERBOSE;
 	private Random seed = new Random();
+	private boolean hasWarnings = false;
 	
 	
 	public static enum CentralTendencyMethod {
@@ -32,8 +33,6 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 	}
 	
 	
-	
-	public MatrixImputation() { }
 	
 	public MatrixImputation(final ImputationPlanner planner) {
 		this.verbose = planner.getVerbose();
@@ -92,6 +91,7 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 	}
 	
 	@Override public void warn(String msg) {
+		hasWarnings = true;
 		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
@@ -109,6 +109,11 @@ public abstract class MatrixImputation implements Loggable, Named, PreProcessor 
 	
 	@Override public void wallInfo(LogTimer timer, String info) {
 		if(verbose) info(timer.wallMsg() + info);
+	}
+	
+	@Override
+	public boolean hasWarnings() {
+		return hasWarnings;
 	}
 	
 	/**

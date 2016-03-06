@@ -33,6 +33,6 @@ public class InverseMultiquadricKernel extends MultiquadricKernel {
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		return 1 / super.getSimilarity(a, b);
+		return 1.0 / super.getSimilarity(a, b);
 	}
 }

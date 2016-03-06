@@ -32,7 +32,7 @@ public class SphericalKernel extends CircularKernel {
 	}
 	
 	@Override
-	public double getSimilarity(final double[] a, final double[] b) {
+	public double getPartialSimilarity(final double[] a, final double[] b) {
 		final double lp = toHilbertPSpace(a, b);
 		if(lp >= getSigma())
 			return 0d;

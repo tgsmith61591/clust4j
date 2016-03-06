@@ -155,6 +155,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 
 		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1 && km.getLabels()[3] == 0);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
+		
+		// test re-fit
+		km.fit();
+		
 		assertTrue(km.getLabels()[0] == km.getLabels()[3]);
 		assertTrue(km.didConverge());
 	}

@@ -32,8 +32,18 @@ public class CauchyKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double getSimilarity(final double[] a, final double[] b) {
+	public double getPartialSimilarity(final double[] a, final double[] b) {
 		final double lp2 = FastMath.pow(toHilbertPSpace(a, b), 2);
 		return 1.0 / (1 + lp2/FastMath.pow(getSigma(), 2));
+	}
+	
+	@Override
+	public double partialSimilarityToSimilarity(double partial) {
+		return partial;
+	}
+	
+	@Override
+	public double similarityToPartialSimilarity(double full) {
+		return full;
 	}
 }

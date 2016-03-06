@@ -13,14 +13,42 @@ public abstract class Kernel implements SimilarityMetric {
 	public Kernel() {}
 	
 	
-	/* public final double similarity(final double[] a) {
-		return distance(a, a);
-	} */
 	
 	@Override
-	final public double getDistance(final double[] a, final double[] b) {
+	public double getDistance(final double[] a, final double[] b) {
 		return -getSimilarity(a, b);
 	}
+	
+	@Override
+	public double getPartialDistance(final double[] a, final double[] b) {
+		return -getPartialSimilarity(a, b);
+	}
+	
+	@Override
+	public double getPartialSimilarity(final double[] a, final double[] b) {
+		return getSimilarity(a, b);
+	}
+	
+	@Override
+	public double distanceToPartialDistance(double d) {
+		return -similarityToPartialSimilarity(-d);
+	}
+	
+	@Override
+	public double similarityToPartialSimilarity(double d) {
+		return d;
+	}
+	
+	@Override
+	public double partialDistanceToDistance(double d) {
+		return -partialSimilarityToSimilarity(-d);
+	}
+	
+	@Override
+	public double partialSimilarityToSimilarity(double d) {
+		return d;
+	}
+	
 	
 	
 	protected static double toHilbertPSpace(final double[] a, final double[] b) {

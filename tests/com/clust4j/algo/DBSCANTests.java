@@ -129,8 +129,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 					.setVerbose(true))
 				.fit();
 			System.out.println();
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			return; // Not enough heap space..
+		} catch(OutOfMemoryError | StackOverflowError e) { // swallow, move along
 		}
 	}
 	
@@ -145,6 +144,9 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 					.setVerbose(true)).fit();
 		System.out.println();
 		assertTrue(db.hasWarnings());
+		assertTrue(db.equals(db)); // ref equals
+		assertFalse(db.equals(new DBSCAN(mat)));
+		assertFalse(db.equals(new String("asdf"))); // test against different type
 	}
 
 	@Test
@@ -165,5 +167,11 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		assertTrue(a == db2.getNumberOfNoisePoints());
 		assertTrue(db.equals(db2));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMinPtsIAE() {
+		new DBSCAN(ExampleDataSets.IRIS.getData(), 
+			new DBSCANPlanner().setMinPts(0));
 	}
 }

@@ -9,7 +9,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -336,9 +335,6 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	private ClusterAssignments assignClosestMedoid(int[] medoidIdcs) {
-		if(null == dist_mat)
-			throw new IllegalClusterStateException("null dist mat; shouldn't have gotten here");
-		
 		double minDist;
 		int nearest, rowIdx, colIdx;
 		final int[] assn = new int[m];

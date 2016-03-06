@@ -74,9 +74,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		/**
 		 * Proposed in 2007 by David Arthur and Sergei Vassilvitskii, this <i>k</i>-means++ initialization
-		 * algorithms is an approximation algorithm for the NP-hard k-means problem—a way of avoiding the 
+		 * algorithms is an approximation algorithm for the NP-hard k-means problem - a way of avoiding the 
 		 * sometimes poor clusterings found by the standard k-means algorithm.
 		 * @see <a href="https://en.wikipedia.org/wiki/K-means%2B%2B">k-means++</a>
+		 * @see <a href="http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf">k-means++ paper</a>
 		 */
 		KM_AUGMENTED {
 			@Override public int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed) {

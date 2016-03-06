@@ -38,8 +38,23 @@ public class RadialBasisKernel extends Kernel {
 	}
 	
 	@Override
-	public double getSimilarity(final double[] a, final double[] b) {
-		return FastMath.exp( sigma * toHilbertPSpace(a,b) );
+	final public double getSimilarity(double[] a, double[] b) {
+		return partialSimilarityToSimilarity(getPartialSimilarity(a, b));
+	}
+	
+	@Override
+	public double getPartialSimilarity(final double[] a, final double[] b) {
+		return sigma * toHilbertPSpace(a,b);
+	}
+	
+	@Override
+	public double partialSimilarityToSimilarity(double partial) {
+		return FastMath.exp(partial);
+	}
+	
+	@Override
+	public double similarityToPartialSimilarity(double full) {
+		return FastMath.log(full);
 	}
 	
 	public void setSigma(final double sigma) {

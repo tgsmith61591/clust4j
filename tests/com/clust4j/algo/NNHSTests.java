@@ -27,6 +27,7 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.utils.TriTup;
@@ -1233,5 +1234,50 @@ public class NNHSTests {
 		assertTrue(n1.equals(n1));
 		assertFalse(n1.equals(n2));
 		assertFalse(n1.equals(new String()));
+	}
+	
+	@Test
+	public void testInfDist() {
+		Array2DRowRealMatrix mat = new Array2DRowRealMatrix(
+			MatUtils.reshape(new double[]{
+				1,2,3,4,5,6,7,8,9
+			}, 3, 3), false);
+		
+		KDTree k = new KDTree(mat, Distance.CHEBYSHEV);
+		Neighborhood n = k.query(mat);
+		Neighborhood p = k.query(mat, 1, false, true);
+		assertTrue(n.equals(p));
+		assertTrue(n.equals(n));
+		assertFalse(n.equals("asdf"));
+		
+		Neighborhood res = new Neighborhood(
+			new double[][]{
+				new double[]{0.0},
+				new double[]{0.0},
+				new double[]{0.0}
+			},	
+			
+			new int[][]{
+				new int[]{0},
+				new int[]{1},
+				new int[]{2}
+			}
+		);
+		
+		assertTrue(n.equals(res));
+		final int[] corr = k.twoPointCorrelation(mat.getDataRef(), new double[]{1,2,3});
+		assertTrue(VecUtils.equalsExactly(corr, new int[]{3,3,7}));
+		assertTrue(k.infinity_dist);
+	}
+	
+	@Test
+	public void testWarn() {
+		Array2DRowRealMatrix mat = new Array2DRowRealMatrix(
+			MatUtils.reshape(new double[]{
+				1,2,3,4,5,6,7,8,9
+			}, 3, 3), false);
+		
+		KDTree k = new KDTree(mat, new HaversineDistance(), new KMeans(mat,1));
+		assertTrue(k.logger.hasWarnings());
 	}
 }

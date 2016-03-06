@@ -2,9 +2,11 @@ package com.clust4j.kernel;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.algo.KMeans;
@@ -137,4 +139,109 @@ public class KernelTestCases {
 		System.out.println();
 	}
 	
+	@Test
+	public void testLaplacianAndRBFPartialSim() {
+		// we want to test that the partial similarity maintains ordinality
+		double[] partialSimilarities = new double[]{
+			0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+		};
+		
+		Kernel[] kernels = new Kernel[]{
+			new GaussianKernel(), 
+			new RadialBasisKernel(), 
+			new CauchyKernel(), 
+			new ANOVAKernel(), 
+			new CircularKernel(), 
+			new SphericalKernel()
+		};
+		
+		for(Kernel kernel: kernels) {
+			double[] fullSimilarities = new double[partialSimilarities.length];
+			for(int i = 0; i < fullSimilarities.length; i++)
+				fullSimilarities[i] = kernel.partialSimilarityToSimilarity(partialSimilarities[i]);
+			System.out.println(Arrays.toString(fullSimilarities));
+			for(int i = 0; i < fullSimilarities.length - 1; i++)
+				assertTrue(fullSimilarities[i+1] > fullSimilarities[i]);
+		}
+		
+		// inverse the partials, make them negative. They should now DECREASE
+		partialSimilarities = VecUtils.negative(partialSimilarities);
+		for(Kernel kernel: kernels) {
+			double[] fullSimilarities = new double[partialSimilarities.length];
+			for(int i = 0; i < fullSimilarities.length; i++)
+				fullSimilarities[i] = kernel.partialSimilarityToSimilarity(partialSimilarities[i]);
+			System.out.println(Arrays.toString(fullSimilarities));
+			for(int i = 0; i < fullSimilarities.length - 1; i++)
+				assertTrue(fullSimilarities[i+1] < fullSimilarities[i]);
+			
+			// Test partial to full for sim and dist
+			for(int i = 0; i < fullSimilarities.length; i++) {
+				assertTrue(
+					Precision.equals(
+						kernel.distanceToPartialDistance( -fullSimilarities[i] ), 
+						-partialSimilarities[i],
+						1e-8));
+				
+				assertTrue(
+					Precision.equals(
+						kernel.partialDistanceToDistance( -partialSimilarities[i] ), 
+						-fullSimilarities[i],
+						1e-8));
+				
+				assertTrue(
+					Precision.equals(
+						kernel.similarityToPartialSimilarity( fullSimilarities[i] ), 
+						partialSimilarities[i],
+						1e-8));
+			}
+		}
+	}
+	
+	@Test
+	public void testForCoverage() {
+		double[] a = new double[]{1,2,3,4,5};
+		
+		Kernel[] kernels = new Kernel[]{
+			new ANOVAKernel(), 
+			new CauchyKernel(), 
+			new CircularKernel(), 
+			new ExponentialKernel(),
+			new GaussianKernel(), 
+			new GeneralizedMinKernel(),
+			new HyperbolicTangentKernel(),
+			new InverseMultiquadricKernel(),
+			new LaplacianKernel(),
+			new LinearKernel(),
+			new LogKernel(),
+			new MinKernel(),
+			new MultiquadricKernel(),
+			new PolynomialKernel(),
+			new PowerKernel(),
+			new RadialBasisKernel(), 
+			new RationalQuadraticKernel(),
+			new SphericalKernel(),
+			new SplineKernel()
+		};
+		
+		for(Kernel k: kernels) {
+			assertNotNull(k.getName());
+			k.getSimilarity(a, a); // ensure throws no exception with default constructor
+			
+			// Ensure all partial to full and vice versa work
+			assertTrue(Precision.equals(
+				k.partialSimilarityToSimilarity(k.getPartialSimilarity(a, a)), 
+				k.getSimilarity(a, a), 
+				1e-8));
+			
+			assertTrue(Precision.equals(
+				k.similarityToPartialSimilarity(k.getSimilarity(a, a)), 
+				k.getPartialSimilarity(a, a), 
+				1e-8));
+			
+			assertTrue(Precision.equals(
+				k.getDistance(a, a), 
+				k.partialDistanceToDistance(k.getPartialDistance(a, a)), 
+				1e-8));
+		}
+	}
 }

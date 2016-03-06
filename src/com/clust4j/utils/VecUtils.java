@@ -1333,6 +1333,15 @@ public class VecUtils {
 	
 	
 	/**
+	 * Multiplies the entire vector by -1
+	 * @param a
+	 * @return the negative of the vector
+	 */
+	public static double[] negative(final double[] a) {
+		return scalarMultiply(a, -1);
+	}
+	
+	/**
 	 * Scalar divides a vector by its magnitude
 	 * @param a
 	 * @return

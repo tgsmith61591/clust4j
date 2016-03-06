@@ -240,7 +240,8 @@ public class TableFormatter {
 					tmpd.isInfinite() ? (tmpd.equals(Double.NEGATIVE_INFINITY) ? "-Inf" : "Inf") : 
 						format.format(tmpd);
 			} else {
-				f = o.toString();
+				f = null == o ? 
+					"null" : o.toString();
 			}
 	    	
 	    	return f;
@@ -329,6 +330,8 @@ public class TableFormatter {
     }
     
     private static boolean isNumeric(Object o) {
+    	if(null == o)
+    		return false;
     	return (o instanceof Number);
     }
     

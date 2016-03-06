@@ -87,18 +87,22 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		this.y_truth = VecUtils.copy(y);
 		this.y_encodings = encoder.getEncodedLabels();
 		
-		/*
-		if(!(planner.getSep() instanceof DistanceMetric)) {
-			err = "only distance metrics permitted for NearestCentroid; "
-				+ "falling back to default: " + DEF_DIST;
-			warn(err);
-			super.setSeparabilityMetric(DEF_DIST);
-		}
-		*/
 		
 		this.shrinkage = planner.shrinkage;
-		meta("shrinkage param="+shrinkage);
-		meta("num classes="+numClasses);
+		logModelSummary();
+	}
+	
+	@Override
+	final protected ModelSummary modelSummary() {
+		return new ModelSummary(new Object[]{
+			"Num Rows","Num Cols","Metric","Num Classes",
+			"Shrinkage","Scale","Force Par.","Allow Par."
+		}, new Object[]{
+			m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,
+			shrinkage, normalized,
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
+			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+		});
 	}
 	
 	
@@ -360,17 +364,6 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		return VecUtils.outerProduct(m, s);
 	}
 	
-	@Override
-	final protected ModelSummary modelSummary() {
-		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Num Classes","Scale","Force Par.","Allow Par."
-			}, new Object[]{
-				m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-			});
-	}
-	
 	// Tested: passing
 	static double[] sqrtMedAdd(double[] variance, int m, int numClasses) {
 		double[] s = new double[variance.length];
@@ -444,7 +437,8 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 			
 			for(int j = 0; j < centroids.size(); j++) {
 				centroid = centroids.get(j);
-				dist = getSeparabilityMetric().getDistance(centroid, row);
+				dist = getSeparabilityMetric()
+					.getPartialDistance(centroid, row); // Can afford to compute partial dist--faster
 				
 				if(dist < minDist) {
 					minDist = dist;

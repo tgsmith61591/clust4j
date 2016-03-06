@@ -48,9 +48,8 @@ public class LaplacianKernel extends RadialBasisKernel {
 		this.sigma_scalar = sigma_scalar;
 	}
 	
-
 	@Override
-	public double getSimilarity(double[] a, double[] b) {
+	public double getPartialSimilarity(double[] a, double[] b) {
 		// Kernlab's laplacedot returns:
 		// return(exp(-sigma*sqrt(-(round(2*crossprod(x,y) - crossprod(x) - crossprod(y),9)))))
 		//
@@ -62,7 +61,7 @@ public class LaplacianKernel extends RadialBasisKernel {
 		hilbert = exponential > 1 ? FastMath.pow(hilbert, exponential) : -hilbert;
 		final double sigma_val = sigma_scalar * FastMath.pow(getSigma(), sigma_exp);
 		
-		return FastMath.exp(-sigma_val * FastMath.sqrt(hilbert));
+		return -sigma_val * FastMath.sqrt(hilbert);
 	}
 	
 	public double getPower() {

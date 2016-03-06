@@ -34,7 +34,7 @@ public class LogTimer implements Timer {
 	 * @return the formatted time as a String
 	 */
 	public String formatTime() {
-		return LogTimeFormatter.millis(time(), false);
+		return formatTime(now());
 	}
 	
 	/**

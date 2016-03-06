@@ -89,6 +89,16 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	}
 	
 	/**
+	 * Constructor with logger and distance metric
+	 * @param X
+	 * @param dist
+	 * @param logger
+	 */
+	public NearestNeighborHeapSearch(final AbstractRealMatrix X, DistanceMetric dist, Loggable logger) {
+		this(X, DEF_LEAF_SIZE, dist, logger);
+	}
+	
+	/**
 	 * Constructor with logger object
 	 * @param X
 	 * @param leaf_size
@@ -268,6 +278,19 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 			return new Neighborhood(
 				MatUtils.copy(getDistances()),
 				MatUtils.copy(getIndices()));
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if(this == o)
+				return true;
+			if(o instanceof Neighborhood) {
+				Neighborhood n = (Neighborhood)o;
+				return MatUtils.equalsExactly(this.getKey(), n.getKey())
+					&& MatUtils.equalsExactly(this.getValue(), n.getValue());
+			}
+			
+			return false;
 		}
 		
 		public double[][] getDistances() {
@@ -1307,6 +1330,24 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		int tmp = idcs[i1];
 		idcs[i1] = idcs[i2];
 		idcs[i2] = tmp;
+	}
+	
+	public Neighborhood query(AbstractRealMatrix X) {
+		return query(X.getData());
+	}
+	
+	public Neighborhood query(AbstractRealMatrix X, int k, boolean dualTree, boolean sort) {
+		return query(X.getData(), k, dualTree, sort);
+	}
+	
+	/**
+	 * Default query, which calls {@link #query(double[][], int, boolean, boolean)}
+	 * <tt>(X, 1, false, true)</tt>
+	 * @param X
+	 * @return the neighborhood
+	 */
+	public Neighborhood query(double[][] X) {
+		return query(X, 1, false, true);
 	}
 	
 	

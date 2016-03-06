@@ -15,5 +15,35 @@ public enum Similarity implements SimilarityMetric {
 		@Override public String getName() {
 			return "Cosine Similarity";
 		}
+
+		@Override
+		public double getPartialDistance(double[] a, double[] b) {
+			return getDistance(a, b);
+		}
+
+		@Override
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double getPartialSimilarity(double[] a, double[] b) {
+			return getSimilarity(a, b);
+		}
+
+		@Override
+		public double partialSimilarityToSimilarity(double d) {
+			return d;
+		}
+
+		@Override
+		public double similarityToPartialSimilarity(double d) {
+			return d;
+		}
 	}
 }

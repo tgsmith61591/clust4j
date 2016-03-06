@@ -54,6 +54,16 @@ public class KDTree extends NearestNeighborHeapSearch {
 		super(X, leaf_size, dist, logger);
 	}
 	
+	/**
+	 * Constructor with logger and distance metric
+	 * @param X
+	 * @param dist
+	 * @param logger
+	 */
+	public KDTree(final AbstractRealMatrix X, DistanceMetric dist, Loggable logger) {
+		super(X, dist, logger);
+	}
+	
 	
 	
 	@Override
@@ -114,12 +124,6 @@ public class KDTree extends NearestNeighborHeapSearch {
 	@Override
 	double minDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
 		double d = minRDist(tree, i_node, pt);
-		/*
-		double p = tree.dist_metric.getP();
-		if(tree.infinity_dist)
-			return d;
-		return Math.pow(d, 1.0 / p);
-		*/
 		return tree.dist_metric.partialDistanceToDistance(d);
 	}
 
@@ -165,13 +169,6 @@ public class KDTree extends NearestNeighborHeapSearch {
 	@Override
 	double maxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
 		double d = maxRDist(tree, i_node, pt);
-		
-		/*
-		if(Double.isInfinite(tree.dist_metric.getP()))
-			return d;
-		return Math.pow(d, 1.0 / tree.dist_metric.getP());
-		*/
-		
 		return tree.dist_metric.partialDistanceToDistance(d);
 	}
 

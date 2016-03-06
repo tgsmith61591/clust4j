@@ -37,6 +37,8 @@ import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.FormatterTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
+import com.clust4j.utils.QuadTupTests;
+import com.clust4j.utils.SeriesTests;
 import com.clust4j.utils.TestUtils;
 import com.clust4j.utils.VectorTests;
 import com.clust4j.utils.parallel.ParallelTests;
@@ -66,7 +68,9 @@ import com.clust4j.utils.parallel.ParallelTests;
 	ParallelTests.class,
 	PipelineTest.class,
 	PreProcessorTests.class,
+	QuadTupTests.class,
 	RadiusNeighborsTests.class,
+	SeriesTests.class,
 	TestDataSet.class,
 	TestDistanceEnums.class,
 	TestGlobals.class,

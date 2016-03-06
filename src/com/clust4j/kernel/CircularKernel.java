@@ -25,12 +25,12 @@ public class CircularKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double getSimilarity(double[] a, double[] b) {
+	public double getPartialSimilarity(double[] a, double[] b) {
 		final double lp = toHilbertPSpace(a, b);
 		
 		// Per corner case condition
 		if(lp >= getSigma())
-			return 0d;
+			return 0.0;
 		
 		final double twoOverPi = (2d/FastMath.PI);
 		final double lpOverSig = lp/getSigma();
@@ -44,6 +44,16 @@ public class CircularKernel extends RadialBasisKernel {
 		final double back = first * second;
 		
 		return front - back;
+	}
+	
+	@Override
+	final public double partialSimilarityToSimilarity(double partial) {
+		return partial;
+	}
+	
+	@Override
+	final public double similarityToPartialSimilarity(double full) {
+		return full;
 	}
 
 	@Override

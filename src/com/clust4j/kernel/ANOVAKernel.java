@@ -44,7 +44,7 @@ public class ANOVAKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double getSimilarity(final double[] a, final double[] b) {
+	public double getPartialSimilarity(final double[] a, final double[] b) {
 		final double[] xMinY2 = VecUtils.pow( VecUtils.subtractForceSerial(a, b), 2 );
 		final double[] sigmaXY2 = VecUtils.scalarMultiply(xMinY2, -getSigma());
 		
@@ -53,5 +53,15 @@ public class ANOVAKernel extends RadialBasisKernel {
 			sum += FastMath.exp(d);
 		
 		return sum;
+	}
+	
+	@Override
+	public double partialSimilarityToSimilarity(double partial) {
+		return partial;
+	}
+	
+	@Override
+	public double similarityToPartialSimilarity(double full) {
+		return full;
 	}
 }
