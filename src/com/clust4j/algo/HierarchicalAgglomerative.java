@@ -254,8 +254,8 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			int incrementor = n/5, pct = 1;
 			for(k = 0; k < n - 1; k++) {
 				if(incrementor>0 && k%incrementor == 0)
-					ref.wallInfo(link_timer, "node mapping progress - " + 20*pct++ + "% (total link time: "+
-						link_timer.formatTime()+")");
+					ref.info("node mapping progress - " + 20*pct++ + "%. Total link time: "+
+						link_timer.toString()+"");
 				
 				// get two closest x, y
 				current_min = Double.POSITIVE_INFINITY;

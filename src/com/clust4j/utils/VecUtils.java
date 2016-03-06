@@ -1717,6 +1717,18 @@ public class VecUtils {
 		return out;
 	}
 	
+	public static double[] sortAsc(final double[] a) {
+		checkDimsPermitEmpty(a);
+		
+		final int n = a.length;
+		if(n == 0)
+			return new double[]{};
+		
+		final double[] b = copy(a);
+		Arrays.sort(b);
+		return b;
+	}
+	
 	public static double[] sqrt(final double[] a) {
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)

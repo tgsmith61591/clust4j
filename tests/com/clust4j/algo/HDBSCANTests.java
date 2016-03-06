@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -21,7 +22,9 @@ import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.ExampleDataSets;
+import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.MatUtils;
@@ -46,7 +49,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		final int min_points = FastMath.min(m - 1, minPts);
 		final double[] core_distances = MatUtils
-			.partitionByRow(dist_mat, min_points)[min_points];
+			.sortColsAsc(dist_mat)[min_points];
 		
 		final MatSeries ser1 = new MatSeries(core_distances, Inequality.GT, dist_mat);
 		double[][] stage1 = MatUtils.where(ser1, core_distances, dist_mat);
@@ -485,6 +488,90 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		assertTrue(VecUtils.equalsExactly(hd2.getLabels(), labels));
 		assertTrue(hd.equals(hd2));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testAlphaIAE() {
+		new HDBSCAN(TestSuite.getRandom(5, 5), new HDBSCANPlanner().setAlpha(0.0));
+	}
+	
+	@Test
+	public void testSepWarn() {
+		HDBSCAN h = new HDBSCAN(TestSuite.getRandom(5, 5), 
+			new HDBSCANPlanner()
+				.setAlgo(Algorithm.PRIMS_KDTREE)
+				.setSep(new GaussianKernel()));
+		assertTrue(h.hasWarnings());
+	}
+	
+	@Test
+	public void compareToPckg() {
+		Array2DRowRealMatrix X= new Array2DRowRealMatrix(
+			MatUtils.reshape(new double[]{
+				0.58459246,  0.2411591 ,  0.54266953,  0.80298748,  0.7108317 ,
+		        0.77419375,  0.19460038,  0.51769224,  0.80581355,  0.06109043,
+		        0.57755264,  0.48690635,  0.4698578 ,  0.68256655,  0.35583625,
+		        0.33956817,  0.46084149,  0.2266772 ,  0.78013553,  0.84169725,
+		        0.45929076,  0.5763663 ,  0.85034392,  0.42344478,  0.08823549
+			}, 5, 5), false);
+		
+		HDBSCAN h = new HDBSCAN(X).fit();
+		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
+		
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_KDTREE)).fit();
+		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
+		
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_BALLTREE)).fit();
+		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
+		
+		// Test on IRIS
+		X = ExampleDataSets.IRIS.getData();
+		h = new HDBSCAN(X).fit();
+		int[] expectedLabels = new int[]{
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		};
+		
+		assertTrue(VecUtils.equalsExactly(expectedLabels, h.getLabels()));
+		
+		// TODO fix KD & BALL trees
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_KDTREE)).fit();
+		System.out.println(Arrays.toString(h.getLabels()));
+	}
+	
+	@Test
+	public void testMutualReachability() {
+		Array2DRowRealMatrix X= new Array2DRowRealMatrix(
+			MatUtils.reshape(new double[]{
+				1,2,3,4,5,6,7,8,9
+			}, 3, 3), false);
+		
+		final double[][] dist = 
+			ClustUtils.distanceFullMatrix(X, 
+				Distance.EUCLIDEAN);
+		
+		
+		// first test the partition by row
+		final int minPts = FastMath.min(X.getRowDimension() - 1, 5);
+		final double[] core_distances = MatUtils
+				.sortColsAsc(dist)[minPts];
+		assertTrue(VecUtils.equalsExactly(core_distances, new double[]{
+			10.392304845413264,  5.196152422706632, 10.392304845413264
+		}));
+		
+		final double[][] expected = new double[][]{
+			new double[]{10.392304845413264, 10.392304845413264, 10.392304845413264},
+			new double[]{10.392304845413264,  5.196152422706632, 10.392304845413264},
+			new double[]{10.392304845413264, 10.392304845413264, 10.392304845413264},
+		};
+		
+		double[][] mr = HDBSCAN.LinkageTreeUtils.mutualReachability(dist, minPts, 1.0);
+		assertTrue(MatUtils.equalsExactly(mr, expected));
 	}
 	
 	/*@Test

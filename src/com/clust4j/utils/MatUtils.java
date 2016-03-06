@@ -4,7 +4,6 @@ import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -1190,43 +1189,33 @@ public class MatUtils {
 		return copy;
 	}
 	
-	public static double[][] partitionByRow(final double[][] a, final int kth) {
-		checkDims(a);
+	/**
+	 * Sort all of the columns ascending
+	 * @param a
+	 * @throws IllegalArgumentException if the rows are empty
+	 * @throws NonUniformMatrixException if matrix is non-uniform
+	 * @return the sorted matrix
+	 */
+	public static double[][] sortColsAsc(final double[][] a) {
+		return transpose(sortRowsAsc(transpose(a)));
+	}
+	
+	/**
+	 * Sort all of the rows ascending
+	 * @param a
+	 * @throws IllegalArgumentException if the rows are empty
+	 * @throws NonUniformMatrixException if matrix is non-uniform
+	 * @return the sorted matrix
+	 */
+	public static double[][] sortRowsAsc(final double[][] a) {
+		checkDimsForUniformity(a);
 		
-		final int n = a.length;
-		if(kth >= n || kth < 0)
-			throw new IllegalArgumentException(kth+" is out of bounds");
+		final int m = a.length, n = a[0].length;
+		final double[][] b = new double[m][n];
+		for(int i = 0; i < b.length; i++)
+			b[i] = VecUtils.sortAsc(a[i]);
 		
-		final double[] val = a[kth];
-		final String strVl = Arrays.toString(val);
-		
-		String[] b = new String[n];
-		for(int i = 0; i < n; i++)
-			b[i] = Arrays.toString(a[i]);
-		
-		double[][] c = new double[n][];
-		
-		int idx = -1;
-		Arrays.sort(b);
-		for(int i = 0; i < n; i++) {
-			if(b[i].equals(strVl)) {
-				idx = i;
-				break;
-			}	
-		}
-		
-		c[idx] = val;
-		for(int i = 0, nextLow = 0, nextHigh = idx+1; i < n; i++) {
-			if(i == kth) // This is the pivot point
-				continue;
-			if(Arrays.toString(a[i]).compareTo(strVl) < 0)
-				c[nextLow++] = a[i];
-			else {
-				c[nextHigh++] = a[i];
-			}
-		}
-		
-		return c;
+		return b;
 	}
 	
 	/**

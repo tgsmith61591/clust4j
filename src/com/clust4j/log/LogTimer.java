@@ -34,7 +34,7 @@ public class LogTimer implements Timer {
 	 * @return the formatted time as a String
 	 */
 	public String formatTime() {
-		return formatTime(now());
+		return formatTime(now() - _start);
 	}
 	
 	/**

@@ -290,60 +290,6 @@ public class MatTests {
 	}
 	
 	@Test
-	public void testPartition() {
-		final double[][] a = new double[][]{
-			new double[]{0,1,2},
-			new double[]{0,0,1},
-			new double[]{0,0,0}
-		};
-		
-		final double[][] b = new double[][]{
-			new double[]{0,0,0},
-			new double[]{0,1,2},
-			new double[]{0,0,1}
-		};
-		
-		final double[][] c = MatUtils.copy(a);
-		//System.out.println(TestSuite.formatter.format(new Array2DRowRealMatrix(MatUtils.partitionByRow(a, 2))));
-		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 2), b) );
-		assertTrue( MatUtils.equalsExactly(a, c) );
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testPartitionIAE1() {
-		final double[][] a = new double[][]{
-			new double[]{0,1,2},
-			new double[]{0,0,1},
-			new double[]{0,0,0}
-		};
-		
-		final double[][] b = new double[][]{
-			new double[]{0,0,0},
-			new double[]{0,1,2},
-			new double[]{0,0,1}
-		};
-		
-		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, -1), b) );
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testPartitionIAE2() {
-		final double[][] a = new double[][]{
-			new double[]{0,1,2},
-			new double[]{0,0,1},
-			new double[]{0,0,0}
-		};
-		
-		final double[][] b = new double[][]{
-			new double[]{0,0,0},
-			new double[]{0,1,2},
-			new double[]{0,0,1}
-		};
-		
-		assertTrue( MatUtils.equalsExactly(MatUtils.partitionByRow(a, 3), b) );
-	}
-	
-	@Test
 	public void testWhere() {
 		final double[][] a = new double[][]{
 			new double[]{6, 0},
@@ -3099,5 +3045,25 @@ public class MatTests {
 				fail();
 			else failed = false; // reset
 		}
+	}
+	
+	@Test
+	public void testSortColsRowsAsc() {
+		double[][] a = new double[][]{
+			new double[]{3,2,1},
+			new double[]{1,4,2}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(MatUtils.sortRowsAsc(a),
+			new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,4}
+		}));
+		
+		assertTrue(MatUtils.equalsExactly(MatUtils.sortColsAsc(a),
+			new double[][]{
+				new double[]{1,2,1},
+				new double[]{3,4,2}
+		}));
 	}
 }

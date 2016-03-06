@@ -51,14 +51,12 @@ public class HDBSCAN extends AbstractDBSCAN {
 	public static final boolean DEF_APPROX_MIN_SPAN = true;
 	public static final int DEF_LEAF_SIZE = 40;
 	public static final int DEF_MIN_CLUST_SIZE = 5;
-	//public static final boolean DEF_GENERATE_MIN_SPAN = false;
 	
 	private final Algorithm algo;
 	private final double alpha;
 	private final boolean approxMinSpanTree;
 	private final int min_cluster_size;
 	private final int leafSize;
-	//private final boolean genMinSpanTree; // NEVER
 
 	private volatile HDBSCANLinkageTree tree = null;
 	private volatile double[][] dist_mat = null;
@@ -99,6 +97,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	
 	/**
 	 * Constructs an instance of HDBSCAN from the provided builder
+	 * @throws IllegalArgumentException if alpha is 0
 	 * @param builder
 	 * @param data
 	 */
@@ -109,10 +108,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 		this.approxMinSpanTree = planner.approxMinSpanTree;
 		this.min_cluster_size = planner.min_cluster_size;
 		this.leafSize = planner.leafSize;
-		//this.genMinSpanTree = planner.genMinTree;
 		
 		if(alpha == 0.0)
-			throw new ArithmeticException("alpha cannot equal 0");
+			throw new IllegalArgumentException("alpha cannot equal 0");
 		
 		
 		if(!algo.equals(Algorithm.GENERIC) && !(planner.getSep() instanceof DistanceMetric)) {
@@ -156,7 +154,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 		private boolean approxMinSpanTree = DEF_APPROX_MIN_SPAN;
 		private int min_cluster_size = DEF_MIN_CLUST_SIZE;
 		private int leafSize = DEF_LEAF_SIZE;
-		//private boolean genMinTree = DEF_GENERATE_MIN_SPAN;
 		
 		
 		public HDBSCANPlanner() { this(DEF_MIN_PTS); }
@@ -178,7 +175,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 				.setApprox(approxMinSpanTree)
 				.setLeafSize(leafSize)
 				.setMinClustSize(min_cluster_size)
-				//.setGenMinSpan(genMinTree)
+				.setMinPts(minPts)
 				.setScale(scale)
 				.setSep(dist)
 				.setSeed(seed)
@@ -236,11 +233,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 			return this;
 		}
 		
-		/*public HDBSCANPlanner setGenMinSpan(final boolean b) {
-			this.genMinTree = b;
-			return this;
-		}*/
-		
 		@Override
 		public HDBSCANPlanner setMinPts(final int minPts) {
 			this.minPts = minPts;
@@ -292,7 +284,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * @author Taylor G Smith
 	 * @param <T>
 	 */
-	final static class HList<T> extends ArrayList<T> {
+	protected final static class HList<T> extends ArrayList<T> {
 		private static final long serialVersionUID = 2784009809720305029L;
 		
 		public HList() {
@@ -332,7 +324,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * @author Taylor G Smith
 	 * @param <T>
 	 */
-	final static class HSet<T> extends HashSet<T> {
+	protected final static class HSet<T> extends HashSet<T> {
 		private static final long serialVersionUID = 5185550036712184095L;
 		
 		HSet(int size) {
@@ -354,7 +346,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * Constructs an {@link HSet} from the labels
 	 * @author Taylor G Smith
 	 */
-	final static class LabelHSetFactory {
+	protected final static class LabelHSetFactory {
 		static HSet<Integer> build(int[] labs) {
 			HSet<Integer> res = new HSet<Integer>(labs.length);
 			for(int i: labs)
@@ -386,7 +378,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * Util mst linkage methods
 	 * @author Taylor G Smith
 	 */
-	static class LinkageTreeUtils {	
+	protected static class LinkageTreeUtils {	
 		
 		/**
 		 * Perform a breadth first search on a tree
@@ -800,6 +792,27 @@ public class HDBSCAN extends AbstractDBSCAN {
 				return idx;
 			return array_len - abs;
 		}
+		
+		static double[][] mutualReachability(double[][] dist_mat, int minPts, double alpha) {
+			final int size = dist_mat.length;
+			minPts = FastMath.min(size - 1, minPts);
+			
+			final double[] core_distances = MatUtils
+				.sortColsAsc(dist_mat)[minPts];
+			
+			if(alpha != 1.0)
+				dist_mat = MatUtils.scalarDivide(dist_mat, alpha);
+			
+			
+			final MatSeries ser1 = new MatSeries(core_distances, Inequality.GT, dist_mat);
+			double[][] stage1 = MatUtils.where(ser1, core_distances, dist_mat);
+			
+			stage1 = MatUtils.transpose(stage1);
+			final MatSeries ser2 = new MatSeries(core_distances, Inequality.GT, stage1);
+			final double[][] result = MatUtils.where(ser2, core_distances, stage1);
+			
+			return MatUtils.transpose(result);
+		}
 	}
 	
 	
@@ -971,29 +984,14 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		@Override
-		public double[][] mutualReachability() { // Tested: passing
+		public double[][] mutualReachability() {
 			if(null == dist_mat)
 				throw new IllegalClusterStateException("dist matrix is null; "
 					+ "this only can happen when the model attempts to invoke "
 					+ "mutualReachability on a tree without proper initialization "
 					+ "or after the model has already been fit.");
 			
-			final int min_points = FastMath.min(m - 1, minPts);
-			final double[] core_distances = MatUtils
-				.partitionByRow(dist_mat, min_points)[min_points];
-			
-			if(alpha != 1.0)
-				dist_mat = MatUtils.scalarDivide(dist_mat, alpha);
-			
-			
-			final MatSeries ser1 = new MatSeries(core_distances, Inequality.GT, dist_mat);
-			double[][] stage1 = MatUtils.where(ser1, core_distances, dist_mat);
-			
-			stage1 = MatUtils.transpose(stage1);
-			final MatSeries ser2 = new MatSeries(core_distances, Inequality.GT, stage1);
-			final double[][] result = MatUtils.where(ser2, core_distances, stage1);
-			
-			return MatUtils.transpose(result);
+			return LinkageTreeUtils.mutualReachability(dist_mat, minPts, alpha);
 		}
 	}
 	

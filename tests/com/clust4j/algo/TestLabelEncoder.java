@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.junit.Test;
 
@@ -123,5 +124,6 @@ public class TestLabelEncoder implements BaseModelTest {
 		
 		LabelEncoder encoder2 = (LabelEncoder)LabelEncoder.loadModel(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(VecUtils.equalsExactly(mappings, encoder2.getEncodedLabels()));
+		Files.delete(TestSuite.path);
 	}
 }
