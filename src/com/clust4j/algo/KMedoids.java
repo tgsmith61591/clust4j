@@ -32,7 +32,8 @@ import com.clust4j.utils.VecUtils;
  * clust4j utilizes the <a href="https://en.wikipedia.org/wiki/Lloyd%27s_algorithm">
  * Voronoi iteration</a> technique to identify clusters. Alternative greedy searches, 
  * including PAM (partitioning around medoids), are faster yet may not find the optimal
- * solution.
+ * solution. For this reason, clust4j's implementation of KMedoids almost always surpasses
+ * the performance of {@link KMeans}, however it can typically take longer  as well.
  * 
  * @see {@link AbstractPartitionalClusterer}
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;

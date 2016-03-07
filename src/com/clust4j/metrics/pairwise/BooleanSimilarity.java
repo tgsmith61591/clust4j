@@ -32,14 +32,4 @@ class BooleanSimilarity extends QuadTup<Double, Double, Double, Double> {
 		
 		return new BooleanSimilarity(ctt, ctf, cft, cff);
 	}
-	
-	static double[] asBool(final double[] a) {
-		VecUtils.checkDimsPermitEmpty(a);
-		
-		double[] out = new double[a.length];
-		for(int i = 0; i < out.length; i++)
-			out[i] = a[i] == 0 ? 0.0 : 1.0;
-		
-		return out;
-	}
 }
