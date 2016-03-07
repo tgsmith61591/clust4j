@@ -116,21 +116,21 @@ public class TestDistanceEnums {
 	public void testKulsinski() {
 		final double[] a = new double[]{1,1,1,1,3};
 		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.KULSINSKI.getDistance(a, b) == 3);
+		assertTrue(Distance.KULSINSKI.getDistance(a, b) == 0.33333333333333331);
 	}
 	
 	@Test
 	public void testYule() {
-		final double[] a = new double[]{1,1,1,1,3};
-		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.YULE.getDistance(a, b) == 0.7692307692307693);
+		final double[] a = new double[]{1,0,1,0,3,4};
+		final double[] b = new double[]{0,3,1,0,0,3};
+		assertTrue(Distance.YULE.getDistance(a, b) == 1.0);
 	}
 	
 	@Test
 	public void testRogersTanimoto() {
 		final double[] a = new double[]{1,1,1,1,3};
 		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.ROGERS_TANIMOTO.getDistance(a, b) == 3.6666666666666665);
+		assertTrue(Distance.ROGERS_TANIMOTO.getDistance(a, b) == 0.3333333333333333);
 	}
 	
 	@Test
@@ -151,21 +151,21 @@ public class TestDistanceEnums {
 	public void testDice() {
 		final double[] a = new double[]{1,1,1,1,3};
 		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.DICE.getDistance(a, b) == -0.8461538461538461);
+		assertTrue(Distance.DICE.getDistance(a, b) == 0.11111111111111111);
 	}
 	
 	@Test
 	public void testRussellRao() {
 		final double[] a = new double[]{1,1,1,1,3};
 		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.RUSSELL_RAO.getDistance(a, b) == -1.4);
+		assertTrue(Distance.RUSSELL_RAO.getDistance(a, b) == 0.2);
 	}
 	
 	@Test
 	public void testSokalSneath() {
 		final double[] a = new double[]{1,1,1,1,3};
 		final double[] b = new double[]{1,0,1,1,3};
-		assertTrue(Distance.SOKAL_SNEATH.getDistance(a, b) == 2.2000000000000002);
+		assertTrue(Distance.SOKAL_SNEATH.getDistance(a, b) == 0.33333333333333331);
 	}
 	
 	@Test

@@ -2,8 +2,6 @@ package com.clust4j.metrics.pairwise;
 
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.utils.QuadTup;
-import com.clust4j.utils.TriTup;
 import com.clust4j.utils.VecUtils;
 
 public enum Distance implements DistanceMetric, java.io.Serializable {
@@ -270,10 +268,9 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[] a, final double[] b) {
-			TriTup<Double, Double, Double> corr = 
-				BooleanCorrespondence.correspondFtTfTt(a, b);
-			double nft_sum = corr.one, ntf_sum = corr.two, ntt_sum = corr.three;
-			return (ntf_sum + nft_sum) / (2.0 * ntt_sum + ntf_sum + nft_sum);
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
+			double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			return (ctf + cft) / (2 * ctt + cft + ctf);
 		}
 		
 		@Override
@@ -307,13 +304,9 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[] a, final double[] b) {
-			QuadTup<Double, Double, Double, Double> correspondence = 
-				BooleanCorrespondence.correspondAll(a, b);
-			double nft_sum = correspondence.two, 
-				ntf_sum = correspondence.three, ntt_sum = correspondence.four;
-			
-			final int n = a.length;
-			return (ntf_sum + nft_sum - ntt_sum + n) / (ntf_sum + nft_sum + n);
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
+			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			return (ctf + cft - ctt + a.length) / (cft + ctf + a.length);
 		}
 		
 		@Override
@@ -347,12 +340,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[]a, final double[] b) {
-			QuadTup<Double, Double, Double, Double> correspondence = 
-					BooleanCorrespondence.correspondAll(a, b);
-			double nff_sum = correspondence.one, nft_sum = correspondence.two, 
-				   ntf_sum = correspondence.three, ntt_sum = correspondence.four;
-			
-			return (2.0 * (ntf_sum + nft_sum)) / (ntt_sum + nff_sum + (2.0 * (ntf_sum + nft_sum)));
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
+			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
+			final double R = 2 * (cft + ctf);
+			return R / (ctt + cff + R);
 		}
 		
 		@Override
@@ -386,9 +377,14 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[] a, final double[] b) {
-			final double ip = VecUtils.innerProduct(a, b);
-			final int n = a.length;
-			return (n - ip) / n;
+			// This actually takes 3N and can get expensive...
+			/*final double ip = VecUtils.innerProduct(
+				BooleanSimilarity.asBool(a), 
+				BooleanSimilarity.asBool(b));*/
+			
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);			
+			final double n = (double)a.length;
+			return (n - bool.one) / n;
 		}
 		
 		@Override
@@ -422,15 +418,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[] a, final double[] b) {
-			TriTup<Double, Double, Double> corr = 
-				BooleanCorrespondence.correspondFtTfTt(a, b);
-			double nft_sum = corr.one, ntf_sum = corr.two, ntt_sum = corr.three;
-			double denom = ntt_sum + 2.0 * (ntf_sum + nft_sum);
-			
-			if(0 == denom)
-				throw new ArithmeticException("Undefined result for Sokal-Sneath distance");
-			
-			return (2.0 * (nft_sum + ntf_sum)) / denom;
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
+			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			final double R = 2 * (cft + ctf);
+			return R / (ctt + R);
 		}
 		
 		@Override
@@ -464,12 +455,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		public double getDistance(final double[]a, final double[] b) {
-			QuadTup<Double, Double, Double, Double> correspondence = 
-					BooleanCorrespondence.correspondAll(a, b);
-			double nff_sum = correspondence.one, nft_sum = correspondence.two, 
-				   ntf_sum = correspondence.three, ntt_sum = correspondence.four;
-			
-			return (2.0 * ntf_sum * nft_sum) / (ntt_sum * nff_sum + ntf_sum * nft_sum);
+			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
+			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
+			final double R = 2 * cft * ctf;
+			return R / (ctt * cff + (cft * ctf));
 		}
 		
 		@Override

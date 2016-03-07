@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
@@ -42,10 +43,10 @@ public class NearestNeighbors extends Neighbors {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","K","Scale","Force Par.","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","K","Leaf Size","Scale","Force Par.","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
-				alg, kNeighbors, normalized,
+				alg, kNeighbors, leafSize, normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 			});
@@ -211,14 +212,13 @@ public class NearestNeighbors extends Neighbors {
 				if(null != res)
 					return this;
 
-				info("Model fit:");
 				int nNeighbors = kNeighbors + 1;
 				final LogTimer timer = new LogTimer();
 				
-				info("querying tree for nearest neighbors");
 				Neighborhood initRes = new Neighborhood(
 					tree.query(fit_X, nNeighbors, 
 						DUAL_TREE_SEARCH, SORT));
+				info("queried "+this.alg+" for nearest neighbors in " + timer.toString());
 
 				
 				double[][] dists = initRes.getDistances();
@@ -253,7 +253,6 @@ public class NearestNeighbors extends Neighbors {
 		        // In that case mask the first duplicate.
 				// sample_mask[:, 0][dup_gr_nbrs] = False
 				
-				info("identifying duplicate neighbors");
 				for(i = 0; i < m; i++)
 					if(dupGroups[i])
 						sampleMask[i][0] = false;
@@ -264,16 +263,25 @@ public class NearestNeighbors extends Neighbors {
 				int[] indOut = new int[m * (nNeighbors - 1)];
 				double[] distOut = new double[m * (nNeighbors - 1)];
 				for(i = 0; i < m; i++) {
+					double minDist = Double.POSITIVE_INFINITY, maxDist = Double.NEGATIVE_INFINITY;
+					
 					for(j = 0; j < ni; j++) {
 						if(sampleMask[i][j]) {
 							indOut[k] = indices[i][j];
 							distOut[k]= dists[i][j];
+							
+							minDist = FastMath.min(dists[i][j], minDist);
+							maxDist = FastMath.max(dists[i][j], maxDist);
+							
 							k++;
 						}
 					}
+					
+					fitSummary.add(new Object[]{
+						i, minDist, maxDist, timer.wallTime()
+					});
 				}
 				
-				info("computing neighborhoods");
 				res = new Neighborhood(
 					MatUtils.reshape(distOut, m, nNeighbors - 1),
 					MatUtils.reshape(indOut,  m, nNeighbors - 1));
@@ -293,7 +301,7 @@ public class NearestNeighbors extends Neighbors {
 	final protected Object[] getModelFitSummaryHeaders() {
 		// TODO
 		return new Object[]{
-			"TODO"
+			"Instance","Nrst Nbr Dist","Farthest Nbr Dist","Wall"
 		};
 	}
 	

@@ -65,10 +65,6 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		// Get the data ref from the tree
 		fit_X = tree.getData();
 		this.m = fit_X.length;
-		
-		meta(radiusMode?("radius="+radius):("k="+kNeighbors));
-		meta("leafSize="+leafSize);
-		meta("algorithm="+planner.getAlgorithm());
 	}
 	
 	

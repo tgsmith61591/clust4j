@@ -3,6 +3,7 @@ package com.clust4j.algo;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
@@ -38,10 +39,10 @@ public class RadiusNeighbors extends Neighbors {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","Radius","Scale","Force Par.","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","Radius","Leaf Size","Scale","Force Par.","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
-				alg, radius, normalized,
+				alg, radius, leafSize, normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 			});
@@ -49,9 +50,8 @@ public class RadiusNeighbors extends Neighbors {
 	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
-		// TODO
 		return new Object[]{
-			"TODO"
+			"Instance","Num. Neighbors","Nrst Nbr","Avg Nbr Dist","Farthest Nbr","Wall"
 		};
 	}
 	
@@ -216,10 +216,9 @@ public class RadiusNeighbors extends Neighbors {
 				if(null != res)
 					return this;
 
-				info("Model fit:");
 				final LogTimer timer = new LogTimer();
-				info("querying tree for nearest neighbors");
 				Neighborhood initRes = new Neighborhood(tree.queryRadius(fit_X, radius, false));
+				info("queried "+this.alg+" for radius neighbors in " + timer.toString());
 				
 				
 				double[][] dists = initRes.getDistances();
@@ -232,15 +231,25 @@ public class RadiusNeighbors extends Neighbors {
 					ind_neighbor = indices[ind];
 					dist_row = dists[ind];
 					
+					// Keep track for summary
+					double v, sum = 0,
+						minDist = Double.POSITIVE_INFINITY, 
+						maxDist = Double.NEGATIVE_INFINITY;
+					
 					int b_count = 0;
 					boolean b_val;
 					boolean[] mask = new boolean[ind_neighbor.length];
 					for(int j = 0; j < ind_neighbor.length; j++) {
 						b_val = ind_neighbor[j] != ind;
 						mask[j] = b_val;
+						v = dist_row[j];
 						
-						if(b_val) 
+						if(b_val) {
+							sum += v;
+							minDist = FastMath.min(minDist, v);
+							maxDist = FastMath.max(maxDist, v);
 							b_count++;
+						}
 					}
 					
 					tmp_ind_neigh = new int[b_count];
@@ -256,9 +265,10 @@ public class RadiusNeighbors extends Neighbors {
 					
 					indices[ind] = tmp_ind_neigh;
 					dists[ind] = tmp_dists;
+					
+					fitSummary.add(new Object[]{ind, b_count, minDist, (double)sum/(double)b_count, maxDist, timer.wallTime()});
 				}
 				
-				info("computing neighborhoods");
 				res = new Neighborhood(dists, indices);
 				
 				sayBye(timer);
