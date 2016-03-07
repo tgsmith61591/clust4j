@@ -1344,6 +1344,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
 						" classified noise");
 				
+				// Need to encode labels to maintain order
+				labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+				
 				
 				sayBye(timer);
 				

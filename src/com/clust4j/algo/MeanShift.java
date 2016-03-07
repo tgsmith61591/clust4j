@@ -47,7 +47,6 @@ public class MeanShift
 	final public static double DEF_BANDWIDTH = 5.0;
 	final public static int DEF_MAX_ITER = 300;
 	final public static int DEF_MIN_BIN_FREQ = 1;
-	final public static int NOISE_CLASS = -1;
 	final static int maxTries = 4;
 	final static double incrementAmt = 0.25;
 	

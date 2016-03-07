@@ -527,7 +527,8 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		// Test on IRIS
 		X = ExampleDataSets.IRIS.getData();
 		h = new HDBSCAN(X).fit();
-		int[] expectedLabels = new int[]{
+		
+		int[] expectedLabels = new NoiseyLabelEncoder(new int[]{
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -535,7 +536,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		};
+		}).fit().getEncodedLabels();
 		
 		assertTrue(VecUtils.equalsExactly(expectedLabels, h.getLabels()));
 		

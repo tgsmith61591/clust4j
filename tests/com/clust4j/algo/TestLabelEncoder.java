@@ -126,4 +126,48 @@ public class TestLabelEncoder implements BaseModelTest {
 		assertTrue(VecUtils.equalsExactly(mappings, encoder2.getEncodedLabels()));
 		Files.delete(TestSuite.path);
 	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFitException1() {
+		LabelEncoder encoder = new LabelEncoder(new int[]{ 0,1,5,1,2,2,2,0,1,1,5 });
+		encoder.encodeOrNull(2);
+	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFitException2() {
+		LabelEncoder encoder = new LabelEncoder(new int[]{ 0,1,5,1,2,2,2,0,1,1,5 });
+		encoder.reverseEncodeOrNull(2);
+	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFitException3() {
+		LabelEncoder encoder = new LabelEncoder(new int[]{ 0,1,5,1,2,2,2,0,1,1,5 });
+		encoder.getEncodedLabels();
+	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFitException4() {
+		LabelEncoder encoder = new LabelEncoder(new int[]{ 0,1,5,1,2,2,2,0,1,1,5 });
+		encoder.transform(new int[]{1,2,0});
+	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFitException5() {
+		LabelEncoder encoder = new LabelEncoder(new int[]{ 0,1,5,1,2,2,2,0,1,1,5 });
+		encoder.reverseTransform(new int[]{1,2,0});
+	}
+	
+	@Test
+	public void testNoiseyLabelEncoder() {
+		NoiseyLabelEncoder encoder = new NoiseyLabelEncoder(
+			new int[]{ 0,-1,5,-1,2,2,2,0,1,1,5 }).fit();
+		assertTrue(encoder.encodeOrNull(-1) == -1);
+		assertTrue(encoder.reverseEncodeOrNull(-1) == -1);
+		
+		final int[] exp = new int[]{ 0,-1,1,-1,2,2,2,0,3,3,1 };
+		assertTrue(VecUtils.equalsExactly(encoder.getEncodedLabels(), exp));
+		
+		// test extra fit, make sure nothing changes...
+		assertTrue(VecUtils.equalsExactly(encoder.fit().getEncodedLabels(), exp));
+	}
 }

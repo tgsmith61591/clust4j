@@ -16,13 +16,15 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	private volatile TreeMap<Integer, Integer> encodedMapping = null;
 	private volatile TreeMap<Integer, Integer> reverseMapping = null;
 	private volatile int[] encodedLabels = null;
+	private volatile boolean fit = false;
+	
 	
 	public LabelEncoder(int[] labels) {
 		VecUtils.checkDims(labels);
 		
 		final LinkedHashSet<Integer> unique = VecUtils.unique(labels);
 		numClasses = unique.size();
-		if(numClasses < 2) {
+		if(numClasses < 2 && !allowSingleClass()) {
 			throw new IllegalArgumentException("y has "+numClasses+" unique class" 
 				+ (numClasses!=1?"es":"") + " and requires at least two");
 		}
@@ -33,17 +35,38 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 		int idx = 0;
 		this.classes = new int[numClasses];
 		for(Integer u: unique) classes[idx++] = u.intValue();
+		
+		// Initialize mappings
+		encodedMapping = new TreeMap<>();
+		reverseMapping = new TreeMap<>();
+		encodedLabels = new int[n];
+	}
+	
+	
+	/**
+	 * For subclasses that need to have built-in mappings, 
+	 * this hook should be called in the constructor
+	 * @param key
+	 * @param val
+	 */
+	protected void addMapping(Integer key, Integer value) {
+		encodedMapping.put(key, value);
+		reverseMapping.put(value, key);
+	}
+	
+	/**
+	 * Whether or not to allow only a single class mapping
+	 * @return true if allow single class mappings
+	 */
+	protected boolean allowSingleClass() {
+		return false;
 	}
 	
 	@Override
 	public LabelEncoder fit() {
 		synchronized(this) {
-			if(null != encodedLabels)
+			if(fit) 
 				return this;
-			
-			encodedMapping = new TreeMap<>();
-			reverseMapping = new TreeMap<>();
-			encodedLabels = new int[n];
 			
 			int nextLabel = 0, label;
 			Integer val;
@@ -60,15 +83,14 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 				encodedLabels[i] = val;
 			}
 			
+			
+			fit = true;
 			return this;
 		}
 	}
 	
 	public Integer encodeOrNull(int label) {
-		if(null == encodedMapping) {
-			throw new ModelNotFitException("model not yet fit");
-		}
-		
+		if(!fit) throw new ModelNotFitException("model not yet fit"); 
 		return encodedMapping.get(label);
 	}
 	
@@ -77,8 +99,7 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	}
 	
 	public int[] getEncodedLabels() {
-		if(null == encodedLabels)
-			throw new ModelNotFitException("model not yet fit");
+		if(!fit) throw new ModelNotFitException("model not yet fit"); 
 		return VecUtils.copy(encodedLabels);
 	}
 	
@@ -91,10 +112,7 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	}
 	
 	public Integer reverseEncodeOrNull(int encodedLabel) {
-		if(null == reverseMapping) {
-			throw new ModelNotFitException("model not yet fit");
-		}
-		
+		if(!fit) throw new ModelNotFitException("model not yet fit"); 
 		return reverseMapping.get(encodedLabel);
 	}
 	
@@ -104,10 +122,7 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	 * @return
 	 */
 	public int[] reverseTransform(int[] encodedLabels) {
-		if(null == reverseMapping) {
-			throw new ModelNotFitException("model not yet fit");
-		}
-		
+		if(!fit) throw new ModelNotFitException("model not yet fit"); 
 		final int[] out= new int[encodedLabels.length];
 		
 		int val; 
@@ -131,10 +146,7 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	 * @return
 	 */
 	public int[] transform(int[] newLabels) {
-		if(null == encodedMapping) {
-			throw new ModelNotFitException("model not yet fit");
-		}
-		
+		if(!fit) throw new ModelNotFitException("model not yet fit"); 
 		final int[] out= new int[newLabels.length];
 		
 		int val; 

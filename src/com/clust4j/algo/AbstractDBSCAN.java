@@ -9,7 +9,6 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 	
 	final public static double DEF_EPS = 0.5;
 	final public static int DEF_MIN_PTS = 5;
-	final public static int NOISE_CLASS = -1;
 
 	final protected int minPts;
 	protected double eps = DEF_EPS;

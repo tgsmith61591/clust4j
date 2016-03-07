@@ -347,6 +347,9 @@ public class DBSCAN extends AbstractDBSCAN {
 					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
 						" classified noise");
 				
+				// Encode to put in order
+				labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+				
 				sayBye(timer);
 				return this;
 			} catch(OutOfMemoryError | StackOverflowError e) {

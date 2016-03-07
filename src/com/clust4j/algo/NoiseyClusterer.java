@@ -12,6 +12,8 @@ package com.clust4j.algo;
  * @see {@link MeanShift}
  */
 public interface NoiseyClusterer extends java.io.Serializable {
+	final public static int NOISE_CLASS = -1;
+	
 	/**
 	 * the number of points that were not classified as
 	 * belonging to any clusters.
