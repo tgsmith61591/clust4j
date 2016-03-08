@@ -5,7 +5,6 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.utils.VecUtils;
 
 public enum Distance implements DistanceMetric, java.io.Serializable {
-	
 	HAMMING {
 		
 		@Override
@@ -270,7 +269,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public double getDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			double ctt = bool.one, ctf = bool.two, cft = bool.three;
-			return (ctf + cft) / (2 * ctt + cft + ctf);
+			
+			// If all values in a and b are 0s, the distance will be NaN.
+			// Do we want to call that a distance of positive infinity? Or zero?
+			return filterNaN((ctf + cft) / (2 * ctt + cft + ctf));
 		}
 		
 		@Override
@@ -306,6 +308,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public double getDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			
 			return (ctf + cft - ctt + a.length) / (cft + ctf + a.length);
 		}
 		
@@ -421,7 +424,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
 			final double R = 2 * (cft + ctf);
-			return R / (ctt + R);
+
+			// If all values in a and b are 0s, the distance will be NaN.
+			// Do we want to call that a distance of positive infinity? Or zero?
+			return filterNaN(R / (ctt + R));
 		}
 		
 		@Override
@@ -453,12 +459,19 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	YULE {
 		
+		/**
+		 * Returns positive infinity in the case of division errors
+		 */
 		@Override
 		public double getDistance(final double[]a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
 			final double R = 2 * cft * ctf;
-			return R / (ctt * cff + (cft * ctf));
+			final double v = R / (ctt * cff + (cft * ctf));
+
+			// If all values in a and b are 0s, the distance will be NaN.
+			// Do we want to call that a distance of positive infinity? Or zero?
+			return filterNaN(v);
 		}
 		
 		@Override
@@ -485,5 +498,17 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Yule";
 		}
+	};
+	
+	
+	/**
+	 * Should be used on distance methods which may have a 0
+	 * in the denominator, creating a distance of {@link Double#NaN}. This will
+	 * return a distance of {@link Double#POSITIVE_INFINITY} instead.
+	 * @param a
+	 * @return infinity if NaN, the distance otherwise.
+	 */
+	private static double filterNaN(double a) {
+		return Double.isNaN(a) ? Double.POSITIVE_INFINITY : a;
 	}
 }

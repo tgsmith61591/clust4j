@@ -1,6 +1,9 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Random;
 
@@ -20,7 +23,6 @@ import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -497,8 +499,7 @@ public class MeanShift
 				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
 				info("identifying most populated seeds, removing near-duplicates");
 				ArrayList<Map.Entry<double[], Integer>> sorted_by_intensity = 
-					(ArrayList<Map.Entry<double[], Integer>>)ClustUtils
-						.sortEntriesByValue(center_intensity, true);
+					sortEntriesByValue(center_intensity, true);
 				
 				// Extract the centroids
 				int idx = 0;
@@ -706,6 +707,30 @@ public class MeanShift
 		
 		converged = false;
 		return null; // Default if breaks from inner loop
+	}
+	
+
+	/**
+	 * Utility function
+	 * @param col
+	 * @param desc
+	 * @return Sorted map entries
+	 */
+	final private static <K,V extends Comparable<? super V>> 
+			ArrayList<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col, 
+					final boolean desc) {
+		
+		Comparator<Map.Entry<K,V>> comp = new Comparator<Map.Entry<K,V>>() {
+			@Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
+				int res = e1.getValue().compareTo(e2.getValue());
+				int scale = desc ? -1 : 1;
+				return res * scale;
+			}
+		};
+		
+		ArrayList<Map.Entry<K,V>> sorted = new ArrayList<>(col);
+		Collections.sort(sorted, comp);
+		return sorted;
 	}
 	
 	@Override

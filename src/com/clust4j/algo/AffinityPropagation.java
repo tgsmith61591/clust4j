@@ -320,6 +320,75 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.AFFINITY_PROP;
 	}
+	
+	/**
+	 * Remove this from scope of {@link #fit()} to avoid lots of large objects
+	 * left in memory. This is more space efficient and promotes easier testing.
+	 * @param X
+	 * @param metric
+	 * @param seed
+	 * @param addNoise
+	 * @return the smoothed similarity matrix
+	 */
+	static double[][] computeSmoothedSimilarity(final double[][] X, GeometricallySeparable metric, Random seed, boolean addNoise) {
+		/*
+		 * Originally, we computed similarity matrix, then refactored the diagonal vector, and
+		 * then computed the following portions. We can do this all at once and save lots of passes
+		 * (5?) on the order of O(M^2), condensing it all to one pass of O(M choose 2).
+		 * 
+		 * After the sim matrix is computed, we need to do three things:
+		 * 
+		 * 1. Create a matrix of very small values (tiny_scaled) to remove degeneracies in sim_mal
+		 * 2. Multiply tiny_scaled by an extremely small value (GlobalState.Mathematics.TINY*100)
+		 * 3. Create a noise matrix of random Gaussian values and add it to the similarity matrix.
+		 * 
+		 * The methods exist to build these in three to five separate O(M^2) passes, but that's 
+		 * extremely expensive, so we're going to do it in one giant, convoluted loop. If you're 
+		 * trying to debug this, sorry...
+		 */
+		final int m = X.length;
+		double[][] sim_mat = new double[m][m];
+		
+		int idx = 0;
+		final double[] ut_vals = new double[((m*m) - m) / 2]; // all upper triangular values to find median of
+		final double tiny_val = GlobalState.Mathematics.TINY*100;
+		double sim, noise;
+		boolean last_iter = false;
+		
+		for(int i = 0; i < m - 1; i++) {
+			for(int j = i + 1; j < m; j++) { // Upper triangular
+				sim = -(metric.getPartialDistance(X[i], X[j])); // similarity
+				ut_vals[idx++] = sim;
+				
+				// Assign to upper and lower portion
+				sim_mat[i][j] = sim;
+				sim_mat[j][i] = sim;
+				
+				// Catch the last iteration, compute the diagonal:
+				double median = 0.0;
+				if(last_iter = (i == m - 2 && j == m - 1))
+					median = VecUtils.median(ut_vals);
+				
+				if(addNoise) {
+					noise = (sim * GlobalState.Mathematics.EPS + tiny_val);
+					sim_mat[i][j] += (noise * seed.nextGaussian());
+					sim_mat[j][i] += (noise * seed.nextGaussian());
+					
+					if(last_iter) { // set diag and do the noise thing.
+						noise = (median * GlobalState.Mathematics.EPS + tiny_val);
+						for(int h = 0; h < m; h++)
+							sim_mat[h][h] = median + (noise * seed.nextGaussian());
+					}
+				} else if(last_iter) {
+					// it's the last iter and no noise. Just set diag.
+					for(int h = 0; h < m; h++)
+						sim_mat[h][h] = median;
+				}
+			}
+		}
+		
+		return sim_mat;
+	}
 
 	@Override
 	public AffinityPropagation fit() {
@@ -333,72 +402,10 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				// Init labels
 				final LogTimer timer = new LogTimer();
-				final double[][] X = data.getData();
 				labels = new int[m];
 				
-				
-					
-				/*
-				 * Originally, we computed similarity matrix, then refactored the diagonal vector, and
-				 * then computed the following portions. We can do this all at once and save lots of passes
-				 * (5?) on the order of O(M^2), condensing it all to one pass of O(M choose 2).
-				 * 
-				 * After the sim matrix is computed, we need to do three things:
-				 * 
-				 * 1. Create a matrix of very small values (tiny_scaled) to remove degeneracies in sim_mal
-				 * 2. Multiply tiny_scaled by an extremely small value (GlobalState.Mathematics.TINY*100)
-				 * 3. Create a noise matrix of random Gaussian values and add it to the similarity matrix.
-				 * 
-				 * The methods exist to build these in three to five separate O(M^2) passes, but that's 
-				 * extremely expensive, so we're going to do it in one giant, convoluted loop. If you're 
-				 * trying to debug this, sorry...
-				 */
-				LogTimer tmpTimer = new LogTimer();
-				sim_mat = new double[m][m];
-				
-				int idx = 0;
-				final double[] ut_vals = new double[((m*m) - m) / 2]; // all upper triangular values to find median of
-				final double tiny_val = GlobalState.Mathematics.TINY*100;
-				double sim, noise;
-				boolean last_iter = false;
-				
-				for(int i = 0; i < m - 1; i++) {
-					for(int j = i + 1; j < m; j++) { // Upper triangular
-						sim = -(getSeparabilityMetric().getPartialDistance(X[i], X[j])); // similarity
-						ut_vals[idx++] = sim;
-						
-						// Assign to upper and lower portion
-						sim_mat[i][j] = sim;
-						sim_mat[j][i] = sim;
-						
-						// Catch the last iteration, compute the diagonal:
-						double median = 0.0;
-						if(last_iter = (i == m - 2 && j == m - 1)) {
-							median = VecUtils.median(ut_vals);
-							info("median partial similarity computed as " + median + 
-								". Setting as initialization point " + tmpTimer.wallMsg());
-						}
-						
-						if(addNoise) {
-							noise = (sim * GlobalState.Mathematics.EPS + tiny_val);
-							sim_mat[i][j] += (noise * getSeed().nextGaussian());
-							sim_mat[j][i] += (noise * getSeed().nextGaussian());
-							
-							if(last_iter) { // set diag and do the noise thing.
-								noise = (median * GlobalState.Mathematics.EPS + tiny_val);
-								for(int h = 0; h < m; h++)
-									sim_mat[h][h] = median + (noise * getSeed().nextGaussian());
-							}
-						} else if(last_iter) {
-							// it's the last iter and no noise. Just set diag.
-							for(int h = 0; h < m; h++)
-								sim_mat[h][h] = median;
-						}
-					}
-				}
-				
-				
-				info("computed similarity matrix and smoothed degeneracies in " + tmpTimer.toString());
+				sim_mat = computeSmoothedSimilarity(data.getData(), getSeparabilityMetric(), getSeed(), addNoise);
+				info("computed similarity matrix and smoothed degeneracies in " + timer.toString());
 				
 				
 				// Affinity propagation uses two matrices: the responsibility 
@@ -581,6 +588,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					fitSummary.add(new Object[]{
 						iterCt, converged, 
 						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.formatTime(),
 						timer.wallTime()
 					});
 				} // End for
@@ -592,6 +600,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					fitSummary.add(new Object[]{
 						iterCt, converged, 
 						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.formatTime(),
 						timer.wallTime()
 					});
 				}
@@ -750,7 +759,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Iter. Time","Wall"
+			"Iter. #","Converged","Iter. Time","Tot. Time","Wall"
 		};
 	}
 

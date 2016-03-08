@@ -1,13 +1,5 @@
 package com.clust4j.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -43,64 +35,6 @@ public class ClustUtils {
 		
 		return vec;
 	}
-	
-	public static double[][] distanceFullMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
-		return distanceFullMatrix(data.getData(), dist);
-	}
-	
-	public static double[][] distanceFullMatrix(final double[][] data, GeometricallySeparable dist) {
-		final int m = data.length;
-		
-		// Runs in O(m choose 2)
-		final double[][] dist_mat = new double[m][m];
-		for(int i = 0; i < m - 1; i++) {
-			for(int j = i + 1; j < m; j++) {
-				final double d = dist.getDistance(data[i], data[j]);
-				dist_mat[i][j] = d;
-				dist_mat[j][i] = d;
-			}
-		}
-		
-		// One extra pass of M for the diagonal
-		for(int i = 0; i < m; i++)
-			dist_mat[i][i] = dist.getDistance(data[i], data[i]);
-		
-		return dist_mat;
-	}
-	
-	/**
-	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
-	 * and an instance of GeometricallySeparable.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] distanceUpperTriangMatrix(final AbstractRealMatrix data, GeometricallySeparable dist) {
-		return distanceUpperTriangMatrix(data.getData(), dist);
-	}
-	
-	/**
-	 * Calculate the upper triangular distance matrix given an AbstractRealMatrix
-	 * and an instance of GeometricallySeparable.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] distanceUpperTriangMatrix(final double[][] data, GeometricallySeparable dist) {
-		final int m = data.length;
-		
-		// Compute distance matrix, which is O(N^2) space, O(Nc2) time
-		// We do this in KMedoids and not KMeans, because KMedoids uses
-		// real points as medoids and not means for centroids, thus
-		// the recomputation of distances is unnecessary with the dist mat
-		final double[][] dist_mat = new double[m][m];
-		for(int i = 0; i < m - 1; i++)
-			for(int j = i + 1; j < m; j++)
-				dist_mat[i][j] = dist.getDistance(data[i], data[j]);
-		
-		return dist_mat;
-	}
-	
 
 	public static double minDist(final double[][] data) {
 		final int m = data.length;
@@ -188,30 +122,6 @@ public class ClustUtils {
 		return vector[getIndexFromFlattenedVec(m,i,j)];
 	}
 	
-	public static double[][] similarityFullMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
-		return similarityFullMatrix(data.getData(), sim);
-	}
-	
-	public static double[][] similarityFullMatrix(final double[][] data, SimilarityMetric sim) {
-		final int m = data.length;
-		
-		// Runs in O(m choose 2)
-		final double[][] dist_mat = new double[m][m];
-		for(int i = 0; i < m - 1; i++) {
-			for(int j = i + 1; j < m; j++) {
-				final double d = sim.getSimilarity(data[i], data[j]);
-				dist_mat[i][j] = d;
-				dist_mat[j][i] = d;
-			}
-		}
-		
-		// One extra pass of M for the diagonal
-		for(int i = 0; i < m; i++)
-			dist_mat[i][i] = sim.getSimilarity(data[i], data[i]);
-		
-		return dist_mat;
-	}
-	
 	/**
 	 * Computes a flattened upper triangular similarity matrix in a much more space efficient manner,
 	 * however traversing it requires intermittent calculations using {@link #navigateFlattenedMatrix(double[], int, int, int)}
@@ -239,100 +149,5 @@ public class ClustUtils {
 				vec[r] = sim.getSimilarity(data[i], data[j]);
 		
 		return vec;
-	}
-	
-	/**
-	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
-	 * and an instance of SimilarityMetric.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] similarityUpperTriangMatrix(final AbstractRealMatrix data, SimilarityMetric sim) {
-		return similarityUpperTriangMatrix(data.getData(),sim);
-	}
-	
-	/**
-	 * Calculate the upper triangular similarity matrix given an AbstractRealMatrix
-	 * and an instance of SimilarityMetric.
-	 * @param data
-	 * @param dist
-	 * @return
-	 */
-	final public static double[][] similarityUpperTriangMatrix(final double[][] data, SimilarityMetric sim) {
-		final int m = data.length;
-		
-		// Compute similarity matrix, which is O(N^2) space, O(Nc2) time
-		// We do this in KMedoids and not KMeans, because KMedoids uses
-		// real points as medoids and not means for centroids, thus
-		// the recomputation of distances is unnecessary with the dist mat
-		final double[][] sim_mat = new double[m][m];
-		for(int i = 0; i < m - 1; i++)
-			for(int j = i + 1; j < m; j++)
-				sim_mat[i][j] = sim.getSimilarity(data[i], data[j]);
-		
-		return sim_mat;
-	}
-	
-	
-	
-	final public static <K,V extends Comparable<? super V>> SortedSet<Map.Entry<K,V>> sortEntriesByValue(Map<K,V> map) {
-		return sortEntriesByValue(map, false);
-	}
-	
-	
-	
-	final public static <K,V extends Comparable<? super V>> 
-		SortedSet<Map.Entry<K,V>> sortEntriesByValue(Map<K,V> map, final boolean desc) 
-	{
-		SortedSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
-			new Comparator<Map.Entry<K,V>>() {
-				@Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
-					int res = e1.getValue().compareTo(e2.getValue());
-					return (res != 0 ? res : 1) * (desc ? -1 : 1);
-				}
-			}
-		);
-		
-		sortedEntries.addAll(map.entrySet());
-		return sortedEntries;
-	}
-	
-	
-	final public static <K,V extends Comparable<? super V>> 
-			Collection<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col) {
-		
-		return sortEntriesByValue(col, false);
-	}
-	
-	
-	
-	final public static <K,V extends Comparable<? super V>> 
-			Collection<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col, 
-					final boolean desc) {
-		
-		Comparator<Map.Entry<K,V>> comp = new Comparator<Map.Entry<K,V>>() {
-			@Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
-				int res = e1.getValue().compareTo(e2.getValue());
-				int scale = desc ? -1 : 1;
-				return res * scale;
-			}
-		};
-		
-		ArrayList<Map.Entry<K,V>> sorted = new ArrayList<>(col);
-		Collections.sort(sorted, comp);
-		return sorted;
-	}
-	
-	
-	
-	final public static <K,V extends Comparable<? super V>> 
-		SortedSet<Map.Entry<K,V>> sortEntriesByValue(
-				Map<K,V> map, 
-				final Comparator<Map.Entry<K,V>> cmp) 
-	{
-		SortedSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(cmp);
-		sortedEntries.addAll(map.entrySet());
-		return sortedEntries;
 	}
 }

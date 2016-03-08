@@ -42,8 +42,9 @@ public class CircularKernel extends RadialBasisKernel {
 		final double first = twoOverPi * lpOverSig;
 		final double second = FastMath.sqrt(1.0 - FastMath.pow(lpOverSig, 2));
 		final double back = first * second;
+		final double answer = front - back;
 		
-		return front - back;
+		return Double.isNaN(answer) ? Double.NEGATIVE_INFINITY : answer;
 	}
 	
 	@Override

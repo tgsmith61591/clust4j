@@ -24,7 +24,7 @@ import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.utils.ClustUtils;
+import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.MatUtils;
@@ -968,7 +968,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			// The generic implementation requires the computation of an UT dist mat
 			final LogTimer s = new LogTimer();
-			dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
+			dist_mat = Pairwise.getDistance(data, getSeparabilityMetric(), true, false);
 			info("completed distance matrix computation in " + s.toString());
 		}
 		

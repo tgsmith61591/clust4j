@@ -24,7 +24,7 @@ import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
-import com.clust4j.utils.ClustUtils;
+import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
 import com.clust4j.utils.MatUtils;
@@ -552,9 +552,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 				1,2,3,4,5,6,7,8,9
 			}, 3, 3), false);
 		
-		final double[][] dist = 
-			ClustUtils.distanceFullMatrix(X, 
-				Distance.EUCLIDEAN);
+		final double[][] dist = Pairwise.getDistance(X, Distance.EUCLIDEAN, false, false);
 		
 		
 		// first test the partition by row

@@ -8,7 +8,7 @@ import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.utils.ClustUtils;
+import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.VecUtils;
 
 class BoruvkaAlgorithm implements java.io.Serializable {
@@ -578,8 +578,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				leafSize, metric, logger));
 			
 			// Compute pairwise dist matrix for node_bounds
-			centroidDistances = ClustUtils
-				.distanceFullMatrix(node_bounds[0], metric);
+			centroidDistances = Pairwise.getDistance(node_bounds[0], metric, false, false);
 		}
 
 		@Override

@@ -30,6 +30,7 @@ import com.clust4j.data.TestDataSet;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
 import com.clust4j.metrics.pairwise.HaversineTest;
+import com.clust4j.metrics.pairwise.PairwiseTests;
 import com.clust4j.metrics.pairwise.TestDistanceEnums;
 import com.clust4j.metrics.scoring.TestMetrics;
 import com.clust4j.sample.BootstrapTest;
@@ -65,6 +66,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	NearestCentroidTests.class,
 	NearestNeighborsTests.class,
 	NNHSTests.class,
+	PairwiseTests.class,
 	ParallelTests.class,
 	PipelineTest.class,
 	PreProcessorTests.class,

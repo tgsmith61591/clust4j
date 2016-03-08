@@ -1,0 +1,225 @@
+package com.clust4j.metrics.pairwise;
+
+import static org.junit.Assert.*;
+
+import org.apache.commons.math3.util.Precision;
+import org.junit.Test;
+
+import com.clust4j.kernel.ANOVAKernel;
+import com.clust4j.kernel.CauchyKernel;
+import com.clust4j.kernel.CircularKernel;
+import com.clust4j.kernel.ExponentialKernel;
+import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.kernel.GeneralizedMinKernel;
+import com.clust4j.kernel.HyperbolicTangentKernel;
+import com.clust4j.kernel.InverseMultiquadricKernel;
+import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.LaplacianKernel;
+import com.clust4j.kernel.LinearKernel;
+import com.clust4j.kernel.LogKernel;
+import com.clust4j.kernel.MinKernel;
+import com.clust4j.kernel.MultiquadricKernel;
+import com.clust4j.kernel.PolynomialKernel;
+import com.clust4j.kernel.PowerKernel;
+import com.clust4j.kernel.RadialBasisKernel;
+import com.clust4j.kernel.RationalQuadraticKernel;
+import com.clust4j.kernel.SphericalKernel;
+import com.clust4j.kernel.SplineKernel;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
+
+public class PairwiseTests {
+	final static double[][] X = MatUtils.reshape(VecUtils.asDouble(VecUtils.arange(9)), 3, 3);
+	final static Kernel[] kernels = new Kernel[]{
+			new ANOVAKernel(), 
+			new CauchyKernel(), 
+			new CircularKernel(), 
+			new ExponentialKernel(),
+			new GaussianKernel(), 
+			new GeneralizedMinKernel(),
+			new HyperbolicTangentKernel(),
+			new InverseMultiquadricKernel(),
+			new LaplacianKernel(),
+			new LinearKernel(),
+			new LogKernel(),
+			new MinKernel(),
+			new MultiquadricKernel(),
+			new PolynomialKernel(),
+			new PowerKernel(),
+			new RadialBasisKernel(), 
+			new RationalQuadraticKernel(),
+			new SphericalKernel(),
+			new SplineKernel()
+		};
+	
+	@Test
+	public void testDistUpperTriangular() {
+		/*
+		 * Test for ALL distance metrics
+		 */
+		for(Distance metric: Distance.values()) {
+			double[][] completeDistance = Pairwise.getDistance(X, metric, true, false);
+			double[][] partialDistance  = Pairwise.getDistance(X, metric, true, true);
+			
+			for(int i = 0; i < X.length - 1; i++) {
+				for(int j = i + 1; j < X.length; j++) {
+					/*
+					 * Assert partial to full == complete
+					 */
+					assertTrue(Precision.equals(
+						completeDistance[i][j], 
+						metric.partialDistanceToDistance(partialDistance[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert complete to partial == partial
+					 */
+					assertTrue(Precision.equals(
+						partialDistance[i][j], 
+						metric.distanceToPartialDistance(completeDistance[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert lower-triangular portion is all zero
+					 */
+					assertTrue(partialDistance[j][i] == 0.0);
+					assertTrue(completeDistance[j][i]== 0.0);
+				}
+			}
+			
+			// Assert the diagonal is entirely zero
+			for(int i = 0; i < X.length; i++) {
+				assertTrue(partialDistance[i][i] == 0.0);
+				assertTrue(completeDistance[i][i]== 0.0);
+			}
+		}	
+	}
+
+	
+	
+	@Test
+	public void testDistFull() {
+		/*
+		 * Test for ALL distance metrics
+		 */
+		for(Distance metric: Distance.values()) {
+			double[][] completeDistance = Pairwise.getDistance(X, metric, false, false);
+			double[][] partialDistance  = Pairwise.getDistance(X, metric, false, true);
+			
+			for(int i = 0; i < X.length - 1; i++) {
+				for(int j = i + 1; j < X.length; j++) {
+					/*
+					 * Assert partial to full == complete
+					 */
+					assertTrue(Precision.equals(
+						completeDistance[i][j], 
+						metric.partialDistanceToDistance(partialDistance[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert complete to partial == partial
+					 */
+					assertTrue(Precision.equals(
+						partialDistance[i][j], 
+						metric.distanceToPartialDistance(completeDistance[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert lower-triangular portion equals upper triangular portion reflected
+					 */
+					assertTrue(partialDistance[j][i]  == partialDistance[i][j] );
+					assertTrue(completeDistance[j][i] == completeDistance[i][j]);
+				}
+			}
+		}
+	}
+	
+	@Test
+	public void testSimUpperTriangular() {
+		/*
+		 * Test for ALL kernels
+		 */
+		for(Kernel kernel: kernels) {
+			double[][] completeSimil = Pairwise.getSimilarity(X, kernel, true, false);
+			double[][] partialSimil  = Pairwise.getSimilarity(X, kernel, true, true);
+			
+			for(int i = 0; i < X.length - 1; i++) {
+				for(int j = i + 1; j < X.length; j++) {
+					/*
+					 * Assert partial to full == complete
+					 */
+					assertTrue(Precision.equals(
+						completeSimil[i][j], 
+						kernel.partialSimilarityToSimilarity(partialSimil[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert complete to partial == partial
+					 */
+					assertTrue(Precision.equals(
+						partialSimil[i][j], 
+						kernel.similarityToPartialSimilarity(completeSimil[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert lower-triangular portion is all zero
+					 */
+					assertTrue(partialSimil[j][i] == 0.0);
+					assertTrue(completeSimil[j][i]== 0.0);
+				}
+			}
+			
+			// Assert the diagonal is entirely zero
+			for(int i = 0; i < X.length; i++) {
+				assertTrue(partialSimil[i][i] == 0.0);
+				assertTrue(completeSimil[i][i]== 0.0);
+			}
+		}	
+	}
+
+	
+	
+	@Test
+	public void testSimFull() {
+		/*
+		 * Test for ALL kernels
+		 */
+		for(Kernel kernel: kernels) {
+			double[][] completeSimil = Pairwise.getSimilarity(X, kernel, false, false);
+			double[][] partialSimil  = Pairwise.getSimilarity(X, kernel, false, true);
+			
+			for(int i = 0; i < X.length - 1; i++) {
+				for(int j = i + 1; j < X.length; j++) {
+					/*
+					System.out.println(
+						kernel.getName() + ", " + 
+						completeSimil[i][j] + ", " + 
+						kernel.partialSimilarityToSimilarity(partialSimil[i][j]));
+					*/
+					
+					/*
+					 * Assert partial to full == complete
+					 */
+					assertTrue(Precision.equals(
+						completeSimil[i][j], 
+						kernel.partialSimilarityToSimilarity(partialSimil[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert complete to partial == partial
+					 */
+					assertTrue(Precision.equals(
+						partialSimil[i][j], 
+						kernel.similarityToPartialSimilarity(completeSimil[i][j]),
+						1e-8));
+					
+					/*
+					 * Assert lower-triangular portion equals upper triangular portion reflected
+					 */
+					assertTrue(partialSimil[j][i]  == partialSimil[i][j] );
+					assertTrue(completeSimil[j][i] == completeSimil[i][j]);
+				}
+			}
+		}	
+	}
+}

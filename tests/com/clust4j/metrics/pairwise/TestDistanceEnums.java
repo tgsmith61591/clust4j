@@ -181,4 +181,13 @@ public class TestDistanceEnums {
 			assertFalse(Double.isInfinite(d.getP()));
 		}
 	}
+	
+	@Test
+	public void testNans() {
+		final double[] a = new double[]{0,0,0,0};
+		final double[] b = new double[]{0,0,0,0};
+		assertTrue(Double.POSITIVE_INFINITY == Distance.DICE.getDistance(a, b));
+		assertTrue(Double.POSITIVE_INFINITY == Distance.SOKAL_SNEATH.getDistance(a, b));
+		assertTrue(Double.POSITIVE_INFINITY == Distance.YULE.getDistance(a, b));	
+	}
 }

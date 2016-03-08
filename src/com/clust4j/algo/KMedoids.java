@@ -13,7 +13,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.utils.ClustUtils;
+import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -237,7 +237,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				// We do this in KMedoids and not KMeans, because KMedoids uses
 				// real points as medoids and not means for centroids, thus
 				// the recomputation of distances is unnecessary with the dist mat
-				dist_mat = ClustUtils.distanceUpperTriangMatrix(X, getSeparabilityMetric());
+				dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
 				info("distance matrix computed in " + timer.toString());
 				
 				
