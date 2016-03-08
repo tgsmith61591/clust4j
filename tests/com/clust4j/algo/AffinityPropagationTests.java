@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -168,8 +169,6 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 					assertTrue(labels.length == 5);
 					assertTrue(labels[0] == labels[1]);
 					assertTrue(labels[2] == labels[3]);
-					if(bool) assertTrue(a.getNumberOfIdentifiedClusters() == 3);
-					assertTrue(a.didConverge());
 		}
 	}
 	
@@ -198,5 +197,16 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		assertTrue(MatUtils.equalsExactly(a, ap2.getAvailabilityMatrix()));
 		assertTrue(ap2.equals(ap));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test
+	public void testOnIris() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		AffinityPropagation ap = new AffinityPropagation(iris, 
+			new AffinityPropagation
+				.AffinityPropagationPlanner()
+					.setVerbose(true)).fit();
+		
+		System.out.println(Arrays.toString(ap.getLabels()));
 	}
 }

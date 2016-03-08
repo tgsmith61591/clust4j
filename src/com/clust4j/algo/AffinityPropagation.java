@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -14,8 +13,6 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.metrics.pairwise.SimilarityMetric;
-import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
@@ -336,41 +333,72 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				
 				// Init labels
 				final LogTimer timer = new LogTimer();
+				final double[][] X = data.getData();
 				labels = new int[m];
-				String error;
 				
 				
+					
+				/*
+				 * Originally, we computed similarity matrix, then refactored the diagonal vector, and
+				 * then computed the following portions. We can do this all at once and save lots of passes
+				 * (5?) on the order of O(M^2), condensing it all to one pass of O(M choose 2).
+				 * 
+				 * After the sim matrix is computed, we need to do three things:
+				 * 
+				 * 1. Create a matrix of very small values (tiny_scaled) to remove degeneracies in sim_mal
+				 * 2. Multiply tiny_scaled by an extremely small value (GlobalState.Mathematics.TINY*100)
+				 * 3. Create a noise matrix of random Gaussian values and add it to the similarity matrix.
+				 * 
+				 * The methods exist to build these in three to five separate O(M^2) passes, but that's 
+				 * extremely expensive, so we're going to do it in one giant, convoluted loop. If you're 
+				 * trying to debug this, sorry...
+				 */
+				LogTimer tmpTimer = new LogTimer();
+				sim_mat = new double[m][m];
 				
-				// Calc sim mat to MAXIMIZE VALS
-				if(getSeparabilityMetric() instanceof SimilarityMetric) {
-					sim_mat = ClustUtils.similarityFullMatrix(data, (SimilarityMetric)getSeparabilityMetric());
-				} else {
-					sim_mat = MatUtils.negative(ClustUtils.distanceFullMatrix(data, getSeparabilityMetric()));
+				int idx = 0;
+				final double[] ut_vals = new double[((m*m) - m) / 2]; // all upper triangular values to find median of
+				final double tiny_val = GlobalState.Mathematics.TINY*100;
+				double sim, noise;
+				boolean last_iter = false;
+				
+				for(int i = 0; i < m - 1; i++) {
+					for(int j = i + 1; j < m; j++) { // Upper triangular
+						sim = -(getSeparabilityMetric().getPartialDistance(X[i], X[j])); // similarity
+						ut_vals[idx++] = sim;
+						
+						// Assign to upper and lower portion
+						sim_mat[i][j] = sim;
+						sim_mat[j][i] = sim;
+						
+						// Catch the last iteration, compute the diagonal:
+						double median = 0.0;
+						if(last_iter = (i == m - 2 && j == m - 1)) {
+							median = VecUtils.median(ut_vals);
+							info("median partial similarity computed as " + median + 
+								". Setting as initialization point " + tmpTimer.wallMsg());
+						}
+						
+						if(addNoise) {
+							noise = (sim * GlobalState.Mathematics.EPS + tiny_val);
+							sim_mat[i][j] += (noise * getSeed().nextGaussian());
+							sim_mat[j][i] += (noise * getSeed().nextGaussian());
+							
+							if(last_iter) { // set diag and do the noise thing.
+								noise = (median * GlobalState.Mathematics.EPS + tiny_val);
+								for(int h = 0; h < m; h++)
+									sim_mat[h][h] = median + (noise * getSeed().nextGaussian());
+							}
+						} else if(last_iter) {
+							// it's the last iter and no noise. Just set diag.
+							for(int h = 0; h < m; h++)
+								sim_mat[h][h] = median;
+						}
+					}
 				}
 				
-				info("completed similarity computations in " + timer.toString());
 				
-				
-				
-				// Extract the upper triangular portion from sim mat, get the median as default pref 
-				LogTimer tmpTimer = new LogTimer();
-				int idx = 0, mChoose2 = ((m*m) - m) / 2;
-				final double[] vals = new double[mChoose2];
-				for(int i = 0; i < m - 1; i++)
-					for(int j = i + 1; j < m; j++)
-						vals[idx++] = sim_mat[i][j];
-				
-				final double pref = VecUtils.median(vals);
-				info("computed initialization point ("+pref+") in " + tmpTimer.toString());
-				
-				
-				
-				// Place pref on diagonal of sim mat
-				tmpTimer = new LogTimer();
-				for(int i = 0; i < m; i++)
-					sim_mat[i][i] = pref;
-				info("refactored similarity matrix diagonal vector in " + tmpTimer.toString());
-				
+				info("computed similarity matrix and smoothed degeneracies in " + tmpTimer.toString());
 				
 				
 				// Affinity propagation uses two matrices: the responsibility 
@@ -378,50 +406,6 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[][] A = new double[m][m];
 				double[][] R = new double[m][m];
 				double[][] tmp = new double[m][m]; // Intermediate staging...
-				
-				
-				// Add noise if needed
-				if(addNoise) {
-					// Add some extremely small noise to the similarity matrix
-					double[][] tiny_scaled = MatUtils.scalarMultiply(sim_mat, GlobalState.Mathematics.EPS);
-					tiny_scaled = MatUtils.scalarAdd(tiny_scaled, GlobalState.Mathematics.TINY*100);
-					
-					tmpTimer = new LogTimer();
-					double[][] noise = MatUtils.randomGaussian(m, m, getSeed());
-					info("Gaussian noise matrix computed in " + tmpTimer.toString());
-					double[][] noiseMatrix = null;
-					
-					
-					try {
-						tmpTimer = new LogTimer();
-						info("multiplying scaling matrix by noise matrix ("+m+"x"+m+")");
-						
-						
-						// Compute noise matrix, force parallel if necessary
-						if(FORCE_PARALLELISM_WHERE_POSSIBLE) {
-							try {
-								noiseMatrix = MatUtils.multiplyDistributed(tiny_scaled, noise);
-							} catch(RejectedExecutionException rej) {
-								noiseMatrix = MatUtils.multiplyForceSerial(tiny_scaled, noise);
-							}
-						} else {
-							noiseMatrix = ALLOW_AUTO_PARALLELISM ? 
-									// It'll choose whether to run in parallel or not
-									MatUtils.multiply(tiny_scaled, noise) :
-										MatUtils.multiplyForceSerial(tiny_scaled, noise);
-						}
-						
-								
-						// Update
-						info("matrix product computed in " + tmpTimer.toString());
-					} catch(DimensionMismatchException e) {
-						error = e.getMessage();
-						error(error);
-						throw new InternalError("similarity matrix produced DimMismatch: "+ error); // Should NEVER happen
-					}
-					
-					sim_mat = MatUtils.add(sim_mat, noiseMatrix);
-				}
 				
 				
 				// Begin here
@@ -432,7 +416,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[] sum_e;
 				
 				final LogTimer iterTimer = new LogTimer();
-				wallInfo(iterTimer, "beginning affinity computations");
+				info("beginning affinity computations " + timer.wallMsg());
 				long iterStart = Long.MAX_VALUE;
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
 					iterStart = iterTimer.now();

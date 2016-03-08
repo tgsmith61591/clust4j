@@ -311,4 +311,20 @@ public class ParallelTests {
 		System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
 	}
 
+	@Test
+	public void testMultRealBig() {
+		final double[][] a = MatUtils.randomGaussian(5000, 20);
+		final double[][] b = MatUtils.randomGaussian(20, 6000);
+		
+		long start = System.currentTimeMillis();
+		final double[][] ca = MatUtils.multiplyForceSerial(a, b);
+		long serialTime = System.currentTimeMillis() - start;
+		
+		start = System.currentTimeMillis();
+		final double[][] cb = MatUtils.multiplyDistributed(a, b);
+		long paraTime = System.currentTimeMillis() - start;
+		
+		assertTrue(MatUtils.equalsWithTolerance(ca, cb, 1e-8));
+		System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
+	}
 }
