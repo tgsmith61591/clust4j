@@ -2,7 +2,6 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -16,9 +15,6 @@ import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
-
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
-import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/Affinity_propagation">Affinity Propagation</a> (AP) 
@@ -330,7 +326,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	 * @param addNoise
 	 * @return the smoothed similarity matrix
 	 */
-	static double[][] computeSmoothedSimilarity(final double[][] X, GeometricallySeparable metric, Random seed, boolean addNoise) {
+	protected static double[][] computeSmoothedSimilarity(final double[][] X, GeometricallySeparable metric, Random seed, boolean addNoise) {
 		/*
 		 * Originally, we computed similarity matrix, then refactored the diagonal vector, and
 		 * then computed the following portions. We can do this all at once and save lots of passes
@@ -345,29 +341,43 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		 * The methods exist to build these in three to five separate O(M^2) passes, but that's 
 		 * extremely expensive, so we're going to do it in one giant, convoluted loop. If you're 
 		 * trying to debug this, sorry...
+		 * 
+		 * Total runtime: O(2M * M choose 2)
 		 */
 		final int m = X.length;
 		double[][] sim_mat = new double[m][m];
 		
 		int idx = 0;
-		final double[] ut_vals = new double[((m*m) - m) / 2]; // all upper triangular values to find median of
 		final double tiny_val = GlobalState.Mathematics.TINY*100;
+		final double[] vector = new double[m * m];
 		double sim, noise;
 		boolean last_iter = false;
+		
+		
+		// Do this a little differently... set the diagonal FIRST.
+		for(int i = 0; i < m; i++) {
+			sim = -(metric.getPartialDistance(X[i], X[i]));
+			sim_mat[i][i] = sim;
+			vector[idx++] = sim;
+		}
+		
 		
 		for(int i = 0; i < m - 1; i++) {
 			for(int j = i + 1; j < m; j++) { // Upper triangular
 				sim = -(metric.getPartialDistance(X[i], X[j])); // similarity
-				ut_vals[idx++] = sim;
 				
 				// Assign to upper and lower portion
 				sim_mat[i][j] = sim;
 				sim_mat[j][i] = sim;
 				
-				// Catch the last iteration, compute the diagonal:
+				// Add to the vector (twice)
+				for(int b = 0; b < 2; b++)
+					vector[idx++] = sim;
+				
+				// Catch the last iteration, compute the pref:
 				double median = 0.0;
 				if(last_iter = (i == m - 2 && j == m - 1))
-					median = VecUtils.median(ut_vals);
+					median = VecUtils.median(vector);
 				
 				if(addNoise) {
 					noise = (sim * GlobalState.Mathematics.EPS + tiny_val);
@@ -390,6 +400,173 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		return sim_mat;
 	}
 
+	
+	/**
+	 * Computes the first portion of the AffinityPropagation iteration
+	 * sequence in place. Separating this piece from the {@link #fit()} method
+	 * itself allows for easier testing.
+	 * @param A
+	 * @param S
+	 * @param tmp
+	 * @param I
+	 * @param Y
+	 * @param Y2
+	 */
+	protected static void affinityPiece1(double[][] A, double[][] S, double[][] tmp, int[] I, double[] Y, double[] Y2) {
+		final int m = S.length;
+		
+		// Reassign tmp, create vector of arg maxes. Can
+		// assign tmp like this:
+		//
+		//		tmp = MatUtils.add(A, sim_mat);
+		//
+		//
+		// But requires extra M x M pass. Also get indices of ROW max. 
+		// Can do like this:
+		//
+		//		I = MatUtils.argMax(tmp, Axis.ROW);
+		//
+		// But requires extra pass on order of M. Finally, capture the second
+		// highest record in each row, and store in a vector. Then row-wise
+		// scalar subtract Y from the sim_mat
+		for(int i = 0; i < m; i++) {
+			
+			// Compute row maxes
+			double runningMax = Double.NEGATIVE_INFINITY;
+			double secondMax  = Double.NEGATIVE_INFINITY;
+			int runningMaxIdx = -1;			// Idx of max row element
+			
+			for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
+				tmp[i][j] = A[i][j] + S[i][j];
+				
+				if(tmp[i][j] > runningMax) {
+					secondMax = runningMax;
+					runningMax = tmp[i][j];
+					runningMaxIdx = j;
+				} else if(tmp[i][j] > secondMax) {
+					secondMax = tmp[i][j];
+				}
+			}
+			
+			I[i] = runningMaxIdx;			// Idx of max element for row
+			Y[i] = tmp[i][I[i]]; // Grab the current val
+			Y2[i] = secondMax;
+			tmp[i][I[i]] = Double.NEGATIVE_INFINITY; // Set that idx to neg inf now
+		}
+	}
+	
+	/**
+	 * Computes the second portion of the AffinityPropagation iteration
+	 * sequence in place. Separating this piece from the {@link #fit()} method
+	 * itself allows for easier testing.
+	 * @param colSums
+	 * @param tmp
+	 * @param I
+	 * @param S
+	 * @param R
+	 * @param Y
+	 * @param Y2
+	 * @param damping
+	 */
+	protected static void affinityPiece2(double[] colSums, double[][] tmp, int[] I, 
+			double[][] S, double[][] R, double[] Y, double[] Y2, double damping) {
+		
+		final int m = S.length;
+		
+		// Second i thru m loop, get new max vector and then first damping.
+		// First damping ====================================
+		// This can be done like this (which is more readable):
+		//
+		//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
+		//		R	= MatUtils.scalarMultiply(R, damping);
+		//		R	= MatUtils.add(R, tmp);
+		//
+		// But it requires two extra MXM passes, which can be costly...
+		// We know R & tmp are both m X m, so we can combine the 
+		// three steps all together...
+		// Finally, compute availability -- start by setting anything 
+		// less than 0 to 0 in tmp. Also calc column sums in same pass...
+		int ind = 0;
+		final double omd = 1.0 - damping;
+		
+		for(int i = 0; i < m; i++) {
+			// Get new max vector
+			for(int j = 0; j < m; j++) 
+				tmp[i][j] = S[i][j] - Y[i];
+			tmp[ind][I[i]] = S[ind][I[i]] - Y2[ind++];
+			
+			// Perform damping, then piecewise 
+			// calculate column sums
+			for(int j = 0; j < m; j++) {
+				tmp[i][j] *= omd;
+				R[i][j] = (R[i][j] * damping) + tmp[i][j];
+
+				tmp[i][j] = FastMath.max(R[i][j], 0);
+				if(i != j) // Because we set diag after this outside j loop
+					colSums[j] += tmp[i][j];
+			}
+			
+			tmp[i][i] = R[i][i]; // Set diagonal elements in tmp equal to those in R
+			colSums[i] += tmp[i][i];
+		}
+	}
+	
+	/**
+	 * Computes the third portion of the AffinityPropagation iteration
+	 * sequence in place. Separating this piece from the {@link #fit()} method
+	 * itself allows for easier testing.
+	 * @param tmp
+	 * @param colSums
+	 * @param A
+	 * @param R
+	 * @param mask
+	 * @param damping
+	 */
+	protected static void affinityPiece3(double[][] tmp, double[] colSums, 
+			double[][] A, double[][] R, double[] mask, double damping) {
+		final int m = A.length;
+		
+		// Set any negative values to zero but keep diagonal at original
+		// Originally ran this way, but costs an extra M x M operation:
+		// tmp = MatUtils.scalarSubtract(tmp, colSums, Axis.COL);
+		// Finally, more damping...
+		// More damping ====================================
+		// This can be done like this (which is more readable):
+		//
+		//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
+		//		A	= MatUtils.scalarMultiply(A, damping);
+		//		A	= MatUtils.subtract(A, tmp);
+		//
+		// But it requires two extra MXM passes, which can be costly... O(2M^2)
+		// We know A & tmp are both m X m, so we can combine the 
+		// three steps all together...
+		
+		// ALSO CHECK CONVERGENCE CRITERIA
+		
+		// Check convergence criteria =====================
+		// This can be done like this for readability:
+		//
+		//		final double[] diagA = MatUtils.diagFromSquare(A);
+		//		final double[] diagR = MatUtils.diagFromSquare(R);
+		//		final double[] mask = new double[diagA.length];
+		//		for(int i = 0; i < mask.length; i++)
+		//			mask[i] = diagA[i] + diagR[i] > 0 ? 1d : 0d;
+		for(int i = 0; i < m; i++) {
+			for(int j = 0; j < m; j++) {
+				tmp[i][j] -= colSums[j];
+				
+				if(tmp[i][j] < 0 && i != j) // Don't set diag to 0
+					tmp[i][j] = 0;
+				
+				tmp[i][j] *= (1 - damping);
+				A[i][j] = (A[i][j] * damping) - tmp[i][j];
+			}
+			
+			mask[i] = A[i][i] + R[i][i] > 0 ? 1.0 : 0.0;
+		}
+	}
+	
+	
 	@Override
 	public AffinityPropagation fit() {
 		synchronized(this) {
@@ -422,148 +599,41 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				double[] Y2;	// vector of maxes post neg inf
 				double[] sum_e;
 				
+				
 				final LogTimer iterTimer = new LogTimer();
 				info("beginning affinity computations " + timer.wallMsg());
+				
+				
+				
 				long iterStart = Long.MAX_VALUE;
 				for(iterCt = 0; iterCt < maxIter; iterCt++) {
 					iterStart = iterTimer.now();
 					
-					// Reassign tmp, create vector of arg maxes. Can
-					// assign tmp like this:
-					//
-					//		tmp = MatUtils.add(A, sim_mat);
-					//
-					//
-					// But requires extra M x M pass. Also get indices of ROW max. 
-					// Can do like this:
-					//
-					//		I = MatUtils.argMax(tmp, Axis.ROW);
-					//
-					// But requires extra pass on order of M. Finally, capture the second
-					// highest record in each row, and store in a vector. Then row-wise
-					// scalar subtract Y from the sim_mat
+					/*
+					 * First piece in place
+					 */
 					Y = new double[m];
 					Y2 = new double[m]; // Second max for each row
-					for(int i = 0; i < m; i++) {
-						double runningMax = GlobalState.Mathematics.SIGNED_MIN;
-						double secondMax = GlobalState.Mathematics.SIGNED_MIN;
-						int runningMaxIdx = -1;			// Idx of max row element
-						for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
-							tmp[i][j] = A[i][j] + sim_mat[i][j];
-							
-							if(tmp[i][j] > runningMax) {
-								secondMax = runningMax;
-								runningMax = tmp[i][j];
-								runningMaxIdx = j;
-							} else if(tmp[i][j] > secondMax) {
-								secondMax = tmp[i][j];
-							}
-						}
-						
-						I[i] = runningMaxIdx;			// Idx of max element for row
-						Y[i] = tmp[i][I[i]]; // Grab the current val
-						Y2[i] = secondMax;
-						tmp[i][I[i]] = Double.NEGATIVE_INFINITY; // Set that idx to neg inf now
-					}
+					affinityPiece1(A, sim_mat, tmp, I, Y, Y2);
 					
 					
-					// Second i thru m loop, get new max vector and then first damping.
-					// First damping ====================================
-					// This can be done like this (which is more readable):
-					//
-					//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
-					//		R	= MatUtils.scalarMultiply(R, damping);
-					//		R	= MatUtils.add(R, tmp);
-					//
-					// But it requires two extra MXM passes, which can be costly...
-					// We know R & tmp are both m X m, so we can combine the 
-					// three steps all together...
-					// Finally, compute availability -- start by setting anything 
-					// less than 0 to 0 in tmp. Also calc column sums in same pass...
-					int ind = 0;
+					/*
+					 * Second piece in place
+					 */
 					final double[] columnSums = new double[m];
-					for(int i = 0; i < m; i++) {
-						// Get new max vector
-						for(int j = 0; j < m; j++) tmp[i][j] = sim_mat[i][j] - Y[i];
-						tmp[ind][I[i]] = sim_mat[ind][I[i]] - Y2[ind++];
-						
-						// Perform damping, then piecewise 
-						// calculate column sums
-						for(int j = 0; j < m; j++) {
-							tmp[i][j] *= (1 - damping);
-							R[i][j] = (R[i][j] * damping) + tmp[i][j];
-	
-							tmp[i][j] = FastMath.max(R[i][j], 0);
-							if(i != j) // Because we set diag after this outside j loop
-								columnSums[j] += tmp[i][j];
-						}
-						
-						tmp[i][i] = R[i][i]; // Set diagonal elements in tmp equal to those in R
-						columnSums[i] += tmp[i][i];
-					}
+					affinityPiece2(columnSums, tmp, I, sim_mat, R, Y, Y2, damping);
 					
 					
-					// Set any negative values to zero but keep diagonal at original
-					// Originally ran this way, but costs an extra M x M operation:
-					// tmp = MatUtils.scalarSubtract(tmp, colSums, Axis.COL);
-					// Finally, more damping...
-					// More damping ====================================
-					// This can be done like this (which is more readable):
-					//
-					//		tmp	= MatUtils.scalarMultiply(tmp, 1 - damping);
-					//		A	= MatUtils.scalarMultiply(A, damping);
-					//		A	= MatUtils.subtract(A, tmp);
-					//
-					// But it requires two extra MXM passes, which can be costly... O(2M^2)
-					// We know A & tmp are both m X m, so we can combine the 
-					// three steps all together...
-					
-					// ALSO CHECK CONVERGENCE CRITERIA
-					
-					// Check convergence criteria =====================
-					// This can be done like this for readability:
-					//
-					//		final double[] diagA = MatUtils.diagFromSquare(A);
-					//		final double[] diagR = MatUtils.diagFromSquare(R);
-					//		final double[] mask = new double[diagA.length];
-					//		for(int i = 0; i < mask.length; i++)
-					//			mask[i] = diagA[i] + diagR[i] > 0 ? 1d : 0d;
+					/*
+					 * Third piece in place
+					 */
 					final double[] mask = new double[m];
-					for(int i = 0; i < m; i++) {
-						for(int j = 0; j < m; j++) {
-							tmp[i][j] -= columnSums[j];
-							
-							if(tmp[i][j] < 0 && i != j) // Don't set diag to 0
-								tmp[i][j] = 0;
-							
-							tmp[i][j] *= (1 - damping);
-							A[i][j] = (A[i][j] * damping) - tmp[i][j];
-						}
-						
-						mask[i] = A[i][i] + R[i][i] > 0 ? 1.0 : 0.0;
-					}
-						
+					affinityPiece3(tmp, columnSums, A, R, mask, damping);
 						
 						
 					// Set the mask in `e`
 					MatUtils.setColumnInPlace(e, iterCt % iterBreak, mask);
-					
-					
-					
-					
-					// Get k -- can use parallelism... 
-					if(FORCE_PARALLELISM_WHERE_POSSIBLE) {
-						try {
-							numClusters = (int)VecUtils.sumDistributed(mask);
-						} catch(RejectedExecutionException rej) {
-							numClusters = (int)VecUtils.sumForceSerial(mask);
-						}
-					} else {
-						numClusters = ALLOW_AUTO_PARALLELISM ? 
-							(int)VecUtils.sum(mask) : // let sum internally check whether vec is long enough
-								(int)VecUtils.sumForceSerial(mask); // just force serial, save overhead of checks & try/catch
-					}
-	
+					numClusters = (int)VecUtils.sum(mask);
 					
 					
 					
@@ -589,6 +659,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						iterCt, converged, 
 						iterTimer.formatTime( iterTimer.now() - iterStart ),
 						timer.formatTime(),
+						numClusters,
 						timer.wallTime()
 					});
 				} // End for
@@ -601,6 +672,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 						iterCt, converged, 
 						iterTimer.formatTime( iterTimer.now() - iterStart ),
 						timer.formatTime(),
+						numClusters,
 						timer.wallTime()
 					});
 				}
@@ -759,7 +831,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Iter. Time","Tot. Time","Wall"
+			"Iter. #","Converged","Iter. Time","Tot. Time","Num Clusters","Wall"
 		};
 	}
 

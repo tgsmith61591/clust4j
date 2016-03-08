@@ -7,17 +7,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
 
 public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
@@ -114,35 +117,6 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	}
 	
 	@Test
-	public void NNTest1() {
-		final double[][] train_array = new double[][] {
-			new double[] {0.0,  1.0,  2.0,  3.0},
-			new double[] {1.0,  2.3,  2.0,  4.0},
-			new double[] {9.06, 12.6, 6.5,  9.0}
-		};
-		
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
-		
-		Neighbors nn = new NearestNeighbors(mat, 
-			new NearestNeighbors.NearestNeighborsPlanner(1)
-				.setVerbose(true)).fit();
-		
-		int[][] ne = nn.getNeighbors().getIndices();
-		assertTrue(ne[0].length == 1);
-		assertTrue(ne[0].length == 1);
-		System.out.println();
-		
-		nn = new RadiusNeighbors(mat, 
-			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
-				.setVerbose(true)).fit();
-		
-		ne = nn.getNeighbors().getIndices();
-		assertTrue(ne[0].length == 1);
-		assertTrue(ne[1].length == 1);
-		assertTrue(ne[2].length == 0);
-	}
-	
-	@Test
 	public void AffinityPropKernelTest1() {
 		final double[][] train_array = new double[][] {
 			new double[] {0.001,  1.002,   0.481,   3.029,  2.019},
@@ -207,6 +181,135 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 				.AffinityPropagationPlanner()
 					.setVerbose(true)).fit();
 		
-		System.out.println(Arrays.toString(ap.getLabels()));
+		final int[] expected = new LabelEncoder(new int[]{
+			1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+			1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0,
+			1, 0, 1, 0, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 2, 4, 3, 2,
+			3, 4, 3, 4, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 3, 2, 2, 2, 3, 3, 3, 2,
+			3, 3, 3, 3, 3, 2, 3, 3, 6, 4, 6, 6, 6, 5, 3, 5, 6, 5, 6, 4, 6, 4, 4,
+			6, 6, 5, 5, 4, 6, 4, 5, 4, 6, 6, 4, 4, 6, 6, 5, 5, 6, 4, 4, 5, 6, 6,
+			4, 6, 6, 6, 4, 6, 6, 6, 4, 6, 6, 4
+		}).fit().getEncodedLabels();
+		
+		// Assert that the predicted labels are at least 90% in sync with sklearn
+		// expected labels (give leeway for random state...)
+		assertTrue(Precision.equals(ap.indexAffinityScore(expected), 1.0, 0.1));
+	}
+	
+	@Test
+	public void testSimMatFormulation() {
+		double[][] X = MatUtils.reshape(VecUtils.asDouble(VecUtils.arange(9)), 3, 3);
+		double[][] S = AffinityPropagation
+			.computeSmoothedSimilarity(X, Distance.EUCLIDEAN, 
+					GlobalState.DEFAULT_RANDOM_STATE, false);
+		
+		assertTrue(MatUtils.equalsExactly(S, new double[][]{
+			new double[]{ -27, -27, -108},
+			new double[]{ -27, -27,  -27},
+			new double[]{-108, -27,  -27}
+		}));
+		
+		double[][] S_noise = AffinityPropagation
+			.computeSmoothedSimilarity(X, Distance.EUCLIDEAN, 
+					GlobalState.DEFAULT_RANDOM_STATE, true);
+		
+		assertTrue(MatUtils.equalsWithTolerance(S_noise, new double[][]{
+			new double[]{ -27, -27, -108},
+			new double[]{ -27, -27,  -27},
+			new double[]{-108, -27,  -27}
+		}, 1e-12));
+		
+		
+		
+		// ==== DIFF EXAMPLE ====
+		
+		X = new double[][]{
+			new double[]{0.1,0.2,0.3,0.4},
+			new double[]{0.2,0.2,0.3,0.1},
+			new double[]{12.1,18.1,34,12},
+			new double[]{15,23.2,32.1,14}
+		};
+		
+		S_noise = AffinityPropagation
+			.computeSmoothedSimilarity(X, Distance.EUCLIDEAN, 
+				GlobalState.DEFAULT_RANDOM_STATE, true);
+		assertTrue(MatUtils.equalsWithTolerance(S_noise, 
+			new double[][]{
+				new double[]{-8.88345000e+02, -1.00000000e-01, -1.73466000e+03, -1.94721000e+03},
+				new double[]{-1.00000000e-01, -8.88345000e+02, -1.73932000e+03, -1.95249000e+03},
+				new double[]{-1.73466000e+03, -1.73932000e+03, -8.88345000e+02, -4.20300000e+01},
+				new double[]{-1.94721000e+03, -1.95249000e+03, -4.20300000e+01, -8.88345000e+02}
+			}, 1e-12));
+		
+		
+		final int m = S_noise.length;
+		double[][] A = new double[m][m];
+		double[][] R = new double[m][m];
+		double[][] tmp = new double[m][m];
+		int[] I = new int[m];
+		double[] Y = new double[m];
+		double[] Y2 = new double[m];
+		
+		// Performs the work IN PLACE
+		AffinityPropagation.affinityPiece1(A, S_noise, tmp, I, Y, Y2);
+		
+		assertTrue(MatUtils.equalsExactly(A, MatUtils.rep(0.0, m, m)));
+		assertTrue(MatUtils.equalsExactly(R, MatUtils.rep(0.0, m, m)));
+		assertTrue(VecUtils.equalsExactly(I, new int[]{1,0,3,2}));
+		assertTrue(VecUtils.equalsWithTolerance(Y, new double[]{-0.1, -0.1 , -42.03, -42.03}, 1e-12));
+		assertTrue(VecUtils.equalsWithTolerance(Y2, new double[]{-888.345, -888.345, -888.345, -888.345}, 1e-12));
+		
+		assertTrue(MatUtils.equalsWithTolerance(tmp, 
+			new double[][]{
+				new double[]{-8.88345000e+02, Double.NEGATIVE_INFINITY, -1.73466000e+03, -1.94721000e+03},
+				new double[]{Double.NEGATIVE_INFINITY, -8.88345000e+02, -1.73932000e+03, -1.95249000e+03},
+				new double[]{-1.73466000e+03, -1.73932000e+03, -8.88345000e+02, Double.NEGATIVE_INFINITY},
+				new double[]{-1.94721000e+03, -1.95249000e+03, Double.NEGATIVE_INFINITY, -8.88345000e+02}
+			}, 1e-12));
+		
+		
+		// Performs the work IN PLACE
+		double[] colSums = new double[m];
+		AffinityPropagation.affinityPiece2(colSums, tmp, I, S_noise, R, Y, Y2, 0.5);
+		
+		assertTrue(MatUtils.equalsWithTolerance(R, new double[][]{
+			new double[]{-444.1225,  444.1225, -867.28  , -973.555 },
+			new double[]{ 444.1225, -444.1225, -869.61  , -976.195 },
+			new double[]{-846.315 , -848.645 , -423.1575,  423.1575},
+			new double[]{-952.59  , -955.23  ,  423.1575, -423.1575}
+		}, 1e-12));
+		
+		assertTrue(MatUtils.equalsWithTolerance(tmp, new double[][]{
+			new double[]{-444.1225,  444.1225,    0.    ,    0.    },
+			new double[]{ 444.1225, -444.1225,    0.    ,    0.    },
+			new double[]{   0.    ,    0.    , -423.1575,  423.1575},
+			new double[]{   0.    ,    0.    ,  423.1575, -423.1575}
+		}, 1e-12));
+		
+		
+		// Performs the work IN PLACE
+		double[] mask = new double[m];
+		AffinityPropagation.affinityPiece3(tmp, colSums, A, R, mask, 0.5);
+		
+		assertTrue(MatUtils.equalsWithTolerance(R, new double[][]{
+			new double[]{-444.1225,  444.1225, -867.28  , -973.555 },
+			new double[]{ 444.1225, -444.1225, -869.61  , -976.195 },
+			new double[]{-846.315 , -848.645 , -423.1575,  423.1575},
+			new double[]{-952.59  , -955.23  ,  423.1575, -423.1575}
+		}, 1e-12));
+		
+		assertTrue(MatUtils.equalsWithTolerance(A, new double[][]{
+			new double[]{ 2.22061250e+02,  -2.22061250e+02,  -2.84217094e-14,  0.00000000e+00},
+			new double[]{-2.22061250e+02,   2.22061250e+02,  -2.84217094e-14,  0.00000000e+00},
+			new double[]{-8.52651283e-14,   0.00000000e+00,   2.11578750e+02, -2.11578750e+02},
+			new double[]{-8.52651283e-14,   0.00000000e+00,  -2.11578750e+02,  2.11578750e+02}
+		}, 1e-12));
+		
+		assertTrue(MatUtils.equalsWithTolerance(tmp, new double[][]{
+			new double[]{-2.22061250e+02,   2.22061250e+02,   2.84217094e-14,  0.00000000e+00},
+			new double[]{ 2.22061250e+02,  -2.22061250e+02,   2.84217094e-14,  0.00000000e+00},
+			new double[]{ 8.52651283e-14,   0.00000000e+00,  -2.11578750e+02,  2.11578750e+02},
+			new double[]{ 8.52651283e-14,   0.00000000e+00,   2.11578750e+02, -2.11578750e+02}
+		}, 1e-12));
 	}
 }

@@ -446,4 +446,33 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		NearestNeighbors nn = new NearestNeighbors(DATA, 2).fit();
 		nn.getNeighbors(DATA, -1);
 	}
+	
+	@Test
+	public void NNTest1_ap() {
+		final double[][] train_array = new double[][] {
+			new double[] {0.0,  1.0,  2.0,  3.0},
+			new double[] {1.0,  2.3,  2.0,  4.0},
+			new double[] {9.06, 12.6, 6.5,  9.0}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		
+		Neighbors nn = new NearestNeighbors(mat, 
+			new NearestNeighbors.NearestNeighborsPlanner(1)
+				.setVerbose(false)).fit();
+		
+		int[][] ne = nn.getNeighbors().getIndices();
+		assertTrue(ne[0].length == 1);
+		assertTrue(ne[0].length == 1);
+		System.out.println();
+		
+		nn = new RadiusNeighbors(mat, 
+			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
+				.setVerbose(true)).fit();
+		
+		ne = nn.getNeighbors().getIndices();
+		assertTrue(ne[0].length == 1);
+		assertTrue(ne[1].length == 1);
+		assertTrue(ne[2].length == 0);
+	}
 }
