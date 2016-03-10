@@ -1,11 +1,13 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -49,7 +51,7 @@ public class MeanShift
 	final public static double DEF_BANDWIDTH = 5.0;
 	final public static int DEF_MAX_ITER = 300;
 	final public static int DEF_MIN_BIN_FREQ = 1;
-	final static int maxTries = 4;
+	final static int maxTries = 8;
 	final static double incrementAmt = 0.25;
 	
 	
@@ -182,60 +184,44 @@ public class MeanShift
 			});
 	}
 	
-	static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
+	final protected static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
 		if(quantile <= 0 || quantile > 1)
 			throw new IllegalArgumentException("illegal quantile");
-		final int m = data.getRowDimension();
-		
+		final int m = data.getRowDimension(), nnbrs = (int)(m * quantile);
 		
 		NearestNeighbors nn = new NearestNeighbors(data,
-			new NearestNeighborsPlanner((int)(m * quantile))
-				.setSeed(seed)
-				.setSep(sep))
-			.fit();
+			new NearestNeighborsPlanner(nnbrs)
+				.setSeed(seed)).fit();
 		
 		double bw = 0.0;
-		ArrayList<Array2DRowRealMatrix> chunks = generateChunks(data.getData(), 500);
+		final double[][] X = data.getData();
+		final int chunkSize = 500;
+		final int numChunks = getNumChunks(chunkSize, m);
 		Neighborhood neighb;
-		double[][] distances;
-		for(Array2DRowRealMatrix chunk: chunks) {
-			neighb = nn.getNeighbors(chunk);
-			distances = neighb.getDistances();
-			
-			for(double[] distRow: distances) {
-				double maxDist = Double.NEGATIVE_INFINITY;
-				
-				for(double dist: distRow)
-					maxDist= FastMath.max(dist, maxDist);
-				
-				bw += maxDist;
-			}
-		}
 		
 		
-		return bw / (double)m;
-	}
-	
-	static ArrayList<Array2DRowRealMatrix> generateChunks(double[][] data, int chunkSize) {
-		final int m = data.length, numChunks = getNumChunks(chunkSize, m);
-		
+		/*
+		 * For each chunk of 500, get the neighbors and then compute the
+		 * sum of the row maxes of the distance matrix.
+		 */
 		int chunkStart, nextChunk;
-		ArrayList<Array2DRowRealMatrix> out = new ArrayList<>();
 		for(int chunk = 0; chunk < numChunks; chunk++) {
 			chunkStart = chunk * chunkSize;
 			nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
 			
 			double[][] nextMatrix = new double[nextChunk - chunkStart][];
 			for(int i = chunkStart, j = 0; i < nextChunk; i++, j++)
-				nextMatrix[j] = data[i];
+				nextMatrix[j] = X[i];
 			
-			out.add(new Array2DRowRealMatrix(nextMatrix, false));
+			neighb = nn.getNeighbors(nextMatrix);
+			for(double[] distRow: neighb.getDistances())
+				bw += VecUtils.max(distRow);
 		}
 		
-		return out;
+		return bw / (double)m;
 	}
 	
-	static int getNumChunks(final int chunkSize, final int m) {
+	protected static int getNumChunks(final int chunkSize, final int m) {
 		return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
 	}
 	
@@ -420,7 +406,42 @@ public class MeanShift
 	public Algo getLoggerTag() {
 		return com.clust4j.log.Log.Tag.Algo.MEANSHIFT;
 	}
-
+	
+	static EntryPair<ArrayList<EntryPair<double[], Integer>>, Integer> getCenterIntensity(AbstractRealMatrix data, 
+			double bandwidth, double[][] seeds, Random rand, GeometricallySeparable metric, int maxIter) {
+		int itrz = 0;
+		
+		RadiusNeighbors nbrs = new RadiusNeighbors(data,
+			new RadiusNeighborsPlanner(bandwidth)
+				.setScale(false) // if we scaled in MeanShift, data is already there
+				.setSeed(rand)
+				.setSep(metric)
+				.setVerbose(false)).fit();
+		
+		// Now get single seed members
+		MeanShiftSeed sd;
+		TreeSet<MeanShiftSeed> computedSeeds = new TreeSet<>();
+		for(double[] seed: seeds) {
+			sd = singleSeed(seed, nbrs, seeds, maxIter);
+			if(null == sd)
+				continue;
+			
+			computedSeeds.add(sd);
+			itrz = FastMath.max(itrz, sd.iterations);
+		}
+		
+		
+		ArrayList<EntryPair<double[], Integer>> center_intensity = new ArrayList<>();
+		
+		// add the entry pairs
+		for(MeanShiftSeed seed: computedSeeds) {
+			if(null != seed) {
+				center_intensity.add(seed.getPair());
+			}
+		}
+		
+		return new EntryPair<>(center_intensity, itrz);
+	}
 
 	@Override
 	public MeanShift fit() {
@@ -431,46 +452,26 @@ public class MeanShift
 					return this;
 				
 
-				info("Model fit:");
 				int tries = 0;
 				final LogTimer timer = new LogTimer();
-				info("identifying neighborhoods within bandwidth");
 				
 
 				// Put the results into a Map (hash because tree imposes comparable casting)
 				ArrayList<EntryPair<double[], Integer>> center_intensity = null;
 				RadiusNeighbors nbrs;
 				String error; // Hold any error msgs
+				centroids = new ArrayList<double[]>();
 				
+				int itrz = 0;
 				while(true) {
-					
-					// Init labels, centroids
-					converged = true; // Will reset to false in loop in needed
-					centroids = new ArrayList<double[]>();
-					
+					itrz = 0;
 
-					nbrs = new RadiusNeighbors(data,
-						new RadiusNeighborsPlanner(bandwidth)
-							.setScale(false) // if we scaled in MeanShift, data is already there
-							.setSeed(getSeed())
-							.setSep(getSeparabilityMetric())
-							.setVerbose(false)).fit();
+					final EntryPair<ArrayList<EntryPair<double[],Integer>>, Integer> entry =
+						getCenterIntensity(data, bandwidth, seeds, getSeed(), 
+								getSeparabilityMetric(), maxIter);
 					
-					// Now get single seed members
-					ArrayList<EntryPair<double[], Integer>> computedSeeds = new ArrayList<>();
-					for(double[] seed: seeds)
-						computedSeeds.add(computeNewSeed(seed, nbrs));
-						//all_res.add(meanShiftSingleSeed(seed));
-					
-					
-					
-					center_intensity = new ArrayList<>();
-					
-					
-					for(int i = 0; i < m; i++)
-						if(null != computedSeeds.get(i))
-							center_intensity.add(computedSeeds.get(i));
-					
+					center_intensity = entry.getKey();
+					itrz = entry.getValue();
 					
 					// Check for points all too far from seeds
 					boolean empty = center_intensity.isEmpty();
@@ -485,35 +486,43 @@ public class MeanShift
 								(bandwidth=(bandwidth+incrementAmt)) + " and trying again.";
 						warn(error);
 						tries++;
-					} else 
+					} else {
+						converged = true;
 						break;
+					}
 				}
+				
+				
 				
 				
 				if(tries > 0) // if it was automatically increased
 					info("final bandwidth selection: " + bandwidth);
+				itersElapsed = itrz; // max iters elapsed
 				
 				
 				
 				// Post-processing. Remove near duplicate seeds
 				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
-				info("identifying most populated seeds, removing near-duplicates");
-				ArrayList<Map.Entry<double[], Integer>> sorted_by_intensity = 
-					sortEntriesByValue(center_intensity, true);
+				//info("identifying most populated seeds, removing near-duplicates");
+				// Now already sorted desc by value...
+				//ArrayList<Map.Entry<double[], Integer>> sorted_by_intensity = 
+				//	sortEntriesByValue(center_intensity, true);
+				
+				final ArrayList<EntryPair<double[], Integer>> sorted_by_intensity = center_intensity;
 				
 				// Extract the centroids
-				int idx = 0;
-				final double[][] sorted_centers = new double[sorted_by_intensity.size()][];
+				int idx = 0, m_prime = sorted_by_intensity.size();
+				final Array2DRowRealMatrix sorted_centers = new Array2DRowRealMatrix(m_prime,n);
 				for(Map.Entry<double[], Integer> entry: sorted_by_intensity)
-					sorted_centers[idx++] = entry.getKey();
+					sorted_centers.setRow(idx++, entry.getKey());
 				
 				
 				// Create a boolean mask, init true
-				final boolean[] unique = new boolean[sorted_centers.length];
+				final boolean[] unique = new boolean[m_prime];
 				for(int i = 0; i < unique.length; i++) unique[i] = true;
 				
 				// Fit the new neighbors model
-				nbrs = new RadiusNeighbors(new Array2DRowRealMatrix(sorted_centers,false),
+				nbrs = new RadiusNeighbors(sorted_centers,
 					new RadiusNeighborsPlanner(bandwidth)
 						.setScale(false) // dont scale centers
 						.setSeed(getSeed())
@@ -525,51 +534,53 @@ public class MeanShift
 				int redundant_ct = 0;
 				int[] indcs;
 				double[] center;
-				for(int i = 0; i < sorted_centers.length; i++) {
+				for(int i = 0; i < m_prime; i++) {
 					if(unique[i]) {
-						center = sorted_centers[i];
-						indcs = nbrs.getNeighbors(new double[][]{center}, bandwidth).getIndices()[0];
+						center = sorted_centers.getRow(i);
+						indcs = nbrs.getNeighbors(
+							new double[][]{center}, bandwidth)
+								.getIndices()[0];
 						
-						for(int id: indcs) {
+						for(int id: indcs)
 							unique[id] = false;
-							redundant_ct++;
-						}
 						
 						unique[i] = true; // Keep this as true
 					}
 				}
 				
 				
-				
 				// Now assign the centroids...
 				for(int i = 0; i < unique.length; i++) {
 					if(unique[i]) {
-						centroids.add(sorted_centers[i]);
+						centroids.add(sorted_centers.getRow(i));
 					}
 				}
+				
+				// calc redundant ct
+				redundant_ct = unique.length - centroids.size();
 				
 				// also put the centroids into a matrix. We have to
 				// wait to perform this op, because we have to know
 				// the size of centroids first...
-				double[][] centers = new double[centroids.size()][];
-				for(int i = 0; i < centers.length; i++)
-					centers[i] = centroids.get(i);
+				Array2DRowRealMatrix centers = new Array2DRowRealMatrix(centroids.size(),n);
+				for(int i = 0; i < centers.getRowDimension(); i++)
+					centers.setRow(i, centroids.get(i));
 				
 				
 				// Build yet another neighbors model... 
 				// this one has the propensity to throw exceptions
 				NearestNeighbors nn; 
 				try { // This only happens if centeres.length == 1...
-					nn = new NearestNeighbors(new Array2DRowRealMatrix(centers, false),
+					nn = new NearestNeighbors(centers,
 						new NearestNeighborsPlanner(1)
 							.setScale(false) // dont scale the centers
 							.setSeed(getSeed())
 							.setSep(getSeparabilityMetric())
 							.setVerbose(false)).fit();
 				} catch(IllegalArgumentException iae) {
-					error = "only "+centers.length+" centroid"
-							+ (centers.length==1?"":"s")+" identified; "
-							+ "try reducing or increasing bandwidth";
+					error = "only "+centers.getRowDimension()+" centroid"
+							+ (centers.getRowDimension()==1?"":"s")+" identified; "
+							+ "try altering bandwidth";
 					error(error);
 					throw new IllegalClusterStateException(error + "; " + iae.getMessage(), iae);
 				}
@@ -654,24 +665,80 @@ public class MeanShift
 		}
 	}
 	
-	private EntryPair<double[], Integer> computeNewSeed(double[] seed, RadiusNeighbors rn) {
+	static class MeanShiftSeed implements Comparable<MeanShiftSeed> {
+		final double[] dists;
+		final Integer count;
+		final int iterations;
+		
+		MeanShiftSeed(final double[] dists, final int count, int iterations) {
+			this.dists = dists;
+			this.count = count;
+			this.iterations = iterations;
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if(this == o)
+				return true;
+			if(o instanceof MeanShiftSeed) {
+				MeanShiftSeed m = (MeanShiftSeed)o;
+				return VecUtils.equalsExactly(dists, m.dists)
+					&& count.intValue() == m.count.intValue();
+			}
+			
+			return false;
+		}
+		
+		@Override
+		public int hashCode() {
+			int h = 31;
+			for(double d: dists)
+				h ^= (int)d;
+			return h ^ count;
+		}
+		
+		EntryPair<double[],Integer> getPair() {
+			return new EntryPair<>(dists, count);
+		}
+		
+		@Override
+		public String toString() {
+			return "{" + Arrays.toString(dists) + " : " + count + "}";
+		}
 
-		double norm, diff;
+		@Override
+		public int compareTo(MeanShiftSeed o2) {
+			int comp = count.compareTo(o2.count);
+			
+			if(comp == 0) {
+				final double[] d2 = o2.dists;
+				
+				for(int i= 0; i < dists.length; i++) {
+					int c = Double.valueOf(dists[i]).compareTo(d2[i]);
+					if(c != 0)
+						return -c;
+				}
+			}
+			
+			return -comp;
+		}
+	}
+	
+	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {
+		final double bandwidth = rn.getRadius(), tolerance = MeanShift.DEF_TOL;
+		final int n = X[0].length; // we know X is uniform
 		int completed_iterations = 0;
 		
+		double norm, diff;
+		
 		while(true) {
-			// Keep track of max iterations elapsed
-			if(completed_iterations > itersElapsed)
-				itersElapsed = completed_iterations;
-			
-			Neighborhood nbrs = rn.getNeighbors(new double[][]{seed}, this.bandwidth);
+
+			Neighborhood nbrs = rn.getNeighbors(new double[][]{seed}, bandwidth);
 			int[] i_nbrs = nbrs.getIndices()[0];
 			
 			// Check if exit
-			if(i_nbrs.length == 0) {
-				//if(verbose) info("breaking from single seed computation early due to empty neighbor set");
+			if(i_nbrs.length == 0) 
 				break;
-			}
 			
 			// Save the old seed
 			final double[] oldSeed = seed;
@@ -680,7 +747,7 @@ public class MeanShift
 			final double[] newSeed = new double[n];
 			norm = 0; diff = 0;
 			for(int i = 0; i < i_nbrs.length; i++) {
-				final double[] record = data.getRow(i_nbrs[i]);
+				final double[] record = X[i_nbrs[i]];
 				
 				for(int j = 0; j < n; j++) {
 					newSeed[j] += record[j];
@@ -699,15 +766,15 @@ public class MeanShift
 			norm = FastMath.sqrt(norm);
 			
 			// Check stopping criteria
-			if( norm < tolerance || 
-					completed_iterations == maxIter )
-				return new EntryPair<double[], Integer>(seed, i_nbrs.length);
+			if( norm < tolerance || completed_iterations == maxIter )
+				return new MeanShiftSeed(seed, i_nbrs.length, completed_iterations);
 			completed_iterations++;
 		}
 		
-		converged = false;
-		return null; // Default if breaks from inner loop
+		// Default... shouldn't get here though
+		return null;
 	}
+	
 	
 
 	/**
@@ -716,7 +783,7 @@ public class MeanShift
 	 * @param desc
 	 * @return Sorted map entries
 	 */
-	final private static <K,V extends Comparable<? super V>> 
+	final static <K,V extends Comparable<? super V>> 
 			ArrayList<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col, 
 					final boolean desc) {
 		

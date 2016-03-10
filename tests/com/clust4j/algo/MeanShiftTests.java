@@ -6,17 +6,27 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
+import com.clust4j.algo.MeanShift.MeanShiftSeed;
+import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -71,6 +81,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 				.setVerbose(true)).fit();
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
 		assertTrue(ms.hasWarnings()); // will because not normalizing
+		System.out.println();
 	}
 	
 	@Test
@@ -125,7 +136,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	}
 	
 	// Hard condition to force..
-	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
+	@Test//(expected=com.clust4j.except.IllegalClusterStateException.class)
 	public void MeanShiftTest4() {
 		DataSet iris = ExampleDataSets.IRIS;
 		final Array2DRowRealMatrix data = iris.getData();
@@ -161,7 +172,9 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			new MeanShiftPlanner().setVerbose(true)).fit();
 		System.out.println();
 		assertTrue(ms.itersElapsed() >= 1);
+		
 		ms.fit(); // re-fit
+		System.out.println();
 	}
 	
 	@Test
@@ -256,5 +269,178 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		assertTrue(ms2.getNumberOfNoisePoints() == n);
 		assertTrue(ms.equals(ms2));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test
+	public void testAutoEstimation() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		final double[][] X = iris.getData();
+		
+		// MS estimates bw at 1.202076812799869
+		final double bandwidth = 1.202076812799869;
+		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
+			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE) == bandwidth);
+		
+		// Asserting fit works without breaking things...
+		RadiusNeighbors r = new RadiusNeighbors(iris,
+			new RadiusNeighborsPlanner(bandwidth)).fit();
+		
+		TreeSet<MeanShiftSeed> centers = new TreeSet<>();
+		for(double[] seed: X)
+			centers.add(MeanShift.singleSeed(seed, r, X, 300));
+		
+		assertTrue(centers.size() == 7);
+
+		double[][] expected_dists = new double[][]{
+			new double[]{6.2114285714285691, 2.8928571428571428, 4.8528571428571423, 1.6728571428571426},
+			new double[]{6.1927536231884037, 2.8768115942028984, 4.8188405797101437, 1.6463768115942023},
+			new double[]{6.1521739130434767, 2.850724637681159,  4.7405797101449272, 1.6072463768115937},
+			new double[]{6.1852941176470564, 2.8705882352941177, 4.8058823529411754, 1.6397058823529407},
+			new double[]{6.1727272727272711, 2.874242424242424,  4.7757575757575745, 1.6287878787878785},
+			new double[]{5.0163265306122451, 3.440816326530614,  1.46734693877551,   0.24285714285714283},
+			new double[]{5.0020833333333341, 3.4208333333333356, 1.4666666666666668, 0.23958333333333334}
+		};
+		
+		int[] expected_centers= new int[]{
+			70, 69, 69, 68, 66, 49, 48
+		};
+		
+		int idx = 0;
+		for(MeanShiftSeed seed: centers) {
+			assertTrue(VecUtils.equalsWithTolerance(seed.dists, expected_dists[idx], 1e-1));
+			assertTrue(seed.count == expected_centers[idx]);
+			idx++;
+		}
+	}
+	
+	@Test
+	public void testAutoEstimationWithScale() {
+		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)FeatureNormalization
+			.STANDARD_SCALE.operate(ExampleDataSets.IRIS.getData());
+		final double[][] X = iris.getData();
+		
+		// MS estimates bw at 1.5971266273437668
+		final double bandwidth = 1.5971266273437668;
+		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
+			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE) == bandwidth);
+		
+		// Asserting fit works without breaking things...
+		RadiusNeighbors r = new RadiusNeighbors(iris,
+			new RadiusNeighborsPlanner(bandwidth)).fit();
+				
+		TreeSet<MeanShiftSeed> centers = new TreeSet<>();
+		for(double[] seed: X)
+			centers.add(MeanShift.singleSeed(seed, r, X, 300));
+		
+		assertTrue(centers.size() == 5);
+		
+		double[][] expected_dists = new double[][]{
+			new double[]{ 0.50161528154395962, -0.31685274298813487,  0.65388162422893481, 0.65270450741975761},
+			new double[]{ 0.4829041180399124,  -0.3184802762043775,   0.6434194172372906,  0.6471200248238047 },
+			new double[]{ 0.52001211065400177, -0.29561728795619946,  0.67106269515983397, 0.67390853215763813},
+			new double[]{ 0.54861244890482475, -0.25718786696105495,  0.68964559485632182, 0.69326664641211422},
+			new double[]{-1.0595457115461515,   0.74408909010240054, -1.2995708885010491, -1.2545442961404225 }
+		};
+		
+		int[] expected_centers= new int[]{
+			82, 81, 80, 77, 45
+		};
+		
+		int idx = 0;
+		for(MeanShiftSeed seed: centers) {
+			assertTrue(VecUtils.equalsWithTolerance(seed.dists, expected_dists[idx], 1e-1));
+			assertTrue(seed.count == expected_centers[idx]);
+			idx++;
+		}
+		
+		ArrayList<EntryPair<double[], Integer>> center_intensity = new ArrayList<>();
+		for(MeanShiftSeed seed: centers) {
+			if(null != seed) {
+				center_intensity.add(seed.getPair());
+			}
+		}
+		
+		
+		
+		// Now test the actual method...
+		EntryPair<ArrayList<EntryPair<double[],Integer>>, Integer> entry =
+			MeanShift.getCenterIntensity(iris, bandwidth, X, GlobalState.DEFAULT_RANDOM_STATE, 
+					Distance.EUCLIDEAN, 300);
+		ArrayList<EntryPair<double[], Integer>> center_intensity2 = entry.getKey();
+		assertTrue(center_intensity2.size() == center_intensity.size());
+		
+		
+		final ArrayList<EntryPair<double[], Integer>> sorted_by_intensity = center_intensity;
+		
+		// test getting the unique vals
+		idx = 0;
+		final int m_prime = sorted_by_intensity.size();
+		final Array2DRowRealMatrix sorted_centers = new Array2DRowRealMatrix(m_prime, iris.getColumnDimension());
+		for(Map.Entry<double[], Integer> e: sorted_by_intensity)
+			sorted_centers.setRow(idx++, e.getKey());
+		
+		
+		// Create a boolean mask, init true
+		final boolean[] unique = new boolean[m_prime];
+		for(int i = 0; i < unique.length; i++) unique[i] = true;
+		
+		// Fit the new neighbors model
+		RadiusNeighbors nbrs = new RadiusNeighbors(sorted_centers,
+			new RadiusNeighborsPlanner(bandwidth)
+				.setVerbose(false)).fit();
+		
+		
+		// Iterate over sorted centers and query radii
+		int[] indcs;
+		double[] center;
+		for(int i = 0; i < m_prime; i++) {
+			if(unique[i]) {
+				center = sorted_centers.getRow(i);
+				indcs = nbrs.getNeighbors(
+					new double[][]{center}, bandwidth)
+						.getIndices()[0];
+				
+				for(int id: indcs) {
+					unique[id] = false;
+				}
+				
+				unique[i] = true; // Keep this as true
+			}
+		}
+		
+		
+		// Now assign the centroids...
+		int redundant_ct = 0;
+		final ArrayList<double[]> centroids =  new ArrayList<>();
+		for(int i = 0; i < unique.length; i++) {
+			if(unique[i]) {
+				centroids.add(sorted_centers.getRow(i));
+			}
+		}
+		
+		redundant_ct = unique.length - centroids.size();
+		
+		assertTrue(redundant_ct == 3);
+		assertTrue(centroids.size() == 2);
+		assertTrue(VecUtils.equalsExactly(centroids.get(0), new double[]{
+			 0.4999404345258573, -0.3217963110452486, 0.651751961050506, 0.6504383581073979
+		}));
+		
+
+		assertTrue(VecUtils.equalsExactly(centroids.get(1), new double[]{
+			-1.0560079864392453, 0.7555834087538167, -1.2954688594835067, -1.2498288991228368
+		}));
+		
+		
+		// also put the centroids into a matrix. We have to
+		// wait to perform this op, because we have to know
+		// the size of centroids first...
+		Array2DRowRealMatrix clust_centers = new Array2DRowRealMatrix(centroids.size(), iris.getColumnDimension());
+		for(int i = 0; i < clust_centers.getRowDimension(); i++)
+			clust_centers.setRow(i, centroids.get(i));
+		
+		// The final nearest neighbors model -- if this works, we are in the clear...
+		NearestNeighbors nn = new NearestNeighbors(clust_centers,
+			new NearestNeighborsPlanner(1)).fit();
 	}
 }

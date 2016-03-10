@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static com.clust4j.TestSuite.getRandom;
 
@@ -13,9 +15,11 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
+import com.clust4j.algo.HierarchicalAgglomerative.HeapUtils;
 import com.clust4j.algo.HierarchicalAgglomerative.HierarchicalPlanner;
 import com.clust4j.algo.HierarchicalClusterer.Linkage;
 import com.clust4j.data.ExampleDataSets;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;
@@ -218,6 +222,11 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		new HierarchicalPlanner(Linkage.COMPLETE).buildNewModelInstance(data_);
 		new HierarchicalPlanner(Linkage.WARD).buildNewModelInstance(data_);
 	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFit1() {
+		new HierarchicalPlanner().buildNewModelInstance(data_).getLabels();
+	}
 
 	@Test
 	@Override
@@ -234,8 +243,48 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		
 		HierarchicalAgglomerative agglom2 = (HierarchicalAgglomerative)HierarchicalAgglomerative
 			.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		
+		// test re-fit:
+		agglom2 = agglom2.fit();
+		
 		assertTrue(VecUtils.equalsExactly(l, agglom2.getLabels()));
 		assertTrue(agglom2.equals(agglom));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test(expected=InternalError.class)
+	public void testHeapUtils() {
+		final ArrayList<Integer> a= new ArrayList<>();
+		HeapUtils.heapifyInPlace(a);
+		
+		assertNotNull(a); // Just to make sure we get here...
+		HeapUtils.popInPlace(a); // thrown here
+	}
+	
+	@Test
+	public void testHeapifier() {
+		// Test heapify initial
+		final ArrayList<Integer> x = new ArrayList<>(Arrays.asList(new Integer[]{19, 56, 1, 52, 7, 2, 23}));
+		HeapUtils.heapifyInPlace(x);
+		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{1, 7, 2, 52, 56, 19, 23}))));
+		
+		// Test push pop
+		Integer i = HeapUtils.heapPushPop(x, 2);
+		assertTrue(i.equals(1));
+		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 2, 52, 56, 19, 23}))));
+		
+		// Test pop
+		i = HeapUtils.heapPop(x);
+		assertTrue(i.equals(2));
+		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 19, 52, 56, 23}))));
+		
+		// Test push
+		HeapUtils.heapPush(x, 9);
+		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 9, 52, 56, 23, 19}))));
+		
+		while(!x.isEmpty())
+			HeapUtils.popInPlace(x);
+		
+		assertTrue(x.size() == 0);
 	}
 }

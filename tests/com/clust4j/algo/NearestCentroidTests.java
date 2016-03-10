@@ -74,11 +74,6 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		new NearestCentroid(data_, new int[]{1,2,3});
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
-	public void testIAE() {
-		new NearestCentroid(data_, VecUtils.repInt(1, data_.getRowDimension()));
-	}
-	
 	@Test
 	public void testWarn() {
 		/*// We need to allow this behavior now that NC used in KMeans
@@ -272,11 +267,6 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		new NearestCentroid(data, new int[]{0,1,1,2});
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
-	public void testNCBasicIAE() {
-		new NearestCentroid(data, new int[]{0,0,0});
-	}
-	
 	@Test(expected=NullPointerException.class)
 	public void testNPE() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{0,1,1}, 
@@ -341,5 +331,12 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 			new NearestCentroidPlanner()
 				.setSep(Distance.MANHATTAN)).fit();
 		assertTrue(VecUtils.equalsExactly(n.predict(data), new int[]{212,56,56}));
+	}
+	
+	@Test
+	public void testLoadWithSingleClass() {
+		NearestCentroid n = new NearestCentroid(TestSuite.getRandom(1200, 10), 
+				VecUtils.repInt(1, 1200)).fit();
+		assertTrue(VecUtils.equalsExactly(VecUtils.repInt(1, 5), n.predict(TestSuite.getRandom(5, 10))));
 	}
 }

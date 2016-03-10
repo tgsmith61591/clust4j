@@ -13,7 +13,6 @@ import com.clust4j.algo.AffinityPropagationTests;
 import com.clust4j.algo.ClustTests;
 import com.clust4j.algo.DBSCANTests;
 import com.clust4j.algo.HDBSCANTests;
-import com.clust4j.algo.HeapTesting;
 import com.clust4j.algo.HierarchicalTests;
 import com.clust4j.algo.KMeansTests;
 import com.clust4j.algo.KMedoidsTests;
@@ -54,7 +53,6 @@ import com.clust4j.utils.parallel.ParallelTests;
 	FormatterTests.class,
 	HaversineTest.class,
 	HDBSCANTests.class,
-	HeapTesting.class,
 	HierarchicalTests.class,
 	ImputationTests.class,
 	KMeansTests.class,

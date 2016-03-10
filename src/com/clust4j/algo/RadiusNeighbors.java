@@ -10,6 +10,7 @@ import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 
@@ -296,5 +297,10 @@ public class RadiusNeighbors extends Neighbors {
 		
 		validateRadius(rad);
 		return new Neighborhood(tree.queryRadius(X, rad, false));
+	}
+
+	@Override
+	public Algo getLoggerTag() {
+		return Algo.RADIUS;
 	}
 }

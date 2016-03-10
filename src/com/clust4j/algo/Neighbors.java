@@ -76,7 +76,7 @@ abstract public class Neighbors extends BaseNeighborsModel {
 	}
 
 	@Override
-	final public Algo getLoggerTag() {
+	public Algo getLoggerTag() {
 		return Algo.NEAREST;
 	}
 	

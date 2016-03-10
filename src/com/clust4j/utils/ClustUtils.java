@@ -12,10 +12,11 @@ public class ClustUtils {
 	 * however traversing it requires intermittent calculations using {@link #navigateFlattenedMatrix(double[], int, int, int)}
 	 * @param data
 	 * @param dist
+	 * @param partial -- use the partial distance?
 	 * @return a flattened distance vector
 	 */
-	public static double[] distanceFlatVector(final AbstractRealMatrix data, GeometricallySeparable dist) {
-		return distanceFlatVector(data.getData(), dist);
+	public static double[] distanceFlatVector(final AbstractRealMatrix data, GeometricallySeparable dist, boolean partial) {
+		return distanceFlatVector(data.getData(), dist, partial);
 	}
 	
 	/**
@@ -23,15 +24,17 @@ public class ClustUtils {
 	 * however traversing it requires intermittent calculations using {@link #navigateFlattenedMatrix(double[], int, int, int)}
 	 * @param data
 	 * @param dist
+	 * @param partial -- use the partial distance?
 	 * @return a flattened distance vector
 	 */
-	public static double[] distanceFlatVector(final double[][] data, GeometricallySeparable dist) {
+	public static double[] distanceFlatVector(final double[][] data, GeometricallySeparable dist, boolean partial) {
 		final int m = data.length;
 		final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
 		final double[] vec = new double[s];
 		for(int i = 0, r = 0; i < m - 1; i++)
 			for(int j = i + 1; j < m; j++, r++)
-				vec[r] = dist.getDistance(data[i], data[j]);
+				vec[r] = partial ? dist.getPartialDistance(data[i], data[j]) : 
+					dist.getDistance(data[i], data[j]);
 		
 		return vec;
 	}

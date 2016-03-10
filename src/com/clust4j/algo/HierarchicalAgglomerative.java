@@ -2,8 +2,6 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -219,7 +217,8 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		
 		HierarchicalDendrogram() {
 			if(null == dist_vec)
-				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
+				dist_vec = ClustUtils.distanceFlatVector(data, 
+					getSeparabilityMetric(), true);
 			
 			ref = HierarchicalAgglomerative.this;
 			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
@@ -237,7 +236,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			return MatUtils.getColumns(Z, new int[]{0,1});
 		}
 		
-		private void link(final double[] dists, final double[][] Z, final int n) {
+		final private void link(final double[] dists, final double[][] Z, final int n) {
 			int i, j, k, x = -1, y = -1, i_start, nx, ny, ni, id_x, id_y, id_i, c_idx;
 			double current_min;
 			
@@ -250,16 +249,17 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			for(i = 0; i < n; i++) 
 				id_map[i] = i;
 			
-			LogTimer link_timer = new LogTimer();
-			int incrementor = n/5, pct = 1;
+			LogTimer link_timer = new LogTimer(), iterTimer;
+			int incrementor = n/10, pct = 1;
 			for(k = 0; k < n - 1; k++) {
 				if(incrementor>0 && k%incrementor == 0)
-					ref.info("node mapping progress - " + 20*pct++ + "%. Total link time: "+
+					ref.info("node mapping progress - " + 10*pct++ + "%. Total link time: "+
 						link_timer.toString()+"");
 				
 				// get two closest x, y
 				current_min = Double.POSITIVE_INFINITY;
 				
+				iterTimer = new LogTimer();
 				for(i = 0; i < n - 1; i++) {
 					if(id_map[i] == -1)
 						continue;
@@ -291,10 +291,13 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				id_map[y] = n + k; // cluster y replaced
 				
 				// update dist mat
+				int cont = 0;
 				for(i = 0; i < n; i++) {
 					id_i = id_map[i];
-					if(id_i == -1 || id_i == n + k)
+					if(id_i == -1 || id_i == n + k) {
+						cont++;
 						continue;
+					}
 					
 					ni = id_i < n ? 1 : (int)Z[id_i - n][3];
 					c_idx = ClustUtils.getIndexFromFlattenedVec(n, i, y);
@@ -304,6 +307,11 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 					if(i < x)
 						D[ClustUtils.getIndexFromFlattenedVec(n,i,x)] = Double.POSITIVE_INFINITY;
 				}
+				
+				fitSummary.add(new Object[]{
+					k,current_min,cont,iterTimer.formatTime(),
+					link_timer.formatTime(),link_timer.wallMsg()
+				});
 			}
 		}
 		
@@ -378,7 +386,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	 * @author Taylor G Smith
 	 */
 	static class HeapUtils {
-		public static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
+		static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
 			final int n = x.size();
 			final int n_2_floor = n / 2;
 			
@@ -386,7 +394,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				siftUp(x, i);
 		}
 		
-		public static <T extends Comparable<? super T>> T heapPop(ArrayList<T> heap) {
+		static <T extends Comparable<? super T>> T heapPop(ArrayList<T> heap) {
 			final T lastElement = popInPlace(heap), returnItem;
 			
 			if(heap.size() > 0) {
@@ -400,12 +408,12 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			return returnItem;
 		}
 		
-		public static <T extends Comparable<? super T>> void heapPush(final ArrayList<T> heap, T item) {
+		static <T extends Comparable<? super T>> void heapPush(final ArrayList<T> heap, T item) {
 			heap.add(item);
 			siftDown(heap, 0, heap.size()-1);
 		}
 		
-		public static <T extends Comparable<? super T>> T heapPushPop(final ArrayList<T> heap, T item) {
+		static <T extends Comparable<? super T>> T heapPushPop(final ArrayList<T> heap, T item) {
 			if(heap.get(0).compareTo(item) < 0) {
 				T tmp = heap.get(0);
 				heap.set(0, item);
@@ -413,40 +421,6 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			}
 			
 			return item;
-		}
-		
-		public static <T extends Comparable<? super T>> T heapReplace(final ArrayList<T> heap, T item) {
-			T returnItem = heap.get(0);
-			heap.set(0, item);
-			siftUp(heap, 0);
-			return returnItem;
-		}
-		
-		public static <T extends Comparable<? super T>> ArrayList<T> nLargest(final int n, final Collection<T> iterable) {
-			if(n >= iterable.size())
-				throw new IllegalArgumentException();
-			
-			final ArrayList<T> copy = new ArrayList<T>();
-			for(T t: iterable)
-				copy.add(t);
-			
-			Collections.sort(copy);
-			Collections.reverse(copy);
-			
-			return (ArrayList<T>) copy.subList(0, n);
-		}
-		
-		public static <T extends Comparable<? super T>> ArrayList<T> nSmallest(final int n, final Collection<T> iterable) {
-			if(n >= iterable.size())
-				throw new IllegalArgumentException();
-			
-			final ArrayList<T> copy = new ArrayList<T>();
-			for(T t: iterable)
-				copy.add(t);
-			
-			Collections.sort(copy);
-			
-			return (ArrayList<T>) copy.subList(0, n);
 		}
 		
 		static <T extends Comparable<? super T>> T popInPlace(final ArrayList<T> heap) {
@@ -517,7 +491,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				final LogTimer timer = new LogTimer();
 				
 				labels = new int[m];
-				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric());
+				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric(), true);
 				
 				// Log info...
 				info("calculated " + 
@@ -551,7 +525,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				
 				// Cut the tree
 				labels = hcCut(num_clusters, children, m);
-				reorderLabels();
+				labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
 				
 				
 				sayBye(timer);
@@ -642,27 +616,10 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		return com.clust4j.log.Log.Tag.Algo.AGGLOMERATIVE;
 	}
 	
-	final private void reorderLabels() {
-		// Now rearrange labels in order... first get unique labels in order of appearance
-		final ArrayList<Integer> orderOfLabels = new ArrayList<Integer>(k);
-		for(int label: labels) {
-			if(!orderOfLabels.contains(label)) // Race condition? but synchronized so should be ok...
-				orderOfLabels.add(label);
-		}
-		
-		final int[] newLabels = new int[m];
-		for(int i = 0; i < m; i++)
-			newLabels[i] = orderOfLabels.indexOf(labels[i]);
-		
-		// Reassign labels...
-		labels = newLabels;
-	}
-	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
-		// TODO
 		return new Object[]{
-			"TODO:"
+			"Link Iter. #","Iter. Min","Continues","Iter. Time","Total Time","Wall"
 		};
 	}
 }

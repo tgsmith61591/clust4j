@@ -310,10 +310,28 @@ public class NearestNeighbors extends Neighbors {
 		return getNeighbors(x, kNeighbors);
 	}
 	
+	/**
+	 * For internal use
+	 * @param x
+	 * @return
+	 */
+	protected Neighborhood getNeighbors(double[][] x) {
+		return getNeighbors(x, kNeighbors);
+	}
+	
 	public Neighborhood getNeighbors(AbstractRealMatrix x, int k) {
+		return getNeighbors(x.getData(), k);
+	}
+	
+	/**
+	 * For internal use
+	 * @param X
+	 * @param k
+	 * @return
+	 */
+	protected Neighborhood getNeighbors(double[][] X, int k) {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
-		double[][] X = x.getData();
 		
 		validateK(k, X.length);
 		return new Neighborhood(tree.query(X, k, 

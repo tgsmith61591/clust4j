@@ -75,12 +75,17 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		
 		
 		// Build the label encoder
+		/*
 		try {
 			this.encoder = new LabelEncoder(y).fit();
 		} catch(IllegalArgumentException e) {
 			error(e.getMessage());
 			throw new IllegalArgumentException("Error in NearestCentroid: " + e.getMessage(), e);
 		}
+		*/
+		
+		// Opting for SafeLabelEncoder in favor of allowing single class systems...
+		this.encoder = new SafeLabelEncoder(y).fit();
 		
 		
 		this.numClasses = encoder.numClasses;

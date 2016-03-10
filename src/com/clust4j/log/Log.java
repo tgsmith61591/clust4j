@@ -41,7 +41,8 @@ public abstract class Log {
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
-			NEAREST			{ @Override public String toString(){return "NEAREST";} };
+			NEAREST			{ @Override public String toString(){return "NEAREST";} },
+			RADIUS          { @Override public String toString(){return "RADIUS ";}};
 			
 			
 			boolean _enable;
