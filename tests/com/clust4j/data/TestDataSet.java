@@ -16,7 +16,6 @@ import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.MeanShift;
 import com.clust4j.algo.UnsupervisedClassifier;
-import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -122,17 +121,11 @@ public class TestDataSet {
 					.setVerbose(verbose)).fit();
 			stdout(kmd, b, labels);
 			
-			try {
-				MeanShift ms = new MeanShift(data, 
-					new MeanShift.MeanShiftPlanner()
-						.setScale(b)
-						.setVerbose(verbose)).fit();
-				stdout(ms, b);
-			} catch(IllegalClusterStateException e) {
-				if(!(e.getMessage().contains("k must") || e.getMessage().contains("identified")))
-					throw e;
-			}
-			
+			MeanShift ms = new MeanShift(data, 
+				new MeanShift.MeanShiftPlanner()
+					.setScale(b)
+					.setVerbose(verbose)).fit();
+			stdout(ms, b);
 			
 			
 			System.out.println();

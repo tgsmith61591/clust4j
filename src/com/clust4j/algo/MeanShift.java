@@ -70,7 +70,7 @@ public class MeanShift
 	private double[][] seeds;
 	
 	/** Num rows, cols */
-	private final int m, n;
+	private final int n;
 	
 	/** Whether bandwidth is auto-estimated */
 	private final boolean autoEstimate;
@@ -128,30 +128,34 @@ public class MeanShift
 				throw new IllegalArgumentException(e);
 			}
 			
+			// Throws NonUniformMatrixException if non uniform...
+			MatUtils.checkDimsForUniformity(planner.seeds);
+			
 			if(planner.seeds[0].length != (n=data.getColumnDimension())) {
 				e = "seeds column dims do not match data column dims";
 				error(e);
 				throw new org.apache.commons.math3.exception.DimensionMismatchException(planner.seeds[0].length, n);
 			}
 			
-			if(seeds.length > data.getRowDimension()) {
+			if(planner.seeds.length > this.data.getRowDimension()) {
 				e = "seeds length cannot exceed number of datapoints";
 				error(e);
 				throw new IllegalArgumentException(e);
 			}
 			
 			info("initializing kernels from given seeds");
-			seeds = MatUtils.copy(planner.seeds);
+			
+			// Handle the copying in the planner
+			seeds = planner.seeds;
 		} else { // Default = all*/
 			info("no seeds provided; defaulting to all datapoints");
-			seeds = data.getData();
-			n = data.getColumnDimension();
+			seeds = this.data.getData(); // use THIS as it's already scaled...
+			n = this.data.getColumnDimension();
 		}
 		
 		
 		this.maxIter = planner.maxIter;
 		this.tolerance = planner.minChange;
-		this.m = seeds.length; //data.getRowDimension();
 		
 
 		this.autoEstimate = planner.autoEstimateBW;
@@ -271,6 +275,7 @@ public class MeanShift
 				.setMinChange(minChange)
 				.setScale(scale)
 				.setSeed(seed)
+				.setSeeds(seeds)
 				.setSep(dist)
 				.setVerbose(verbose)
 				.setNormalizer(norm);
@@ -328,6 +333,12 @@ public class MeanShift
 			return this;
 		}
 		
+		public MeanShiftPlanner setSeeds(final double[][] seeds) {
+			if(null != seeds)
+				this.seeds = MatUtils.copy(seeds);
+			return this;
+		}
+		
 		@Override
 		public MeanShiftPlanner setSep(final GeometricallySeparable dist) {
 			this.dist = dist;
@@ -350,6 +361,116 @@ public class MeanShift
 			this.norm = norm;
 			return this;
 		}
+	}
+
+	/**
+	 * Handles the output for the {@link #singleSeed(double[], RadiusNeighbors, double[][], int)}
+	 * method. Implements comparable to be sorted by the value in the entry pair.
+	 * @author Taylor G Smith
+	 */
+	static class MeanShiftSeed implements Comparable<MeanShiftSeed> {
+		final double[] dists;
+		/** The number of points in the bandwidth */
+		final Integer count;
+		final int iterations;
+		
+		MeanShiftSeed(final double[] dists, final int count, int iterations) {
+			this.dists = dists;
+			this.count = count;
+			this.iterations = iterations;
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if(this == o)
+				return true;
+			if(o instanceof MeanShiftSeed) {
+				MeanShiftSeed m = (MeanShiftSeed)o;
+				return VecUtils.equalsExactly(dists, m.dists)
+					&& count.intValue() == m.count.intValue();
+			}
+			
+			return false;
+		}
+		
+		@Override
+		public int hashCode() {
+			int h = 31;
+			for(double d: dists)
+				h ^= (int)d;
+			return h ^ count;
+		}
+		
+		EntryPair<double[],Integer> getPair() {
+			return new EntryPair<>(dists, count);
+		}
+		
+		@Override
+		public String toString() {
+			return "{" + Arrays.toString(dists) + " : " + count + "}";
+		}
+
+		@Override
+		public int compareTo(MeanShiftSeed o2) {
+			int comp = count.compareTo(o2.count);
+			
+			if(comp == 0) {
+				final double[] d2 = o2.dists;
+				
+				for(int i= 0; i < dists.length; i++) {
+					int c = Double.valueOf(dists[i]).compareTo(d2[i]);
+					if(c != 0)
+						return -c;
+				}
+			}
+			
+			return -comp;
+		}
+	}
+	
+	/**
+	 * Compute the center intensity entry pairs and call the 
+	 * {@link MeanShift#singleSeed(double[], RadiusNeighbors, double[][], int)} method
+	 * @author Taylor G Smith
+	 */
+	static class CenterIntensity {
+		final ArrayList<EntryPair<double[], Integer>> pairs = new ArrayList<>();
+		int itrz = 0;
+		
+		CenterIntensity(
+				AbstractRealMatrix data, 
+				double bandwidth, double[][] seeds, 
+				Random rand, GeometricallySeparable metric, 
+				int maxIter) {
+			
+			RadiusNeighbors nbrs = new RadiusNeighbors(data,
+				new RadiusNeighborsPlanner(bandwidth)
+					.setScale(false) // don't rescale
+					.setSeed(rand)
+					.setSep(metric)
+					.setVerbose(false)).fit();
+			
+			// Now get single seed members
+			MeanShiftSeed sd;
+			TreeSet<MeanShiftSeed> computedSeeds = new TreeSet<>();
+			final double[][] X = data.getData();
+			for(double[] seed: seeds) {
+				sd = singleSeed(seed, nbrs, X, maxIter);
+				if(null == sd)
+					continue;
+				
+				computedSeeds.add(sd);
+				itrz = FastMath.max(itrz, sd.iterations);
+			}
+			
+			// add the entry pairs
+			for(MeanShiftSeed seed: computedSeeds) {
+				if(null != seed) {
+					pairs.add(seed.getPair());
+				}
+			}
+		}
+		
 	}
 	
 	
@@ -404,41 +525,6 @@ public class MeanShift
 		return com.clust4j.log.Log.Tag.Algo.MEANSHIFT;
 	}
 	
-	static EntryPair<ArrayList<EntryPair<double[], Integer>>, Integer> getCenterIntensity(AbstractRealMatrix data, 
-			double bandwidth, double[][] seeds, Random rand, GeometricallySeparable metric, int maxIter) {
-		int itrz = 0;
-		
-		RadiusNeighbors nbrs = new RadiusNeighbors(data,
-			new RadiusNeighborsPlanner(bandwidth)
-				.setScale(false) // if we scaled in MeanShift, data is already there
-				.setSeed(rand)
-				.setSep(metric)
-				.setVerbose(false)).fit();
-		
-		// Now get single seed members
-		MeanShiftSeed sd;
-		TreeSet<MeanShiftSeed> computedSeeds = new TreeSet<>();
-		for(double[] seed: seeds) {
-			sd = singleSeed(seed, nbrs, seeds, maxIter);
-			if(null == sd)
-				continue;
-			
-			computedSeeds.add(sd);
-			itrz = FastMath.max(itrz, sd.iterations);
-		}
-		
-		
-		ArrayList<EntryPair<double[], Integer>> center_intensity = new ArrayList<>();
-		
-		// add the entry pairs
-		for(MeanShiftSeed seed: computedSeeds) {
-			if(null != seed) {
-				center_intensity.add(seed.getPair());
-			}
-		}
-		
-		return new EntryPair<>(center_intensity, itrz);
-	}
 
 	@Override
 	public MeanShift fit() {
@@ -455,20 +541,30 @@ public class MeanShift
 
 				// Put the results into a Map (hash because tree imposes comparable casting)
 				ArrayList<EntryPair<double[], Integer>> center_intensity = null;
-				RadiusNeighbors nbrs;
 				String error; // Hold any error msgs
 				centroids = new ArrayList<double[]>();
 				
+				
+				
+				/*
+				 * Get the neighborhoods and center intensity object. Will iterate until
+				 * either the centers are found, or the max try count is exceeded. For each
+				 * iteration, will increase bandwidth.
+				 */
 				int itrz = 0;
 				while(true) {
 					itrz = 0;
 
-					final EntryPair<ArrayList<EntryPair<double[],Integer>>, Integer> entry =
-						getCenterIntensity(data, bandwidth, seeds, getSeed(), 
-								getSeparabilityMetric(), maxIter);
 					
-					center_intensity = entry.getKey();
-					itrz = entry.getValue();
+					final CenterIntensity intensity = new CenterIntensity(
+							data, bandwidth, seeds, getSeed(), 
+							getSeparabilityMetric(), maxIter);
+					
+					
+					// Extract the members
+					center_intensity = intensity.pairs;
+					itrz = intensity.itrz;
+					
 					
 					// Check for points all too far from seeds
 					boolean empty = center_intensity.isEmpty();
@@ -500,11 +596,6 @@ public class MeanShift
 				
 				// Post-processing. Remove near duplicate seeds
 				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
-				//info("identifying most populated seeds, removing near-duplicates");
-				// Now already sorted desc by value...
-				//ArrayList<Map.Entry<double[], Integer>> sorted_by_intensity = 
-				//	sortEntriesByValue(center_intensity, true);
-				
 				final ArrayList<EntryPair<double[], Integer>> sorted_by_intensity = center_intensity;
 				
 				// Extract the centroids
@@ -519,7 +610,7 @@ public class MeanShift
 				for(int i = 0; i < unique.length; i++) unique[i] = true;
 				
 				// Fit the new neighbors model
-				nbrs = new RadiusNeighbors(sorted_centers,
+				RadiusNeighbors nbrs = new RadiusNeighbors(sorted_centers,
 					new RadiusNeighborsPlanner(bandwidth)
 						.setScale(false) // dont scale centers
 						.setSeed(getSeed())
@@ -595,6 +686,7 @@ public class MeanShift
 				
 				
 				
+				
 				// order the labels..
 				/* 
 				 * Reduce labels to a sorted, gapless, list
@@ -611,6 +703,7 @@ public class MeanShift
 				 */
 				for(int i = 0; i < labels.length; i++)
 					labels[i] = centroidIndices.indexOf(labels[i]);
+				
 				
 				
 				
@@ -662,65 +755,6 @@ public class MeanShift
 		}
 	}
 	
-	static class MeanShiftSeed implements Comparable<MeanShiftSeed> {
-		final double[] dists;
-		final Integer count;
-		final int iterations;
-		
-		MeanShiftSeed(final double[] dists, final int count, int iterations) {
-			this.dists = dists;
-			this.count = count;
-			this.iterations = iterations;
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			if(this == o)
-				return true;
-			if(o instanceof MeanShiftSeed) {
-				MeanShiftSeed m = (MeanShiftSeed)o;
-				return VecUtils.equalsExactly(dists, m.dists)
-					&& count.intValue() == m.count.intValue();
-			}
-			
-			return false;
-		}
-		
-		@Override
-		public int hashCode() {
-			int h = 31;
-			for(double d: dists)
-				h ^= (int)d;
-			return h ^ count;
-		}
-		
-		EntryPair<double[],Integer> getPair() {
-			return new EntryPair<>(dists, count);
-		}
-		
-		@Override
-		public String toString() {
-			return "{" + Arrays.toString(dists) + " : " + count + "}";
-		}
-
-		@Override
-		public int compareTo(MeanShiftSeed o2) {
-			int comp = count.compareTo(o2.count);
-			
-			if(comp == 0) {
-				final double[] d2 = o2.dists;
-				
-				for(int i= 0; i < dists.length; i++) {
-					int c = Double.valueOf(dists[i]).compareTo(d2[i]);
-					if(c != 0)
-						return -c;
-				}
-			}
-			
-			return -comp;
-		}
-	}
-	
 	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {
 		final double bandwidth = rn.getRadius(), tolerance = 1e-3;
 		final int n = X[0].length; // we know X is uniform
@@ -737,7 +771,6 @@ public class MeanShift
 			if(i_nbrs.length == 0) 
 				break;
 			
-			System.out.println("Here");
 			// Save the old seed
 			final double[] oldSeed = seed;
 			

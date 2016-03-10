@@ -7,24 +7,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
+import com.clust4j.algo.MeanShift.CenterIntensity;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
 import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
@@ -302,16 +304,102 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 
 	
-	// Hard condition to force..
-	@Test//(expected=com.clust4j.except.IllegalClusterStateException.class)
-	public void MeanShiftTest4() {
-		DataSet iris = ExampleDataSets.IRIS;
-		final Array2DRowRealMatrix data = iris.getData();
+	/*
+	 * Test iris with no seeds
+	 */
+	@Test
+	public void MeanShiftTestIris() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
 		
-		new MeanShift(data, 
+		MeanShift ms = new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setScale(true)).fit();
+		
+		// sklearn output
+		int[] expected = new LabelEncoder(new int[]{
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		}).fit().getEncodedLabels();
+		
+		// Assert almost equal
+		assertTrue(Precision.equals(ms.indexAffinityScore(expected), 1.0, 1e-2));
+	}
+	
+	/*
+	 * Test where none in range
+	 */
+	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
+	public void MeanShiftTestIrisSeeded() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
 				.setScale(true)
-				.setVerbose(true)).fit();
+				.setSeeds(iris.getData())).fit();
+		System.out.println();
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testSeededNUME() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setSeeds(new double[][]{
+					new double[]{1,2,3,4},
+					new double[]{0}
+				}));
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testSeededDME() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setSeeds(new double[][]{
+					new double[]{1,2,3},
+					new double[]{1,2,3}
+				}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSeededIAE1() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setSeeds(new double[][]{
+				}));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSeededIAE2() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setSeeds(MatUtils.randomGaussian(iris.getRowDimension() + 1, 
+					iris.getColumnDimension())));
+	}
+	
+	@Test
+	public void testSeededIrisFunctional() {
+		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		
+		new MeanShift(iris, 
+			new MeanShift.MeanShiftPlanner()
+				.setVerbose(true)
+				.setSeeds(new double[][]{
+					iris.getRow(3),
+					iris.getRow(90),
+					iris.getRow(120)
+				})).fit();
 		System.out.println();
 	}
 	
@@ -365,10 +453,11 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		
 		// Now test the actual method...
-		EntryPair<ArrayList<EntryPair<double[],Integer>>, Integer> entry =
-			MeanShift.getCenterIntensity(iris, bandwidth, X, GlobalState.DEFAULT_RANDOM_STATE, 
-					Distance.EUCLIDEAN, 300);
-		ArrayList<EntryPair<double[], Integer>> center_intensity2 = entry.getKey();
+		CenterIntensity intensity = new CenterIntensity(
+				iris, bandwidth, X, GlobalState.DEFAULT_RANDOM_STATE, 
+				Distance.EUCLIDEAN, 300);
+		
+		ArrayList<EntryPair<double[], Integer>> center_intensity2 = intensity.pairs;
 		assertTrue(center_intensity2.size() == center_intensity.size());
 		
 		
@@ -442,7 +531,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			clust_centers.setRow(i, centroids.get(i));
 		
 		// The final nearest neighbors model -- if this works, we are in the clear...
-		NearestNeighbors nn = new NearestNeighbors(clust_centers,
+		new NearestNeighbors(clust_centers,
 			new NearestNeighborsPlanner(1)).fit();
 	}
 }
