@@ -1,180 +1,339 @@
 package com.clust4j.data;
 
-import com.clust4j.utils.MatrixFormatter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 
 public class ExampleDataSets {
 	
-	public final static DataSet IRIS;
+	/**
+	 * 1. Title: Iris Plants Database Updated Sept 21 by C.Blake - Added
+	 * discrepency information
+	 * 
+	 * <p>
+	 * 2. Sources: 
+	 * <ul>
+	 * <li>(a) Creator: R.A. Fisher 
+	 * <li>(b) Donor: Michael Marshall (MARSHALL%PLU@io.arc.nasa.gov) (c) Date: July, 1988
+	 * </ul>
+	 * 
+	 * <p>
+	 * 3. Past Usage (far too many to exhaustively list): 
+	 * <ul>
+	 * <li>1. Fisher,R.A. "The use of multiple measurements in taxonomic problems"
+	 * Annual Eugenics, 7, Part II, 179-188 (1936); also in "Contributions to
+	 * Mathematical Statistics" (John Wiley, NY, 1950). 
+	 * <li>2. Duda,R.O., & Hart,P.E. (1973) Pattern Classification and Scene Analysis. (Q327.D83)
+	 * John Wiley & Sons. ISBN 0-471-22361-1. See page 218. 
+	 * <li>3. Dasarathy, B.V. (1980) "Nosing Around the Neighborhood: A New System Structure and
+	 * Classification Rule for Recognition in Partially Exposed Environments".
+	 * IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol.
+	 * PAMI-2, No. 1, 67-71. -- Results: -- very low misclassification rates (0%
+	 * for the setosa class) 
+	 * <li>4. Gates, G.W. (1972)
+	 * "The Reduced Nearest Neighbor Rule". IEEE Transactions on Information
+	 * Theory, May 1972, 431-433. -- Results: -- very low misclassification
+	 * rates again 5. See also: 1988 MLC Proceedings, 54-64. Cheeseman et al's
+	 * AUTOCLASS II conceptual clustering system finds 3 classes in the data.
+	 * </ul>
+	 * 
+	 * 4. Relevant Information: --- This is perhaps the best known database to
+	 * be found in the pattern recognition literature. Fisher's paper is a
+	 * classic in the field and is referenced frequently to this day. (See Duda
+	 * & Hart, for example.) The data set contains 3 classes of 50 instances
+	 * each, where each class refers to a type of iris plant. One class is
+	 * linearly separable from the other 2; the latter are NOT linearly
+	 * separable from each other. --- Predicted attribute: class of iris plant.
+	 * --- This is an exceedingly simple domain. --- This data differs from the
+	 * data presented in Fishers article (identified by Steve Chadwick,
+	 * spchadwick@espeedaz.net ) The 35th sample should be:
+	 * 4.9,3.1,1.5,0.2,"Iris-setosa" where the error is in the fourth feature.
+	 * The 38th sample: 4.9,3.6,1.4,0.1,"Iris-setosa" where the errors are in
+	 * the second and third features.
+	 * 
+	 * <p>
+	 * 5. Number of Instances: 150 (50 in each of three classes)
+	 * 
+	 * <p>
+	 * 6. Number of Attributes: 4 numeric
+	 * 
+	 * <p>
+	 * 7. Attribute Information: 
+	 * <ul>
+	 * <li>1. sepal length in cm 
+	 * <li>2. sepal width in cm 
+	 * <li>3. petal length in cm 
+	 * <li>4. petal width in cm
+	 * </ul>
+	 * 
+	 * 8. Missing Attribute Values: None
+	 * 
+	 * <p>
+	 * 9. Class Distribution: 33.3% for each of 3 classes.
+	 * 
+	 * @return the iris dataset
+	 * @see <a href="https://archive.ics.uci.edu/ml/datasets/Iris">ics.uci.edu</a>
+	 */
+	public final static DataSet loadIris() {
+		return datasetLoader("datasets/iris.data");
+	}
 	
-	static {
-		// ===== BUILD IRIS =======
-		IRIS = new DataSet(
-			new double[][]{
-				new double[] {5.1,3.5,1.4,0.2},
-				new double[] {4.9,3,1.4,0.2},
-				new double[] {4.7,3.2,1.3,0.2},
-				new double[] {4.6,3.1,1.5,0.2},
-				new double[] {5,3.6,1.4,0.2},
-				new double[] {5.4,3.9,1.7,0.4},
-				new double[] {4.6,3.4,1.4,0.3},
-				new double[] {5,3.4,1.5,0.2},
-				new double[] {4.4,2.9,1.4,0.2},
-				new double[] {4.9,3.1,1.5,0.1},
-				new double[] {5.4,3.7,1.5,0.2},
-				new double[] {4.8,3.4,1.6,0.2},
-				new double[] {4.8,3,1.4,0.1},
-				new double[] {4.3,3,1.1,0.1},
-				new double[] {5.8,4,1.2,0.2},
-				new double[] {5.7,4.4,1.5,0.4},
-				new double[] {5.4,3.9,1.3,0.4},
-				new double[] {5.1,3.5,1.4,0.3},
-				new double[] {5.7,3.8,1.7,0.3},
-				new double[] {5.1,3.8,1.5,0.3},
-				new double[] {5.4,3.4,1.7,0.2},
-				new double[] {5.1,3.7,1.5,0.4},
-				new double[] {4.6,3.6,1,0.2},
-				new double[] {5.1,3.3,1.7,0.5},
-				new double[] {4.8,3.4,1.9,0.2},
-				new double[] {5,3,1.6,0.2},
-				new double[] {5,3.4,1.6,0.4},
-				new double[] {5.2,3.5,1.5,0.2},
-				new double[] {5.2,3.4,1.4,0.2},
-				new double[] {4.7,3.2,1.6,0.2},
-				new double[] {4.8,3.1,1.6,0.2},
-				new double[] {5.4,3.4,1.5,0.4},
-				new double[] {5.2,4.1,1.5,0.1},
-				new double[] {5.5,4.2,1.4,0.2},
-				new double[] {4.9,3.1,1.5,0.2},
-				new double[] {5,3.2,1.2,0.2},
-				new double[] {5.5,3.5,1.3,0.2},
-				new double[] {4.9,3.6,1.4,0.1},
-				new double[] {4.4,3,1.3,0.2},
-				new double[] {5.1,3.4,1.5,0.2},
-				new double[] {5,3.5,1.3,0.3},
-				new double[] {4.5,2.3,1.3,0.3},
-				new double[] {4.4,3.2,1.3,0.2},
-				new double[] {5,3.5,1.6,0.6},
-				new double[] {5.1,3.8,1.9,0.4},
-				new double[] {4.8,3,1.4,0.3},
-				new double[] {5.1,3.8,1.6,0.2},
-				new double[] {4.6,3.2,1.4,0.2},
-				new double[] {5.3,3.7,1.5,0.2},
-				new double[] {5,3.3,1.4,0.2},
-				new double[] {7,3.2,4.7,1.4},
-				new double[] {6.4,3.2,4.5,1.5},
-				new double[] {6.9,3.1,4.9,1.5},
-				new double[] {5.5,2.3,4,1.3},
-				new double[] {6.5,2.8,4.6,1.5},
-				new double[] {5.7,2.8,4.5,1.3},
-				new double[] {6.3,3.3,4.7,1.6},
-				new double[] {4.9,2.4,3.3,1},
-				new double[] {6.6,2.9,4.6,1.3},
-				new double[] {5.2,2.7,3.9,1.4},
-				new double[] {5,2,3.5,1},
-				new double[] {5.9,3,4.2,1.5},
-				new double[] {6,2.2,4,1},
-				new double[] {6.1,2.9,4.7,1.4},
-				new double[] {5.6,2.9,3.6,1.3},
-				new double[] {6.7,3.1,4.4,1.4},
-				new double[] {5.6,3,4.5,1.5},
-				new double[] {5.8,2.7,4.1,1},
-				new double[] {6.2,2.2,4.5,1.5},
-				new double[] {5.6,2.5,3.9,1.1},
-				new double[] {5.9,3.2,4.8,1.8},
-				new double[] {6.1,2.8,4,1.3},
-				new double[] {6.3,2.5,4.9,1.5},
-				new double[] {6.1,2.8,4.7,1.2},
-				new double[] {6.4,2.9,4.3,1.3},
-				new double[] {6.6,3,4.4,1.4},
-				new double[] {6.8,2.8,4.8,1.4},
-				new double[] {6.7,3,5,1.7},
-				new double[] {6,2.9,4.5,1.5},
-				new double[] {5.7,2.6,3.5,1},
-				new double[] {5.5,2.4,3.8,1.1},
-				new double[] {5.5,2.4,3.7,1},
-				new double[] {5.8,2.7,3.9,1.2},
-				new double[] {6,2.7,5.1,1.6},
-				new double[] {5.4,3,4.5,1.5},
-				new double[] {6,3.4,4.5,1.6},
-				new double[] {6.7,3.1,4.7,1.5},
-				new double[] {6.3,2.3,4.4,1.3},
-				new double[] {5.6,3,4.1,1.3},
-				new double[] {5.5,2.5,4,1.3},
-				new double[] {5.5,2.6,4.4,1.2},
-				new double[] {6.1,3,4.6,1.4},
-				new double[] {5.8,2.6,4,1.2},
-				new double[] {5,2.3,3.3,1},
-				new double[] {5.6,2.7,4.2,1.3},
-				new double[] {5.7,3,4.2,1.2},
-				new double[] {5.7,2.9,4.2,1.3},
-				new double[] {6.2,2.9,4.3,1.3},
-				new double[] {5.1,2.5,3,1.1},
-				new double[] {5.7,2.8,4.1,1.3},
-				new double[] {6.3,3.3,6,2.5},
-				new double[] {5.8,2.7,5.1,1.9},
-				new double[] {7.1,3,5.9,2.1},
-				new double[] {6.3,2.9,5.6,1.8},
-				new double[] {6.5,3,5.8,2.2},
-				new double[] {7.6,3,6.6,2.1},
-				new double[] {4.9,2.5,4.5,1.7},
-				new double[] {7.3,2.9,6.3,1.8},
-				new double[] {6.7,2.5,5.8,1.8},
-				new double[] {7.2,3.6,6.1,2.5},
-				new double[] {6.5,3.2,5.1,2},
-				new double[] {6.4,2.7,5.3,1.9},
-				new double[] {6.8,3,5.5,2.1},
-				new double[] {5.7,2.5,5,2},
-				new double[] {5.8,2.8,5.1,2.4},
-				new double[] {6.4,3.2,5.3,2.3},
-				new double[] {6.5,3,5.5,1.8},
-				new double[] {7.7,3.8,6.7,2.2},
-				new double[] {7.7,2.6,6.9,2.3},
-				new double[] {6,2.2,5,1.5},
-				new double[] {6.9,3.2,5.7,2.3},
-				new double[] {5.6,2.8,4.9,2},
-				new double[] {7.7,2.8,6.7,2},
-				new double[] {6.3,2.7,4.9,1.8},
-				new double[] {6.7,3.3,5.7,2.1},
-				new double[] {7.2,3.2,6,1.8},
-				new double[] {6.2,2.8,4.8,1.8},
-				new double[] {6.1,3,4.9,1.8},
-				new double[] {6.4,2.8,5.6,2.1},
-				new double[] {7.2,3,5.8,1.6},
-				new double[] {7.4,2.8,6.1,1.9},
-				new double[] {7.9,3.8,6.4,2},
-				new double[] {6.4,2.8,5.6,2.2},
-				new double[] {6.3,2.8,5.1,1.5},
-				new double[] {6.1,2.6,5.6,1.4},
-				new double[] {7.7,3,6.1,2.3},
-				new double[] {6.3,3.4,5.6,2.4},
-				new double[] {6.4,3.1,5.5,1.8},
-				new double[] {6,3,4.8,1.8},
-				new double[] {6.9,3.1,5.4,2.1},
-				new double[] {6.7,3.1,5.6,2.4},
-				new double[] {6.9,3.1,5.1,2.3},
-				new double[] {5.8,2.7,5.1,1.9},
-				new double[] {6.8,3.2,5.9,2.3},
-				new double[] {6.7,3.3,5.7,2.5},
-				new double[] {6.7,3,5.2,2.3},
-				new double[] {6.3,2.5,5,1.9},
-				new double[] {6.5,3,5.2,2},
-				new double[] {6.2,3.4,5.4,2.3},
-				new double[] {5.9,3,5.1,1.8}
-			},
-				
-			new int[]{
-				0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-				1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-				2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
-			},
-			
-			new String[]{
-				"Sepal Length", 
-				"Sepal Width",
-				"Petal Length", 
-				"Petal Width"
-			},
-			
-			new MatrixFormatter());
+	
+	/**
+	 * 1. Title of Database: Wine recognition data Updated Sept 21, 1998 by
+	 * C.Blake : Added attribute information
+	 *
+	 * <p>
+	 * 2. Sources: (a) Forina, M. et al, PARVUS - An Extendible Package for Data
+	 * Exploration, Classification and Correlation. Institute of Pharmaceutical
+	 * and Food Analysis and Technologies, Via Brigata Salerno, 16147 Genoa,
+	 * Italy.
+	 *
+	 * <p>
+	 * (b) Stefan Aeberhard, email: stefan@coral.cs.jcu.edu.au (c) July 1991 3.
+	 * Past Usage:
+	 * 
+	 * <p>
+	 * (1) S. Aeberhard, D. Coomans and O. de Vel, Comparison of Classifiers in
+	 * High Dimensional Settings, Tech. Rep. no. 92-02, (1992), Dept. of
+	 * Computer Science and Dept. of Mathematics and Statistics, James Cook
+	 * University of North Queensland. (Also submitted to Technometrics).
+	 * 
+	 * <p>
+	 * The data was used with many others for comparing various classifiers. The
+	 * classes are separable, though only RDA has achieved 100% correct
+	 * classification. (RDA : 100%, QDA 99.4%, LDA 98.9%, 1NN 96.1%
+	 * (z-transformed data)) (All results using the leave-one-out technique)
+	 * 
+	 * <p>
+	 * In a classification context, this is a well posed problem with
+	 * "well behaved" class structures. A good data set for first testing of a
+	 * new classifier, but not very challenging.
+	 * 
+	 * <p>
+	 * (2) S. Aeberhard, D. Coomans and O. de Vel,
+	 * "THE CLASSIFICATION PERFORMANCE OF RDA" Tech. Rep. no. 92-01, (1992),
+	 * Dept. of Computer Science and Dept. of Mathematics and Statistics, James
+	 * Cook University of North Queensland. (Also submitted to Journal of
+	 * Chemometrics).
+	 * 
+	 * <p>
+	 * Here, the data was used to illustrate the superior performance of the use
+	 * of a new appreciation function with RDA.
+	 * 
+	 * <p>
+	 * 4. Relevant Information:
+	 * 
+	 * <p>
+	 * -- These data are the results of a chemical analysis of wines grown in
+	 * the same region in Italy but derived from three different cultivars. The
+	 * analysis determined the quantities of 13 constituents found in each of
+	 * the three types of wines.
+	 * 
+	 * <p>
+	 * -- I think that the initial data set had around 30 variables, but for
+	 * some reason I only have the 13 dimensional version. I had a list of what
+	 * the 30 or so variables were, but a.) I lost it, and b.), I would not know
+	 * which 13 variables are included in the set.
+	 * 
+	 * <p>
+	 * -- The attributes are (dontated by Riccardo Leardi,
+	 * riclea@anchem.unige.it ) 
+	 * 
+	 * <ul>
+	 * <li>1) Alcohol 
+	 * <li>2) Malic acid 
+	 * <li>3) Ash 
+	 * <li>4) Alcalinity of ash 
+	 * <li>5) Magnesium 
+	 * <li>6) Total phenols 
+	 * <li>7) Flavanoids 
+	 * <li>8) Nonflavanoid phenols
+	 * <li>9) Proanthocyanins 
+	 * <li>10) Color intensity 
+	 * <li>11) Hue 
+	 * <li>12) OD280/OD315 of diluted wines 
+	 * <li>13) Proline
+	 * </ul>
+	 * 
+	 * <p>
+	 * 5. Number of Instances:
+	 * <ul>
+	 * <li>class 0: 59 
+	 * <li>class 2: 71 
+	 * <li>class 3: 48
+	 * </ul>
+	 * 
+	 * 6. Number of Attributes: 13
+	 * 
+	 * <p>
+	 * 7. For Each Attribute:  All attributes are continuous
+	 * 
+	 * <p>
+	 * 8. Missing Attribute Values: None
+	 * 
+	 * @return wine dataset
+	 * @see <a href="https://archive.ics.uci.edu/ml/datasets/Wine">ics.uci.edu</a>
+	 */
+	public static DataSet loadWine() {
+		return datasetLoader("datasets/wine.data");
+	}
+	
+	
+	/**
+	 * 1. Title: Wisconsin Diagnostic Breast Cancer (WDBC)
+	 * 
+	 * <p>
+	 * 2. Source Information
+	 * 
+	 * <ul>
+	 * <li>a) Creators: Dr. William H. Wolberg, General Surgery Dept., University of Wisconsin,
+	 * Clinical Sciences Center, Madison, WI 53792
+	 * wolberg@eagle.surgery.wisc.edu
+	 * 
+	 * W. Nick Street, Computer Sciences Dept., University of Wisconsin, 1210
+	 * West Dayton St., Madison, WI 53706 street@cs.wisc.edu 608-262-6619
+	 * 
+	 * Olvi L. Mangasarian, Computer Sciences Dept., University of Wisconsin,
+	 * 1210 West Dayton St., Madison, WI 53706 olvi@cs.wisc.edu
+	 * 
+	 * <li>b) Donor: Nick Street
+	 * 
+	 * <li>c) Date: November 1995
+	 * </ul>
+	 * 
+	 * 3. Past Usage:
+	 * 
+	 * <p>
+	 * W.N. Street, W.H. Wolberg and O.L. Mangasarian Nuclear feature extraction
+	 * for breast tumor diagnosis. IS&T/SPIE 1993 International Symposium on
+	 * Electronic Imaging: Science and Technology, volume 1905, pages 861-870,
+	 * San Jose, CA, 1993.
+	 * 
+	 * <p>
+	 * OR literature:
+	 * <p>
+	 * O.L. Mangasarian, W.N. Street and W.H. Wolberg. Breast cancer diagnosis
+	 * and prognosis via linear programming. Operations Research, 43(4), pages
+	 * 570-577, July-August 1995.
+	 * <p>
+	 * Medical literature:
+	 * <p>
+	 * W.H. Wolberg, W.N. Street, and O.L. Mangasarian. Machine learning
+	 * techniques to diagnose breast cancer from fine-needle aspirates. Cancer
+	 * Letters 77 (1994) 163-171.
+	 * <p>
+	 * W.H. Wolberg, W.N. Street, and O.L. Mangasarian. Image analysis and
+	 * machine learning applied to breast cancer diagnosis and prognosis.
+	 * Analytical and Quantitative Cytology and Histology, Vol. 17 No. 2, pages
+	 * 77-87, April 1995.
+	 * <p>
+	 * W.H. Wolberg, W.N. Street, D.M. Heisey, and O.L. Mangasarian.
+	 * Computerized breast cancer diagnosis and prognosis from fine needle
+	 * aspirates. Archives of Surgery 1995;130:511-516.
+	 * <p>
+	 * W.H. Wolberg, W.N. Street, D.M. Heisey, and O.L. Mangasarian.
+	 * Computer-derived nuclear features distinguish malignant from benign
+	 * breast cytology. Human Pathology, 26:792--796, 1995.
+	 * <p>
+	 * See also: http://www.cs.wisc.edu/~olvi/uwmp/mpml.html
+	 * http://www.cs.wisc.edu/~olvi/uwmp/cancer.html
+	 * <p>
+	 * Results:
+	 * <p>
+	 * - predicting field 2, diagnosis: B = benign, M = malignant - sets are
+	 * linearly separable using all 30 input features - best predictive accuracy
+	 * obtained using one separating plane in the 3-D space of Worst Area, Worst
+	 * Smoothness and Mean Texture. Estimated accuracy 97.5% using repeated
+	 * 10-fold crossvalidations. Classifier has correctly diagnosed 176
+	 * consecutive new patients as of November 1995.
+	 * 
+	 * <p>
+	 * 4. Relevant information
+	 * <p>
+	 * Features are computed from a digitized image of a fine needle aspirate
+	 * (FNA) of a breast mass. They describe characteristics of the cell nuclei
+	 * present in the image. A few of the images can be found at
+	 * http://www.cs.wisc.edu/~street/images/
+	 * <p>
+	 * Separating plane described above was obtained using Multisurface
+	 * Method-Tree (MSM-T) [K. P. Bennett, "Decision Tree Construction Via
+	 * Linear Programming." Proceedings of the 4th Midwest Artificial
+	 * Intelligence and Cognitive Science Society, pp. 97-101, 1992], a
+	 * classification method which uses linear programming to construct a
+	 * decision tree. Relevant features were selected using an exhaustive search
+	 * in the space of 1-4 features and 1-3 separating planes.
+	 * <p>
+	 * The actual linear program used to obtain the separating plane in the
+	 * 3-dimensional space is that described in: [K. P. Bennett and O. L.
+	 * Mangasarian: "Robust Linear Programming Discrimination of Two Linearly
+	 * Inseparable Sets", Optimization Methods and Software 1, 1992, 23-34].
+	 * 
+	 * <p>
+	 * 5. Number of instances: 569
+	 * <p>
+	 * 6. Number of attributes: 30 (real-valued input
+	 * features)
+	 * 
+	 * <p>
+	 * 7. Attribute information
+	 * 
+	 * <ul>
+	 * <li>1) Diagnosis (0 = malignant, 1 = benign))
+	 * </ul>
+	 * 
+	 * <p>
+	 * Ten real-valued features are computed for each cell nucleus:
+	 * <ul>
+	 * <li>a) radius (mean of distances from center to points on the perimeter) 
+	 * <li>b) texture (standard deviation of gray-scale values) 
+	 * <li>c) perimeter 
+	 * <li>d) area 
+	 * <li>e) smoothness (local variation in radius lengths) 
+	 * <li>f) compactness (perimeter^2 / area - 1.0) 
+	 * <li>g) concavity (severity of concave portions of the contour) 
+	 * <li>h) concave points (number of concave portions of the contour) 
+	 * <li>i) symmetry 
+	 * <li>j) fractal dimension ("coastline approximation" - 1)
+	 * </ul>
+	 * 
+	 * Several of the papers listed above contain detailed descriptions of how
+	 * these features are computed.
+	 * 
+	 * <p>
+	 * The mean, standard error, and "worst" or largest (mean of the three
+	 * largest values) of these features were computed for each image, resulting
+	 * in 30 features.
+	 * 
+	 * <p>
+	 * All feature values are recoded with four significant digits.
+	 * 
+	 * <p>
+	 * 8. Missing attribute values: none
+	 * 
+	 * <p>
+	 * 9. Class distribution: 357 benign, 212 malignant
+	 * 
+	 * @return the breast cancer dataset
+	 */
+	public static DataSet loadBreastCancer() {
+		return datasetLoader("datasets/breastcancer.data");
+	}
+	
+	private static DataSet datasetLoader(final String location) {
+		DataSet bc = null;
+		
+		try {
+			bc = (DataSet)DataSet.loadObject(new FileInputStream(location));
+		} catch(FileNotFoundException f) {
+			throw new RuntimeException("File not found: " + location);
+		} catch(ClassNotFoundException c) {
+			throw new RuntimeException("Cannot find classtype", c);
+		} catch(IOException i) {
+			throw new RuntimeException("exception occurred in dataset loading: ", i);
+		}
+		
+		return bc;
 	}
 }

@@ -15,13 +15,15 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.DBSCAN.DBSCANPlanner;
+import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.metrics.pairwise.Distance;
 
 public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+	final DataSet irisds = ExampleDataSets.loadIris();
+	final Array2DRowRealMatrix data = irisds.getData();
 
 
 	@Test
@@ -160,10 +162,10 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		System.out.println();
 		
 		int a = db.getNumberOfNoisePoints();
-		db.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		db.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		DBSCAN db2 = (DBSCAN)DBSCAN.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		DBSCAN db2 = (DBSCAN)DBSCAN.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(a == db2.getNumberOfNoisePoints());
 		assertTrue(db.equals(db2));
 		Files.delete(TestSuite.path);
@@ -171,7 +173,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testMinPtsIAE() {
-		new DBSCAN(ExampleDataSets.IRIS.getData(), 
+		new DBSCAN(data, 
 			new DBSCANPlanner().setMinPts(0));
 	}
 }

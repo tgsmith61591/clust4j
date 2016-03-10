@@ -16,6 +16,7 @@ import org.junit.Test;
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
+import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
@@ -23,7 +24,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+	final DataSet irisds = ExampleDataSets.loadIris();
+	final Array2DRowRealMatrix data = irisds.getData();
 	
 	@Test
 	@Override
@@ -164,10 +166,10 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 					.setVerbose(true)).fit();
 		
 		double[][] a = ap.getAvailabilityMatrix();
-		ap.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		ap.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		AffinityPropagation ap2 = (AffinityPropagation)AffinityPropagation.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		AffinityPropagation ap2 = (AffinityPropagation)AffinityPropagation.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(MatUtils.equalsExactly(a, ap2.getAvailabilityMatrix()));
 		assertTrue(ap2.equals(ap));
 		Files.delete(TestSuite.path);
@@ -175,7 +177,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	
 	@Test
 	public void testOnIris() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = data;
 		AffinityPropagation ap = new AffinityPropagation(iris, 
 			new AffinityPropagation
 				.AffinityPropagationPlanner()

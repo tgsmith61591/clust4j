@@ -196,7 +196,7 @@ public class MeanShift
 		
 		double bw = 0.0;
 		final double[][] X = data.getData();
-		final int chunkSize = 500;
+		final int chunkSize = X.length < 500 ? 500 : X.length / 5;
 		final int numChunks = getNumChunks(chunkSize, m);
 		Neighborhood neighb;
 		
@@ -436,6 +436,7 @@ public class MeanShift
 	static class CenterIntensity {
 		final ArrayList<EntryPair<double[], Integer>> pairs = new ArrayList<>();
 		int itrz = 0;
+		final ArrayList<Object[]> summaries = new ArrayList<>();
 		
 		CenterIntensity(
 				AbstractRealMatrix data, 
@@ -443,6 +444,7 @@ public class MeanShift
 				Random rand, GeometricallySeparable metric, 
 				int maxIter) {
 			
+			LogTimer timer;
 			RadiusNeighbors nbrs = new RadiusNeighbors(data,
 				new RadiusNeighborsPlanner(bandwidth)
 					.setScale(false) // don't rescale
@@ -454,13 +456,23 @@ public class MeanShift
 			MeanShiftSeed sd;
 			TreeSet<MeanShiftSeed> computedSeeds = new TreeSet<>();
 			final double[][] X = data.getData();
+			
+			int idx = 0;
 			for(double[] seed: seeds) {
+				idx++;
+				timer = new LogTimer();
 				sd = singleSeed(seed, nbrs, X, maxIter);
+				
 				if(null == sd)
 					continue;
 				
 				computedSeeds.add(sd);
 				itrz = FastMath.max(itrz, sd.iterations);
+				
+				// If it actually converged, add the summary
+				summaries.add(new Object[]{
+					idx - 1, sd.iterations, timer.formatTime(), timer.wallTime()
+				});
 			}
 			
 			// add the entry pairs
@@ -552,11 +564,12 @@ public class MeanShift
 				 * iteration, will increase bandwidth.
 				 */
 				int itrz = 0;
+				CenterIntensity intensity = null;
 				while(true) {
 					itrz = 0;
 
-					
-					final CenterIntensity intensity = new CenterIntensity(
+					// Compute the seeds and center intensity
+					intensity = new CenterIntensity(
 							data, bandwidth, seeds, getSeed(), 
 							getSeparabilityMetric(), maxIter);
 					
@@ -592,6 +605,9 @@ public class MeanShift
 					info("final bandwidth selection: " + bandwidth);
 				itersElapsed = itrz; // max iters elapsed
 				
+				
+				// Pre-filtered summaries...
+				ArrayList<Object[]> allSummary = intensity.summaries;
 				
 				
 				// Post-processing. Remove near duplicate seeds
@@ -640,6 +656,7 @@ public class MeanShift
 				// Now assign the centroids...
 				for(int i = 0; i < unique.length; i++) {
 					if(unique[i]) {
+						fitSummary.add(allSummary.get(i));
 						centroids.add(sorted_centers.getRow(i));
 					}
 				}
@@ -670,8 +687,9 @@ public class MeanShift
 							+ (centers.getRowDimension()==1?"":"s")+" identified; "
 							+ "try altering bandwidth";
 					error(error);
-					throw new IllegalClusterStateException(error + "; " + iae.getMessage(), iae);
+					throw new IllegalClusterStateException(error, iae);
 				}
+				
 				
 				
 				info((numClusters=centroids.size())+" optimal kernels identified");
@@ -811,7 +829,7 @@ public class MeanShift
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Num. Clusters","Num. Noise"
+			"Seed #","Iterations","Iter. Time","Wall"
 		};
 	}
 

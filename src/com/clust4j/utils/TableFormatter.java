@@ -10,8 +10,10 @@ import java.util.Locale;
 
 import org.apache.commons.math3.util.FastMath;
 
-public class TableFormatter {
-	public static enum ColumnAlignment {
+public class TableFormatter implements java.io.Serializable {
+	private static final long serialVersionUID = -4944015740188846236L;
+
+	public static enum ColumnAlignment implements java.io.Serializable {
 		LEFT, 
 		RIGHT
 	}

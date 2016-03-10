@@ -33,7 +33,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final static Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
+	final static Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
+	final static Array2DRowRealMatrix wine = ExampleDataSets.loadWine().getData();
 
 	@Test
 	public void MeanShiftTest1() {
@@ -192,7 +193,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	@Override
 	public void testDefConst() {
-		new MeanShift(ExampleDataSets.IRIS.getData());
+		new MeanShift(ExampleDataSets.loadIris().getData());
 	}
 
 	@Test
@@ -251,10 +252,10 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		System.out.println();
 		
 		final double n = ms.getNumberOfNoisePoints();
-		ms.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		ms.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		MeanShift ms2 = (MeanShift)MeanShift.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		MeanShift ms2 = (MeanShift)MeanShift.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(ms2.getNumberOfNoisePoints() == n);
 		assertTrue(ms.equals(ms2));
 		Files.delete(TestSuite.path);
@@ -262,7 +263,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testAutoEstimation() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.202076812799869
@@ -309,7 +310,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	 */
 	@Test
 	public void MeanShiftTestIris() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		MeanShift ms = new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -335,7 +336,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	 */
 	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
 	public void MeanShiftTestIrisSeeded() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -346,7 +347,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=NonUniformMatrixException.class)
 	public void testSeededNUME() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -358,7 +359,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testSeededDME() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -370,7 +371,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testSeededIAE1() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -380,7 +381,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testSeededIAE2() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -390,7 +391,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testSeededIrisFunctional() {
-		Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -406,7 +407,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testAutoEstimationWithScale() {
 		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)FeatureNormalization
-			.STANDARD_SCALE.operate(ExampleDataSets.IRIS.getData());
+			.STANDARD_SCALE.operate(ExampleDataSets.loadIris().getData());
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.5971266273437668
@@ -533,5 +534,20 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		// The final nearest neighbors model -- if this works, we are in the clear...
 		new NearestNeighbors(clust_centers,
 			new NearestNeighborsPlanner(1)).fit();
+	}
+	
+	@Test
+	public void testOnWineDataNonScaled() {
+		new MeanShift(wine,
+			new MeanShiftPlanner()
+			.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void testOnWineDataScaled() {
+		new MeanShift(wine,
+			new MeanShiftPlanner()
+				.setScale(true)
+				.setVerbose(true)).fit();
 	}
 }

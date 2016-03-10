@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.log.Log;
@@ -18,6 +19,7 @@ import com.clust4j.utils.MatUtils.Axis;
 import com.clust4j.utils.MatUtils.MatSeries;
 
 public class MatTests {
+	final static DataSet IRIS = ExampleDataSets.loadIris();
 
 	@Test
 	public void test() {
@@ -1663,7 +1665,7 @@ public class MatTests {
 	@Test
 	public void testMeanRecords() {
 		assertTrue(VecUtils.equalsExactly(
-			MatUtils.meanRecord(ExampleDataSets.IRIS.getData().getData()),
+			MatUtils.meanRecord(IRIS.getData().getData()),
 			new double[]{5.843333333333335, 3.057333333333334, 3.7580000000000027, 1.199333333333334}));
 	
 		double[][] d = new double[][]{
@@ -1694,7 +1696,7 @@ public class MatTests {
 	@Test
 	public void testMedianRecord() {
 		assertTrue(VecUtils.equalsExactly(
-			MatUtils.medianRecord(ExampleDataSets.IRIS.getData().getData()),
+			MatUtils.medianRecord(IRIS.getData().getData()),
 			new double[]{5.8, 3.0, 4.35, 1.3}));
 		
 		double[][] d = new double[][]{

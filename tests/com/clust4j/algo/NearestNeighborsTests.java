@@ -25,7 +25,7 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
-	final Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
+	final Array2DRowRealMatrix data = ExampleDataSets.loadIris().getData();
 	
 	@Test
 	@Override
@@ -71,10 +71,10 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 				.setScale(true)).fit();
 		
 		final int[][] c = nn.getNeighbors().getIndices();
-		nn.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		NearestNeighbors nn2 = (NearestNeighbors)NearestNeighbors.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		NearestNeighbors nn2 = (NearestNeighbors)NearestNeighbors.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(MatUtils.equalsExactly(nn2.getNeighbors().getIndices(), c));
 		assertTrue(nn2.equals(nn));
 		assertTrue(nn.equals(nn)); // test the ref return

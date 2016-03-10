@@ -119,10 +119,10 @@ public class TestLabelEncoder implements BaseModelTest {
 		}).fit();
 		
 		final int[] mappings = encoder.getEncodedLabels();
-		encoder.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		encoder.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		LabelEncoder encoder2 = (LabelEncoder)LabelEncoder.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		LabelEncoder encoder2 = (LabelEncoder)LabelEncoder.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(VecUtils.equalsExactly(mappings, encoder2.getEncodedLabels()));
 		Files.delete(TestSuite.path);
 	}

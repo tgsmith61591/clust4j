@@ -24,7 +24,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 
 public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
-	final static Array2DRowRealMatrix iris = ExampleDataSets.IRIS.getData();
+	final static Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 	
 	final static Array2DRowRealMatrix data=
 		new Array2DRowRealMatrix(new double[][]{
@@ -251,10 +251,10 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 				.setScale(true)).fit();
 		
 		final int[][] c = nn.getNeighbors().getIndices();
-		nn.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		RadiusNeighbors nn2 = (RadiusNeighbors)RadiusNeighbors.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		RadiusNeighbors nn2 = (RadiusNeighbors)RadiusNeighbors.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(MatUtils.equalsExactly(nn2.getNeighbors().getIndices(), c));
 		assertTrue(nn2.equals(nn));
 		assertTrue(nn.equals(nn)); // test the ref return

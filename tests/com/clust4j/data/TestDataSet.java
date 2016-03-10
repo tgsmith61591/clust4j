@@ -21,17 +21,19 @@ import com.clust4j.utils.VecUtils;
 
 public class TestDataSet {
 	private final static DecimalFormat df = new DecimalFormat("##.##");
+	private final static DataSet IRIS = ExampleDataSets.loadIris();
+	private final static DataSet WINE = ExampleDataSets.loadWine();
+	private final static DataSet BC = ExampleDataSets.loadBreastCancer();
 
 	@Test(expected=IllegalStateException.class)
 	public void testIris() {
-		DataSet iris = ExampleDataSets.IRIS;
-		final int len = iris.getDataRef().getRowDimension();
-		DataSet shuffled = iris.shuffle();
+		final int len = IRIS.getDataRef().getRowDimension();
+		DataSet shuffled = IRIS.shuffle();
 		assertTrue(shuffled.getDataRef().getRowDimension() == len);
 		
 		// Test that no reference carried over...
 		shuffled.getHeaderRef()[0] = "TESTING!";
-		assertTrue( !iris.getHeaderRef()[0].equals(shuffled.getHeaderRef()[0]) );
+		assertTrue( !IRIS.getHeaderRef()[0].equals(shuffled.getHeaderRef()[0]) );
 		
 		shuffled.setColumn("TESTING!", 
 			VecUtils.rep(Double.POSITIVE_INFINITY, shuffled.numRows()));
@@ -51,6 +53,8 @@ public class TestDataSet {
 		shuffled.dropCol("Petal Width"); // BOOM!
 	}
 	
+	
+	
 	private static String formatPct(double num) {
 		return df.format(num * 100) + "%";
 	}
@@ -65,13 +69,12 @@ public class TestDataSet {
 		System.out.println(nm+" (scale = "+b+"):  " + model.silhouetteScore() );
 	}
 
-	private void testAlgos(boolean shuffle) {
+	private void testAlgos(boolean shuffle, DataSet ds, int k) {
 		System.out.println(" ========== " + "Testing with shuffle" + 
 				(shuffle ? " enabled" : " disabled") + 
 				" ========== ");
 		
-		DataSet iris = ExampleDataSets.IRIS;
-		DataSet shuffled = shuffle ? iris.shuffle() : iris;
+		DataSet shuffled = shuffle ? ds.shuffle() : ds;
 		int[] labels = shuffled.getLabels();
 		
 		final Array2DRowRealMatrix data = shuffled.getData();
@@ -110,13 +113,13 @@ public class TestDataSet {
 			
 			
 			KMeans kmn = new KMeans(data, 
-				new KMeans.KMeansPlanner(3)
+				new KMeans.KMeansPlanner(k)
 					.setScale(b)
 					.setVerbose(verbose)).fit();
 			stdout(kmn, b, labels);
 			
 			KMedoids kmd = new KMedoids(data, 
-				new KMedoids.KMedoidsPlanner(3)
+				new KMedoids.KMedoidsPlanner(k)
 					.setScale(b)
 					.setVerbose(verbose)).fit();
 			stdout(kmd, b, labels);
@@ -135,18 +138,38 @@ public class TestDataSet {
 	}
 	
 	@Test
-	public void testDifferentAlgorithmWithShuffle() {
-		testAlgos(true);
+	public void testDifferentAlgorithmWithShuffleIRIS() {
+		testAlgos(true, IRIS, 3);
 	}
 	
 	@Test
-	public void testDifferentAlgorithmNoShuffle() {
-		testAlgos(false);
+	public void testDifferentAlgorithmNoShuffleIRIS() {
+		testAlgos(false, IRIS, 3);
 	}
 	
 	@Test
-	public void testCopy() {
-		DataSet iris = ExampleDataSets.IRIS;
+	public void testDifferentAlgorithmWithShuffleWINE() {
+		testAlgos(true, WINE, 3);
+	}
+	
+	@Test
+	public void testDifferentAlgorithmNoShuffleWINE() {
+		testAlgos(false, WINE, 3);
+	}
+	
+	@Test
+	public void testDifferentAlgorithmWithShuffleBC() {
+		testAlgos(true, BC, 2);
+	}
+	
+	@Test
+	public void testDifferentAlgorithmNoShuffleBC() {
+		testAlgos(false, BC, 2);
+	}
+	
+	@Test
+	public void testCopyIRIS() {
+		DataSet iris = IRIS;
 		DataSet shuffle = iris.copy();
 		assertFalse(iris.equals(shuffle));
 		
@@ -159,8 +182,22 @@ public class TestDataSet {
 	}
 	
 	@Test
+	public void testCopyWINE() {
+		DataSet data = WINE;
+		DataSet shuffle = data.copy();
+		assertFalse(data.equals(shuffle));
+		
+		shuffle = shuffle.shuffle();
+		assertFalse(shuffle.equals(data));
+		
+		assertFalse(shuffle.getDataRef().equals(data.getDataRef()));
+		assertFalse(shuffle.getHeaderRef().equals(data.getHeaderRef()));
+		assertFalse(shuffle.getLabelRef().equals(data.getLabelRef()));
+	}
+	
+	@Test
 	public void testDataSetColAddsRemoves() {
-		DataSet iris = ExampleDataSets.IRIS;
+		DataSet iris = IRIS;
 		DataSet shuffle = iris.copy();
 		
 		final int m = shuffle.getDataRef().getRowDimension();

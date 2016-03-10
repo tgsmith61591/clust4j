@@ -25,6 +25,7 @@ import com.clust4j.algo.RadiusNeighborsTests;
 import com.clust4j.algo.pipeline.PipelineTest;
 import com.clust4j.algo.preprocess.ImputationTests;
 import com.clust4j.algo.preprocess.PreProcessorTests;
+import com.clust4j.data.BufferedMatrixReaderTests;
 import com.clust4j.data.TestDataSet;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
@@ -48,6 +49,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	AffinityPropagationTests.class,
 	BinarySearchTreeTests.class,
 	BootstrapTest.class,
+	BufferedMatrixReaderTests.class,
 	ClustTests.class,
 	DBSCANTests.class,
 	FormatterTests.class,

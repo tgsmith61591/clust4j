@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
@@ -24,7 +25,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.VecUtils;
 
 public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
+	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
 	
 	/**
 	 * This is the method as it is used in the KMedoids class,
@@ -322,12 +323,29 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 				.setVerbose(true)).fit();
 		
 		final double c = km.totalCost();
-		km.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		km.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		KMedoids km2 = (KMedoids)KMedoids.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		KMedoids km2 = (KMedoids)KMedoids.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(km2.totalCost() == c);
 		assertTrue(km2.equals(km));
 		Files.delete(TestSuite.path);
+	}
+	
+	@Test
+	public void testWineData() {
+		final DataSet wine = ExampleDataSets.loadWine();
+		Array2DRowRealMatrix data = wine.getData();
+		
+		// assert that scaling is better...
+		assertTrue(
+			new KMedoids(data, new KMedoidsPlanner(3)
+			.setScale(true)).fit().indexAffinityScore(wine.getLabels())
+			
+			> // scaled should produce a better score
+			
+			new KMedoids(data, new KMedoidsPlanner(3)
+			.setScale(false)).fit().indexAffinityScore(wine.getLabels())
+		);
 	}
 }

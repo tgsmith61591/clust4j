@@ -24,7 +24,12 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
+	final DataSet irisds = ExampleDataSets.loadIris();
+	final DataSet wineds = ExampleDataSets.loadWine();
+	final DataSet bcds = ExampleDataSets.loadBreastCancer().shuffle();
+	final Array2DRowRealMatrix data_ = irisds.getData();
+	final Array2DRowRealMatrix wine = wineds.getData();
+	final Array2DRowRealMatrix bc = bcds.getData();
 
 	@Test
 	@Override
@@ -263,10 +268,10 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		System.out.println();
 		
 		final double c = km.totalCost();
-		km.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		km.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		KMeans km2 = (KMeans)KMeans.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		KMeans km2 = (KMeans)KMeans.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(km2.totalCost() == c);
 		assertTrue(km.equals(km2));
 		Files.delete(TestSuite.path);
@@ -345,7 +350,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void testOnIris() {
-		DataSet iris = ExampleDataSets.IRIS.shuffle();
+		DataSet iris = irisds.shuffle();
 		Array2DRowRealMatrix data = iris.getData();
 		int[] labels = iris.getLabels();
 		
@@ -366,13 +371,39 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testPartitionalClass1() {
-		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
-		new KMeans(data, 0);
+		new KMeans(data_, 0);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testPartitionalClass2() {
-		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
-		new KMeans(data, 151);
+		new KMeans(data_, 151);
+	}
+	
+	@Test
+	public void testWineData() {
+		// assert that scaling is better...
+		assertTrue(
+			new KMeans(wine, new KMeansPlanner(3)
+			.setScale(true)).fit().indexAffinityScore(wineds.getLabels())
+			
+			> // scaled should produce a better score
+			
+			new KMeans(wine, new KMeansPlanner(3)
+			.setScale(false)).fit().indexAffinityScore(wineds.getLabels())
+		);
+	}
+	
+	@Test
+	public void testBCData() {
+		// assert that scaling is better...
+		assertTrue(
+			new KMeans(bc, new KMeansPlanner(2)
+			.setScale(true).setVerbose(true)).fit().indexAffinityScore(bcds.getLabels())
+			
+			> // scaled should produce a better score
+			
+			new KMeans(bc, new KMeansPlanner(2)
+			.setScale(false).setVerbose(true)).fit().indexAffinityScore(bcds.getLabels())
+		);
 	}
 }

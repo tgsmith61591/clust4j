@@ -10,6 +10,7 @@ import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.GlobalState;
+import com.clust4j.algo.Clust4j;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.MatUtils;
@@ -22,7 +23,9 @@ import com.clust4j.utils.VecUtils;
  * header names, matrix data and classification labels.
  * @author Taylor G Smith
  */
-public class DataSet implements DeepCloneable {
+public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializable {
+	private static final long serialVersionUID = -1203771047711850121L;
+	
 	final static String COL_PREFIX = "V";
 	final static int DEF_HEAD = 6;
 	

@@ -26,7 +26,7 @@ import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
 public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
+	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
 	private static Array2DRowRealMatrix matrix = getRandom(250, 10);
 	static final MatrixFormatter formatter = new MatrixFormatter();
 	
@@ -238,11 +238,11 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 					.setVerbose(true)).fit();
 		
 		final int[] l = agglom.getLabels();
-		agglom.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		agglom.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
 		HierarchicalAgglomerative agglom2 = (HierarchicalAgglomerative)HierarchicalAgglomerative
-			.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+			.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		
 		// test re-fit:
 		agglom2 = agglom2.fit();

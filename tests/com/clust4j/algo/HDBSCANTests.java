@@ -34,7 +34,8 @@ import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
 
 public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final Array2DRowRealMatrix DATA = ExampleDataSets.IRIS.getData();
+	final Array2DRowRealMatrix DATA = ExampleDataSets.loadIris().getData();
+	final Array2DRowRealMatrix iris = DATA;
 	final static MatrixFormatter formatter = TestSuite.formatter;
 	final static double[][] dist_mat = new double[][]{
 		new double[]{1,2,3},
@@ -426,8 +427,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	
 	@Test
 	public void testDataSet() { // See if the iris dataset works...
-		Array2DRowRealMatrix data = ExampleDataSets.IRIS.getData();
-		new HDBSCAN(data, 
+		new HDBSCAN(iris, 
 				new HDBSCANPlanner(1)
 					.setVerbose(true)
 					.setScale(true)).fit();
@@ -481,10 +481,10 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		System.out.println();
 
 		final int[] labels = hd.getLabels();
-		hd.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		hd.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		HDBSCAN hd2 = (HDBSCAN)HDBSCAN.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		HDBSCAN hd2 = (HDBSCAN)HDBSCAN.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(VecUtils.equalsExactly(hd2.getLabels(), labels));
 		assertTrue(hd.equals(hd2));
 		Files.delete(TestSuite.path);
@@ -525,8 +525,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
 		// Test on IRIS
-		X = ExampleDataSets.IRIS.getData();
-		h = new HDBSCAN(X).fit();
+		h = new HDBSCAN(iris).fit();
 		
 		int[] expectedLabels = new NoiseyLabelEncoder(new int[]{
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

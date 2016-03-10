@@ -333,7 +333,7 @@ public class NearestNeighbors extends Neighbors {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
 		
-		validateK(k, X.length);
+		validateK(k, m); // Should be X.length  or m??
 		return new Neighborhood(tree.query(X, k, 
 			DUAL_TREE_SEARCH, SORT));
 	}

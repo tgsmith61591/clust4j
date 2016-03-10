@@ -22,7 +22,6 @@ import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeHeap;
 import com.clust4j.algo.NearestNeighborHeapSearch.PartialKernelDensity;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.Distance;
@@ -34,6 +33,8 @@ import com.clust4j.utils.TriTup;
 import com.clust4j.utils.VecUtils;
 
 public class NNHSTests {
+	final public static Array2DRowRealMatrix IRIS = ExampleDataSets.loadIris().getData();
+	
 	final static double[][] a = new double[][]{
 		new double[]{0,1,0,2},
 		new double[]{0,0,1,2},
@@ -348,7 +349,7 @@ public class NNHSTests {
 	
 	@Test
 	public void testBigKD() {
-		Array2DRowRealMatrix x = new Array2DRowRealMatrix(ExampleDataSets.IRIS.getData().getData(),false);
+		Array2DRowRealMatrix x = new Array2DRowRealMatrix(IRIS.getData(),false);
 		KDTree kd = new KDTree(x);
 		assertTrue(VecUtils.equalsExactly(kd.idx_array, new int[]{
 			0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,
@@ -618,7 +619,7 @@ public class NNHSTests {
 	public void testDistToRDist() {
 		double[]a = new double[]{5,0,0};
 		double[]b = new double[]{0,0,1};
-		KDTree kd = new KDTree(ExampleDataSets.IRIS.getData());
+		KDTree kd = new KDTree(IRIS);
 		assertTrue(kd.dist(a, b) == 5.0990195135927845);
 		assertTrue(kd.rDistToDist(25.999999999999996) == kd.dist(a, b));
 		assertTrue(Precision.equals(kd.rDist(a, b), 25.999999999999996, 1e-8));
@@ -627,12 +628,11 @@ public class NNHSTests {
 	
 	@Test
 	public void testMinRDistDual() {
-		DataSet data = ExampleDataSets.IRIS;
-		Array2DRowRealMatrix X1 = data.getData();
+		Array2DRowRealMatrix X1 = IRIS;
 		
 		double[][] query = new double[10][];
 		int idx = 0;
-		for(double[] row: data.getData().getData()) {
+		for(double[] row: IRIS.getData()) {
 			if(idx == query.length)
 				break;
 			query[idx++] = row; // copied implicitly
@@ -660,8 +660,7 @@ public class NNHSTests {
 	
 	@Test
 	public void testMinRDist() {
-		DataSet data = ExampleDataSets.IRIS;
-		Array2DRowRealMatrix X1 = data.getData();
+		Array2DRowRealMatrix X1 = IRIS;
 		NearestNeighborHeapSearch tree1 = new KDTree(X1);
 		double[] a = new double[]{5.1, 3.5, 1.4, 0.2};
 		
@@ -720,11 +719,11 @@ public class NNHSTests {
 	
 	@Test
 	public void testQueryBig() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		double[][] query = new double[10][];
 		
 		int idx = 0;
-		for(double[] row: ExampleDataSets.IRIS.getData().getData()) {
+		for(double[] row: IRIS.getData()) {
 			if(idx == query.length)
 				break;
 			query[idx++] = row; // copied implicitly
@@ -792,11 +791,11 @@ public class NNHSTests {
 	
 	@Test
 	public void testQueryRadiusNoSort() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		double[][] query = new double[10][];
 		
 		int idx = 0;
-		for(double[] row: ExampleDataSets.IRIS.getData().getData()) {
+		for(double[] row: IRIS.getData()) {
 			if(idx == query.length)
 				break;
 			query[idx++] = row; // copied implicitly
@@ -946,11 +945,11 @@ public class NNHSTests {
 	
 	@Test
 	public void testQueryRadiusWithSort() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		double[][] query = new double[10][];
 		
 		int idx = 0;
-		for(double[] row: ExampleDataSets.IRIS.getData().getData()) {
+		for(double[] row: IRIS.getData()) {
 			if(idx == query.length)
 				break;
 			query[idx++] = row; // copied implicitly
@@ -1127,11 +1126,11 @@ public class NNHSTests {
 	
 	@Test
 	public void testTwoPointCorrelation() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		double[][] query = new double[10][];
 		
 		int idx = 0;
-		for(double[] row: ExampleDataSets.IRIS.getData().getData()) {
+		for(double[] row: IRIS.getData()) {
 			if(idx == query.length)
 				break;
 			query[idx++] = row; // copied implicitly
@@ -1170,59 +1169,60 @@ public class NNHSTests {
 		assertTrue(VecUtils.equalsExactly(corSingle, VecUtils.repInt(0, 10)));
 		
 		// Test a big query now, just to ensure no exceptions are thrown...
-		tree.twoPointCorrelation(ExampleDataSets.IRIS.getData().getData(), -1, false);
-		tree.twoPointCorrelation(ExampleDataSets.IRIS.getData().getData(), -1, true);
-		tree.twoPointCorrelation(ExampleDataSets.IRIS.getData().getData(), -1.0);
-		tree.twoPointCorrelation(ExampleDataSets.IRIS.getData().getData(), new double[]{1,2});
+		final double[][] X = IRIS.getData();
+		tree.twoPointCorrelation(X, -1, false);
+		tree.twoPointCorrelation(X, -1, true);
+		tree.twoPointCorrelation(X, -1.0);
+		tree.twoPointCorrelation(X, new double[]{1,2});
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testTwoPointCorrelationExcept1() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.twoPointCorrelation(new double[][]{new double[]{1,2}}, new double[]{1.5});
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testTwoPointCorrelationExcept2() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.twoPointCorrelation(new double[][]{new double[]{1,2}}, 1.5);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void radiusQueryTestDimException() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.queryRadius(new double[][]{new double[]{1,2}}, 150.0, true);
 	}
 	
 	@Test
 	public void radiusQueryTestAllInRadius() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.queryRadius(new double[][]{new double[]{2.5,2.5,2.5,2.5}}, 150.0, true);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void radiusQueryTestMPrimeDimMismatch1() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.queryRadius(new double[][]{new double[]{2.5,2.5,2.5,2.5}}, 
 			new double[]{1,2,3,4,5}, true);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void radiusQueryTestNDimMismatch2() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.queryRadius(new double[][]{new double[]{2.5,2.5,2.5}}, 
 			new double[]{5}, true);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void queryNDimMismatch1() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.query(new double[][]{new double[]{1,2}}, 2, true, true);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testKernelDimMismatch() {
-		NearestNeighborHeapSearch tree = new KDTree(ExampleDataSets.IRIS.getData());
+		NearestNeighborHeapSearch tree = new KDTree(IRIS);
 		tree.kernelDensity(new double[][]{new double[]{1.0}}, 1.0, PartialKernelDensity.LOG_COSINE);
 	}
 	

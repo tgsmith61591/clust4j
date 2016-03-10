@@ -22,8 +22,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.IRIS.getData();
-	final int[] target_ = ExampleDataSets.IRIS.getLabels();
+	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
+	final int[] target_ = ExampleDataSets.loadIris().getLabels();
 
 	@Test
 	@Override
@@ -130,10 +130,10 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 				.setScale(true)).fit();
 		
 		final int[] c = nn.getLabels();
-		nn.saveModel(new FileOutputStream(TestSuite.tmpSerPath));
+		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		NearestCentroid nn2 = (NearestCentroid)NearestCentroid.loadModel(new FileInputStream(TestSuite.tmpSerPath));
+		NearestCentroid nn2 = (NearestCentroid)NearestCentroid.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		assertTrue(VecUtils.equalsExactly(c, nn2.getLabels()));
 		assertTrue(nn2.equals(nn));
 		Files.delete(TestSuite.path);

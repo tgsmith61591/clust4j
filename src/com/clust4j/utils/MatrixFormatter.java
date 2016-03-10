@@ -6,8 +6,9 @@ import java.util.ArrayList;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 public class MatrixFormatter extends TableFormatter {
-	
-    public MatrixFormatter() {
+	private static final long serialVersionUID = 6065772725783899020L;
+
+	public MatrixFormatter() {
     	this(DEFAULT_NUMBER_FORMAT);
     }
     
