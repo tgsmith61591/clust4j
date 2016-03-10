@@ -7,6 +7,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.NaNException;
@@ -89,7 +90,9 @@ public abstract class AbstractClusterer
 	 * @author Taylor G Smith
 	 */
 	abstract public static class BaseClustererPlanner 
+			extends Clust4j // So all are serializable
 			implements DeepCloneable, BaseClassifierPlanner {
+		private static final long serialVersionUID = -5830795881133834268L;
 		
 		//abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
 		@Override abstract public BaseClustererPlanner copy();

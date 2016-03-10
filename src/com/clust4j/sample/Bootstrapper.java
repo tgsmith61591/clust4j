@@ -18,7 +18,7 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  *
  */
-public enum Bootstrapper implements Sampler {
+public enum Bootstrapper implements Sampler, java.io.Serializable {
 	
 	/**
 	 * Performs uniformly random (or seeded) sampling across a matrix.

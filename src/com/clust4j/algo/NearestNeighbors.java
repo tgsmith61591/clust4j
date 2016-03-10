@@ -56,6 +56,8 @@ public class NearestNeighbors extends Neighbors {
 	
 	
 	public static class NearestNeighborsPlanner extends NeighborsPlanner {
+		private static final long serialVersionUID = -4848896423352149405L;
+		
 		private Algorithm algo = DEF_ALGO;
 		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
 		private FeatureNormalization norm = DEF_NORMALIZER;

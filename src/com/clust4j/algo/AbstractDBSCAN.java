@@ -31,6 +31,7 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 	abstract public static class AbstractDBSCANPlanner 
 			extends AbstractClusterer.BaseClustererPlanner 
 			implements UnsupervisedClassifierPlanner {
+		private static final long serialVersionUID = 765572960123009344L;
 		
 		abstract public AbstractDBSCANPlanner setMinPts(final int minPts);
 		abstract public int getMinPts();

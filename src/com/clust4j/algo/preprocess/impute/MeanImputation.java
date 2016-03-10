@@ -15,7 +15,8 @@ import com.clust4j.utils.MatUtils;
  * @author Taylor G Smith
  */
 public class MeanImputation extends MatrixImputation {
-	
+	private static final long serialVersionUID = -1120617362212795699L;
+
 	public MeanImputation() {
 		this(new MeanImputationPlanner());
 	}

@@ -57,6 +57,7 @@ abstract public class HierarchicalClusterer
 	abstract public static class BaseHierarchicalPlanner 
 			extends BaseClustererPlanner 
 			implements UnsupervisedClassifierPlanner {
+		private static final long serialVersionUID = 5887249169631701685L;
 		
 		abstract public Linkage getLinkage();
 		abstract public BaseHierarchicalPlanner setLinkage(Linkage linkage);

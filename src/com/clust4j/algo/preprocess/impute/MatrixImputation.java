@@ -2,6 +2,7 @@ package com.clust4j.algo.preprocess.impute;
 
 import java.util.Random;
 
+import com.clust4j.Clust4j;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.except.NaNException;
@@ -20,14 +21,16 @@ import com.clust4j.utils.Named;
  * 
  * @author Taylor G Smith
  */
-public abstract class MatrixImputation implements Loggable, Named, PreProcessor {
+public abstract class MatrixImputation extends Clust4j implements Loggable, Named, PreProcessor {
+	private static final long serialVersionUID = 8816387041123292806L;
+	
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
 	protected boolean verbose = DEF_VERBOSE;
 	private Random seed = new Random();
 	private boolean hasWarnings = false;
 	
 	
-	public static enum CentralTendencyMethod {
+	public static enum CentralTendencyMethod implements java.io.Serializable {
 		MEAN, 
 		MEDIAN
 	}

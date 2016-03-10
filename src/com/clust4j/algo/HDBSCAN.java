@@ -143,6 +143,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * @author Taylor G Smith
 	 */
 	final public static class HDBSCANPlanner extends AbstractDBSCANPlanner {
+		private static final long serialVersionUID = 7197585563308908685L;
+		
 		private int minPts = DEF_MIN_PTS;
 		private boolean scale = DEF_SCALE;
 		private GeometricallySeparable dist	= DEF_DIST;

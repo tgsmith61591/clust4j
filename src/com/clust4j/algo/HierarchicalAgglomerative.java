@@ -102,6 +102,8 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	
 	
 	public static class HierarchicalPlanner extends BaseHierarchicalPlanner {
+		private static final long serialVersionUID = -1333222392991867085L;
+		
 		private GeometricallySeparable dist = DEF_DIST;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;

@@ -9,8 +9,8 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
-import com.clust4j.algo.Clust4j;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.MatUtils;

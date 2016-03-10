@@ -18,6 +18,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighborImputation extends MatrixImputation {
+	private static final long serialVersionUID = -2717555601058365204L;
+	
 	final static public int DEF_K = Neighbors.DEF_K;
 	final static public GeometricallySeparable DEF_METRIC = Distance.EUCLIDEAN;
 	final static public CentralTendencyMethod DEF_CENT = CentralTendencyMethod.MEAN;

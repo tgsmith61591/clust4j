@@ -114,6 +114,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	public static class NearestCentroidPlanner 
 			extends BaseClustererPlanner 
 			implements SupervisedClassifierPlanner {
+		private static final long serialVersionUID = -2064678309873097219L;
 		
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private GeometricallySeparable met= DEF_DIST;
@@ -270,10 +271,12 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 				double[][] masked;
 				double[] centroid;
 				
+				int encoded;
 				info("identifying centroid for each class label");
 				for(int currentClass = 0; currentClass < numClasses; currentClass++) {
 					// Since we've already encoded the labels, we can just use
 					// an iterator like this to keep track of the current one
+					encoded = encoder.reverseEncodeOrNull(currentClass); // shouldn't ever be null
 					
 					mask = new boolean[m];
 					for(int j = 0; j < m; j++)
@@ -290,6 +293,12 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 					// Update
 					centroid = isManhattan ? MatUtils.medianRecord(masked) : MatUtils.meanRecord(masked);
 					centroids.add(centroid);
+
+					fitSummary.add(new Object[]{
+						encoded, nk[currentClass], 
+						KMeans.barycentricDistance(masked, centroid), 
+						timer.wallTime()
+					});
 				}
 				
 				
@@ -351,7 +360,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	final protected Object[] getModelFitSummaryHeaders() {
 		// TODO
 		return new Object[]{
-			"TODO"
+			"Class Label","Num. Instances","WSS","Wall"
 		};
 	}
 	

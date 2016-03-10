@@ -18,6 +18,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	abstract public static class BaseNeighborsPlanner 
 			extends BaseClustererPlanner 
 			implements UnsupervisedClassifierPlanner {
+		private static final long serialVersionUID = 8356804193088162871L;
 		
 		abstract public BaseNeighborsPlanner setAlgorithm(Algorithm algo);
 		abstract public Algorithm getAlgorithm();

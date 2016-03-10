@@ -1,4 +1,4 @@
-package com.clust4j.algo;
+package com.clust4j;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

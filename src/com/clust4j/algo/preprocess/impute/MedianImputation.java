@@ -16,7 +16,8 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 public class MedianImputation extends MatrixImputation {
-	
+	private static final long serialVersionUID = -3479934875830428010L;
+
 	public MedianImputation() {
 		this(new MedianImputationPlanner());
 	}

@@ -2,9 +2,17 @@ package com.clust4j.algo.pipeline;
 
 import static org.junit.Assert.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
+import com.clust4j.algo.BaseModelTest;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
@@ -14,10 +22,10 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 
-public class PipelineTest {
+public class PipelineTest implements BaseModelTest {
 
 	@Test
-	public void testA() {
+	public void testA() throws FileNotFoundException, IOException, ClassNotFoundException {
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -39,6 +47,20 @@ public class PipelineTest {
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.didConverge());
 		System.out.println();
+		
+		pipe.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
+		assertTrue(TestSuite.file.exists());
+		
+		UnsupervisedPipeline pipe2 = (UnsupervisedPipeline)UnsupervisedPipeline
+			.loadObject(new FileInputStream(TestSuite.tmpSerPath));
+		
+		final KMeans km2 = (KMeans) pipe2.fit(mat);
+		
+		assertTrue(km2.getLabels()[0] == 0 && km2.getLabels()[1] == 1);
+		assertTrue(km2.getLabels()[1] == km2.getLabels()[2]);
+		assertTrue(km2.didConverge());
+		
+		Files.delete(TestSuite.path);
 	}
 	
 	@Test
@@ -109,10 +131,12 @@ public class PipelineTest {
 		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
 		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
 		System.out.println();
+		
+		
 	}
 	
 	@Test
-	public void testSupervisedVarArgs() {
+	public void testSupervisedVarArgs() throws ClassNotFoundException, FileNotFoundException, IOException {
 		final double[][] data = new double[][] {
 			new double[] {0.005, 	 0.182751,  0.1284},
 			new double[] {3.65816,   0.29518,   2.123316},
@@ -130,5 +154,25 @@ public class PipelineTest {
 		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
 		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
 		System.out.println();
+
+		
+		pipe.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
+		assertTrue(TestSuite.file.exists());
+		
+		SupervisedPipeline pipe2 = (SupervisedPipeline)SupervisedPipeline
+			.loadObject(new FileInputStream(TestSuite.tmpSerPath));
+		
+		final NearestCentroid nc2 = (NearestCentroid) pipe2.fit(mat, new int[]{0,1,1});
+		
+		assertTrue(nc2.getLabels()[0] == 0 && nc2.getLabels()[1] == 1);
+		assertTrue(nc2.getLabels()[1] == nc2.getLabels()[2]);
+		
+		Files.delete(TestSuite.path);
+	}
+
+	@Test
+	@Override
+	public void testSerialization() throws IOException, ClassNotFoundException {
+		assertTrue(true); // This gets tested above^^
 	}
 }

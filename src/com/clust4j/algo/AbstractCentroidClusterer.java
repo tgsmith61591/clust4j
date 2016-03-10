@@ -420,4 +420,27 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		for(int i = 0; i < k; i++)
 			centroids.set(i, tmpCentroids.get(i));
 	}
+	
+	/**
+	 * For computing the within sum of squares
+	 * @param instances
+	 * @param centroid
+	 * @return
+	 */
+	static double barycentricDistance(double[][] instances, double[] centroid) {
+		double clust_cost = 0.0, diff;
+		final int n = centroid.length;
+		
+		for(double[] instance: instances) {
+			if(n != instance.length)
+				throw new DimensionMismatchException(n, instance.length);
+			
+			for(int j = 0; j < n; j++) {
+				diff = instance[j] - centroid[j];
+				clust_cost += diff * diff;
+			}
+		}
+		
+		return clust_cost;
+	}
 }

@@ -70,6 +70,8 @@ abstract public class Neighbors extends BaseNeighborsModel {
 	
 	
 	abstract static class NeighborsPlanner extends BaseNeighborsPlanner {
+		private static final long serialVersionUID = 3571245599432278300L;
+		
 		abstract public Integer getK();
 		abstract public int getLeafSize();
 		abstract public Double getRadius();

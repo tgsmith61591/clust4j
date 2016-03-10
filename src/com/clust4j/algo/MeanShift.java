@@ -238,6 +238,8 @@ public class MeanShift
 	final public static class MeanShiftPlanner 
 			extends AbstractClusterer.BaseClustererPlanner 
 			implements UnsupervisedClassifierPlanner {
+
+		private static final long serialVersionUID = -2276248235151049820L;
 		
 		private boolean autoEstimateBW = false;
 		private double autoEstimateBWQuantile = 0.3;

@@ -51,6 +51,8 @@ public class DBSCAN extends AbstractDBSCAN {
 	 * @author Taylor G Smith
 	 */
 	final public static class DBSCANPlanner extends AbstractDBSCANPlanner {
+		private static final long serialVersionUID = -5285244186285768512L;
+		
 		private double eps = DEF_EPS;
 		private int minPts = DEF_MIN_PTS;
 		private boolean scale = DEF_SCALE;

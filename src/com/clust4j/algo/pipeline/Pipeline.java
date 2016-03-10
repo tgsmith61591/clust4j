@@ -1,9 +1,10 @@
 package com.clust4j.algo.pipeline;
 
+import com.clust4j.Clust4j;
 import com.clust4j.algo.BaseClassifierPlanner;
 import com.clust4j.algo.preprocess.PreProcessor;
 
-public abstract class Pipeline<T extends BaseClassifierPlanner> implements java.io.Serializable {
+public abstract class Pipeline<T extends BaseClassifierPlanner> extends Clust4j {
 	private static final long serialVersionUID = 3491192139356583621L;
 	final PreProcessor[] pipe;
 	final T planner;

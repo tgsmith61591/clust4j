@@ -141,6 +141,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	public static class AffinityPropagationPlanner 
 			extends AbstractClusterer.BaseClustererPlanner 
 			implements UnsupervisedClassifierPlanner {
+		private static final long serialVersionUID = -6096855634412545959L;
 		
 		private int maxIter = DEF_MAX_ITER;
 		private double minChange = DEF_TOL;

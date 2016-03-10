@@ -63,7 +63,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	@Override
 	public void testScoring() {
-		new NearestCentroid(data_, target_).fit().score();
+		new NearestCentroid(data_, target_, new NearestCentroidPlanner().setVerbose(true)).fit().score();
 		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner()).fit().score();
 		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner().setVerbose(true)).fit().score();
 		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner().setShrinkage(0.5)).fit().score();
@@ -329,7 +329,9 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	public void testOddLabelsManhattan() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{212,56,56}, 
 			new NearestCentroidPlanner()
-				.setSep(Distance.MANHATTAN)).fit();
+				.setSep(Distance.MANHATTAN)
+				.setVerbose(true)).fit();
+		
 		assertTrue(VecUtils.equalsExactly(n.predict(data), new int[]{212,56,56}));
 	}
 	

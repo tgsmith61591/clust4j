@@ -60,6 +60,8 @@ public class RadiusNeighbors extends Neighbors {
 	
 	
 	public static class RadiusNeighborsPlanner extends NeighborsPlanner {
+		private static final long serialVersionUID = 2183556008789826257L;
+		
 		private Algorithm algo = DEF_ALGO;
 		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
 		private FeatureNormalization norm = DEF_NORMALIZER;
