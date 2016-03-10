@@ -2,9 +2,6 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
@@ -725,7 +722,7 @@ public class MeanShift
 	}
 	
 	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {
-		final double bandwidth = rn.getRadius(), tolerance = MeanShift.DEF_TOL;
+		final double bandwidth = rn.getRadius(), tolerance = 1e-3;
 		final int n = X[0].length; // we know X is uniform
 		int completed_iterations = 0;
 		
@@ -740,6 +737,7 @@ public class MeanShift
 			if(i_nbrs.length == 0) 
 				break;
 			
+			System.out.println("Here");
 			// Save the old seed
 			final double[] oldSeed = seed;
 			
@@ -777,29 +775,6 @@ public class MeanShift
 	
 	
 
-	/**
-	 * Utility function
-	 * @param col
-	 * @param desc
-	 * @return Sorted map entries
-	 */
-	final static <K,V extends Comparable<? super V>> 
-			ArrayList<Map.Entry<K,V>> sortEntriesByValue(Collection<? extends Map.Entry<K,V>> col, 
-					final boolean desc) {
-		
-		Comparator<Map.Entry<K,V>> comp = new Comparator<Map.Entry<K,V>>() {
-			@Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
-				int res = e1.getValue().compareTo(e2.getValue());
-				int scale = desc ? -1 : 1;
-				return res * scale;
-			}
-		};
-		
-		ArrayList<Map.Entry<K,V>> sorted = new ArrayList<>(col);
-		Collections.sort(sorted, comp);
-		return sorted;
-	}
-	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{

@@ -134,19 +134,6 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(MatUtils.randomGaussian(50, 2));
 		new MeanShift(mat, 0.0);
 	}
-	
-	// Hard condition to force..
-	@Test//(expected=com.clust4j.except.IllegalClusterStateException.class)
-	public void MeanShiftTest4() {
-		DataSet iris = ExampleDataSets.IRIS;
-		final Array2DRowRealMatrix data = iris.getData();
-		
-		new MeanShift(data, 
-			new MeanShift.MeanShiftPlanner()
-				.setScale(true)
-				.setVerbose(true)).fit();
-		System.out.println();
-	}
 
 	
 	@Test
@@ -311,6 +298,21 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			assertTrue(seed.count == expected_centers[idx]);
 			idx++;
 		}
+	}
+	
+
+	
+	// Hard condition to force..
+	@Test//(expected=com.clust4j.except.IllegalClusterStateException.class)
+	public void MeanShiftTest4() {
+		DataSet iris = ExampleDataSets.IRIS;
+		final Array2DRowRealMatrix data = iris.getData();
+		
+		new MeanShift(data, 
+			new MeanShift.MeanShiftPlanner()
+				.setScale(true)
+				.setVerbose(true)).fit();
+		System.out.println();
 	}
 	
 	@Test
