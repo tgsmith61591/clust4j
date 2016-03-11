@@ -45,7 +45,7 @@ public class RadiusNeighbors extends Neighbors {
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				alg, radius, leafSize, normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+				parallel
 			});
 	}
 	

@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.MeanShift.CenterIntensity;
+import com.clust4j.algo.MeanShift.SerialCenterIntensity;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
 import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
@@ -151,7 +151,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testMeanShiftAutoBwEstimate1() {
 		final double[][] x = TestSuite.bigMatrix;
-		double bw = MeanShift.autoEstimateBW(new Array2DRowRealMatrix(x, false), 0.3, Distance.EUCLIDEAN, new Random());
+		double bw = MeanShift.autoEstimateBW(new Array2DRowRealMatrix(x, false), 
+				0.3, Distance.EUCLIDEAN, new Random(), false);
 		new MeanShift(new Array2DRowRealMatrix(x), bw).fit();
 	}
 	
@@ -269,7 +270,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		// MS estimates bw at 1.202076812799869
 		final double bandwidth = 1.202076812799869;
 		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
-			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE) == bandwidth);
+			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false) == bandwidth);
 		
 		// Asserting fit works without breaking things...
 		RadiusNeighbors r = new RadiusNeighbors(iris,
@@ -333,17 +334,18 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	/*
 	 * Test where none in range
-	 */
 	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
 	public void MeanShiftTestIrisSeeded() {
 		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
 		
+		MeanShift ms =
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
 				.setScale(true)
 				.setSeeds(iris.getData())).fit();
-		System.out.println();
+		System.out.println(Arrays.toString(ms.getLabels()));
 	}
+	*/
 	
 	@Test(expected=NonUniformMatrixException.class)
 	public void testSeededNUME() {
@@ -413,7 +415,9 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		// MS estimates bw at 1.5971266273437668
 		final double bandwidth = 1.5971266273437668;
 		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
-			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE) == bandwidth);
+			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false) == bandwidth);
+		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
+			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, true) == bandwidth);
 		
 		// Asserting fit works without breaking things...
 		RadiusNeighbors r = new RadiusNeighbors(iris,
@@ -454,8 +458,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		
 		// Now test the actual method...
-		CenterIntensity intensity = new CenterIntensity(
-				iris, bandwidth, X, GlobalState.DEFAULT_RANDOM_STATE, 
+		SerialCenterIntensity intensity = new SerialCenterIntensity(
+				iris, r, bandwidth, X,
 				Distance.EUCLIDEAN, 300);
 		
 		ArrayList<EntryPair<double[], Integer>> center_intensity2 = intensity.pairs;
@@ -549,5 +553,55 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			new MeanShiftPlanner()
 				.setScale(true)
 				.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void testParallelSmall() {
+		try {
+			MeanShift iris_serial = new MeanShift(data_, new MeanShiftPlanner()).fit();
+
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
+			MeanShift iris_paral = new MeanShift(data_, new MeanShiftPlanner()).fit();
+
+			assertTrue(iris_serial.silhouetteScore() == iris_paral.silhouetteScore());
+			assertTrue(VecUtils.equalsExactly(iris_serial.getLabels(), iris_paral.getLabels()));
+		} finally {
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
+		}
+	}
+	
+	@Test
+	public void testParallelLarger() {
+		try {
+			MeanShift wine_serial = new MeanShift(wine, 
+				new MeanShiftPlanner().setVerbose(true)).fit();
+			System.out.println();
+			
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
+			MeanShift wine_paral = new MeanShift(wine, 
+				new MeanShiftPlanner().setVerbose(true)).fit();
+			System.out.println();
+			
+			assertTrue(wine_serial.getBandwidth() == wine_paral.getBandwidth());
+			assertTrue(wine_serial.silhouetteScore() == wine_paral.silhouetteScore());
+			assertTrue(VecUtils.equalsExactly(wine_serial.getLabels(), wine_paral.getLabels()));
+		} finally {
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
+		}
+	}
+	
+	@Test
+	public void testParallelHuge() {
+		// Construct a large matrix of two separate gaussian seeds
+		double[][] A = MatUtils.randomGaussian(1000, 20);
+		double[][] B = MatUtils.randomGaussian(1000, 20, 25.0);
+		double[][] C = MatUtils.rbind(A, B);
+		
+		new MeanShift(new Array2DRowRealMatrix(C, false),
+			new MeanShiftPlanner()
+				//.setScale(true)
+				.setVerbose(true)).fit();
+		
+		// This should result in one cluster. We are testing that that works.
 	}
 }

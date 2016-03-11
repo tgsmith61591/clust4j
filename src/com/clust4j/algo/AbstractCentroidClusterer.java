@@ -263,7 +263,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				parallel,
 				maxIter, tolerance, init.toString()
 			});
 	}

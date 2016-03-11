@@ -197,7 +197,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				eps, minPts, normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+				parallel
 			});
 	}
 	

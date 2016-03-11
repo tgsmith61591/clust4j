@@ -48,7 +48,7 @@ public class NearestNeighbors extends Neighbors {
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				alg, kNeighbors, leafSize, normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+				parallel
 			});
 	}
 	
@@ -213,8 +213,10 @@ public class NearestNeighbors extends Neighbors {
 			try {
 				if(null != res)
 					return this;
-
-				int nNeighbors = kNeighbors + 1;
+				
+				
+				// CORNER! If k == m, we can't do kNeighbors + 1..
+				int nNeighbors = FastMath.min(kNeighbors + 1, m); //kNeighbors + 1;
 				final LogTimer timer = new LogTimer();
 				
 				Neighborhood initRes = new Neighborhood(

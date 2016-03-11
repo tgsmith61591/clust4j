@@ -15,7 +15,7 @@ abstract class DualMatrixMapTaskOperator extends DualMatrixMapTask {
     protected double[][] compute() {
         if(high - low <= getChunkSize()) {
             return operate(low, high);
-         } else {
+        } else {
             int mid = low + (high - low) / 2;
             DualMatrixMapTaskOperator left  = newInstance(matrix, matrix_b, matrix_c, low, mid);
             DualMatrixMapTaskOperator right = newInstance(matrix, matrix_b, matrix_c, mid, high);
@@ -24,7 +24,7 @@ abstract class DualMatrixMapTaskOperator extends DualMatrixMapTask {
             left.join();
             
             return matrix_c;
-         }
+        }
     }
 	
 	/**

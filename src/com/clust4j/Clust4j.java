@@ -13,7 +13,6 @@ import java.io.ObjectOutputStream;
  */
 public abstract class Clust4j implements java.io.Serializable {
 	private static final long serialVersionUID = -4522135376738501625L;
-
 	
 	/**
 	 * Load a model from a FileInputStream
@@ -35,8 +34,8 @@ public abstract class Clust4j implements java.io.Serializable {
 			} catch(NullPointerException n) {
 				// only happens if improperly initialized...
 			}
-	        
-	        fis.close();
+
+			fis.close();
 		}
         
         return bm;
@@ -59,7 +58,7 @@ public abstract class Clust4j implements java.io.Serializable {
 			} catch(NullPointerException n) {
 				// only happens if improperly initialized...
 			}
-				
+
 			fos.close();
 		}
 	}

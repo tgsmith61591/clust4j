@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -50,7 +53,6 @@ public class MeanShift
 	final public static int DEF_MIN_BIN_FREQ = 1;
 	final static int maxTries = 8;
 	final static double incrementAmt = 0.25;
-	
 	
 	
 	
@@ -163,10 +165,12 @@ public class MeanShift
 		this.bandwidth = autoEstimate ? 
 			autoEstimateBW(this.data, // Needs to be 'this' because might be stdized
 				planner.autoEstimateBWQuantile, 
-				planner.getSep(), planner.seed) : 
+				planner.getSep(), planner.seed, parallel) : 
 				planner.bandwidth;
 			
-		if(autoEstimate) info("bandwidth auto-estimated in " + aeTimer.toString());
+		if(autoEstimate) info("bandwidth auto-estimated in " + 
+			(parallel?"parallel in ":"") + aeTimer.toString());
+		
 		logModelSummary();
 	}
 	
@@ -180,12 +184,13 @@ public class MeanShift
 				(autoEstimate ? "(auto) " : "") + bandwidth,
 				normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				parallel,
 				maxIter, tolerance
 			});
 	}
 	
-	final protected static double autoEstimateBW(AbstractRealMatrix data, double quantile, GeometricallySeparable sep, Random seed) {
+	final protected static double autoEstimateBW(AbstractRealMatrix data, 
+			double quantile, GeometricallySeparable sep, Random seed, boolean parallel) {
 		if(quantile <= 0 || quantile > 1)
 			throw new IllegalArgumentException("illegal quantile");
 		final int m = data.getRowDimension(), nnbrs = (int)(m * quantile);
@@ -201,22 +206,28 @@ public class MeanShift
 		Neighborhood neighb;
 		
 		
-		/*
-		 * For each chunk of 500, get the neighbors and then compute the
-		 * sum of the row maxes of the distance matrix.
-		 */
-		int chunkStart, nextChunk;
-		for(int chunk = 0; chunk < numChunks; chunk++) {
-			chunkStart = chunk * chunkSize;
-			nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
-			
-			double[][] nextMatrix = new double[nextChunk - chunkStart][];
-			for(int i = chunkStart, j = 0; i < nextChunk; i++, j++)
-				nextMatrix[j] = X[i];
-			
-			neighb = nn.getNeighbors(nextMatrix);
-			for(double[] distRow: neighb.getDistances())
-				bw += VecUtils.max(distRow);
+		if(!parallel) {
+			/*
+			 * For each chunk of 500, get the neighbors and then compute the
+			 * sum of the row maxes of the distance matrix.
+			 */
+			int chunkStart, nextChunk;
+			for(int chunk = 0; chunk < numChunks; chunk++) {
+				chunkStart = chunk * chunkSize;
+				nextChunk = chunk == numChunks - 1 ? m : chunkStart + chunkSize;
+				
+				double[][] nextMatrix = new double[nextChunk - chunkStart][];
+				for(int i = chunkStart, j = 0; i < nextChunk; i++, j++)
+					nextMatrix[j] = X[i];
+				
+				neighb = nn.getNeighbors(nextMatrix);
+				for(double[] distRow: neighb.getDistances())
+					bw += VecUtils.max(distRow);
+			}
+		} else {
+			// Estimate bandwidth in parallel
+			bw = ParallelBandwidthEstimator.doAll(
+				ParallelTask.generateChunks(X, numChunks), nn);
 		}
 		
 		return bw / (double)m;
@@ -224,6 +235,64 @@ public class MeanShift
 	
 	protected static int getNumChunks(final int chunkSize, final int m) {
 		return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
+	}
+	
+	/**
+	 * Estimates the bandwidth of the model in parallel for scalability
+	 * @author Taylor G Smith
+	 */
+	static class ParallelBandwidthEstimator 
+			extends ParallelTask<Double> 
+			implements ParallelTask.Chunker<Double> {
+		
+		private static final long serialVersionUID = 1171269106158790138L;
+		final ArrayList<double[][]> chunks;
+		final NearestNeighbors nn;
+		final int high;
+		final int low;
+		
+		ParallelBandwidthEstimator(ArrayList<double[][]> chunks, 
+				NearestNeighbors nn, int low, int high) {
+			super();
+			this.chunks = chunks;
+			this.nn = nn;
+			this.low = low;
+			this.high = high;
+		}
+
+		@Override
+		protected Double compute() {
+			if(high - low <= 1) { // generally should equal one...
+				return doChunk(chunks.get(low));
+			} else {
+				int mid = this.low + (this.high - this.low) / 2;
+				ParallelBandwidthEstimator left = new ParallelBandwidthEstimator(
+					chunks, nn, low, mid);
+				ParallelBandwidthEstimator right = new ParallelBandwidthEstimator(
+					chunks, nn, mid, high);
+				
+	            left.fork();
+	            Double l = right.compute();
+	            Double r = left.join();
+	            
+	            return l + r;
+			}
+		}
+
+		@Override
+		public Double doChunk(double[][] chunk) {
+			double bw = 0.0;
+			Neighborhood neighb = nn.getNeighbors(chunk);
+			
+			for(double[] distRow: neighb.getDistances())
+				bw += VecUtils.max(distRow);
+			
+			return bw;
+		}
+		
+		static double doAll(ArrayList<double[][]> chunks, NearestNeighbors nn) {
+			return getThreadPool().invoke(new ParallelBandwidthEstimator(chunks, nn, 0, chunks.size()));
+		}
 	}
 	
 	
@@ -430,29 +499,207 @@ public class MeanShift
 		}
 	}
 	
+	
 	/**
-	 * Compute the center intensity entry pairs and call the 
+	 * Class that handles construction of the center intensity object
+	 * @author Taylor G Smith
+	 */
+	static abstract class CenterIntensity implements java.io.Serializable {
+		private static final long serialVersionUID = -6535787295158719610L;
+		
+		abstract ArrayList<EntryPair<double[], Integer>> getPairs();
+		abstract int getIters();
+		abstract ArrayList<Object[]> getSummaries();
+	}
+	
+	/**
+	 * A class that utilizes a {@link java.util.concurrent.ForkJoinPool} 
+	 * as parallel executors to run many tasks across multiple cores.
+	 * @author Taylor G Smith
+	 */
+	static class ParallelSeedExecutor 
+			extends ParallelModelTask<ConcurrentSkipListSet<MeanShiftSeed>> 
+			implements ParallelModelTask.Chunker<ConcurrentSkipListSet<MeanShiftSeed>> {
+		
+		private static final long serialVersionUID = 632871644265502894L;
+		
+		final int maxIter;
+		final RadiusNeighbors nbrs;
+		
+		final ConcurrentSkipListSet<MeanShiftSeed> computedSeeds;
+		final ArrayList<double[][]> chunks;
+		final double[][] X;
+		
+		final int high, low;
+		
+		ParallelSeedExecutor(
+				int maxIter, double[][] X, RadiusNeighbors nbrs,
+				ConcurrentSkipListSet<MeanShiftSeed> computedSeeds,
+				ArrayList<double[][]> chunks, int high, int low,
+				ConcurrentLinkedDeque<Object[]> summaries) {
+			
+			/**
+			 * Pass reference to super
+			 */
+			super(summaries);
+			
+			this.maxIter = maxIter;
+			this.X = X;
+			this.nbrs = nbrs;
+			this.computedSeeds = computedSeeds;
+			this.chunks = chunks;
+			
+			this.high = high;
+			this.low = low;
+		}
+		
+		@Override
+		protected ConcurrentSkipListSet<MeanShiftSeed> compute() {
+			if(high - low <= 1) { // generally should equal one...
+				return doChunk(chunks.get(low));
+			} else {
+				int mid = this.low + (this.high - this.low) / 2;
+				ParallelSeedExecutor left  = new ParallelSeedExecutor(
+					maxIter, X,nbrs, computedSeeds, chunks, mid, low, summaries);
+				
+				ParallelSeedExecutor right  = new ParallelSeedExecutor(
+					maxIter, X,nbrs, computedSeeds, chunks, high, mid, summaries);
+				
+	            left.fork();
+	            right.compute();
+	            left.join();
+	            
+	            return computedSeeds;
+			}
+		}
+		
+		@Override
+		public ConcurrentSkipListSet<MeanShiftSeed> doChunk(double[][] chunk) {
+			for(double[] seed: chunk) {
+				MeanShiftSeed ms = doSingleSeed(seed);
+				if(null == ms)
+					continue;
+				
+				computedSeeds.add(ms);
+				
+				String nm = getName();
+				summaries.add(new Object[]{
+					nm, ms.iterations, 
+					timer.formatTime(), 
+					timer.wallTime()
+				});
+			}
+			
+			return computedSeeds;
+		}
+		
+		protected MeanShiftSeed doSingleSeed(double[] seed) {
+			return singleSeed(seed, nbrs, X, maxIter);
+		}
+		
+		static ConcurrentSkipListSet<MeanShiftSeed> doAll(
+				int maxIter, double[][] X, RadiusNeighbors nbrs,
+				ConcurrentSkipListSet<MeanShiftSeed> computedSeeds,
+				ArrayList<double[][]> chunks, int high, int low,
+				ConcurrentLinkedDeque<Object[]> summaries) {
+			
+			return getThreadPool().invoke(
+				new ParallelSeedExecutor(
+					maxIter, X, nbrs, 
+					computedSeeds, chunks, high, low,
+					summaries));
+		}
+	}
+	
+	static class ParallelCenterIntensity extends CenterIntensity {
+		private static final long serialVersionUID = 4392163493242956320L;
+		
+		final AbstractRealMatrix data;
+		final double bandwidth;
+		final double[][] seeds;
+		final GeometricallySeparable metric;
+		final int maxIter;
+
+		final ConcurrentSkipListSet<Integer> itrz = new ConcurrentSkipListSet<>();
+		final ConcurrentSkipListSet<MeanShiftSeed> computedSeeds;
+		
+		/** Serves as a reference for passing to parallel job */
+		final ConcurrentLinkedDeque<Object[]> summaries = new ConcurrentLinkedDeque<>();
+		
+		final LogTimer timer;
+		final RadiusNeighbors nbrs;
+		final double[][] X;
+		
+		ParallelCenterIntensity(
+				AbstractRealMatrix data, 
+				RadiusNeighbors nbrs,
+				double bandwidth, double[][] seeds, 
+				GeometricallySeparable metric, 
+				int maxIter) {
+			
+			this.data = data;
+			this.nbrs = nbrs;
+			this.bandwidth = bandwidth;
+			this.seeds = seeds;
+			this.metric = metric;
+			this.maxIter = maxIter;
+			
+			this.timer = new LogTimer();
+			
+			this.X = data.getData();
+
+			/* Create as many chunks as cores available */
+			final int numChunks = FastMath.min(X.length, GlobalState.ParallelismConf.NUM_CORES);
+			
+			// Execute forkjoinpool
+			this.computedSeeds = ParallelSeedExecutor.doAll(
+				maxIter, seeds, nbrs, new ConcurrentSkipListSet<MeanShiftSeed>(), 
+				ParallelTask.generateChunks(X, numChunks), numChunks, 0, summaries);
+			
+			for(MeanShiftSeed sd: computedSeeds)
+				itrz.add(sd.iterations);
+		}
+
+		@Override
+		public ArrayList<EntryPair<double[], Integer>> getPairs() {
+			final ArrayList<EntryPair<double[], Integer>> out =
+				new ArrayList<>();
+			for(MeanShiftSeed seed: this.computedSeeds)
+				out.add(seed.getPair());
+			return out;
+		}
+
+		@Override
+		public int getIters() {
+			return itrz.last();
+		}
+
+		@Override
+		public ArrayList<Object[]> getSummaries() {
+			return new ArrayList<>(summaries);
+		}
+	}
+	
+	/**
+	 * Compute the center intensity entry pairs serially and call the 
 	 * {@link MeanShift#singleSeed(double[], RadiusNeighbors, double[][], int)} method
 	 * @author Taylor G Smith
 	 */
-	static class CenterIntensity {
+	static class SerialCenterIntensity extends CenterIntensity {
+		private static final long serialVersionUID = -1117327079708746405L;
+		
 		final ArrayList<EntryPair<double[], Integer>> pairs = new ArrayList<>();
 		int itrz = 0;
 		final ArrayList<Object[]> summaries = new ArrayList<>();
 		
-		CenterIntensity(
+		SerialCenterIntensity(
 				AbstractRealMatrix data, 
+				RadiusNeighbors nbrs,
 				double bandwidth, double[][] seeds, 
-				Random rand, GeometricallySeparable metric, 
+				GeometricallySeparable metric, 
 				int maxIter) {
 			
 			LogTimer timer;
-			RadiusNeighbors nbrs = new RadiusNeighbors(data,
-				new RadiusNeighborsPlanner(bandwidth)
-					.setScale(false) // don't rescale
-					.setSeed(rand)
-					.setSep(metric)
-					.setVerbose(false)).fit();
 			
 			// Now get single seed members
 			MeanShiftSeed sd;
@@ -484,7 +731,21 @@ public class MeanShift
 				}
 			}
 		}
-		
+
+		@Override
+		public ArrayList<EntryPair<double[], Integer>> getPairs() {
+			return pairs;
+		}
+
+		@Override
+		public int getIters() {
+			return itrz;
+		}
+
+		@Override
+		public ArrayList<Object[]> getSummaries() {
+			return summaries;
+		}
 	}
 	
 	
@@ -567,18 +828,46 @@ public class MeanShift
 				 */
 				int itrz = 0;
 				CenterIntensity intensity = null;
+				
+				// Breaks if max tries hit.
 				while(true) {
 					itrz = 0;
-
+					
+					
+					RadiusNeighbors nbrs = new RadiusNeighbors(data,
+						new RadiusNeighborsPlanner(bandwidth)
+							.setScale(false) // don't rescale
+							.setSeed(getSeed())
+							.setSep(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+					
+					
 					// Compute the seeds and center intensity
-					intensity = new CenterIntensity(
-							data, bandwidth, seeds, getSeed(), 
+					// If parallelism is permitted, try it. Otherwise let's
+					// let it fail so we can figure out why...
+					if(parallel) {
+						try {
+							intensity = new ParallelCenterIntensity(
+								data, nbrs, bandwidth, seeds, 
+								getSeparabilityMetric(), maxIter);
+						} catch(RejectedExecutionException e) {
+							// Shouldn't happen...
+							error = "cannot execute parallel job";
+							error(error);
+							throw new RuntimeException(error, e);
+						}
+					} else {
+						intensity = new SerialCenterIntensity(
+							data, nbrs, bandwidth, seeds, 
 							getSeparabilityMetric(), maxIter);
+					}
+					
 					
 					
 					// Extract the members
-					center_intensity = intensity.pairs;
-					itrz = intensity.itrz;
+					center_intensity = intensity.getPairs();
+					itrz = intensity.getIters();
+					
 					
 					
 					// Check for points all too far from seeds
@@ -609,7 +898,7 @@ public class MeanShift
 				
 				
 				// Pre-filtered summaries...
-				ArrayList<Object[]> allSummary = intensity.summaries;
+				ArrayList<Object[]> allSummary = intensity.getSummaries();
 				
 				
 				// Post-processing. Remove near duplicate seeds
@@ -674,23 +963,13 @@ public class MeanShift
 					centers.setRow(i, centroids.get(i));
 				
 				
-				// Build yet another neighbors model... 
-				// this one has the propensity to throw exceptions
-				NearestNeighbors nn; 
-				try { // This only happens if centeres.length == 1...
-					nn = new NearestNeighbors(centers,
-						new NearestNeighborsPlanner(1)
-							.setScale(false) // dont scale the centers
-							.setSeed(getSeed())
-							.setSep(getSeparabilityMetric())
-							.setVerbose(false)).fit();
-				} catch(IllegalArgumentException iae) {
-					error = "only "+centers.getRowDimension()+" centroid"
-							+ (centers.getRowDimension()==1?"":"s")+" identified; "
-							+ "try altering bandwidth";
-					error(error);
-					throw new IllegalClusterStateException(error, iae);
-				}
+				// Build yet another neighbors model...
+				NearestNeighbors nn = new NearestNeighbors(centers,
+					new NearestNeighborsPlanner(1)
+						.setScale(false) // dont scale the centers
+						.setSeed(getSeed())
+						.setSep(getSeparabilityMetric())
+						.setVerbose(false)).fit();
 				
 				
 				
@@ -831,7 +1110,7 @@ public class MeanShift
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Seed #","Iterations","Iter. Time","Wall"
+			"Seed ID","Iterations","Iter. Time","Wall"
 		};
 	}
 

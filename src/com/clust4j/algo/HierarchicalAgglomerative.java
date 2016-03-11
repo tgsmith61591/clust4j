@@ -92,7 +92,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),linkage,normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				parallel,
 				num_clusters
 			});
 	}

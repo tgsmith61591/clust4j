@@ -130,7 +130,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				parallel,
 				maxIter, tolerance, addNoise
 			});
 	}

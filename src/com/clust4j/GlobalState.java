@@ -173,6 +173,13 @@ public class GlobalState {
 	 */
 	public final static class ParallelismConf {
 		/**
+		 * Matrices with number of elements exceeding this number
+		 * will automatically trigger parallel events as supported
+		 * in clustering methods.
+		 */
+		public static final int MIN_ELEMENTS = 15000;
+		
+		/**
 		 * The minimum number of required cores to efficiently
 		 * allow parallel operations.
 		 */

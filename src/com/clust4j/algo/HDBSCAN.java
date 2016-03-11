@@ -130,7 +130,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),algo,normalized,
 				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
-				GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM,
+				parallel,
 				minPts, min_cluster_size,alpha
 			});
 	}

@@ -1190,6 +1190,35 @@ public class MatUtils {
 	}
 	
 	/**
+	 * Stack two matrices A on top of B.
+	 * @param a
+	 * @param b
+	 * @throws NonUniformMatrixException if either matrix is non-uniform
+	 * @throws IllegalArgumentException if either matrix is empty
+	 * @throws DimensionMismatchException if the col dims don't match
+	 * @return bound matrices
+	 */
+	public static double[][] rbind(double[][] a, double[][] b) {
+		checkDimsForUniformity(a);
+		checkDimsForUniformity(b);
+		
+		final int m = a.length + b.length, n= a[0].length;
+		if(n != b[0].length)
+			throw new DimensionMismatchException(n, b[0].length);
+		
+		final double[][] c = new double[m][n];
+		
+		int idx = 0;
+		for(int i = 0; i < a.length; i++)
+			c[idx++] = VecUtils.copy(a[i]);
+		
+		for(int i = 0; i < b.length; i++)
+			c[idx++] = VecUtils.copy(b[i]);
+		
+		return c;
+ 	}
+	
+	/**
 	 * Sort all of the columns ascending
 	 * @param a
 	 * @throws IllegalArgumentException if the rows are empty
@@ -1232,16 +1261,39 @@ public class MatUtils {
 	 * Creates a matrix of random Gaussians.
 	 * @param m
 	 * @param n
+	 * @param scalar
+	 * @return a MxN matrix
+	 */
+	public static double[][] randomGaussian(final int m, final int n, final double scalar) {
+		return randomGaussian(m, n, new Random());
+	}
+	
+	/**
+	 * Creates a matrix of random Gaussians.
+	 * @param m
+	 * @param n
 	 * @param seed
 	 * @return a MxN matrix
 	 */
 	public static double[][] randomGaussian(final int m, final int n, final Random seed) {
+		return randomGaussian(m, n, 1.0, seed);
+	}
+	
+	/**
+	 * Creates a matrix of random Gaussians.
+	 * @param m
+	 * @param n
+	 * @param scalar
+	 * @param seed
+	 * @return a MxN matrix
+	 */
+	public static double[][] randomGaussian(final int m, final int n, final double scalar, final Random seed) {
 		if(m < 0 || n < 0)
 			throw new IllegalArgumentException("illegal dimensions");
 		
 		final double[][] out = new double[m][n];
 		for(int i = 0; i < m; i++)
-			out[i] = VecUtils.randomGaussian(n, seed);
+			out[i] = VecUtils.randomGaussian(n, seed, scalar);
 		
 		return out;
 	}

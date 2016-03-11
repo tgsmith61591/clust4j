@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.Precision;
 
 import static com.clust4j.TestSuite.getRandom;
 
@@ -175,5 +176,25 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	public void testMinPtsIAE() {
 		new DBSCAN(data, 
 			new DBSCANPlanner().setMinPts(0));
+	}
+	
+	@Test
+	public void testResults() {
+		DBSCAN db = new DBSCAN(data).fit();
+		
+		// sklearn's result
+		final int[] expected = new int[]{
+			0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		    0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0,  1,
+		    1,  1,  1,  1,  1,  1, -1,  1,  1, -1,  1,  1,  1,  1,  1,  1,  1,
+		   -1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+		    1,  1, -1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1, -1,  1,  1,  1,
+		    1,  1,  1, -1, -1,  1, -1, -1,  1,  1,  1,  1,  1,  1,  1, -1, -1,
+		    1,  1,  1, -1,  1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1, -1, -1,
+		    1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
+		};
+		
+		assertTrue(Precision.equals(0.95, db.indexAffinityScore(expected), 0.05));
 	}
 }

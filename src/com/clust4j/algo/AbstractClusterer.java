@@ -71,6 +71,8 @@ public abstract class AbstractClusterer
 	final private boolean verbose;
 	/** Whether we scale or not */
 	final boolean normalized;
+	/** Whether to use parallelism */
+	final boolean parallel;
 	
 	
 	
@@ -156,6 +158,14 @@ public abstract class AbstractClusterer
 			this.data = planner.getNormalizer().operate(data);
 			meta("normalized matrix columns in " + scaleTimer.toString(), planner.getNormalizer().toString());
 		}
+		
+		
+		// Determine whether we should parallelize
+		this.parallel = GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE
+				|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+				&& (data.getRowDimension() * data.getColumnDimension()) 
+				> GlobalState.ParallelismConf.MIN_ELEMENTS);
+		
 		
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 	} // End constructor
