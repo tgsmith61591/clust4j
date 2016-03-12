@@ -412,8 +412,9 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			.STANDARD_SCALE.operate(ExampleDataSets.loadIris().getData());
 		final double[][] X = iris.getData();
 		
-		// MS estimates bw at 1.5971266273437668
-		final double bandwidth = 1.5971266273437668;
+		// MS estimates bw at 1.5971266273438018
+		final double bandwidth = 1.5971266273438018;
+		
 		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
 			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false) == bandwidth);
 		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
@@ -519,12 +520,11 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		assertTrue(redundant_ct == 3);
 		assertTrue(centroids.size() == 2);
 		assertTrue(VecUtils.equalsExactly(centroids.get(0), new double[]{
-			 0.4999404345258573, -0.3217963110452486, 0.651751961050506, 0.6504383581073979
+			0.4999404345258693, -0.3217963110452594, 0.6517519610505076, 0.6504383581073984
 		}));
 		
-
 		assertTrue(VecUtils.equalsExactly(centroids.get(1), new double[]{
-			-1.0560079864392453, 0.7555834087538167, -1.2954688594835067, -1.2498288991228368
+			-1.05600798643927, 0.7555834087538411, -1.2954688594835102, -1.2498288991228386
 		}));
 		
 		

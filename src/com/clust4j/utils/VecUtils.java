@@ -1871,7 +1871,7 @@ public class VecUtils {
 			double res = x - mean; // Want to avoid math.pow...
 			sum += res * res;
 		}
-		return sum / (a.length - (n_minus_one ? 1 : 0));
+		return sum / ((double)a.length - (n_minus_one ? 1.0 : 0.0));
 	}
 	
 	public static double[][] vstack(final double[] a, final double[] b) {
