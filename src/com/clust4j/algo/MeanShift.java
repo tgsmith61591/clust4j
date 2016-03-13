@@ -834,12 +834,8 @@ public class MeanShift
 					itrz = 0;
 					
 					
-					RadiusNeighbors nbrs = new RadiusNeighbors(data,
-						new RadiusNeighborsPlanner(bandwidth)
-							.setScale(false) // don't rescale
-							.setSeed(getSeed())
-							.setSep(getSeparabilityMetric())
-							.setVerbose(false)).fit();
+					RadiusNeighbors nbrs = new RadiusNeighbors(
+						this, bandwidth).fit();
 					
 					
 					// Compute the seeds and center intensity

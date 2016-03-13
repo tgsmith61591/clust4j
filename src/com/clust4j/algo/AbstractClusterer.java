@@ -121,7 +121,29 @@ public abstract class AbstractClusterer
 		formatter.setWhiteSpace(1);
 	}
 	
+	/**
+	 * Build a new instance from another caller
+	 * @param caller
+	 */
+	protected AbstractClusterer(AbstractClusterer caller) {
+		this(caller, null);
+	}
 	
+	/**
+	 * Internal constructor giving precedence to the planning class if not null
+	 * @param caller
+	 * @param planner
+	 */
+	protected AbstractClusterer(AbstractClusterer caller, BaseClustererPlanner planner) {
+		this.dist = null == planner ? caller.dist : planner.getSep();
+		this.verbose = null == planner ? false : planner.getVerbose(); // if another caller, default to false
+		this.modelKey = UUID.randomUUID();
+		this.seed = null == planner ? caller.seed : planner.getSeed();
+		this.data = caller.data; // Use the reference
+		this.normalized = caller.normalized;
+		this.parallel = caller.parallel;
+		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
+	}
 	
 	/**
 	 * Base clusterer constructor. Sets up the distance measure,
@@ -130,7 +152,7 @@ public abstract class AbstractClusterer
 	 * @param planner
 	 */
 	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
-		
+
 		this.dist = planner.getSep();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
@@ -162,14 +184,13 @@ public abstract class AbstractClusterer
 		
 		// Determine whether we should parallelize
 		this.parallel = GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE
-				|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-				&& (data.getRowDimension() * data.getColumnDimension()) 
-				> GlobalState.ParallelismConf.MIN_ELEMENTS);
+			|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
+			&& (data.getRowDimension() * data.getColumnDimension()) 
+			> GlobalState.ParallelismConf.MIN_ELEMENTS);
 		
 		
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
-	} // End constructor
-	
+	}
 	
 	
 	

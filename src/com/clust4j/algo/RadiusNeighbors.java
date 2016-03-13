@@ -26,9 +26,19 @@ public class RadiusNeighbors extends Neighbors {
 	public RadiusNeighbors(AbstractRealMatrix data, double radius) {
 		this(data, new RadiusNeighborsPlanner(radius));
 	}
+	
+	protected RadiusNeighbors(AbstractClusterer caller, double radius) {
+		this(caller, new RadiusNeighborsPlanner(radius));
+	}
 
 	public RadiusNeighbors(AbstractRealMatrix data, RadiusNeighborsPlanner planner) {
 		super(data, planner);
+		validateRadius(planner.radius);
+		logModelSummary();
+	}
+	
+	protected RadiusNeighbors(AbstractClusterer caller, RadiusNeighborsPlanner planner) {
+		super(caller, planner);
 		validateRadius(planner.radius);
 		logModelSummary();
 	}

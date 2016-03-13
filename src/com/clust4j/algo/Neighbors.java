@@ -16,20 +16,29 @@ abstract public class Neighbors extends BaseNeighborsModel {
 	public final static boolean DUAL_TREE_SEARCH = false;
 	public final static boolean SORT = true;
 	
-	Integer kNeighbors = null;
-	Double radius = null;
-	final NearestNeighborHeapSearch tree;
-	final boolean radiusMode;
-	final int leafSize, m;
-	final double[][] fit_X;
-	final BaseNeighborsModel.Algorithm alg;
+	protected Integer kNeighbors = null;
+	protected Double radius = null;
+	protected NearestNeighborHeapSearch tree;
+	protected boolean radiusMode;
+	protected int leafSize, m;
+	protected double[][] fit_X;
+	protected BaseNeighborsModel.Algorithm alg;
 
 	volatile Neighborhood res;
 	
 	
+	
+	protected Neighbors(AbstractClusterer caller, NeighborsPlanner planner) {
+		super(caller, planner);
+		init(planner);
+	}
+	
 	public Neighbors(AbstractRealMatrix data, NeighborsPlanner planner) {
 		super(data, planner);
-		
+		init(planner);
+	}
+	
+	private void init(NeighborsPlanner planner) {
 		this.kNeighbors = planner.getK();
 		this.radius = planner.getRadius();
 		this.leafSize = planner.getLeafSize();
@@ -66,6 +75,7 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		fit_X = tree.getData();
 		this.m = fit_X.length;
 	}
+	
 	
 	
 	

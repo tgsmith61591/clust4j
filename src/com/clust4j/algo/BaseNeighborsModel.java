@@ -10,6 +10,9 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		KD_TREE, BALL_TREE;
 	}
 	
+	protected BaseNeighborsModel(AbstractClusterer caller, BaseNeighborsPlanner planner) {
+		super(caller, planner);
+	}
 	
 	public BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner planner) {
 		super(data, planner);
