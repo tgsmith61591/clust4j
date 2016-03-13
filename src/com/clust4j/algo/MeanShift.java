@@ -133,7 +133,7 @@ public class MeanShift
 			// Throws NonUniformMatrixException if non uniform...
 			MatUtils.checkDimsForUniformity(planner.seeds);
 			
-			if(planner.seeds[0].length != (n=data.getColumnDimension())) {
+			if(planner.seeds[0].length != (n=this.data.getColumnDimension())) {
 				e = "seeds column dims do not match data column dims";
 				error(e);
 				throw new org.apache.commons.math3.exception.DimensionMismatchException(planner.seeds[0].length, n);

@@ -189,7 +189,7 @@ public enum FeatureNormalization implements PreProcessor {
 				 *   n = n + 1 
 				 *   Sum = Sum + x 
 				 *   SumSq = SumSq + x * x 
-				 * Var = (SumSq − (Sum × Sum) / n) / (n − 1)
+				 * Var = (SumSq - (Sum * Sum) / n) / (n - 1)
 				 * 
 				 * @see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 				 */

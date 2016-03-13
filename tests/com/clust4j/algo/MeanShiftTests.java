@@ -194,7 +194,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	@Override
 	public void testDefConst() {
-		new MeanShift(ExampleDataSets.loadIris().getData());
+		new MeanShift(data_);
 	}
 
 	@Test
@@ -264,7 +264,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testAutoEstimation() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.202076812799869
@@ -311,7 +311,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	 */
 	@Test
 	public void MeanShiftTestIris() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		MeanShift ms = new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -336,7 +336,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	 * Test where none in range
 	@Test(expected=com.clust4j.except.IllegalClusterStateException.class)
 	public void MeanShiftTestIrisSeeded() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		MeanShift ms =
 		new MeanShift(iris, 
@@ -349,7 +349,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=NonUniformMatrixException.class)
 	public void testSeededNUME() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -361,7 +361,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testSeededDME() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -373,7 +373,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testSeededIAE1() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -383,7 +383,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testSeededIAE2() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -393,7 +393,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testSeededIrisFunctional() {
-		Array2DRowRealMatrix iris = ExampleDataSets.loadIris().getData();
+		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
 			new MeanShift.MeanShiftPlanner()
@@ -409,7 +409,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testAutoEstimationWithScale() {
 		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)FeatureNormalization
-			.STANDARD_SCALE.operate(ExampleDataSets.loadIris().getData());
+			.STANDARD_SCALE.operate(data_);
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.5971266273438018
@@ -592,16 +592,22 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testParallelHuge() {
-		// Construct a large matrix of two separate gaussian seeds
-		double[][] A = MatUtils.randomGaussian(1000, 20);
-		double[][] B = MatUtils.randomGaussian(1000, 20, 25.0);
-		double[][] C = MatUtils.rbind(A, B);
+		GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
 		
-		new MeanShift(new Array2DRowRealMatrix(C, false),
-			new MeanShiftPlanner()
-				//.setScale(true)
-				.setVerbose(true)).fit();
-		
-		// This should result in one cluster. We are testing that that works.
+		try {
+			// Construct a large matrix of two separate gaussian seeds
+			double[][] A = MatUtils.randomGaussian(1000, 20);
+			double[][] B = MatUtils.randomGaussian(1000, 20, 25.0);
+			double[][] C = MatUtils.rbind(A, B);
+			
+			new MeanShift(new Array2DRowRealMatrix(C, false),
+				new MeanShiftPlanner()
+					//.setScale(true)
+					.setVerbose(true)).fit();
+			
+			// This should result in one cluster. We are testing that that works.
+		} finally {
+			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
+		}
 	}
 }
