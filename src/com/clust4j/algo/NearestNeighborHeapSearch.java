@@ -617,9 +617,15 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 					final int sliceStart = pivot_idx + 1;
 					final int sliceEnd = dist.length;
 					
-					double[] a = VecUtils.slice(dist, sliceStart, sliceEnd);
-					int[] b =    VecUtils.slice(idx, sliceStart, sliceEnd);
+					final int newLen = sliceEnd - sliceStart;
+					double[] a = new double[newLen];
+					int[] b = new int[newLen];
+					
+					System.arraycopy(dist, sliceStart, a, 0, newLen);
+					System.arraycopy(idx, sliceStart, b, 0, newLen);
+					
 					simultaneous_sort(a, b, size - pivot_idx - 1);
+					
 					
 					// Now iter over and replace...
 					for(int k = 0, p = sliceStart; p < sliceEnd; k++, p++) {
@@ -1356,12 +1362,15 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		
 		final int n = data_arr[0].length, mPrime = X.length;
 		
+		
 		if(n != X[0].length)
 			throw new DimensionMismatchException(n, X[0].length);
-		if(this.N_SAMPLES < k) throw new IllegalArgumentException(k+" is greater than rows in data");
+		if(this.N_SAMPLES < k) 
+			throw new IllegalArgumentException(k+" is greater than rows in data");
 		if(k < 1) throw new IllegalArgumentException(k+" must exceed 0");
 		
-		double[][] Xarr = MatUtils.copy(X);
+		
+		double[][] Xarr = X;
 		
 		// Initialize neighbor heap
 		NeighborsHeap heap = new NeighborsHeap(mPrime, k);
@@ -1422,9 +1431,13 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		double[][] distances = distances_indices.getKey();
 		rDistToDistInPlace(distances); // set back to dist
 		
+		/* Original code called for reshaping...
 		return new Neighborhood(
-				MatUtils.reshape(distances, mPrime, k), 
-				MatUtils.reshape(indices,   mPrime, k));
+			MatUtils.reshape(distances, mPrime, k), 
+			MatUtils.reshape(indices,   mPrime, k));
+		*/
+		
+		return new Neighborhood(distances, indices);
 	}
 	
 	/*

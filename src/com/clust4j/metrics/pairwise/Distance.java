@@ -98,7 +98,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override 
 		public double getDistance(final double[] a, final double[] b) {
-			return FastMath.sqrt(getPartialDistance(a, b));
+			return partialDistanceToDistance(getPartialDistance(a, b));
 		}
 		
 		@Override

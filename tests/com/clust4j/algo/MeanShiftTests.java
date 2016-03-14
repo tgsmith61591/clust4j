@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
@@ -463,7 +464,11 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 				iris, r, bandwidth, X,
 				Distance.EUCLIDEAN, 300);
 		
-		ArrayList<EntryPair<double[], Integer>> center_intensity2 = intensity.pairs;
+		Iterator<MeanShiftSeed> iterator = intensity.iterator();
+		ArrayList<EntryPair<double[], Integer>> center_intensity2 = new ArrayList<>();
+		while(iterator.hasNext())
+			center_intensity2.add(iterator.next().getPair());
+		
 		assertTrue(center_intensity2.size() == center_intensity.size());
 		
 		
@@ -593,11 +598,12 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testParallelHuge() {
 		GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
+		final int n = 10;
 		
 		try {
 			// Construct a large matrix of two separate gaussian seeds
-			double[][] A = MatUtils.randomGaussian(1000, 20);
-			double[][] B = MatUtils.randomGaussian(1000, 20, 25.0);
+			double[][] A = MatUtils.randomGaussian(1000, n);
+			double[][] B = MatUtils.randomGaussian(1000, n, 25.0);
 			double[][] C = MatUtils.rbind(A, B);
 			
 			new MeanShift(new Array2DRowRealMatrix(C, false),

@@ -61,9 +61,9 @@ public abstract class AbstractClusterer
 	/** Underlying data */
 	final protected Array2DRowRealMatrix data;
 	/** Similarity metric */
-	private GeometricallySeparable dist;
+	protected GeometricallySeparable dist_metric;
 	/** Seed for any shuffles */
-	private final Random seed;
+	protected final Random random_state;
 	/** Verbose for heavily logging */
 	final private boolean verbose;
 	/** Whether we scale or not */
@@ -134,29 +134,23 @@ public abstract class AbstractClusterer
 	 * @param planner
 	 */
 	protected AbstractClusterer(AbstractClusterer caller, BaseClustererPlanner planner) {
-		this.dist = null == planner ? caller.dist : planner.getSep();
-		this.verbose = null == planner ? false : planner.getVerbose(); // if another caller, default to false
-		this.modelKey = UUID.randomUUID();
-		this.seed = null == planner ? caller.seed : planner.getSeed();
-		this.data = caller.data; // Use the reference
-		this.normalized = caller.normalized;
-		this.parallel = caller.parallel;
+		this.dist_metric 		= null == planner ? caller.dist_metric : planner.getSep();
+		this.verbose 	= null == planner ? false : planner.getVerbose(); // if another caller, default to false
+		this.modelKey 	= UUID.randomUUID();
+		this.random_state 		= null == planner ? caller.random_state : planner.getSeed();
+		this.data 		= caller.data; // Use the reference
+		this.normalized	= caller.normalized;
+		this.parallel 	= caller.parallel;
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 		this.normalizer = null == planner ? caller.normalizer : planner.getNormalizer();
 	}
 	
-	/**
-	 * Base clusterer constructor. Sets up the distance measure,
-	 * and if necessary scales data.
-	 * @param data
-	 * @param planner
-	 */
-	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
-
-		this.dist = planner.getSep();
+	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner, boolean as_is) {
+		
+		this.dist_metric = planner.getSep();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
-		this.seed = planner.getSeed();
+		this.random_state = planner.getSeed();
 
 		// Scale if needed
 		this.normalized = planner.getScale();
@@ -168,12 +162,25 @@ public abstract class AbstractClusterer
 			&& (data.getRowDimension() * data.getColumnDimension()) 
 			> GlobalState.ParallelismConf.MIN_ELEMENTS);
 		
-		if(this.dist instanceof Kernel)
+		if(this.dist_metric instanceof Kernel)
 			warn("running " + getName() + " in Kernel mode can be an expensive option");
 		
 		// Handle data, now...
-		this.data = initData(data);
+		this.data = as_is ? 
+			(Array2DRowRealMatrix)data : // internally, always 2d...
+				initData(data);
+			
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
+	}
+	
+	/**
+	 * Base clusterer constructor. Sets up the distance measure,
+	 * and if necessary scales data.
+	 * @param data
+	 * @param planner
+	 */
+	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
+		this(data, planner, false);
 	}
 	
 	
@@ -198,7 +205,7 @@ public abstract class AbstractClusterer
 		}
 		
 		if(!normalized)
-			metaWarn("feature normalization option is set to false; this is discouraged");
+			warn("feature normalization option is set to false; this is discouraged");
 		
 		return new Array2DRowRealMatrix(
 			normalized ? normalizer.operate(ref) : ref,
@@ -250,7 +257,7 @@ public abstract class AbstractClusterer
 	 * @return distance metric
 	 */
 	public GeometricallySeparable getSeparabilityMetric() {
-		return dist;
+		return dist_metric;
 	}
 	
 	
@@ -259,7 +266,7 @@ public abstract class AbstractClusterer
 	 * @return the random seed
 	 */
 	public Random getSeed() {
-		return seed;
+		return random_state;
 	}
 	
 	/**
@@ -277,10 +284,10 @@ public abstract class AbstractClusterer
 		return result 
 			^ (verbose ? 1 : 0)
 			^ (getKey().hashCode())
-			^ (dist instanceof DistanceMetric ? 31 :
-				dist instanceof SimilarityMetric ? 53 : 1)
+			^ (dist_metric instanceof DistanceMetric ? 31 :
+				dist_metric instanceof SimilarityMetric ? 53 : 1)
 			// ^ (hasWarnings ? 1 : 0) // removed because forces state dependency
-			^ seed.hashCode();
+			^ random_state.hashCode();
 	}
 	
 	
@@ -334,7 +341,7 @@ public abstract class AbstractClusterer
 	 */
 	@Override public void sayBye(final LogTimer timer) {
 		logFitSummary();
-		info("model "+getKey()+" completed in " + timer.toString());
+		info("model "+getKey()+" fit completed in " + timer.toString());
 	}
 	
 	/**
@@ -393,29 +400,8 @@ public abstract class AbstractClusterer
 			info(line);
 	}
 	
-	/**
-	 * Log info related to the internal state 
-	 * of the model (not progress)
-	 * @param msg
-	 */
-	void meta(final String msg) {
-		meta(msg, getName());
-	}
-	
-	void meta(final String msg, final String nm) {
-		info("[meta "+nm+"] " + msg);
-	}
-	
-	void metaWarn(final String msg) {
-		metaWarn(msg, getName());
-	}
-	
-	void metaWarn(final String msg, final String nm) {
-		warn("[meta "+nm+"] " + msg);
-	}
-	
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
-		this.dist = sep;
+		this.dist_metric = sep;
 	}
 	
 	

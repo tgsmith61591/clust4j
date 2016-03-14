@@ -464,15 +464,36 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		int[][] ne = nn.getNeighbors().getIndices();
 		assertTrue(ne[0].length == 1);
 		assertTrue(ne[0].length == 1);
+		assertTrue(ne[0][0] == 1);
+		assertTrue(ne[1][0] == 0);
+		assertTrue(ne[2][0] == 1);
 		System.out.println();
 		
 		nn = new RadiusNeighbors(mat, 
 			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
-				.setVerbose(true)).fit();
+				.setVerbose(false)).fit();
 		
 		ne = nn.getNeighbors().getIndices();
 		assertTrue(ne[0].length == 1);
 		assertTrue(ne[1].length == 1);
 		assertTrue(ne[2].length == 0);
+	}
+	
+	@Test
+	public void testBig() {
+		final Array2DRowRealMatrix big = TestSuite.getRandom(10000, 3);
+		new NearestNeighbors(big, new NearestNeighborsPlanner(3)
+			.setVerbose(true)).fit();
+	}
+	
+	@Test
+	public void testSorted() {
+		final Array2DRowRealMatrix big = TestSuite.getRandom(50, 3);
+		Neighborhood n = new NearestNeighbors(big, new NearestNeighborsPlanner(3)
+			.setVerbose(true)).fit().getNeighbors();
+		
+		for(double[] d : n.getDistances()) {
+			assertTrue(VecUtils.max(d) == d[d.length - 1]);
+		}
 	}
 }

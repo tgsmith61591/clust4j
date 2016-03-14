@@ -60,8 +60,20 @@ abstract class ParallelTask<T> extends RecursiveTask<T> implements Named {
 		return GlobalState.ParallelismConf.FJ_THREADPOOL;
 	}
 	
-	private static String formatName(String str) {
-		return str.replace("ForkJoinPool", "FJ")
-			.replace("worker", "task");
+	public String formatName(String str) {
+		StringBuilder sb = new StringBuilder();
+		boolean hyphen = false; // have we hit the hyphen yet?
+		
+		for(char c: str.toCharArray()) {
+			if(hyphen || Character.isUpperCase(c))
+				sb.append(c);
+			
+			else if('-' == c) {
+				hyphen = true;
+				sb.append(c);
+			}
+		}
+		
+		return sb.toString();
 	}
 }

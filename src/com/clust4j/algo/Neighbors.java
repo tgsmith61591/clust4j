@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
@@ -33,6 +34,11 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		init(planner);
 	}
 	
+	protected Neighbors(AbstractRealMatrix data, NeighborsPlanner planner, boolean as_is) {
+		super(data, planner, as_is);
+		init(planner);
+	}
+	
 	public Neighbors(AbstractRealMatrix data, NeighborsPlanner planner) {
 		super(data, planner);
 		init(planner);
@@ -56,14 +62,24 @@ abstract public class Neighbors extends BaseNeighborsModel {
 		
 		
 		GeometricallySeparable sep = this.getSeparabilityMetric();
-		this.alg = planner.getAlgorithm();
+		Algorithm algr = planner.getAlgorithm();
+		if(algr.equals(Algorithm.AUTO)) {
+			int mn = data.getColumnDimension() * data.getRowDimension();
+			algr = mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
+				Algorithm.BALL_TREE : Algorithm.KD_TREE;
+		}
+		
+		// Final assnmnt
+		this.alg = algr;
+		
+		
 		switch(alg) {
 			// We can cast to DistanceMetric at this point
 			case KD_TREE:	
-				tree = new KDTree(data,  leafSize, (DistanceMetric)sep, this);
+				tree = new KDTree(this.data, leafSize, (DistanceMetric)sep, this);
 				break;
 			case BALL_TREE:	
-				tree = new BallTree(data,leafSize, (DistanceMetric)sep, this);
+				tree = new BallTree(this.data, leafSize, (DistanceMetric)sep, this);
 				break;
 			default: 
 				/* Can't test for coverage; throws NPE in switch declaration.

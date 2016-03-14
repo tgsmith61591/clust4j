@@ -73,17 +73,17 @@ public abstract class Log {
 	 * PrintStream wrapper
 	 * @author 0xData
 	 */
-	final static class Wrapper extends PrintStream {
+	final static class LogWrapper extends PrintStream {
 		PrintStream parent;
 		
-		Wrapper(PrintStream parent) {
+		LogWrapper(PrintStream parent) {
 			super(parent);
 			this.parent = parent;
 		}
 		
 		private static String log(Locale l, boolean nl, String format, Object... args) {
 			String msg = String.format(l, format, args);
-			Event e = Event.make(Algo.CLUST4J, Type.INFO, null, msg);
+			LogEvent e = LogEvent.make(Algo.CLUST4J, Type.INFO, null, msg);
 			Log.write(e, false); // Skip the KVLog present in H2O
 			return e.toShortString() + lineSep;
 		}
@@ -119,7 +119,7 @@ public abstract class Log {
 	/**
 	 * 0XData Event class
 	 */
-	static class Event {
+	static class LogEvent {
 		Type type;
 		Algo algo;
 		Timer when;
@@ -133,28 +133,28 @@ public abstract class Log {
 		
 		/* These are all volatile in H2O's API */
 		private volatile static Timer lastGoodTimer = new LogTimer();
-		private volatile static Event lastEvent = new Event();
+		private volatile static LogEvent lastEvent = new LogEvent();
 		private volatile static int missed;
 		
 		/* Builder methods */
-		static Event make(Tag.Algo algo, Tag.Type type, Throwable ouch, Object[] messages) {
+		static LogEvent make(Tag.Algo algo, Tag.Type type, Throwable ouch, Object[] messages) {
 			return make0(algo, type, ouch, messages, null);
 		}
 		
-		static Event make(Tag.Algo algo, Tag.Type type, Throwable ouch, Object message) {
+		static LogEvent make(Tag.Algo algo, Tag.Type type, Throwable ouch, Object message) {
 			return make0(algo, type, ouch, null, message);
 		}
 		
-		static private Event /* Oh you fancy, huh? */ make0(
+		static private LogEvent make0(
 				Tag.Algo algo, Tag.Type type, Throwable ouch, 
 				Object[] messages, Object message) {
-			Event result = null;
+			LogEvent result = null;
 			
 			try {
-				result = new Event();
+				result = new LogEvent();
 				result.init(algo, type, ouch, messages, message, lastGoodTimer=new LogTimer());
 			} catch(OutOfMemoryError e) {
-				synchronized(Event.class) {
+				synchronized(LogEvent.class) {
 					/* This is synchronized in the H2O API, not here */
 					if(lastEvent.printMe) {
 						missed++;
@@ -279,32 +279,32 @@ public abstract class Log {
 	
 	
 	/* Main write method */
-	private static void write(Event e, boolean printOnOut) {
+	private static void write(LogEvent e, boolean printOnOut) {
 		try {
 			write0(e, printOnOut);
 			
-			if(Event.lastEvent.printMe || Event.missed > 0) {
+			if(LogEvent.lastEvent.printMe || LogEvent.missed > 0) {
 				
-				synchronized(Event.class) {
-					if(Event.lastEvent.printMe) {
-						Event ev = Event.lastEvent;
+				synchronized(LogEvent.class) {
+					if(LogEvent.lastEvent.printMe) {
+						LogEvent ev = LogEvent.lastEvent;
 						write0(ev, true);
-						Event.lastEvent = new Event();
+						LogEvent.lastEvent = new LogEvent();
 					}
 					
-					if(Event.missed > 0 && !Event.lastEvent.printMe) {
-						Event.lastEvent.init(Algo.CLUST4J, Type.WARN, null, null, "Logging framework dropped a message", Event.lastGoodTimer);
-						Event.missed--;
+					if(LogEvent.missed > 0 && !LogEvent.lastEvent.printMe) {
+						LogEvent.lastEvent.init(Algo.CLUST4J, Type.WARN, null, null, "Logging framework dropped a message", LogEvent.lastGoodTimer);
+						LogEvent.missed--;
 					}
 				}
 				
 			}
 			
 		} catch(OutOfMemoryError xe) {
-			synchronized(Event.class) {
-				if(!Event.lastEvent.printMe)
-					Event.lastEvent = e;
-				else Event.missed++;
+			synchronized(LogEvent.class) {
+				if(!LogEvent.lastEvent.printMe)
+					LogEvent.lastEvent = e;
+				else LogEvent.missed++;
 			}
 		}
 	}
@@ -462,10 +462,10 @@ public abstract class Log {
 	 */
 	static volatile boolean loggerCreateWasCalled = false;
 	static private Object startupLogEventsLock = new Object();
-	static volatile private ArrayList<Event> startupLogEvents = new ArrayList<Event>();
+	static volatile private ArrayList<LogEvent> startupLogEvents = new ArrayList<LogEvent>();
 	
 	
-	private static void log0(org.apache.log4j.Logger l4j, Event e) {
+	private static void log0(org.apache.log4j.Logger l4j, LogEvent e) {
 		String s = e.toString();
 		
 		if(e.type == Type.FATAL)
@@ -486,7 +486,7 @@ public abstract class Log {
 	
 	
 	
-	private static void write0(final Event e, final boolean printOnOut) {
+	private static void write0(final LogEvent e, final boolean printOnOut) {
 		org.apache.log4j.Logger l4j = getLog4jLogger();
 		
 		// If we don't have a logger yet, and we haven't created one, build one...
@@ -528,7 +528,7 @@ public abstract class Log {
 			if(startupLogEvents != null) {
 				synchronized(startupLogEventsLock) {
 					for(int i = 0; i < startupLogEvents.size(); i++) {
-						Event bufferedEvent = startupLogEvents.get(i);
+						LogEvent bufferedEvent = startupLogEvents.get(i);
 						log0(l4j, bufferedEvent);
 					}
 					
@@ -551,13 +551,13 @@ public abstract class Log {
 	
 	
 	static public <T extends Throwable> T err(Algo t, String msg, T exception) {
-		Event e = Event.make(t, Type.ERROR, exception, msg);
+		LogEvent e = LogEvent.make(t, Type.ERROR, exception, msg);
 		write(e, true);
 		return exception;
 	}
 	
 	static public void err(Algo t, String msg) {
-		Event e = Event.make(t, Type.ERROR, null, msg);
+		LogEvent e = LogEvent.make(t, Type.ERROR, null, msg);
 		write(e, true);
 	}
 	
@@ -582,7 +582,7 @@ public abstract class Log {
 	}
 	
 	static public <T extends Throwable> T warn(Algo t, String msg, T exception) {
-		Event e = Event.make(t, Type.WARN, exception, msg);
+		LogEvent e = LogEvent.make(t, Type.WARN, exception, msg);
 		write(e, true);
 		return exception;
 	}
@@ -592,17 +592,17 @@ public abstract class Log {
 	}
 	
 	static public void info_no_stdout(Algo t, Object... objects) {
-		Event e = Event.make(t, Type.INFO, null, objects);
+		LogEvent e = LogEvent.make(t, Type.INFO, null, objects);
 		write(e, false);
 	}
 	
 	static public void info_no_DKV(Algo t, Object... objects) {
-		Event e = Event.make(t, Type.INFO, null, objects);
+		LogEvent e = LogEvent.make(t, Type.INFO, null, objects);
 		write(e, true);
 	}
 	
 	static public void info(Algo t, Object... obj) {
-		Event e = Event.make(t, Type.INFO, null, obj);
+		LogEvent e = LogEvent.make(t, Type.INFO, null, obj);
 		write(e, true);
 	}
 	
@@ -621,14 +621,14 @@ public abstract class Log {
 	static public void debug(Algo t, Object... objects) {
 		if(flag(t) == false)
 			return;
-		Event e = Event.make(t, Type.DEBUG, null, objects);
+		LogEvent e = LogEvent.make(t, Type.DEBUG, null, objects);
 		write(e, false);
 	}
 	
 	static public void trace(Object... objects) {
 		if(flag(Algo.CLUST4J) == false)
 			return;
-		Event e = Event.make(Algo.CLUST4J, Type.TRACE, null, objects);
+		LogEvent e = LogEvent.make(Algo.CLUST4J, Type.TRACE, null, objects);
 		write(e, false);
 	}
 	
@@ -690,18 +690,18 @@ public abstract class Log {
 	}
 	
 	public static PrintStream unwrap(PrintStream stream) {
-		return stream instanceof Wrapper ? 
-				((Wrapper)stream).parent : 
+		return stream instanceof LogWrapper ? 
+				((LogWrapper)stream).parent : 
 					stream;
 	}
 	
 	public static void unwrap(PrintStream stream, String s) {
-		if(stream instanceof Wrapper)
-			((Wrapper)stream).printlnParent(s);
+		if(stream instanceof LogWrapper)
+			((LogWrapper)stream).printlnParent(s);
 		else stream.println(s);
 	}
 	
 	public static void wrap() {
-		System.setErr(new Wrapper(System.err));
+		System.setErr(new LogWrapper(System.err));
 	}
 }

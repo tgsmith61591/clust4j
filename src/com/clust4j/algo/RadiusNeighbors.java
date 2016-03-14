@@ -43,6 +43,15 @@ public class RadiusNeighbors extends Neighbors {
 		logModelSummary();
 	}
 	
+	protected RadiusNeighbors(AbstractRealMatrix data, RadiusNeighborsPlanner planner, boolean as_is) {
+		super(data, planner, as_is);
+		validateRadius(planner.radius);
+		logModelSummary();
+	}
+	
+	
+	
+	
 	static void validateRadius(double radius) {
 		if(radius <= 0) throw new IllegalArgumentException("radius must be positive");
 	}
@@ -303,12 +312,12 @@ public class RadiusNeighbors extends Neighbors {
 		return getNeighbors(x.getData(), rad);
 	}
 	
-	Neighborhood getNeighbors(double[][] X, double rad) {
+	protected Neighborhood getNeighbors(double[][] X, double rad) {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
 		
 		validateRadius(rad);
-		return new Neighborhood(tree.queryRadius(X, rad, false));
+		return tree.queryRadius(X, rad, false);
 	}
 
 	@Override

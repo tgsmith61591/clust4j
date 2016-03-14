@@ -50,7 +50,7 @@ abstract public class HierarchicalClusterer
 					algo.getSeparabilityMetric().getName());
 			
 			algo.setSeparabilityMetric(Distance.EUCLIDEAN);
-			algo.meta("New distance metric: "+algo.getSeparabilityMetric().getName());
+			algo.info("New distance metric: "+algo.getSeparabilityMetric().getName());
 		}
 	}
 	

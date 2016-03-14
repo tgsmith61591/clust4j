@@ -48,6 +48,15 @@ public class NearestNeighbors extends Neighbors {
 		logModelSummary();
 	}
 	
+	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner, boolean as_is) {
+		super(data, planner, as_is);
+		validateK(kNeighbors, m);
+		logModelSummary();
+	}
+	
+	
+	
+	
 	private static void validateK(int k, int m) {
 		if(k < 1) throw new IllegalArgumentException("k must be positive");
 		if(k > m) throw new IllegalArgumentException("k must be <= number of samples");
@@ -316,9 +325,8 @@ public class NearestNeighbors extends Neighbors {
 	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
-		// TODO
 		return new Object[]{
-			"Instance","Nrst Nbr Dist","Farthest Nbr Dist","Wall"
+			"Instance","Nrst-Nbr. Dist","Max-Nbr. Dist","Wall"
 		};
 	}
 	
@@ -351,7 +359,7 @@ public class NearestNeighbors extends Neighbors {
 			throw new ModelNotFitException("model not yet fit");
 		
 		validateK(k, m); // Should be X.length  or m??
-		return new Neighborhood(tree.query(X, k, 
-			DUAL_TREE_SEARCH, SORT));
+		return tree.query(X, k, 
+			DUAL_TREE_SEARCH, SORT);
 	}
 }

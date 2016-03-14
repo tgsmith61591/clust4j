@@ -1280,4 +1280,19 @@ public class NNHSTests {
 		KDTree k = new KDTree(mat, new HaversineDistance(), new KMeans(mat,1));
 		assertTrue(k.logger.hasWarnings());
 	}
+	
+	@Test
+	public void testImmutability() {
+		double[][] a = MatUtils.reshape(new double[]{
+				1,2,3,4,5,6,7,8,9
+			}, 3, 3);
+		
+		double[][] b = MatUtils.copy(a);
+		Array2DRowRealMatrix mat = new Array2DRowRealMatrix(a, false);
+		
+		KDTree k = new KDTree(mat, Distance.EUCLIDEAN);
+		k.query(a);
+		
+		assertTrue(MatUtils.equalsExactly(b, a)); // assert immutability
+	}
 }
