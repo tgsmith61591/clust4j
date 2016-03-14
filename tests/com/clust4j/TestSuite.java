@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.junit.runner.JUnitCore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -113,5 +114,9 @@ public class TestSuite {
 				data[i][j] = rand.nextDouble() * (rand.nextDouble() > 0.5 ? -1 : 1);
 		
 		return new Array2DRowRealMatrix(data, false);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		JUnitCore.main("com.clust4j.TestSuite");
 	}
 }
