@@ -3,9 +3,9 @@ package com.clust4j.algo;
 import java.text.NumberFormat;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
@@ -20,12 +20,9 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.DeepCloneable;
-import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
-
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 
 /**
  * 
@@ -62,7 +59,7 @@ public abstract class AbstractClusterer
 	
 	
 	/** Underlying data */
-	final protected AbstractRealMatrix data;
+	final protected Array2DRowRealMatrix data;
 	/** Similarity metric */
 	private GeometricallySeparable dist;
 	/** Seed for any shuffles */
@@ -73,6 +70,8 @@ public abstract class AbstractClusterer
 	final boolean normalized;
 	/** Whether to use parallelism */
 	final boolean parallel;
+	/** The normalizer */
+	final FeatureNormalization normalizer;
 	
 	
 	
@@ -143,6 +142,7 @@ public abstract class AbstractClusterer
 		this.normalized = caller.normalized;
 		this.parallel = caller.parallel;
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
+		this.normalizer = null == planner ? caller.normalizer : planner.getNormalizer();
 	}
 	
 	/**
@@ -157,30 +157,10 @@ public abstract class AbstractClusterer
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
 		this.seed = planner.getSeed();
-		
-		// Handle data, now...
-		handleData(data);
-		
-		// Log info
-		info("initializing " + getName() + 
-				" clustering with " + data.getRowDimension() + 
-				" x " + data.getColumnDimension() + " data matrix");
-		
-		if(this.dist instanceof Kernel)
-			warn("running " + getName() + " in Kernel mode can be an expensive option");
-		
+
 		// Scale if needed
 		this.normalized = planner.getScale();
-		
-		if(!normalized) {
-			this.data = (AbstractRealMatrix) data.copy();
-			metaWarn("feature normalization option is set to false; this is discouraged");
-		} else {
-			final LogTimer scaleTimer = new LogTimer();
-			this.data = planner.getNormalizer().operate(data);
-			meta("normalized matrix columns in " + scaleTimer.toString(), planner.getNormalizer().toString());
-		}
-		
+		this.normalizer = planner.getNormalizer();
 		
 		// Determine whether we should parallelize
 		this.parallel = GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE
@@ -188,38 +168,41 @@ public abstract class AbstractClusterer
 			&& (data.getRowDimension() * data.getColumnDimension()) 
 			> GlobalState.ParallelismConf.MIN_ELEMENTS);
 		
+		if(this.dist instanceof Kernel)
+			warn("running " + getName() + " in Kernel mode can be an expensive option");
 		
+		// Handle data, now...
+		this.data = initData(data);
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 	}
 	
 	
 	
-	final private void handleData(final AbstractRealMatrix data) {
-		if(data.getRowDimension() == 0)
-			throw new IllegalArgumentException("empty data");
+	final private Array2DRowRealMatrix initData(final AbstractRealMatrix data) {
+		final int m = data.getRowDimension(), n = data.getColumnDimension();
+		final double[][] ref = new double[m][n];
 		
-		
-		// Check for nans in the matrix either serially or in parallel
-		boolean containsNan = false;
-		if(!ALLOW_AUTO_PARALLELISM) {
-			info("checking input data for NaNs serially");
-			containsNan = MatUtils.containsNaN(data);
-		} else {
-			try { // Try distributed job
-				info("checking input data for NaNs using core-distributed task");
-				containsNan = MatUtils.containsNaNDistributed(data);
-			} catch(RejectedExecutionException | OutOfMemoryError e) { // can't schedule parallel job/HS error
-				warn("parallel NaN check failed, reverting to serial check");
-				containsNan = MatUtils.containsNaN(data);
+		double entry;
+		for(int i = 0; i < m; i++) {
+			for(int j = 0; j < n; j++) {
+				entry = data.getEntry(i, j);
+						
+				if(Double.isNaN(entry)) {
+					String error = "NaN in input data. Select a matrix imputation method for incomplete records";
+					error(error);
+					throw new NaNException(error);
+				}
+				
+				ref[i][j] = entry;
 			}
 		}
 		
+		if(!normalized)
+			metaWarn("feature normalization option is set to false; this is discouraged");
 		
-		if(containsNan) {
-			String error = "NaN in input data. Select a matrix imputation method for incomplete records";
-			error(error);
-			throw new NaNException(error);
-		}
+		return new Array2DRowRealMatrix(
+			normalized ? normalizer.operate(ref) : ref,
+		false);
 	}
 	
 	

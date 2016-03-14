@@ -23,21 +23,34 @@ public class NearestNeighbors extends Neighbors {
 	public NearestNeighbors(AbstractRealMatrix data) {
 		this(data, DEF_K);
 	}
+	
+	protected NearestNeighbors(AbstractClusterer caller) {
+		this(caller, DEF_K);
+	}
 
 	public NearestNeighbors(AbstractRealMatrix data, int k) {
 		this(data, new NearestNeighborsPlanner(k));
 	}
+	
+	protected NearestNeighbors(AbstractClusterer caller, int k) {
+		this(caller, new NearestNeighborsPlanner(k));
+	}
 
 	public NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner) {
 		super(data, planner);
-		if(kNeighbors < 1) throw new IllegalArgumentException("k must be positive");
-		if(kNeighbors > m) throw new IllegalArgumentException("k must be <= number of samples");
+		validateK(kNeighbors, m);
+		logModelSummary();
+	}
+	
+	protected NearestNeighbors(AbstractClusterer caller, NearestNeighborsPlanner planner) {
+		super(caller, planner);
+		validateK(kNeighbors, m);
 		logModelSummary();
 	}
 	
 	private static void validateK(int k, int m) {
 		if(k < 1) throw new IllegalArgumentException("k must be positive");
-		if(k > m) throw new IllegalArgumentException("k must be < number of samples");
+		if(k > m) throw new IllegalArgumentException("k must be <= number of samples");
 	}
 	
 	@Override

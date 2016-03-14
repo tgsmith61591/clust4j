@@ -163,9 +163,7 @@ public class MeanShift
 		this.autoEstimate = planner.autoEstimateBW;
 		final LogTimer aeTimer = new LogTimer();
 		this.bandwidth = autoEstimate ? 
-			autoEstimateBW(this.data, // Needs to be 'this' because might be stdized
-				planner.autoEstimateBWQuantile, 
-				planner.getSep(), planner.seed, parallel) : 
+			autoEstimateBW(this, planner.autoEstimateBWQuantile) : 
 				planner.bandwidth;
 			
 		if(autoEstimate) info("bandwidth auto-estimated in " + 
@@ -188,19 +186,40 @@ public class MeanShift
 				maxIter, tolerance
 			});
 	}
-	
-	final protected static double autoEstimateBW(AbstractRealMatrix data, 
+
+	/**
+	 * For testing...
+	 * @param data
+	 * @param quantile
+	 * @param sep
+	 * @param seed
+	 * @param parallel
+	 * @return
+	 */
+	final protected static double autoEstimateBW(Array2DRowRealMatrix data, 
 			double quantile, GeometricallySeparable sep, Random seed, boolean parallel) {
+		
+		return autoEstimateBW(new NearestNeighbors(data,
+			new NearestNeighborsPlanner((int)(data.getRowDimension() * quantile))
+				.setSeed(seed)).fit(), data.getDataRef(), quantile, sep, seed, parallel);
+	}
+	
+	final protected static double autoEstimateBW(MeanShift caller, double quantile) {
+		return autoEstimateBW(new NearestNeighbors(caller, 
+			(int)(caller.data.getRowDimension() * quantile)).fit(),
+				caller.data.getDataRef(), quantile, caller.getSeparabilityMetric(), 
+					caller.getSeed(), caller.parallel);
+	}
+	
+	final protected static double autoEstimateBW(NearestNeighbors nn, double[][] data, 
+			double quantile, GeometricallySeparable sep, Random seed, boolean parallel) {
+		
 		if(quantile <= 0 || quantile > 1)
 			throw new IllegalArgumentException("illegal quantile");
-		final int m = data.getRowDimension(), nnbrs = (int)(m * quantile);
-		
-		NearestNeighbors nn = new NearestNeighbors(data,
-			new NearestNeighborsPlanner(nnbrs)
-				.setSeed(seed)).fit();
+		final int m = data.length;
 		
 		double bw = 0.0;
-		final double[][] X = data.getData();
+		final double[][] X = nn.data.getDataRef();
 		final int chunkSize = X.length < 500 ? 500 : X.length / 5;
 		final int numChunks = getNumChunks(chunkSize, m);
 		Neighborhood neighb;
@@ -232,6 +251,7 @@ public class MeanShift
 		
 		return bw / (double)m;
 	}
+	
 	
 	protected static int getNumChunks(final int chunkSize, final int m) {
 		return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
