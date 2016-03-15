@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
@@ -19,7 +18,6 @@ import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.MeanShift.SerialCenterIntensity;
 import com.clust4j.algo.MeanShift.MeanShiftPlanner;
 import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
@@ -143,10 +141,10 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testChunkSizeMeanShift() {
 		final int chunkSize = 500;
-		assertTrue(MeanShift.getNumChunks(chunkSize, 500) == 1);
-		assertTrue(MeanShift.getNumChunks(chunkSize, 501) == 2);
-		assertTrue(MeanShift.getNumChunks(chunkSize, 23) == 1);
-		assertTrue(MeanShift.getNumChunks(chunkSize, 10) == 1);
+		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 500) == 1);
+		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 501) == 2);
+		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 23) == 1);
+		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 10) == 1);
 	}
 	
 	@Test
@@ -413,13 +411,20 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			.STANDARD_SCALE.operate(data_);
 		final double[][] X = iris.getData();
 		
-		// MS estimates bw at 1.5971266273438018
-		final double bandwidth = 1.5971266273438018;
+		// MS estimates bw at 1.5971266273438016
+		final double bandwidth = 1.5971266273438016;
 		
-		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
-			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false) == bandwidth);
-		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
-			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, true) == bandwidth);
+		assertTrue(
+			Precision.equals(
+				MeanShift.autoEstimateBW(iris, 0.3, 
+				Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false), 
+				bandwidth, 1e-9));
+		
+		assertTrue(
+			Precision.equals(
+				MeanShift.autoEstimateBW(iris, 0.3, 
+				Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, true), 
+				bandwidth, 1e-9));
 		
 		// Asserting fit works without breaking things...
 		RadiusNeighbors r = new RadiusNeighbors(iris,
@@ -456,20 +461,6 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 				center_intensity.add(seed.getPair());
 			}
 		}
-		
-		
-		
-		// Now test the actual method...
-		SerialCenterIntensity intensity = new SerialCenterIntensity(
-				iris, r, bandwidth, X,
-				Distance.EUCLIDEAN, 300);
-		
-		Iterator<MeanShiftSeed> iterator = intensity.iterator();
-		ArrayList<EntryPair<double[], Integer>> center_intensity2 = new ArrayList<>();
-		while(iterator.hasNext())
-			center_intensity2.add(iterator.next().getPair());
-		
-		assertTrue(center_intensity2.size() == center_intensity.size());
 		
 		
 		final ArrayList<EntryPair<double[], Integer>> sorted_by_intensity = center_intensity;
@@ -587,7 +578,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 				new MeanShiftPlanner().setVerbose(true)).fit();
 			System.out.println();
 			
-			assertTrue(wine_serial.getBandwidth() == wine_paral.getBandwidth());
+			assertTrue(Precision.equals(wine_serial.getBandwidth(), wine_paral.getBandwidth(), 1e-9));
 			assertTrue(wine_serial.silhouetteScore() == wine_paral.silhouetteScore());
 			assertTrue(VecUtils.equalsExactly(wine_serial.getLabels(), wine_paral.getLabels()));
 		} finally {

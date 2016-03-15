@@ -6,8 +6,8 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
+import com.clust4j.algo.BaseNeighborsModel;
 import com.clust4j.algo.NearestNeighbors;
-import com.clust4j.algo.Neighbors;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.LogTimer;
@@ -20,7 +20,7 @@ import com.clust4j.utils.VecUtils;
 public class NearestNeighborImputation extends MatrixImputation {
 	private static final long serialVersionUID = -2717555601058365204L;
 	
-	final static public int DEF_K = Neighbors.DEF_K;
+	final static public int DEF_K = BaseNeighborsModel.DEF_K;
 	final static public GeometricallySeparable DEF_METRIC = Distance.EUCLIDEAN;
 	final static public CentralTendencyMethod DEF_CENT = CentralTendencyMethod.MEAN;
 	

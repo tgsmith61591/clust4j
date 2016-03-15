@@ -14,7 +14,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 
-public class RadiusNeighbors extends Neighbors {
+public class RadiusNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 3620377771231699918L;
 
 	
@@ -78,10 +78,10 @@ public class RadiusNeighbors extends Neighbors {
 
 	
 	
-	public static class RadiusNeighborsPlanner extends NeighborsPlanner {
+	public static class RadiusNeighborsPlanner extends BaseNeighborsPlanner {
 		private static final long serialVersionUID = 2183556008789826257L;
 		
-		private Algorithm algo = DEF_ALGO;
+		private NeighborsAlgorithm algo = DEF_ALGO;
 		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private boolean verbose = DEF_VERBOSE;
@@ -104,13 +104,13 @@ public class RadiusNeighbors extends Neighbors {
 		}
 
 		@Override
-		public RadiusNeighborsPlanner setAlgorithm(Algorithm algo) {
+		public RadiusNeighborsPlanner setAlgorithm(NeighborsAlgorithm algo) {
 			this.algo = algo;
 			return this;
 		}
 
 		@Override
-		public Algorithm getAlgorithm() {
+		public NeighborsAlgorithm getAlgorithm() {
 			return algo;
 		}
 

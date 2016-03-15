@@ -25,7 +25,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	private static final long serialVersionUID = -424476075361612324L;
 	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
-	final public static int DEF_K = Neighbors.DEF_K;
+	final public static int DEF_K = BaseNeighborsModel.DEF_K;
 	final public static InitializationStrategy DEF_INIT = InitializationStrategy.KM_AUGMENTED;
 	
 	final protected InitializationStrategy init;

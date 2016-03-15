@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.BaseNeighborsModel.Algorithm;
+import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
@@ -232,9 +232,9 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 
 	@Test
 	public void testWithVerbose() {
-		Algorithm[] algs = new Algorithm[]{Algorithm.BALL_TREE, Algorithm.KD_TREE};
+		NeighborsAlgorithm[] algs = new NeighborsAlgorithm[]{NeighborsAlgorithm.BALL_TREE, NeighborsAlgorithm.KD_TREE};
 		
-		for(Algorithm alg: algs) {
+		for(NeighborsAlgorithm alg: algs) {
 			new NearestNeighbors(DATA, 
 				new NearestNeighbors.NearestNeighborsPlanner(1)
 					.setVerbose(true)
@@ -248,7 +248,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test
 	public void testWarning() {
-		Neighbors n = new NearestNeighbors(DATA, 
+		BaseNeighborsModel n = new NearestNeighbors(DATA, 
 			new NearestNeighbors.NearestNeighborsPlanner(1)
 				.setSep(new GaussianKernel()));
 		assertTrue(n.hasWarnings());
@@ -305,9 +305,9 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 
 	@Test
 	public void testFitResults() {
-		Algorithm[] algos = new Algorithm[]{Algorithm.KD_TREE, Algorithm.BALL_TREE};
+		NeighborsAlgorithm[] algos = new NeighborsAlgorithm[]{NeighborsAlgorithm.KD_TREE, NeighborsAlgorithm.BALL_TREE};
 		
-		for(Algorithm algo: algos) {
+		for(NeighborsAlgorithm algo: algos) {
 			double[][] expected = new double[][]{
 				new double[]{1,2,3},
 				new double[]{4,5,6},
@@ -390,7 +390,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testFromPlanner2() {
 		NearestNeighbors nn = new NearestNeighbors.NearestNeighborsPlanner(1)
-			.setAlgorithm(BaseNeighborsModel.Algorithm.BALL_TREE)
+			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
 			.setScale(true)
 			.setNormalizer(FeatureNormalization.MEAN_CENTER)
@@ -457,7 +457,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		
-		Neighbors nn = new NearestNeighbors(mat, 
+		BaseNeighborsModel nn = new NearestNeighbors(mat, 
 			new NearestNeighbors.NearestNeighborsPlanner(1)
 				.setVerbose(false)).fit();
 		

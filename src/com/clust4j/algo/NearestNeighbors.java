@@ -9,12 +9,13 @@ import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class NearestNeighbors extends Neighbors {
+public class NearestNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 8306843374522289973L;
 	
 	
@@ -77,10 +78,10 @@ public class NearestNeighbors extends Neighbors {
 	
 	
 	
-	public static class NearestNeighborsPlanner extends NeighborsPlanner {
+	public static class NearestNeighborsPlanner extends BaseNeighborsPlanner {
 		private static final long serialVersionUID = -4848896423352149405L;
 		
-		private Algorithm algo = DEF_ALGO;
+		private NeighborsAlgorithm algo = DEF_ALGO;
 		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
 		private FeatureNormalization norm = DEF_NORMALIZER;
 		private boolean verbose = DEF_VERBOSE;
@@ -103,13 +104,13 @@ public class NearestNeighbors extends Neighbors {
 		}
 
 		@Override
-		public NearestNeighborsPlanner setAlgorithm(Algorithm algo) {
+		public NearestNeighborsPlanner setAlgorithm(NeighborsAlgorithm algo) {
 			this.algo = algo;
 			return this;
 		}
 
 		@Override
-		public Algorithm getAlgorithm() {
+		public NeighborsAlgorithm getAlgorithm() {
 			return algo;
 		}
 
@@ -361,5 +362,10 @@ public class NearestNeighbors extends Neighbors {
 		validateK(k, m); // Should be X.length  or m??
 		return tree.query(X, k, 
 			DUAL_TREE_SEARCH, SORT);
+	}
+
+	@Override
+	public Algo getLoggerTag() {
+		return Algo.NEAREST;
 	}
 }

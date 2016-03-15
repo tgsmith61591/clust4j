@@ -231,8 +231,9 @@ public class MeanShift
 		
 		double bw = 0.0;
 		final double[][] X = nn.data.getDataRef();
-		final int chunkSize = X.length < 500 ? 500 : X.length / 5;
-		final int numChunks = getNumChunks(chunkSize, m);
+		final int minsize = ParallelClusteringTask.ChunkingStrategy.DEF_CHUNK_SIZE;
+		final int chunkSize = X.length < minsize ? minsize : X.length / 5;
+		final int numChunks = ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, m);
 		Neighborhood neighb;
 		
 		
@@ -258,37 +259,40 @@ public class MeanShift
 			}
 		} else {
 			// Estimate bandwidth in parallel
-			bw = ParallelBandwidthEstimator.doAll(
-				ParallelTask.generateChunks(X, numChunks), nn);
+			bw = ParallelBandwidthEstimator.doAll(X, nn);
 		}
 		
 		return bw / (double)m;
 	}
 	
 	
-	protected static int getNumChunks(final int chunkSize, final int m) {
-		return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
-	}
-	
 	/**
 	 * Estimates the bandwidth of the model in parallel for scalability
 	 * @author Taylor G Smith
 	 */
 	static class ParallelBandwidthEstimator 
-			extends ParallelTask<Double> 
-			implements ParallelTask.Chunker<Double> {
+			extends ParallelClusteringTask<Double> 
+			implements java.io.Serializable {
 		
 		private static final long serialVersionUID = 1171269106158790138L;
-		final ArrayList<double[][]> chunks;
 		final NearestNeighbors nn;
 		final int high;
 		final int low;
 		
-		ParallelBandwidthEstimator(ArrayList<double[][]> chunks, 
-				NearestNeighbors nn, int low, int high) {
-			super();
-			this.chunks = chunks;
+		ParallelBandwidthEstimator(double[][] X, NearestNeighbors nn) {
+			
+			// Use the SimpleChunker
+			super(X);
+			
 			this.nn = nn;
+			this.low = 0;
+			this.high = strategy.getNumChunks(X);
+		}
+		
+		ParallelBandwidthEstimator(ParallelBandwidthEstimator task, int low, int high) {
+			super(task);
+
+			this.nn = task.nn;
 			this.low = low;
 			this.high = high;
 		}
@@ -296,26 +300,24 @@ public class MeanShift
 		@Override
 		protected Double compute() {
 			if(high - low <= 1) { // generally should equal one...
-				return doChunk(chunks.get(low));
+				return reduce(chunks.get(low));
 			} else {
 				int mid = this.low + (this.high - this.low) / 2;
-				ParallelBandwidthEstimator left = new ParallelBandwidthEstimator(
-					chunks, nn, low, mid);
-				ParallelBandwidthEstimator right = new ParallelBandwidthEstimator(
-					chunks, nn, mid, high);
+				ParallelBandwidthEstimator left = new ParallelBandwidthEstimator(this, low, mid);
+				ParallelBandwidthEstimator right = new ParallelBandwidthEstimator(this, mid, high);
 				
 	            left.fork();
 	            Double l = right.compute();
 	            Double r = left.join();
-	            
+
 	            return l + r;
 			}
 		}
 
 		@Override
-		public Double doChunk(double[][] chunk) {
+		public Double reduce(Chunk chunk) {
 			double bw = 0.0;
-			Neighborhood neighb = nn.getNeighbors(chunk);
+			Neighborhood neighb = nn.getNeighbors(chunk.get());
 			
 			for(double[] distRow: neighb.getDistances()) {
 				//bw += VecUtils.max(distRow);
@@ -325,8 +327,8 @@ public class MeanShift
 			return bw;
 		}
 		
-		static double doAll(ArrayList<double[][]> chunks, NearestNeighbors nn) {
-			return getThreadPool().invoke(new ParallelBandwidthEstimator(chunks, nn, 0, chunks.size()));
+		static double doAll(double[][] X, NearestNeighbors nn) {
+			return getThreadPool().invoke(new ParallelBandwidthEstimator(X, nn));
 		}
 	}
 	
@@ -565,14 +567,26 @@ public class MeanShift
 		}
 	}
 	
-	abstract static class ParallelMSTask<T> extends ParallelTask<T> {
+	/**
+	 * The superclass for parallelized MeanShift tasks
+	 * @author Taylor G Smith
+	 * @param <T>
+	 */
+	abstract static class ParallelMSTask<T> extends ParallelClusteringTask<T> {
 		private static final long serialVersionUID = 2139716909891672022L;
 		final ConcurrentLinkedDeque<SummaryLite> summaries;
+		final double[][] X;
 
-		ParallelMSTask(ConcurrentLinkedDeque<SummaryLite> summaries) {
-			super();
-			
+		ParallelMSTask(double[][] X, ConcurrentLinkedDeque<SummaryLite> summaries) {
+			super(X);
 			this.summaries = summaries;
+			this.X = X;
+		}
+		
+		ParallelMSTask(ParallelMSTask<T> task) {
+			super(task);
+			this.summaries = task.summaries;
+			this.X = task.X;
 		}
 		
 		public String formatName(String str) {
@@ -635,8 +649,7 @@ public class MeanShift
 	 * @author Taylor G Smith
 	 */
 	static class ParallelSeedExecutor 
-			extends ParallelMSTask<ConcurrentSkipListSet<MeanShiftSeed>> 
-			implements ParallelMSTask.Chunker<ConcurrentSkipListSet<MeanShiftSeed>> {
+			extends ParallelMSTask<ConcurrentSkipListSet<MeanShiftSeed>> {
 		
 		private static final long serialVersionUID = 632871644265502894L;
 		
@@ -644,28 +657,31 @@ public class MeanShift
 		final RadiusNeighbors nbrs;
 		
 		final ConcurrentSkipListSet<MeanShiftSeed> computedSeeds;
-		final ArrayList<double[][]> chunks;
-		final double[][] X;
 		final int high, low;
 		
 		
 		ParallelSeedExecutor(
 				int maxIter, double[][] X, RadiusNeighbors nbrs,
-				ConcurrentSkipListSet<MeanShiftSeed> computedSeeds,
-				ArrayList<double[][]> chunks, int high, int low,
 				ConcurrentLinkedDeque<SummaryLite> summaries) {
 			
 			/**
-			 * Pass reference to super
+			 * Pass summaries reference to super
 			 */
-			super(summaries);
+			super(X, summaries);
 			
 			this.maxIter = maxIter;
-			this.X = X;
 			this.nbrs = nbrs;
-			this.computedSeeds = computedSeeds;
-			this.chunks = chunks;
+			this.computedSeeds = new ConcurrentSkipListSet<>();
+			this.low = 0;
+			this.high = strategy.getNumChunks(X);
+		}
+		
+		ParallelSeedExecutor(ParallelSeedExecutor task, int low, int high) {
+			super(task);
 			
+			this.maxIter = task.maxIter;
+			this.nbrs = task.nbrs;
+			this.computedSeeds = task.computedSeeds;
 			this.high = high;
 			this.low = low;
 		}
@@ -673,14 +689,12 @@ public class MeanShift
 		@Override
 		protected ConcurrentSkipListSet<MeanShiftSeed> compute() {
 			if(high - low <= 1) { // generally should equal one...
-				return doChunk(chunks.get(low));
+				return reduce(chunks.get(low));
+				
 			} else {
 				int mid = this.low + (this.high - this.low) / 2;
-				ParallelSeedExecutor left  = new ParallelSeedExecutor(
-					maxIter, X,nbrs, computedSeeds, chunks, mid, low, summaries);
-				
-				ParallelSeedExecutor right  = new ParallelSeedExecutor(
-					maxIter, X,nbrs, computedSeeds, chunks, high, mid, summaries);
+				ParallelSeedExecutor left  = new ParallelSeedExecutor(this, low, mid);
+				ParallelSeedExecutor right  = new ParallelSeedExecutor(this, mid, high);
 				
 	            left.fork();
 	            right.compute();
@@ -691,9 +705,9 @@ public class MeanShift
 		}
 		
 		@Override
-		public ConcurrentSkipListSet<MeanShiftSeed> doChunk(double[][] chunk) {
-			for(double[] seed: chunk) {
-				MeanShiftSeed ms = doSingleSeed(seed);
+		public ConcurrentSkipListSet<MeanShiftSeed> reduce(Chunk chunk) {
+			for(double[] seed: chunk.get()) {
+				MeanShiftSeed ms = singleSeed(seed, nbrs, X, maxIter);
 				if(null == ms)
 					continue;
 				
@@ -710,32 +724,19 @@ public class MeanShift
 			return computedSeeds;
 		}
 		
-		protected MeanShiftSeed doSingleSeed(double[] seed) {
-			return singleSeed(seed, nbrs, X, maxIter);
-		}
-		
 		static ConcurrentSkipListSet<MeanShiftSeed> doAll(
 				int maxIter, double[][] X, RadiusNeighbors nbrs,
-				ConcurrentSkipListSet<MeanShiftSeed> computedSeeds,
-				ArrayList<double[][]> chunks, int high, int low,
 				ConcurrentLinkedDeque<SummaryLite> summaries) {
 			
 			return getThreadPool().invoke(
 				new ParallelSeedExecutor(
-					maxIter, X, nbrs, 
-					computedSeeds, chunks, high, low,
+					maxIter, X, nbrs,
 					summaries));
 		}
 	}
 	
-	static class ParallelCenterIntensity extends CenterIntensity {
+	class ParallelCenterIntensity extends CenterIntensity {
 		private static final long serialVersionUID = 4392163493242956320L;
-		
-		final AbstractRealMatrix data;
-		final double bandwidth;
-		final double[][] seeds;
-		final GeometricallySeparable metric;
-		final int maxIter;
 
 		final ConcurrentSkipListSet<Integer> itrz = new ConcurrentSkipListSet<>();
 		final ConcurrentSkipListSet<MeanShiftSeed> computedSeeds;
@@ -745,34 +746,14 @@ public class MeanShift
 		
 		final LogTimer timer;
 		final RadiusNeighbors nbrs;
-		final double[][] X;
 		
-		ParallelCenterIntensity(
-				AbstractRealMatrix data, 
-				RadiusNeighbors nbrs,
-				double bandwidth, double[][] seeds, 
-				GeometricallySeparable metric, 
-				int maxIter) {
+		ParallelCenterIntensity(RadiusNeighbors nbrs) {
 			
-			this.data = data;
 			this.nbrs = nbrs;
-			this.bandwidth = bandwidth;
-			this.seeds = seeds;
-			this.metric = metric;
-			this.maxIter = maxIter;
-			
 			this.timer = new LogTimer();
 			
-			this.X = data.getData();
-
-			/* Create as many chunks as cores available */
-			final int numChunks = FastMath.min(X.length, GlobalState.ParallelismConf.NUM_CORES);
-			
 			// Execute forkjoinpool
-			this.computedSeeds = ParallelSeedExecutor.doAll(
-				maxIter, seeds, nbrs, new ConcurrentSkipListSet<MeanShiftSeed>(), 
-				ParallelTask.generateChunks(X, numChunks), numChunks, 0, summaries);
-			
+			this.computedSeeds = ParallelSeedExecutor.doAll(maxIter, seeds, nbrs, summaries);
 			for(MeanShiftSeed sd: computedSeeds)
 				itrz.add(sd.iterations);
 		}
@@ -808,19 +789,14 @@ public class MeanShift
 	 * {@link MeanShift#singleSeed(double[], RadiusNeighbors, double[][], int)} method
 	 * @author Taylor G Smith
 	 */
-	static class SerialCenterIntensity extends CenterIntensity {
+	class SerialCenterIntensity extends CenterIntensity {
 		private static final long serialVersionUID = -1117327079708746405L;
 		
 		int itrz = 0;
 		final TreeSet<MeanShiftSeed> computedSeeds;
 		final ArrayList<SummaryLite> summaries = new ArrayList<>();
 		
-		SerialCenterIntensity(
-				AbstractRealMatrix data, 
-				RadiusNeighbors nbrs,
-				double bandwidth, double[][] seeds, 
-				GeometricallySeparable metric, 
-				int maxIter) {
+		SerialCenterIntensity(RadiusNeighbors nbrs) {
 			
 			LogTimer timer;
 			
@@ -958,9 +934,7 @@ public class MeanShift
 				CenterIntensity intensity = null;
 				if(parallel) {
 					try {
-						intensity = new ParallelCenterIntensity(
-							data, nbrs, bandwidth, seeds, 
-							getSeparabilityMetric(), maxIter);
+						intensity = new ParallelCenterIntensity(nbrs);
 					} catch(RejectedExecutionException e) {
 						// Shouldn't happen...
 						error = "cannot execute parallel job";
@@ -968,9 +942,7 @@ public class MeanShift
 						throw new RuntimeException(error, e);
 					}
 				} else {
-					intensity = new SerialCenterIntensity(
-						data, nbrs, bandwidth, seeds, 
-						getSeparabilityMetric(), maxIter);
+					intensity = new SerialCenterIntensity(nbrs);
 				}
 				
 				

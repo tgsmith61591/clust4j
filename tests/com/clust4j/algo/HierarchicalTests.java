@@ -15,13 +15,13 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.HierarchicalAgglomerative.HeapUtils;
+import com.clust4j.utils.SimpleHeap;
 import com.clust4j.algo.HierarchicalAgglomerative.HierarchicalPlanner;
-import com.clust4j.algo.HierarchicalClusterer.Linkage;
+import com.clust4j.algo.HierarchicalAgglomerative.EfficientDistanceMatrix;
+import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
-import com.clust4j.utils.ClustUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
@@ -32,7 +32,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	
 	@Test
 	public void testCondensedIdx() {
-		assertTrue(ClustUtils.getIndexFromFlattenedVec(10, 3, 4) == 24);
+		assertTrue(EfficientDistanceMatrix.getIndexFromFlattenedVec(10, 3, 4) == 24);
 	}
 	
 	@Test
@@ -252,38 +252,37 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		Files.delete(TestSuite.path);
 	}
 	
-	@Test(expected=InternalError.class)
+	@Test(expected=IllegalStateException.class)
 	public void testHeapUtils() {
 		final ArrayList<Integer> a= new ArrayList<>();
-		HeapUtils.heapifyInPlace(a);
+		final SimpleHeap<Integer> b = new SimpleHeap<>(a);
 		
-		assertNotNull(a); // Just to make sure we get here...
-		HeapUtils.popInPlace(a); // thrown here
+		assertNotNull(b); // Just to make sure we get here...
+		b.popInPlace(); // thrown here
 	}
 	
 	@Test
 	public void testHeapifier() {
 		// Test heapify initial
-		final ArrayList<Integer> x = new ArrayList<>(Arrays.asList(new Integer[]{19, 56, 1, 52, 7, 2, 23}));
-		HeapUtils.heapifyInPlace(x);
+		final SimpleHeap<Integer> x = new SimpleHeap<>(new ArrayList<>(Arrays.asList(new Integer[]{19, 56, 1, 52, 7, 2, 23})));
 		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{1, 7, 2, 52, 56, 19, 23}))));
 		
 		// Test push pop
-		Integer i = HeapUtils.heapPushPop(x, 2);
+		Integer i = x.pushPop(2);
 		assertTrue(i.equals(1));
 		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 2, 52, 56, 19, 23}))));
 		
 		// Test pop
-		i = HeapUtils.heapPop(x);
+		i = x.pop();
 		assertTrue(i.equals(2));
 		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 19, 52, 56, 23}))));
 		
 		// Test push
-		HeapUtils.heapPush(x, 9);
+		x.push(9);
 		assertTrue(x.equals(new ArrayList<Integer>(Arrays.asList(new Integer[]{2, 7, 9, 52, 56, 23, 19}))));
 		
 		while(!x.isEmpty())
-			HeapUtils.popInPlace(x);
+			x.popInPlace();
 		
 		assertTrue(x.size() == 0);
 	}

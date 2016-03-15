@@ -956,8 +956,15 @@ public class MatUtils {
 		final double[][] out = new double[data.length][idcs.length];
 		
 		int idx = 0;
-		for(int i = 0; i < idcs.length; i++)
-			setColumnInPlace(out, idx++, getColumn(data, idcs[i]));
+		for(int col: idcs) {
+			if(col < 0 || col >= data[0].length)
+				throw new IndexOutOfBoundsException(col+"");
+			
+			for(int i = 0; i < data.length; i++)
+				out[i][idx] = data[i][col];
+			
+			idx++;
+		}
 		
 		return out;
 	}

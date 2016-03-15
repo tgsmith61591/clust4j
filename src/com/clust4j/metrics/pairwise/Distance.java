@@ -8,7 +8,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	HAMMING {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a, b);
 			
 			final int n = a.length;
@@ -26,21 +26,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Hamming";
 		}
@@ -49,7 +34,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	MANHATTAN {
 		
 		@Override 
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			
 			double sum = 0;
@@ -67,21 +52,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Manhattan";
 		}
@@ -94,11 +64,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double distanceToPartialDistance(final double d) {
 			return d * d;
-		}
-		
-		@Override 
-		public double getDistance(final double[] a, final double[] b) {
-			return partialDistanceToDistance(getPartialDistance(a, b));
 		}
 		
 		@Override
@@ -135,7 +100,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	BRAY_CURTIS {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			
 			final int n = a.length;
@@ -154,21 +119,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "BrayCurtis";
 		}
@@ -178,7 +128,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	CANBERRA {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a,b);
 			
 			final int n = a.length;
@@ -197,21 +147,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Canberra";
 		}
@@ -222,7 +157,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	CHEBYSHEV {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			VecUtils.checkDims(a, b);
 			
 			final int n = a.length;
@@ -242,21 +177,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Chebyshev";
 		}
@@ -266,7 +186,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	DICE {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			double ctt = bool.one, ctf = bool.two, cft = bool.three;
 			
@@ -281,21 +201,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Dice";
 		}
@@ -305,7 +210,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	KULSINSKI {
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
 			
@@ -318,21 +223,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "Kulsinski";
 		}
@@ -340,9 +230,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	
 	ROGERS_TANIMOTO {
-		
 		@Override
-		public double getDistance(final double[]a, final double[] b) {
+		public double getPartialDistance(final double[]a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
 			final double R = 2 * (cft + ctf);
@@ -355,21 +244,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "RogersTanimoto";
 		}
@@ -377,9 +251,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	
 	RUSSELL_RAO {
-		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			// This actually takes 3N and can get expensive...
 			/*final double ip = VecUtils.innerProduct(
 				BooleanSimilarity.asBool(a), 
@@ -396,21 +269,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "RussellRao";
 		}
@@ -418,9 +276,13 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	
 	SOKAL_SNEATH {
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
 		
 		@Override
-		public double getDistance(final double[] a, final double[] b) {
+		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
 			final double R = 2 * (cft + ctf);
@@ -431,26 +293,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
-		}
-		
-		@Override
 		public String getName() {
 			return "SokalSneath";
 		}
@@ -458,12 +300,13 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	
 	YULE {
-		
-		/**
-		 * Returns positive infinity in the case of division errors
-		 */
 		@Override
-		public double getDistance(final double[]a, final double[] b) {
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
 			final double R = 2 * cft * ctf;
@@ -472,26 +315,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			// If all values in a and b are 0s, the distance will be NaN.
 			// Do we want to call that a distance of positive infinity? Or zero?
 			return filterNaN(v);
-		}
-		
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
-		public double getPartialDistance(final double[] a, final double[] b) {
-			return getDistance(a, b);
-		}
-		
-		@Override
-		public double partialDistanceToDistance(double d) {
-			return d;
-		}
-
-		@Override
-		public double distanceToPartialDistance(double d) {
-			return d;
 		}
 		
 		@Override
@@ -510,5 +333,20 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	 */
 	private static double filterNaN(double a) {
 		return Double.isNaN(a) ? Double.POSITIVE_INFINITY : a;
+	}
+	
+	@Override
+	public double getDistance(double[] a, double[] b) {
+		return partialDistanceToDistance(getPartialDistance(a, b));
+	}
+
+	@Override
+	public double partialDistanceToDistance(double d) {
+		return d;
+	}
+
+	@Override
+	public double distanceToPartialDistance(double d) {
+		return d;
 	}
 }

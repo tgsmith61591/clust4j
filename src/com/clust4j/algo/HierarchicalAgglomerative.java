@@ -1,7 +1,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -12,9 +11,12 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.log.Loggable;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.utils.ClustUtils;
+import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.utils.DeepCloneable;
+import com.clust4j.utils.SimpleHeap;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.Named;
 import com.clust4j.utils.VecUtils;
@@ -32,23 +34,58 @@ import com.clust4j.utils.VecUtils;
  * (DIANA), which performs at O(2<sup>n</sup>).
  * 
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
- * 
- * @see com.clust4j.utils.SingleLinkageAgglomerativeFactory
- * @see com.clust4j.utils.HierarchicalClusterTree
  * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
-public class HierarchicalAgglomerative extends HierarchicalClusterer {
+public class HierarchicalAgglomerative extends AbstractPartitionalClusterer implements UnsupervisedClassifier {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7563413590708853735L;
+	public static final Linkage DEF_LINKAGE = Linkage.WARD;
+	
+	/**
+	 * Which {@link Linkage} to use for the clustering algorithm
+	 */
+	final Linkage linkage;
+	
+	interface LinkageTreeBuilder {
+		public HierarchicalDendrogram buildTree(HierarchicalAgglomerative h);
+	}
+	
+	/**
+	 * The linkages for agglomerative clustering. 
+	 * @author Taylor G Smith
+	 */
+	public enum Linkage implements java.io.Serializable, LinkageTreeBuilder {
+		AVERAGE {
+			@Override
+			public AverageLinkageTree buildTree(HierarchicalAgglomerative h) {
+				return h.new AverageLinkageTree();
+			}
+		}, 
+		
+		COMPLETE {
+			@Override
+			public CompleteLinkageTree buildTree(HierarchicalAgglomerative h) {
+				return h.new CompleteLinkageTree();
+			}
+		}, 
+		
+		WARD {
+			@Override
+			public WardTree buildTree(HierarchicalAgglomerative h) {
+				return h.new WardTree();
+			}
+		};
+	}
+	
+	
 	
 	/**
 	 * The number of rows in the matrix
 	 */
 	final private int m;
-	
 	
 	
 	/**
@@ -58,7 +95,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	/**
 	 * The flattened distance vector
 	 */
-	volatile private double[] dist_vec = null;
+	volatile private EfficientDistanceMatrix dist_vec = null;
 	volatile HierarchicalDendrogram tree = null;
 	/** 
 	 * Volatile because if null will later change during build
@@ -77,6 +114,8 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	public HierarchicalAgglomerative(AbstractRealMatrix data, 
 			HierarchicalPlanner planner) {
 		super(data, planner, planner.num_clusters);
+		this.linkage = planner.getLinkage();
+		checkLinkage(this, linkage);
 		
 		this.m = data.getRowDimension();
 		this.num_clusters = planner.num_clusters;
@@ -97,11 +136,29 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			});
 	}
 	
+	protected static void checkLinkage(HierarchicalAgglomerative algo, Linkage link) {
+		Linkage linkage = algo.getLinkage();
+		
+		if(null == linkage) {
+			String e = "null linkage passed to planner";
+			algo.error(e);
+			throw new IllegalArgumentException(e);
+		} else if(linkage.equals(Linkage.WARD) && !algo.getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
+			algo.warn("Ward's method implicitly requires Euclidean distance; overriding " + 
+					algo.getSeparabilityMetric().getName());
+			
+			algo.setSeparabilityMetric(Distance.EUCLIDEAN);
+			algo.info("New distance metric: "+algo.getSeparabilityMetric().getName());
+		}
+	}
 	
 	
 	
 	
-	public static class HierarchicalPlanner extends BaseHierarchicalPlanner {
+	public static class HierarchicalPlanner 
+			extends BaseClustererPlanner 
+			implements UnsupervisedClassifierPlanner {
+		
 		private static final long serialVersionUID = -1333222392991867085L;
 		
 		private GeometricallySeparable dist = DEF_DIST;
@@ -136,7 +193,6 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				.setNormalizer(norm);
 		}
 		
-		@Override
 		public Linkage getLinkage() {
 			return linkage;
 		}
@@ -161,7 +217,6 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			return seed;
 		}
 		
-		@Override
 		public HierarchicalPlanner setLinkage(Linkage l) {
 			this.linkage = l;
 			return this;
@@ -211,39 +266,157 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	
 	
 	
+	/**
+	 * Computes a flattened upper triangular distance matrix in a much more space efficient manner,
+	 * however traversing it requires intermittent calculations using {@link #navigate(int, int, int)}
+	 * @author Taylor G Smith
+	 */
+	static class EfficientDistanceMatrix implements java.io.Serializable, DeepCloneable {
+		private static final long serialVersionUID = -7329893729526766664L;
+		final protected double[] dists;
+		
+		EfficientDistanceMatrix(final AbstractRealMatrix data, GeometricallySeparable dist, boolean partial) {
+			this.dists = build(data.getData(), dist, partial);
+		}
+		
+		/**
+		 * Copy constructor
+		 */
+		private EfficientDistanceMatrix(EfficientDistanceMatrix other) {
+			this.dists = VecUtils.copy(other.dists);
+		}
+		
+		/**
+		 * Computes a flattened upper triangular distance matrix in a much more space efficient manner,
+		 * however traversing it requires intermittent calculations using {@link #navigateFlattenedMatrix(double[], int, int, int)}
+		 * @param data
+		 * @param dist
+		 * @param partial -- use the partial distance?
+		 * @return a flattened distance vector
+		 */
+		static double[] build(final double[][] data, GeometricallySeparable dist, boolean partial) {
+			final int m = data.length;
+			final int s = m*(m-1)/2; // The shape of the flattened upper triangular matrix (m choose 2)
+			final double[] vec = new double[s];
+			for(int i = 0, r = 0; i < m - 1; i++)
+				for(int j = i + 1; j < m; j++, r++)
+					vec[r] = partial ? dist.getPartialDistance(data[i], data[j]) : 
+						dist.getDistance(data[i], data[j]);
+			
+			return vec;
+		}
+		
+		/**
+		 * For a flattened upper triangular matrix...
+		 * 
+		 * <p>
+		 * Original:
+		 * <p>
+		 * <table>
+		 * <tr><td>0 </td><td>1 </td><td>2 </td><td>3</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>1 </td><td>2</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>0 </td><td>1</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>0 </td><td>0</td></tr>
+		 * </table>
+		 * 
+		 * <p>
+		 * Flattened:
+		 * <p>
+		 * &lt;1 2 3 1 2 1&gt;
+		 * 
+		 * <p>
+		 * ...and the parameters <tt>m</tt>, the original row dimension,
+		 * <tt>i</tt> and <tt>j</tt>, will identify the corresponding index
+		 * in the flattened vector such that mat[0][3] corresponds to vec[2];
+		 * this method, then, would return 2 (the index in the vector 
+		 * corresponding to mat[0][3]) in this case.
+		 * 
+		 * @param m
+		 * @param i
+		 * @param j
+		 * @return the corresponding vector index
+		 */
+		static int getIndexFromFlattenedVec(final int m, final int i, final int j) {
+			if(i < j)
+				return m * i - (i * (i + 1) / 2) + (j - i - 1);
+			else if(i > j)
+				return m * j - (j * (j + 1) / 2) + (i - j - 1);
+			throw new IllegalArgumentException(i+", "+j+"; i should not equal j");
+		}
+		
+		double[] getDistRef() {
+			return dists;
+		}
+		
+		/**
+		 * For a flattened upper triangular matrix...
+		 * 
+		 * <p>
+		 * Original:
+		 * <p>
+		 * <table>
+		 * <tr><td>0 </td><td>1 </td><td>2 </td><td>3</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>1 </td><td>2</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>0 </td><td>1</td></tr>
+		 * <tr><td>0 </td><td>0 </td><td>0 </td><td>0</td></tr>
+		 * </table>
+		 * 
+		 * <p>
+		 * Flattened:
+		 * <p>
+		 * &lt;1 2 3 1 2 1&gt;
+		 * 
+		 * <p>
+		 * ...and the parameters <tt>m</tt>, the original row dimension,
+		 * <tt>i</tt> and <tt>j</tt>, will identify the corresponding value
+		 * in the flattened vector such that mat[0][3] corresponds to vec[2];
+		 * this method, then, would return 3, the value at index 2, in this case.
+		 * 
+		 * @param m
+		 * @param i
+		 * @param j
+		 * @return the corresponding vector index
+		 */
+		double navigate(final int m, final int i, final int j) {
+			return dists[getIndexFromFlattenedVec(m,i,j)];
+		}
+
+		@Override
+		public EfficientDistanceMatrix copy() {
+			return new EfficientDistanceMatrix(this);
+		}
+	}
+	
 	abstract class HierarchicalDendrogram implements java.io.Serializable, Named {
 		private static final long serialVersionUID = 5295537901834851676L;
-		public final Loggable ref;
+		public final HierarchicalAgglomerative ref;
 		public final GeometricallySeparable dist;
-		public final int m;
 		
 		HierarchicalDendrogram() {
-			if(null == dist_vec)
-				dist_vec = ClustUtils.distanceFlatVector(data, 
-					getSeparabilityMetric(), true);
-			
 			ref = HierarchicalAgglomerative.this;
-			dist = HierarchicalAgglomerative.this.getSeparabilityMetric();
-			m = HierarchicalAgglomerative.this.m;
+			dist = ref.getSeparabilityMetric();
+			
+			if(null == dist_vec) // why would this happen?
+				dist_vec = new EfficientDistanceMatrix(data, dist, true);
 		}
 		
 		double[][] linkage() {
 			// Perform the linkage logic in the tree
-			double[] y = VecUtils.copy(dist_vec); // Copy the dist_vec
+			//EfficientDistanceMatrix y = dist_vec.copy(); // Copy the dist_vec
 			
 			double[][] Z = new double[m - 1][4];  // Holding matrix
-			link(y, Z, m); // Immutabily change Z
+			link(dist_vec, Z, m); // Immutabily change Z
 			
 			// Final linkage tree out...
 			return MatUtils.getColumns(Z, new int[]{0,1});
 		}
 		
-		final private void link(final double[] dists, final double[][] Z, final int n) {
+		private void link(final EfficientDistanceMatrix dists, final double[][] Z, final int n) {
 			int i, j, k, x = -1, y = -1, i_start, nx, ny, ni, id_x, id_y, id_i, c_idx;
 			double current_min;
 			
 			// Inter cluster dists
-			double[] D = VecUtils.copy(dists);
+			EfficientDistanceMatrix D = dists; //VecUtils.copy(dists);
 			
 			// Map the indices to node ids
 			ref.info("initializing node mappings ("+getClass().getName().split("\\$")[1]+")");
@@ -267,10 +440,10 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 						continue;
 					
 					
-					i_start = ClustUtils.getIndexFromFlattenedVec(n, i, i + 1);
+					i_start = EfficientDistanceMatrix.getIndexFromFlattenedVec(n, i, i + 1);
 					for(j = 0; j < n - i - 1; j++) {
-						if(D[i_start + j] < current_min) {
-							current_min = D[i_start + j];
+						if(D.dists[i_start + j] < current_min) {
+							current_min = D.dists[i_start + j];
 							x = i;
 							y = i + j + 1;
 						}
@@ -302,12 +475,11 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 					}
 					
 					ni = id_i < n ? 1 : (int)Z[id_i - n][3];
-					c_idx = ClustUtils.getIndexFromFlattenedVec(n, i, y);
-					D[c_idx] = getDist(D[ClustUtils.getIndexFromFlattenedVec(n, i, x)],
-						D[c_idx], current_min, nx, ny, ni);
+					c_idx = EfficientDistanceMatrix.getIndexFromFlattenedVec(n, i, y);
+					D.dists[c_idx] = getDist(D.navigate(n, i, x), D.dists[c_idx], current_min, nx, ny, ni);
 					
 					if(i < x)
-						D[ClustUtils.getIndexFromFlattenedVec(n,i,x)] = Double.POSITIVE_INFINITY;
+						D.dists[EfficientDistanceMatrix.getIndexFromFlattenedVec(n,i,x)] = Double.POSITIVE_INFINITY;
 				}
 				
 				fitSummary.add(new Object[]{
@@ -355,7 +527,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		@Override
 		protected double getDist(double dx, double dy, 
 			double current_min, int nx, int ny, int ni) {
-			return (nx * dx + ny * dy) / (double)(nx + ny);
+				return (nx * dx + ny * dy) / (double)(nx + ny);
 		}
 		
 		@Override
@@ -372,7 +544,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		@Override
 		protected double getDist(double dx, double dy, 
 			double current_min, int nx, int ny, int ni) {
-			return FastMath.max(dx, dy);
+				return FastMath.max(dx, dy);
 		}
 		
 		@Override
@@ -381,104 +553,15 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		}
 	}
 	
-	/**
-	 * Heapifies an ArrayList in place. Adapted from Python's
-	 * <a href="https://github.com/python-git/python/blob/master/Lib/heapq.py">heapq</a>
-	 * priority queue.
-	 * @author Taylor G Smith
-	 */
-	static class HeapUtils {
-		static <T extends Comparable<? super T>> void heapifyInPlace(final ArrayList<T> x) {
-			final int n = x.size();
-			final int n_2_floor = n / 2;
-			
-			for(int i = n_2_floor - 1; i >= 0; i--)
-				siftUp(x, i);
-		}
-		
-		static <T extends Comparable<? super T>> T heapPop(ArrayList<T> heap) {
-			final T lastElement = popInPlace(heap), returnItem;
-			
-			if(heap.size() > 0) {
-				returnItem = heap.get(0);
-				heap.set(0, lastElement);
-				siftUp(heap, 0);
-			} else {
-				returnItem = lastElement;
-			}
-			
-			return returnItem;
-		}
-		
-		static <T extends Comparable<? super T>> void heapPush(final ArrayList<T> heap, T item) {
-			heap.add(item);
-			siftDown(heap, 0, heap.size()-1);
-		}
-		
-		static <T extends Comparable<? super T>> T heapPushPop(final ArrayList<T> heap, T item) {
-			if(heap.get(0).compareTo(item) < 0) {
-				T tmp = heap.get(0);
-				heap.set(0, item);
-				item = tmp;
-			}
-			
-			return item;
-		}
-		
-		static <T extends Comparable<? super T>> T popInPlace(final ArrayList<T> heap) {
-			if(heap.size() == 0)
-				throw new InternalError("heap size 0");
-			
-			final T last = heap.get(heap.size()-1);
-			heap.remove(heap.size()-1);
-			return last;
-		}
-		
-		static <T extends Comparable<? super T>> void siftDown(final ArrayList<T> heap, final int startPos, int pos) {
-			T newitem = heap.get(pos);
-			
-			while(pos > startPos) {
-				int parentPos = (pos - 1) >> 1;
-				T parent = heap.get(parentPos);
-				
-				if(newitem.compareTo(parent) < 0) {
-					heap.set(pos, parent);
-					pos = parentPos;
-					continue;
-				}
-				
-				break;
-			}
-			
-			heap.set(pos, newitem);
-		}
-		
-		static <T extends Comparable<? super T>> void siftUp(final ArrayList<T> heap, int pos) {
-			int endPos = heap.size();
-			int startPos= pos;
-			T newItem = heap.get(pos);
-			
-			int childPos = 2*pos + 1;
-			while(childPos < endPos) {
-				int rightPos = childPos + 1;
-				if(rightPos < endPos && !(heap.get(childPos).compareTo(heap.get(rightPos)) < 0))
-					childPos = rightPos;
-				
-				heap.set(pos, heap.get(childPos));
-				pos = childPos;
-				childPos = 2*pos + 1;
-			}
-			
-			heap.set(pos, newItem);
-			siftDown(heap, startPos, pos);
-		}
-	}
-	
 	
 	
 	@Override
 	public String getName() {
 		return "Agglomerative";
+	}
+
+	public Linkage getLinkage() {
+		return linkage;
 	}
 
 	@Override
@@ -493,31 +576,15 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				final LogTimer timer = new LogTimer();
 				
 				labels = new int[m];
-				dist_vec = ClustUtils.distanceFlatVector(data, getSeparabilityMetric(), true);
+				dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
 				
 				// Log info...
-				info("calculated " + 
-					m + " x " + m + 
-					" distance matrix in " + timer.toString());
-				
+				info("computed distance matrix in " + timer.toString());
 				
 				
 				// Get the tree class for logging...
 				LogTimer treeTimer = new LogTimer();
-				switch(linkage) {
-					case WARD:
-						tree = new WardTree();
-						break;
-					case AVERAGE:
-						tree = new AverageLinkageTree();
-						break;
-					case COMPLETE:
-						tree = new CompleteLinkageTree();
-						break;
-					default:
-						throw new InternalError("illegal linkage");
-				}
-				
+				this.tree = this.linkage.buildTree(this);
 				
 				// Tree build
 				info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
@@ -551,7 +618,7 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 			throw new InternalError(n_clusters + " > " + n_leaves);
 		
 		// Init nodes
-		ArrayList<Integer> nodes = new ArrayList<>(Arrays.asList(new Integer[]{-((int)VecUtils.max(children[children.length-1]) + 1)}));
+		SimpleHeap<Integer> nodes = new SimpleHeap<>(-((int)VecUtils.max(children[children.length-1]) + 1));
 
 		
 		for(int i = 0; i < n_clusters - 1; i++) {
@@ -560,8 +627,8 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 				inner_idx = children.length + inner_idx;
 			
 			double[] these_children = children[inner_idx];
-			HeapUtils.heapPush(nodes, -((int)these_children[0]));
-			HeapUtils.heapPushPop(nodes, -((int)these_children[1]));
+			nodes.push(-((int)these_children[0]));
+			nodes.pushPop(-((int)these_children[1]));
 		}
 
 		int i = 0;
@@ -578,15 +645,15 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 	}
 	
 	static Integer[] hcGetDescendents(int node, double[][] children, int leaves) {
-		final ArrayList<Integer> ind = new ArrayList<>(Arrays.asList(new Integer[]{node}));
 		if(node < leaves)
 			return new Integer[]{node};
-		
+
+		final SimpleHeap<Integer> ind = new SimpleHeap<>(node);
 		final ArrayList<Integer> descendent = new ArrayList<>();
 		int i, n_indices = 1;
 		
 		while(n_indices > 0) {
-			i = HeapUtils.popInPlace(ind);
+			i = ind.popInPlace();
 			if(i < leaves) {
 				descendent.add(i);
 				n_indices--;
@@ -623,5 +690,25 @@ public class HierarchicalAgglomerative extends HierarchicalClusterer {
 		return new Object[]{
 			"Link Iter. #","Iter. Min","Continues","Iter. Time","Total Time","Wall"
 		};
+	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public double indexAffinityScore(int[] labels) {
+		// Propagates ModelNotFitException
+		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public double silhouetteScore() {
+		return silhouetteScore(getSeparabilityMetric());
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public double silhouetteScore(GeometricallySeparable dist) {
+		// Propagates ModelNotFitException
+		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
 	}
 }
