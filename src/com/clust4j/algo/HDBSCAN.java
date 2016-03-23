@@ -75,6 +75,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 
 	private interface HInitializer { public HDBSCANLinkageTree initTree(HDBSCAN h); }
 	public static enum HDBSCAN_Algorithm implements HInitializer {
+		/**
+		 * Automatically selects the appropriate algorithm
+		 * given dimensions of the dataset.
+		 */
 		AUTO {
 			@Override
 			public HDBSCANLinkageTree initTree(HDBSCAN h) {
@@ -100,6 +104,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			}
 		},
 		
+		/**
+		 * Generates a minimum spanning tree using a pairwise,
+		 * full distance matrix. Generally performs slower than
+		 * the other algorithms for larger datasets, but has less
+		 * setup overhead.
+		 * @see Pairwise
+		 */
 		GENERIC {
 			@Override
 			public GenericTree initTree(HDBSCAN h) {
@@ -109,6 +120,16 @@ public class HDBSCAN extends AbstractDBSCAN {
 			}
 		},
 		
+		/**
+		 * Prim's algorithm is a greedy algorithm that finds a 
+		 * minimum spanning tree for a weighted undirected graph. 
+		 * This means it finds a subset of the edges that forms a 
+		 * tree that includes every vertex, where the total weight 
+		 * of all the edges in the tree is minimized. This implementation
+		 * internally uses a {@link KDTree} to handle the graph
+		 * linkage function.
+		 * @see KDTree
+		 */
 		PRIMS_KDTREE {
 			@Override
 			public PrimsKDTree initTree(HDBSCAN h) {
@@ -118,6 +139,16 @@ public class HDBSCAN extends AbstractDBSCAN {
 			}
 		},
 		
+		/**
+		 * Prim's algorithm is a greedy algorithm that finds a 
+		 * minimum spanning tree for a weighted undirected graph. 
+		 * This means it finds a subset of the edges that forms a 
+		 * tree that includes every vertex, where the total weight 
+		 * of all the edges in the tree is minimized. This implementation
+		 * internally uses a {@link BallTree} to handle the graph
+		 * linkage function.
+		 * @see BallTree
+		 */
 		PRIMS_BALLTREE {
 			@Override
 			public PrimsBallTree initTree(HDBSCAN h) {
@@ -127,6 +158,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			}
 		},
 		
+		/**
+		 * Uses Boruvka's algorithm to find a minimum spanning
+		 * tree. Internally uses a {@link KDTree} to handle the
+		 * linkage function.
+		 * @see BoruvkaAlgorithm
+		 * @see KDTree
+		 */
 		BORUVKA_KDTREE {
 			@Override
 			public BoruvkaKDTree initTree(HDBSCAN h) {
@@ -136,6 +174,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			}
 		},
 		
+		/**
+		 * Uses Boruvka's algorithm to find a minimum spanning
+		 * tree. Internally uses a {@link BallTree} to handle the
+		 * linkage function.
+		 * @see BoruvkaAlgorithm
+		 * @see BallTree
+		 */
 		BORUVKA_BALLTREE {
 			@Override
 			public BoruvkaBallTree initTree(HDBSCAN h) {
@@ -400,6 +445,17 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
+	/**
+	 * This class extension is for the sake of testing; it restricts
+	 * types to a subclass of Number and adds the method 
+	 * {@link CompQuadTup#almostEquals(CompQuadTup)} to measure whether
+	 * values are equal within a margin of 1e-8.
+	 * @author Taylor G Smith
+	 * @param <ONE>
+	 * @param <TWO>
+	 * @param <THREE>
+	 * @param <FOUR>
+	 */
 	protected final static class CompQuadTup<ONE extends Number, 
 											 TWO extends Number, 
 											 THREE extends Number, 
@@ -458,6 +514,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 			return res;
 		}
 	}
+	
+	
 	
 	
 	/** Classes that will explicitly need to define 

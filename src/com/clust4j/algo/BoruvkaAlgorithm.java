@@ -11,6 +11,14 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.VecUtils;
 
+/**
+ * A graph traversal algorithm used in identifying the minimum spanning tree 
+ * in a graph for which all edge weights are distinct. Used in conjunction with
+ * {@link HDBSCAN}, and adapted from the <a href="https://github.com/lmcinnes/hdbscan">HDBSCAN python package</a>.
+ * 
+ * @see <a href="https://en.wikipedia.org/wiki/Bor%C5%AFvka%27s_algorithm">Boruvka's algorithm</a>
+ * @author Taylor G Smith
+ */
 class BoruvkaAlgorithm implements java.io.Serializable {
 	private static final long serialVersionUID = 3935595821188876442L;
 

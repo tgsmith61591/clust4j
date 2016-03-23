@@ -13,6 +13,18 @@ import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 
+/**
+ * In computer science, a ball tree, balltree or metric tree, 
+ * is a space partitioning data structure for organizing points 
+ * in a multi-dimensional space. The ball tree gets its name from the 
+ * fact that it partitions data points into a nested set of hyperspheres 
+ * known as "balls". The resulting data structure has characteristics 
+ * that make it useful for a number of applications, most notably 
+ * nearest neighbor search.
+ * @author Taylor G Smith
+ * @see NearestNeighborHeapSearch
+ * @see <a href="https://en.wikipedia.org/wiki/Ball_tree">Ball tree</a>
+ */
 public class BallTree extends NearestNeighborHeapSearch {
 	private static final long serialVersionUID = -6424085914337479234L;
 	public final static HashSet<Class<? extends GeometricallySeparable>> VALID_METRICS;

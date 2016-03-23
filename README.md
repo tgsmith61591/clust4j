@@ -10,6 +10,15 @@ ____
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
 
 
+___
+### Release notes:
+There are currently no formal releases of clust4j. However, this repository has been set up for easy cloning into your Eclipse environment. The classpath includes all dependencies required. Once a formal release point has been reached, a dependency-inclusive jar file will be uploaded, but for now, simply use:
+
+```bash
+git clone https://github.com/tgsmith61591/clust4j.git
+```
+
+
 ____
 ### Example data (to use for reproducability):
 
@@ -50,7 +59,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 
 
 - **Hierarchical algorithms**:
-  - [HierarchicalAgglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](https://github.com/tgsmith61591/clust4j#future-implementations).
+  - [HierarchicalAgglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](http://nlp.stanford.edu/IR-book/html/htmledition/divisive-clustering-1.html).
 
         ```java
         HierarchicalAgglomerative a = new HierarchicalAgglomerative(mat, new HierarchicalPlanner()).fit();
@@ -65,7 +74,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
         final int[] results = db.getLabels();
         ```
 
-  - [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14), a density-based clustering algorithm: performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon (Note: __this implementation is still in development__).
+  - [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14), a density-based clustering algorithm: performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon. This implementation includes five algorithms: PrimsKD, PrimsBall, BoruvkaKD and BoruvkaBall.
 
         ```java
         HDBSCAN hdb = new HDBSCAN(mat, new HDBSCANPlanner()).fit();

@@ -12,6 +12,16 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 
+/**
+ * A <i>k</i>-d tree (short for k-dimensional tree) is a space-partitioning 
+ * data structure for organizing points in a k-dimensional space. <i>k</i>-d 
+ * trees are a useful data structure for several applications, such as searches 
+ * involving a multidimensional search key (e.g. range searches and nearest 
+ * neighbor searches). <i>k</i>-d trees are a special case of binary space partitioning trees.
+ * @author Taylor G Smith
+ * @see NearestNeighborHeapSearch
+ * @see <a href="https://en.wikipedia.org/wiki/K-d_tree"><i>k</i>-d trees</a>
+ */
 public class KDTree extends NearestNeighborHeapSearch {
 	private static final long serialVersionUID = -3744545394278454548L;
 	public final static HashSet<Class<? extends GeometricallySeparable>> VALID_METRICS;
