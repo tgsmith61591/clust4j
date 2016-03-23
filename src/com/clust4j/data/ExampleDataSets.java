@@ -321,15 +321,22 @@ public class ExampleDataSets {
 		return datasetLoader("datasets/breastcancer.data");
 	}
 	
-	private static DataSet datasetLoader(final String location) {
+	protected static DataSet datasetLoader(final String location) {
+		Object obj = null;
 		DataSet bc = null;
 		
 		try {
-			bc = (DataSet)DataSet.loadObject(new FileInputStream(location));
+			// Can throw classnotfound
+			obj = DataSet.loadObject(new FileInputStream(location));
+			
+			// Can throw classcast
+			bc = (DataSet)obj;
 		} catch(FileNotFoundException f) {
-			throw new RuntimeException("File not found: " + location);
-		} catch(ClassNotFoundException c) {
+			throw new RuntimeException("File not found: " + location, f);
+		} catch(ClassNotFoundException c) { // Can't mimic this one in test...
 			throw new RuntimeException("Cannot find classtype", c);
+		} catch(ClassCastException c) {
+			throw new RuntimeException(obj.getClass() + " cannot be cast to DataSet", c);
 		} catch(IOException i) {
 			throw new RuntimeException("exception occurred in dataset loading: ", i);
 		}

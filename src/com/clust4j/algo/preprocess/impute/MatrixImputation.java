@@ -62,6 +62,7 @@ public abstract class MatrixImputation extends Clust4j implements Loggable, Name
 	 */
 	protected final void checkMat(final double[][] data) {
 		MatUtils.checkDims(data);
+		String error;
 		final int m = data.length, n = data[0].length;
 		
 		// Now check column NaN level
@@ -73,8 +74,12 @@ public abstract class MatrixImputation extends Clust4j implements Loggable, Name
 				boolean nan = Double.isNaN(dataCopy[row][col]);
 				if(nan) {
 					seenNaN =true;
-					if(row == m - 1)
-						throw new NaNException("column " + col + " is entirely NaN");
+					if(row == m - 1) {
+						error = "column " + col + " is entirely NaN";
+						error(error);
+						throw new NaNException(error);
+					}
+					
 				} else break Inner;
 			}
 		}

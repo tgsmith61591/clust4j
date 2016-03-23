@@ -48,7 +48,7 @@ public class BufferedMatrixReaderTests {
 	
 	@Test(expected=FileNotFoundException.class)
 	public void test3() throws FileNotFoundException, IOException, ClassNotFoundException {
-		BufferedMatrixReader.readMatrix(new FileInputStream(file));
+		SimpleBufferedMatrixReader.readMatrix(new FileInputStream(file));
 	}
 	
 	@Test
@@ -75,7 +75,7 @@ public class BufferedMatrixReaderTests {
 	
 	
 	static Array2DRowRealMatrix readCSV() throws FileNotFoundException, IOException {
-		return new BufferedMatrixReader(new File(file), ",").readMatrix();
+		return new SimpleBufferedMatrixReader(new File(file), ",").readMatrix();
 	}
 	
 	static void writeCSV(Object[] in) throws IOException {

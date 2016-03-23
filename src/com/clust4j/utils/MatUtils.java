@@ -722,7 +722,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[][] a, final double[][] b, final double tol) {
-		checkDimsPermitEmpty(a, b);
+		if(a.length != b.length)
+			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsWithTolerance(a[i], b[i], tol))
@@ -739,7 +740,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final int[][] a, final int[][] b) {
-		checkDims(a, b);
+		if(a.length != b.length)
+			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsExactly(a[i], b[i]))
@@ -756,7 +758,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final boolean[][] a, final boolean[][] b) {
-		checkDims(a, b);
+		if(a.length != b.length)
+			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(!VecUtils.equalsExactly(a[i], b[i]))

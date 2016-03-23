@@ -714,7 +714,8 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final int[] a, final int[] b) {
-		checkDimsPermitEmpty(a, b);
+		if(a.length != b.length)
+			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(a[i] != b[i])
@@ -731,10 +732,29 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final boolean[] a, final boolean[] b) {
-		checkDimsPermitEmpty(a, b);
+		if(a.length != b.length)
+			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(a[i] != b[i])
+				return false;
+		return true;
+	}
+	
+	/**
+	 * Returns true if every element in the vector A
+	 * exactly equals the corresponding element in the vector B
+	 * @param a
+	 * @param b
+	 * @throws DimensionMismatchException if the dims don't match
+	 * @return true if all equal, false otherwise
+	 */
+	public static boolean equalsExactly(final String[] a, final String[] b) {
+		if(a.length != b.length)
+			return false;
+		
+		for(int i = 0; i < a.length; i++)
+			if(!a[i].equals(b[i]))
 				return false;
 		return true;
 	}
@@ -836,7 +856,9 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
-		checkDimsPermitEmpty(a, b);
+		if(a.length != b.length)
+			return false;
+		
 		for(int i = 0; i < a.length; i++)
 			if( !Precision.equals(a[i], b[i], eps) )
 				return false;

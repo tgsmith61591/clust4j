@@ -1,5 +1,6 @@
 package com.clust4j.utils.parallel.reduce;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.utils.VecUtils;
@@ -16,7 +17,8 @@ public class DistributedEqualityTest extends VectorReduceTask<Boolean> {
 	DistributedEqualityTest(double[] arr_a, double[] arr_b, double tolerance, int lo, int hi) {
 		super(arr_a, lo, hi);
 		
-		VecUtils.checkDimsPermitEmpty(arr_a, arr_b);
+		if(arr_a.length != arr_b.length)
+			throw new DimensionMismatchException(arr_a.length, arr_b.length);
 		if(tolerance < 0)
 			throw new IllegalArgumentException("tolerance cannot be less than 0");
 		

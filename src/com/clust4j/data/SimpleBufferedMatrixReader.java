@@ -11,11 +11,16 @@ import java.io.ObjectInputStream;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
-public class BufferedMatrixReader {
+/**
+ * A utility class solely for internal use 
+ * in creating new datasets.
+ * @author Taylor G Smith
+ */
+class SimpleBufferedMatrixReader {
 	final File file;
 	final String separator;
 	
-	public BufferedMatrixReader(final File file, final String separator) throws FileNotFoundException {
+	public SimpleBufferedMatrixReader(final File file, final String separator) throws FileNotFoundException {
 		if(!file.exists())
 			throw new FileNotFoundException();
 		

@@ -2,11 +2,17 @@ package com.clust4j.data;
 
 import static org.junit.Assert.*;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.AffinityPropagation;
 import com.clust4j.algo.DBSCAN;
@@ -17,9 +23,15 @@ import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.MeanShift;
 import com.clust4j.algo.UnsupervisedClassifier;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
 
-public class TestDataSet {
+public class TestDataSet 
+		implements java.io.Serializable {
+	/** This needs to be serializable for the anonymous class test */
+	private static final long serialVersionUID = 4724815970248166429L;
+	
+	
 	private final static DecimalFormat df = new DecimalFormat("##.##");
 	private final static DataSet IRIS = ExampleDataSets.loadIris();
 	private final static DataSet WINE = ExampleDataSets.loadWine();
@@ -171,7 +183,8 @@ public class TestDataSet {
 	public void testCopyIRIS() {
 		DataSet iris = IRIS;
 		DataSet shuffle = iris.copy();
-		assertFalse(iris.equals(shuffle));
+		assertTrue(iris.equals(shuffle));
+		assertFalse(iris == shuffle);
 		
 		shuffle = shuffle.shuffle();
 		assertFalse(shuffle.equals(iris));
@@ -185,7 +198,8 @@ public class TestDataSet {
 	public void testCopyWINE() {
 		DataSet data = WINE;
 		DataSet shuffle = data.copy();
-		assertFalse(data.equals(shuffle));
+		assertTrue(data.equals(shuffle));
+		assertFalse(data == shuffle);
 		
 		shuffle = shuffle.shuffle();
 		assertFalse(shuffle.equals(data));
@@ -407,5 +421,244 @@ public class TestDataSet {
 		
 		double[][] iris = IRIS.getData().getDataRef();
 		assertTrue(MatUtils.equalsExactly(sklearn, iris));
+	}
+	
+	@Test
+	public void testFileNotFound() {
+		try {
+			ExampleDataSets.datasetLoader("fake_dataset.data");
+		} catch(RuntimeException r) {
+			if(!(r.getCause() instanceof FileNotFoundException))
+				fail();
+		}
+	}
+	
+	@Test
+	public void testClassCast() {
+		
+		boolean clzcst = false;
+		try {
+			/*
+			 * This is a hard exception to mimic... 
+			 * we'll generate an anonymous class to try
+			 * to load a class that doesn't exist in the classpath
+			 */
+			new SerializableObject(){
+				private static final long serialVersionUID = -1079143488798469266L;
+	
+				@Override
+				public void foo() {
+					;
+				}
+			}.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
+			
+			/*
+			 * Now try loading it in...
+			 */
+			ExampleDataSets.datasetLoader(TestSuite.tmpSerPath);
+		} catch(IOException e) {
+			e.printStackTrace();
+		} catch(RuntimeException r) {
+			if(r.getCause() instanceof ClassCastException)
+				clzcst = true;
+		} finally {
+			try {
+				Files.delete(TestSuite.path);
+			} catch(Exception e) {
+			}
+			
+			if(!clzcst)
+				fail();
+		}
+	}
+	
+	@Test
+	public void testConst1() {
+		double[][] d = IRIS.getData().getDataRef();
+		int[] labs= IRIS.getLabels();
+		assertTrue(new DataSet(d, labs).numCols() == 4);
+	}
+	
+	@Test
+	public void testConst2() {
+		Array2DRowRealMatrix d = IRIS.getData();
+		int[] labs= IRIS.getLabels();
+		assertTrue(new DataSet(d, labs).numCols() == 4);
+	}
+	
+	@Test
+	public void testConst3() {
+		Array2DRowRealMatrix d = IRIS.getData();
+		int[] labs= IRIS.getLabels();
+		assertTrue(new DataSet(d, labs, TestSuite.formatter).numCols() == 4);
+	}
+	
+	@Test
+	public void testConst4() {
+		Array2DRowRealMatrix d = IRIS.getData();
+		int[] labs= IRIS.getLabels();
+		DataSet dat = new DataSet(d, labs, new String[]{"a","b","c","d"});
+		assertTrue(dat.numCols() == 4);
+		assertTrue(VecUtils.equalsExactly(dat.getColumn("a"), d.getColumn(0)));
+		assertTrue(VecUtils.equalsExactly(dat.getColumn(0), d.getColumn(0)));
+	}
+	
+	@Test
+	public void testConst5() {
+		double[][] d = IRIS.getData().getDataRef();
+		int[] labs= IRIS.getLabels();
+		DataSet dat = new DataSet(d, labs, new String[]{"a","b","c","d"});
+		assertTrue(dat.numCols() == 4);
+	}
+	
+	@Test
+	public void testConst6() {
+		Array2DRowRealMatrix d = IRIS.getData();
+		int[] labs= IRIS.getLabels();
+		DataSet dat = new DataSet(d, labs, new String[]{"a","b","c","d"}, new MatrixFormatter());
+		assertTrue(dat.numCols() == 4);
+		assertTrue(VecUtils.equalsExactly(dat.getColumn("a"), d.getColumn(0)));
+		assertTrue(VecUtils.equalsExactly(dat.getColumn(0), d.getColumn(0)));
+	}
+	
+	@Test
+	public void testConst7() {
+		double[][] d = IRIS.getData().getDataRef();
+		int[] labs= IRIS.getLabels();
+		DataSet dat = new DataSet(d, labs, new String[]{"a","b","c","d"}, new MatrixFormatter());
+		assertTrue(dat.numCols() == 4);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNullLabels() {
+		new DataSet(MatUtils.randomGaussian(5, 2), null);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNullString() {
+		new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5}, null, null);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNullData() {
+		double[][] d = null;
+		new DataSet(d, new int[]{1,2,3,4,5});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testLabDim() {
+		new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testHeaderDim() {
+		new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5}, new String[]{"s"});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testColAddDim() {
+		DataSet d = new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5});
+		d.addColumn(new double[]{1});
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testColsAddDim() {
+		DataSet d = new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5});
+		double[][] dub = new double[][]{
+			new double[]{1,2},
+			new double[]{1,2}
+		};
+		
+		d.addColumns(dub);
+	}
+	
+	@Test
+	public void testColsAdd() {
+		DataSet d = new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5});
+		double[][] dub = MatUtils.randomGaussian(5, 2);
+		d.addColumns(null, dub);
+		assertTrue(d.numCols() == 4);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testBadDrop() {
+		DataSet d = new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5});
+		d.dropCol(-1);
+	}
+	
+	@Test(expected=IllegalStateException.class)
+	public void testBadDrop2() {
+		DataSet d = new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5});
+		while(d.numCols() > 1)
+			d.dropCol(0);
+		d.dropCol(0);
+	}
+	
+	@Test
+	public void testCopyEquals() {
+		DataSet iris = IRIS.copy();
+		assertTrue(iris.equals(iris));
+		
+		DataSet irisb= IRIS.copy();
+		assertTrue(iris.equals(irisb));
+		
+		// test not mutable
+		irisb.dropCol(0);
+		assertFalse(iris.equals(irisb));
+		assertFalse(iris.equals(new Object()));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testMissingHeader() {
+		IRIS.getColumn("missing column");
+	}
+	
+	@Test
+	public void testHash() {
+		IRIS.hashCode(); // no test... just ensure not null
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSetColOOB() {
+		IRIS.setColumn(9, new double[]{});
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSetRowOOB() {
+		IRIS.setRow(-1, new double[]{});
+	}
+	
+	@Test
+	public void testSetRowValid() {
+		IRIS.copy().setRow(0, new double[]{1,2,3,4});
+	}
+	
+	@Test
+	public void testSort() {
+		DataSet i = IRIS.copy();
+		i.sortAscInPlace(0);
+		assertTrue(i.getColumn(0)[0] <= i.getColumn(0)[1]);
+	}
+	
+	@Test
+	public void testSortDesc() {
+		DataSet i = IRIS.copy();
+		i.sortDescInPlace(0);
+		assertTrue(i.getColumn(0)[0] >= i.getColumn(0)[1]);
+		
+		// stdout now
+		i.stdOut();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testSortEx() {
+		DataSet i = IRIS.copy();
+		i.sortAscInPlace(-1);
+	}
+
+	@Test(expected=IllegalArgumentException.class)
+	public void testSortDescEx() {
+		DataSet i = IRIS.copy();
+		i.sortDescInPlace(6);
 	}
 }

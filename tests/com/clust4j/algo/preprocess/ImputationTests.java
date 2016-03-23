@@ -12,6 +12,7 @@ import com.clust4j.algo.preprocess.impute.BootstrapImputation.BootstrapImputatio
 import com.clust4j.algo.preprocess.impute.MatrixImputation.CentralTendencyMethod;
 import com.clust4j.algo.preprocess.impute.MeanImputation.MeanImputationPlanner;
 import com.clust4j.algo.preprocess.impute.MedianImputation.MedianImputationPlanner;
+import com.clust4j.except.NaNException;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.sample.Bootstrapper;
 import com.clust4j.utils.MatUtils;
@@ -145,4 +146,15 @@ public class ImputationTests {
 		System.out.println();
 	}
 
+	@Test(expected=NaNException.class)
+	public void testFullyNaN() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 	 Double.NaN, 2},
+			new double[]{1, 	 Double.NaN, 3},
+			new double[]{8.5,	 Double.NaN, 6},
+			new double[]{9,		 Double.NaN, Double.NaN}
+		};
+		
+		new MeanImputation().operate(d);
+	}
 }

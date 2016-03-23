@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.Clust4j;
@@ -196,13 +195,7 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 		
 		
 		if(n == 1) {
-			
-			try { // knowing that this will always throw...
-				headers = new String[0];
-				data = new Array2DRowRealMatrix(m, 0);
-			} catch(NotStrictlyPositiveException nsp) {
-				throw new IllegalStateException("cannot drop last column", nsp);
-			}
+			throw new IllegalStateException("cannot drop last column");
 		} else {
 			double[][] newData = new double[m][n - 1];
 			String[] newHeader = new String[n - 1];
@@ -234,9 +227,11 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 			return true;
 		if(o instanceof DataSet) {
 			DataSet other = (DataSet)o;
-			return data.equals(other.data)
-				&& headers.equals(other.headers)
-				&& labels.equals(other.labels);
+			System.out.println(VecUtils.equalsExactly(labels, other.labels));
+			
+			return MatUtils.equalsExactly(data.getDataRef(), other.data.getDataRef())
+				&& VecUtils.equalsExactly(headers, other.headers)
+				&& VecUtils.equalsExactly(labels, other.labels);
 		}
 		
 		return false;
