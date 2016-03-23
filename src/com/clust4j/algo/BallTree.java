@@ -65,6 +65,10 @@ public class BallTree extends NearestNeighborHeapSearch {
 		super(X, dist, logger);
 	}
 	
+	protected BallTree(final double[][] X, int leaf_size, DistanceMetric dist, Loggable logger) {
+		super(X, leaf_size, dist, logger);
+	}
+	
 	
 	
 	@Override

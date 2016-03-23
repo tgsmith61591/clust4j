@@ -3,22 +3,24 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
-import com.clust4j.TestSuite;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.log.LogTimeFormatter;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
@@ -46,13 +48,17 @@ import com.clust4j.utils.VecUtils.VecSeries;
  */
 public class HDBSCAN extends AbstractDBSCAN {
 	private static final long serialVersionUID = -5112901322434131541L;
-	public static final Algorithm DEF_ALGO = Algorithm.GENERIC;
+	public static final HDBSCAN_Algorithm DEF_ALGO = HDBSCAN_Algorithm.AUTO;
 	public static final double DEF_ALPHA = 1.0;
 	public static final boolean DEF_APPROX_MIN_SPAN = true;
 	public static final int DEF_LEAF_SIZE = 40;
 	public static final int DEF_MIN_CLUST_SIZE = 5;
+	/** The number of features that should trigger a boruvka implementation */
+	static final int boruvka_n_features_ = 60;
+	static final Set<Class<? extends GeometricallySeparable>> fast_metrics_;
 	
-	private final Algorithm algo;
+	/** Not final because can change if auto-enabled */
+	protected HDBSCAN_Algorithm algo;
 	private final double alpha;
 	private final boolean approxMinSpanTree;
 	private final int min_cluster_size;
@@ -66,15 +72,87 @@ public class HDBSCAN extends AbstractDBSCAN {
 	/** A copy of the data array inside the data matrix */
 	private volatile double[][] dataData = null;
 	
-	
-	public static enum Algorithm {
-		GENERIC,
-		PRIMS_KDTREE,
-		PRIMS_BALLTREE,
-		//BORUVKA_KDTREE,
-		//BORUVKA_BALLTREE
+
+	private interface HInitializer { public HDBSCANLinkageTree initTree(HDBSCAN h); }
+	public static enum HDBSCAN_Algorithm implements HInitializer {
+		AUTO {
+			@Override
+			public HDBSCANLinkageTree initTree(HDBSCAN h) {
+				final Class<? extends GeometricallySeparable> clz =
+					h.dist_metric.getClass();
+				final int n = h.data.getColumnDimension();
+				
+				// rare situation... only if sim metric or kernel
+				if(!fast_metrics_.contains(clz)) {
+					return GENERIC.initTree(h);
+				}
+				
+				else if(KDTree.VALID_METRICS.contains(clz)) {
+					return n > boruvka_n_features_ ?
+						BORUVKA_KDTREE.initTree(h) : 
+							PRIMS_KDTREE.initTree(h);
+				}
+				
+				// otherwise is valid balltree metric
+				return n > boruvka_n_features_ ?
+					BORUVKA_BALLTREE.initTree(h) :
+						PRIMS_BALLTREE.initTree(h);
+			}
+		},
+		
+		GENERIC {
+			@Override
+			public GenericTree initTree(HDBSCAN h) {
+				// we set this in case it was called by auto
+				h.algo = this;
+				return h.new GenericTree();
+			}
+		},
+		
+		PRIMS_KDTREE {
+			@Override
+			public PrimsKDTree initTree(HDBSCAN h) {
+				// we set this in case it was called by auto
+				h.algo = this;
+				return h.new PrimsKDTree(h.leafSize);
+			}
+		},
+		
+		PRIMS_BALLTREE {
+			@Override
+			public PrimsBallTree initTree(HDBSCAN h) {
+				// we set this in case it was called by auto
+				h.algo = this;
+				return h.new PrimsBallTree(h.leafSize);
+			}
+		},
+		
+		BORUVKA_KDTREE {
+			@Override
+			public BoruvkaKDTree initTree(HDBSCAN h) {
+				// we set this in case it was called by auto
+				h.algo = this;
+				return h.new BoruvkaKDTree(h.leafSize);
+			}
+		},
+		
+		BORUVKA_BALLTREE {
+			@Override
+			public BoruvkaBallTree initTree(HDBSCAN h) {
+				// we set this in case it was called by auto
+				h.algo = this;
+				return h.new BoruvkaBallTree(h.leafSize);
+			}
+		};
 	}
 	
+	
+	
+	static {
+		fast_metrics_ = new HashSet<Class<? extends GeometricallySeparable>>();
+		fast_metrics_.addAll(KDTree.VALID_METRICS);
+		fast_metrics_.addAll(BallTree.VALID_METRICS);
+	}
 	
 	
 	
@@ -109,11 +187,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 		this.min_cluster_size = planner.min_cluster_size;
 		this.leafSize = planner.leafSize;
 		
-		if(alpha == 0.0)
-			throw new IllegalArgumentException("alpha cannot equal 0");
+		if(alpha <= 0.0)
+			throw new IllegalArgumentException("alpha must be greater than 0");
+		if(leafSize < 1)
+			throw new IllegalArgumentException("leafsize must be greater than 0");
 		
 		
-		if(!algo.equals(Algorithm.GENERIC) && !(planner.getSep() instanceof DistanceMetric)) {
+		if(!algo.equals(HDBSCAN_Algorithm.GENERIC) && !(planner.getSep() instanceof DistanceMetric)) {
 			warn("algorithms leveraging NearestNeighborHeapSearch require a DistanceMetric; "
 					+ "using default Euclidean distance");
 			setSeparabilityMetric(DEF_DIST);
@@ -151,7 +231,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		private boolean verbose	= DEF_VERBOSE;
 		private Random seed = DEF_SEED;
 		private FeatureNormalization norm = DEF_NORMALIZER;
-		private Algorithm algo = DEF_ALGO;
+		private HDBSCAN_Algorithm algo = DEF_ALGO;
 		private double alpha = DEF_ALPHA;
 		private boolean approxMinSpanTree = DEF_APPROX_MIN_SPAN;
 		private int min_cluster_size = DEF_MIN_CLUST_SIZE;
@@ -210,7 +290,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			return verbose;
 		}
 		
-		public HDBSCANPlanner setAlgo(final Algorithm algo) {
+		public HDBSCANPlanner setAlgo(final HDBSCAN_Algorithm algo) {
 			this.algo = algo;
 			return this;
 		}
@@ -320,6 +400,27 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
+	protected final static class CompQuadTup<ONE extends Number, 
+											 TWO extends Number, 
+											 THREE extends Number, 
+											 FOUR extends Number> 
+		extends QuadTup<ONE, TWO, THREE, FOUR> {
+
+		public CompQuadTup(ONE one, TWO two, THREE three, FOUR four) {
+			super(one, two, three, four);
+		}
+		
+		/*
+		 * For testing
+		 */
+		public boolean almostEquals(CompQuadTup<ONE, TWO, THREE, FOUR> other) {
+			return Precision.equals(this.one.doubleValue(), other.one.doubleValue(), 1e-8)
+				&& Precision.equals(this.two.doubleValue(), other.two.doubleValue(), 1e-8)
+				&& Precision.equals(this.three.doubleValue(), other.three.doubleValue(), 1e-8)
+				&& Precision.equals(this.four.doubleValue(), other.four.doubleValue(), 1e-8);
+		}
+	}
+	
 	/**
 	 * A simple extension of {@link HashSet} that takes
 	 * an array or varargs as a constructor arg
@@ -418,24 +519,20 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		// Tested: passing
-		static TreeMap<Integer, Double> computeStability(HList<QuadTup<Integer, Integer, Double, Integer>> condensed) {
+		static TreeMap<Integer, Double> computeStability(HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed) {
 			double[] resultArr, births, lambdas = new double[condensed.size()];
 			int[] sizes = new int[condensed.size()], parents = new int[condensed.size()];
 			int child, parent, childSize, resultIdx, currentChild = -1, idx = 0, row = 0;
 			double lambda, minLambda = 0;
 			
 			
-			
-			// ['parent', 'child', 'lambda', 'childSize']
-			// Calculate starting maxes/mins
+			/* Populate parents, sizes and lambdas pre-sort and get min/max parent info
+			 * ['parent', 'child', 'lambda', 'childSize']
+			 */
 			int largestChild = Integer.MIN_VALUE,
 				minParent = Integer.MAX_VALUE,
 				maxParent = Integer.MIN_VALUE;
-			
-			int[] sortedChildren= new int[condensed.size()];
-			double[] sortedLambdas = new double[condensed.size()];
-			
-			for(QuadTup<Integer, Integer, Double, Integer> q: condensed) {
+			for(CompQuadTup<Integer, Integer, Double, Integer> q: condensed) {
 				parent= q.one;
 				child = q.two;
 				lambda= q.three;
@@ -449,22 +546,40 @@ public class HDBSCAN extends AbstractDBSCAN {
 					maxParent = parent;
 				
 				parents[idx] = parent;
-				sizes[idx]= childSize;
-				lambdas[idx]= lambda;
-				
-				sortedChildren[idx] = child;
-				sortedLambdas[idx++]= lambda;
+				sizes  [idx] = childSize;
+				lambdas[idx] = lambda;
+				idx++;
 			}
-			
+
 			int numClusters = maxParent - minParent + 1;
 			births = VecUtils.rep(Double.NaN, largestChild + 1);
-			Arrays.sort(sortedChildren);
-			Arrays.sort(sortedLambdas);
 			
-			// Start first loop
-			for(row = 0; row < sortedChildren.length; row++) {
-				child = sortedChildren[row]; // 0,1,2 in test
-				lambda= sortedLambdas[row];  // 1.667 in test
+			/*
+			 * Perform sort, then get sorted lambdas and children
+			 */
+			Collections.sort(condensed, new Comparator<QuadTup<Integer, Integer, Double, Integer>>(){
+				@Override
+				public int compare(QuadTup<Integer, Integer, Double, Integer> q1, 
+						QuadTup<Integer, Integer, Double, Integer> q2) {
+					int cmp = q1.two.compareTo(q2.two);
+					
+					if(cmp == 0) {
+						cmp = q1.three.compareTo(q2.three);
+						return cmp;
+					}
+					
+					return cmp;
+				}
+			});
+			
+			
+			/*
+			 * Go through sorted list...
+			 */
+			for(row = 0; row < condensed.size(); row++) {
+				CompQuadTup<Integer, Integer, Double, Integer> q = condensed.get(row);
+				child = q.two;
+				lambda= q.three;
 				
 				if(child == currentChild)
 					minLambda = FastMath.min(minLambda, lambda);
@@ -510,7 +625,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		// Tested: passing
-		static HList<QuadTup<Integer, Integer, Double, Integer>> condenseTree(final double[][] hierarchy, final int minSize) {
+		static HList<CompQuadTup<Integer, Integer, Double, Integer>> condenseTree(final double[][] hierarchy, final int minSize) {
 			final int m = hierarchy.length;
 			int root = 2 * m, 
 					numPoints = root/2 + 1 /*Integer division*/, 
@@ -518,7 +633,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			// Get node list from BFS
 			HList<Integer> nodeList = breadthFirstSearch(hierarchy, root), tmpList;
-			HList<QuadTup<Integer, Integer, Double, Integer>> resultList = new HList<>();
+			HList<CompQuadTup<Integer, Integer, Double, Integer>> resultList = new HList<>();
 			
 			// Indices needing relabeling -- cython code assigns this to nodeList.size()
 			// but often times this is way too small and causes out of bounds exceptions...
@@ -564,13 +679,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 				
 				if(leftCount >= minSize && rightCount >= minSize) {
 					relabel[left] = nextLabel++;
-					resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+					resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 						relabel[wraparoundIdxGet(relabel.length, node)],
 						relabel[wraparoundIdxGet(relabel.length, left)],
 						lambda, leftCount ));
 					
 					relabel[wraparoundIdxGet(relabel.length, right)] = nextLabel++;
-					resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+					resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 						relabel[wraparoundIdxGet(relabel.length, node)],
 						relabel[wraparoundIdxGet(relabel.length,right)],
 						lambda, rightCount ));
@@ -580,7 +695,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 					tmpList = breadthFirstSearch(hierarchy, left);
 					for(Integer subnode: tmpList) {
 						if(subnode < numPoints)
-							resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+							resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 								relabel[wraparoundIdxGet(relabel.length, node)], subnode,
 								lambda, 1));
 						ignore[subnode] = true;
@@ -589,7 +704,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 					tmpList = breadthFirstSearch(hierarchy, right);
 					for(Integer subnode: tmpList) {
 						if(subnode < numPoints)
-							resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+							resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 								relabel[wraparoundIdxGet(relabel.length, node)], subnode,
 								lambda, 1));
 						ignore[subnode] = true;
@@ -602,7 +717,7 @@ public class HDBSCAN extends AbstractDBSCAN {
  					
  					for(Integer subnode: tmpList) {
 						if(subnode < numPoints)
-							resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+							resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 								relabel[wraparoundIdxGet(relabel.length, node)], subnode,
 								lambda, 1));
 						ignore[subnode] = true;
@@ -615,7 +730,7 @@ public class HDBSCAN extends AbstractDBSCAN {
  					tmpList = breadthFirstSearch(hierarchy, right);
  					for(Integer subnode: tmpList) {
 						if(subnode < numPoints)
-							resultList.add(new QuadTup<Integer, Integer, Double, Integer>(
+							resultList.add(new CompQuadTup<Integer, Integer, Double, Integer>(
 								relabel[wraparoundIdxGet(relabel.length, node)], subnode,
 								lambda, 1));
 						ignore[subnode] = true;
@@ -743,9 +858,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 					if(coreVal > currentNodeCoreDist) {
 						if(coreVal > leftVal)
 							leftVal = coreVal;
-					} else {
-						if(currentNodeCoreDist > leftVal)
-							leftVal = currentNodeCoreDist;
+					} else if(currentNodeCoreDist > leftVal) {
+						leftVal = currentNodeCoreDist;
 					}
 					
 					
@@ -755,11 +869,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 							newDist = leftVal;
 							newNode = j;
 						}
-					} else {
-						if(rightVal < newDist) {
-							newDist = rightVal;
-							newNode = j;
-						}
+					} else if(rightVal < newDist) {
+						newDist = rightVal;
+						newNode = j;
 					}
 				} // end for j
 				
@@ -844,7 +956,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 	 * @author Taylor G Smith
 	 */
 	abstract class HeapSearchAlgorithm extends HDBSCANLinkageTree {
-		int leafSize;
+		final int leafSize;
 		
 		HeapSearchAlgorithm(int leafSize, Collection<Class<? extends GeometricallySeparable>> clzs) {
 			super();
@@ -871,22 +983,20 @@ public class HDBSCAN extends AbstractDBSCAN {
 		final double[][] primTreeLinkageFunction(double[][] dt) {
 			final int min_points = FastMath.min(m - 1, minPts);
 			
-			long strt = System.currentTimeMillis();
+			LogTimer timer = new LogTimer();
 			model.info("building " + getTreeName() + " search tree...");
 			NearestNeighborHeapSearch tree = getTree(dt);
-			model.info("completed NearestNeighborHeapSearch construction in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-strt, false) + 
-					System.lineSeparator());
+			model.info("completed NearestNeighborHeapSearch construction in " + timer.toString());
 			
 			
-			// Query for dists to k nearest neighbors
+			// Query for dists to k nearest neighbors -- no longer use breadth first!
 			Neighborhood query = tree.query(dt, min_points, true, true);
 			double[][] dists = query.getDistances();
 			double[] coreDistances = MatUtils.getColumn(dists, dists[0].length - 1);
 			
 			double[][] minSpanningTree = LinkageTreeUtils
-					.minSpanTreeLinkageCore_cdist(dt, coreDistances, 
-						metric, alpha);
+				.minSpanTreeLinkageCore_cdist(dt, 
+					coreDistances, metric, alpha);
 			
 			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
 		}
@@ -899,23 +1009,20 @@ public class HDBSCAN extends AbstractDBSCAN {
 		 */
 		final double[][] boruvkaTreeLinkageFunction(double[][] dt) {
 			final int min_points = FastMath.min(m - 1, minPts);
-			if(leafSize < 3)
-				leafSize = 3;
+			int ls = FastMath.max(leafSize, 3);
 
-			long strt = System.currentTimeMillis();
 			model.info("building " + getTreeName() + " search tree...");
+			
+			LogTimer timer = new LogTimer();
 			NearestNeighborHeapSearch tree = getTree(dt);
-			model.info("completed NearestNeighborHeapSearch construction in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-strt, false) + 
-					System.lineSeparator());
+			model.info("completed NearestNeighborHeapSearch construction in " + timer.toString());
 			
 			// We can safely cast the metric to DistanceMetric at this point
 			final BoruvkaAlgorithm alg = new BoruvkaAlgorithm(tree, min_points, 
-					(DistanceMetric)metric, leafSize / 3, approxMinSpanTree, 
+					(DistanceMetric)metric, ls / 3, approxMinSpanTree, 
 					alpha, model);
 			
 			double[][] minSpanningTree = alg.spanningTree();
-			System.out.println(TestSuite.formatter.format(minSpanningTree));
 			return label(MatUtils.sortAscByCol(minSpanningTree, 2));
 		}
 	}
@@ -934,7 +1041,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		@Override final KDTree getTree(double[][] X) {
 			// We can safely cast the sep metric as DistanceMetric
 			// after the check in the constructor
-			return new KDTree(data, leafSize, 
+			return new KDTree(X, this.leafSize, 
 				(DistanceMetric)metric, model);
 		}
 	}
@@ -953,7 +1060,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		@Override final BallTree getTree(double[][] X) {
 			// We can safely cast the sep metric as DistanceMetric
 			// after the check in the constructor
-			return new BallTree(data, leafSize, 
+			return new BallTree(X, this.leafSize, 
 				(DistanceMetric)metric, model);
 		}
 	}
@@ -970,7 +1077,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			// The generic implementation requires the computation of an UT dist mat
 			final LogTimer s = new LogTimer();
-			dist_mat = Pairwise.getDistance(data, getSeparabilityMetric(), true, false);
+			dist_mat = Pairwise.getDistance(data, getSeparabilityMetric(), false, false);
 			info("completed distance matrix computation in " + s.toString());
 		}
 		
@@ -1173,7 +1280,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			while(parent[wrap(parent.length, n)] != -1)
 				n = parent[wrap(parent.length, n)];
 			
-			// Incredibly enraging to debug
+			// Incredibly enraging to debug -- skeptics be warned
 			while(parent[wrap(parent.length, p)] != n) {
 				//System.out.println("First: {p:" + p + ", parent[p]:" +parent[wrap(parent.length, p)] +  ", n:" +n+"}");
 				
@@ -1221,10 +1328,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 	
 
 
-	protected static int[] doLabeling(HList<QuadTup<Integer, Integer, Double, Integer>> tree,
+	protected static int[] doLabeling(HList<CompQuadTup<Integer, Integer, Double, Integer>> tree,
 			HList<Integer> clusters, TreeMap<Integer, Integer> clusterMap) {
 		
-		QuadTup<Integer, Integer, Double, Integer> quad;
+		CompQuadTup<Integer, Integer, Double, Integer> quad;
 		int rootCluster, parent, child, n = tree.size(), cluster, i;
 		int[] resultArr, parentArr = new int[n], childArr = new int[n];
 		UnifiedFinder unionFind;
@@ -1278,58 +1385,21 @@ public class HDBSCAN extends AbstractDBSCAN {
 				final LogTimer timer = new LogTimer();
 				
 				// Meant to prevent multiple .getData() copy calls
-				dataData = data.getData();
-				
-				// We don't build the dist mat, because only needed for some algos
-				//dist_mat = ClustUtils.distanceUpperTriangMatrix(data, getSeparabilityMetric());
-				
+				dataData = this.data.getData();
 				
 				// Build the tree
-				String msg = "constructing HDBSCAN single linkage dendrogram: ";
-				Class<? extends HDBSCANLinkageTree> clz = null;
-				switch(algo) {
-					case GENERIC:
-						clz = GenericTree.class;
-						info(msg + clz.getName());
-						tree = new GenericTree();
-						break;
-						
-					case PRIMS_KDTREE:
-						clz = PrimsKDTree.class;
-						info(msg + clz.getName());
-						tree = new PrimsKDTree(leafSize);
-						break;
-						
-					case PRIMS_BALLTREE:
-						clz = PrimsBallTree.class;
-						info(msg + clz.getName());
-						tree = new PrimsBallTree(leafSize);
-						break;
-					/*	
-					case BORUVKA_KDTREE:
-						clz = BoruvkaKDTree.class;
-						info(msg + clz.getName());
-						tree = new BoruvkaKDTree(leafSize);
-						break;
-						
-					case BORUVKA_BALLTREE:
-						clz = BoruvkaBallTree.class;
-						info(msg + clz.getName());
-						tree = new BoruvkaBallTree(leafSize);
-						break;
-					*/	
-					default:
-						throw new InternalError("illegal algorithm");
-				}
+				info("constructing HDBSCAN single linkage dendrogram: " + algo);
+				this.tree = algo.initTree(this);
+				
 				
 				LogTimer treeTimer = new LogTimer();
-				final double[][] build = tree.link(); // returns the result of the label(..) function
+				final double[][] lab_tree = tree.link(); // returns the result of the label(..) function
 				info("completed tree building in " + treeTimer.toString());
 				
 
-				info("converting tree to labels ("+build.length+" x "+build[0].length+")");
+				info("converting tree to labels ("+lab_tree.length+" x "+lab_tree[0].length+")");
 				LogTimer labTimer = new LogTimer();
-				labels = treeToLabels(dataData, build, min_cluster_size, this);
+				labels = treeToLabels(dataData, lab_tree, min_cluster_size, this);
 				
 				
 				// Wrap up...
@@ -1424,12 +1494,12 @@ public class HDBSCAN extends AbstractDBSCAN {
 		 * @param tree
 		 * @return
 		 */
-		protected static EntryPair<HList<double[]>, Integer> childSizeGtOneAndMaxChild(HList<QuadTup<Integer, Integer, Double, Integer>> tree) {
+		protected static EntryPair<HList<double[]>, Integer> childSizeGtOneAndMaxChild(HList<CompQuadTup<Integer, Integer, Double, Integer>> tree) {
 			HList<double[]> out = new HList<>();
 			int max = Integer.MIN_VALUE;
 			
 			// [parent, child, lambda, size]
-			for(QuadTup<Integer, Integer, Double, Integer> tup: tree) {
+			for(CompQuadTup<Integer, Integer, Double, Integer> tup: tree) {
 				if(tup.four > 1)
 					out.add(new double[]{
 						tup.one,
@@ -1495,7 +1565,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
-	protected static int[] getLabels(HList<QuadTup<Integer, Integer, Double, Integer>> condensed,
+	protected static int[] getLabels(HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed,
 									TreeMap<Integer, Double> stability) {
 		
 		double subTreeStability;
@@ -1563,7 +1633,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			a = (int)tree[index][0];
 			b = (int)tree[index][1];
-			delta = tree[index][2];
+			delta  = tree[index][2];
 			
 			aa = U.fastFind(a);
 			bb = U.fastFind(b);
@@ -1592,10 +1662,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 	protected static int[] treeToLabels(final double[][] X, 
 			final double[][] single_linkage_tree, final int min_size, Loggable logger) {
 		
-		final HList<QuadTup<Integer, Integer, Double, Integer>> condensed = 
+		final HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
 				LinkageTreeUtils.condenseTree(single_linkage_tree, min_size);
 		final TreeMap<Integer, Double> stability = LinkageTreeUtils.computeStability(condensed);
-		
 		return getLabels(condensed, stability);
 	}
 	

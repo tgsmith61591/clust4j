@@ -31,7 +31,7 @@ public class TestMetrics {
 		double silhouette = SilhouetteScore
 			.getInstance()
 			.evaluate(X, Distance.EUCLIDEAN, labels);
-		assertTrue(silhouette == 0.5034774406932967);
+		assertTrue(silhouette == 0.5032506980665507);
 	}
 	
 	@Test(expected=DimensionMismatchException.class)

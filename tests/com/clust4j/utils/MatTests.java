@@ -1664,9 +1664,9 @@ public class MatTests {
 	
 	@Test
 	public void testMeanRecords() {
-		assertTrue(VecUtils.equalsExactly(
+		assertTrue(VecUtils.equalsWithTolerance(
 			MatUtils.meanRecord(IRIS.getData().getData()),
-			new double[]{5.843333333333335, 3.057333333333334, 3.7580000000000027, 1.199333333333334}));
+			new double[]{5.84333333,  3.054     ,  3.75866667,  1.19866667}, 1e-8));
 	
 		double[][] d = new double[][]{
 			new double[]{0,1,2},

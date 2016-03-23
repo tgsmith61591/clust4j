@@ -5,7 +5,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
-import com.clust4j.log.LogTimeFormatter;
+import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.Pairwise;
@@ -15,7 +15,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	private static final long serialVersionUID = 3935595821188876442L;
 
 	// the initialization reorganizes the trees
-	final BoruvAlg alg;
+	final Boruvka alg;
 	
 	private final NearestNeighborHeapSearch outer_tree;
 	private final int minSamples;
@@ -28,6 +28,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	BoruvkaAlgorithm(NearestNeighborHeapSearch tree, int min_samples, 
 			DistanceMetric metric, int leafSize, boolean approx_min_span_tree,
 			double alpha) {
+		
 		this(tree, min_samples, metric, leafSize, approx_min_span_tree, alpha, null);
 	}
 	
@@ -52,63 +53,6 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	}
 	
 	
-	/*
-	static class BoruvkaUnionFind extends HDBSCAN.UnifiedFinder {
-		int[][] data;
-		boolean[] isComponent;
-		
-		BoruvkaUnionFind(int size) {
-			super(size);
-			data = new int[size][2];
-			
-			// Set first col to arange
-			for(int i = 0; i < size; i++)
-				data[i][0] = i;
-			
-			isComponent = new boolean[size];
-		}
-		
-		@Override
-		public void union(int x, int y) {
-			int xRoot = find(x);
-			int yRoot = find(y);
-			
-			if(data[xRoot][1] < data[yRoot][1])
-				data[xRoot][0] = yRoot;
-			else if(data[xRoot][1] > data[yRoot][1])
-				data[yRoot][0] = xRoot;
-			else {
-				data[yRoot][0] = xRoot;
-				data[xRoot][1] += 1;
-			}
-		}
-		
-		@Override
-		public int find(int x) {
-			if(data[x][0] != x) {
-				data[x][0] = find(data[x][0]);
-				isComponent[x] = false;
-			}
-			
-			return data[x][0];
-		}
-		
-		int[] components() {
-			ArrayList<Integer> nonZero = new ArrayList<>();
-			
-			for(int i = 0; i < isComponent.length; i++)
-				if(isComponent[i])
-					nonZero.add(i);
-			
-			int[] components = new int[nonZero.size()];
-			for(int i = 0; i < components.length; i++)
-				components[i] = nonZero.get(i);
-			
-			return components;
-		}
-	}
-	*/
-	
 	static class BoruvkaUnionFind extends HDBSCAN.TreeUnionFind {
 		BoruvkaUnionFind(int N) {
 			super(N);
@@ -116,13 +60,13 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	}
 	
 
-	double ballTreeMinDistDual(double rad1, double rad2, int node1, int node2, double[][] centroidDist) {
+	static double ballTreeMinDistDual(double rad1, double rad2, int node1, int node2, double[][] centroidDist) {
 		double distPt = centroidDist[node1][node2];
 		return FastMath.max(0, (distPt - rad1 - rad2));
 	}
 	
-	Neighborhood coreDistQuery(NearestNeighborHeapSearch tree, double[][] X,
-									int min_samples, boolean dualTree, boolean breadthFirst) {
+	static Neighborhood coreDistQuery(NearestNeighborHeapSearch tree, 
+			double[][] X, int min_samples, boolean dualTree, boolean breadthFirst) {
 		return tree.query(X, min_samples, dualTree, true);
 	}
 	
@@ -137,12 +81,13 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	 * @param n
 	 * @return
 	 */
-	double kdTreeMinDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
+	static double kdTreeMinDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
 		return metric.partialDistanceToDistance(kdTreeMinRDistDual(metric, node1, node2, nodeBounds, n));
 	}
 	
-	double kdTreeMinRDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
+	static double kdTreeMinRDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
 		double d, d1, d2, rdist = 0.0;
+		boolean inf = metric.getP() == Double.POSITIVE_INFINITY;
 		int j;
 		
 		for(j = 0; j < n; j++) {
@@ -150,10 +95,9 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 			d2 = nodeBounds[0][node2][j] - nodeBounds[1][node1][j];
 			d = (d1 + FastMath.abs(d1)) + (d2 + FastMath.abs(d2));
 			
-			if(metric.getP() == Double.POSITIVE_INFINITY)
-				rdist = FastMath.max(rdist, 0.5 * d);
-			else
-				rdist += FastMath.pow(0.5 * d, metric.getP());
+			rdist = 
+				inf ? FastMath.max(rdist, 0.5 * d) :
+					rdist + FastMath.pow(0.5 * d, metric.getP());
 		}
 		
 		return rdist;
@@ -165,17 +109,17 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	 * tree traversal algorithm
 	 * @author Taylor G Smith
 	 */
-	abstract class BoruvAlg {
+	abstract class Boruvka {
 		final static int INIT_VAL = -1;
 		
 		final NearestNeighborHeapSearch coreDistTree = outer_tree;
 		final NearestNeighborHeapSearch TREE;
 		final BoruvkaUnionFind componentUnionFind;
 		
-		final double[][] data_arr;
+		final double[][] tree_data_ref;
 		final double[][][] node_bounds;
 		final int[] idx_array;
-		final NodeData[] node_data;
+		final NodeData[] node_data_ref;
 		final boolean partialDistTransform;
 		
 		int numPoints, numFeatures, 
@@ -190,16 +134,16 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		double[][] edges;
 		double[] coreDistance;
 		
-		BoruvAlg(boolean partialTrans, NearestNeighborHeapSearch TREE){
+		Boruvka(boolean partialTrans, NearestNeighborHeapSearch TREE){
 			this.TREE 			= TREE;
-			this.data_arr 		= TREE.getDataRef();
+			this.tree_data_ref 	= TREE.getDataRef();
 			this.node_bounds 	= TREE.getNodeBoundsRef();
 			this.idx_array 		= TREE.getIndexArrayRef();
-			this.node_data 		= TREE.getNodeDataRef();
+			this.node_data_ref 	= TREE.getNodeDataRef();
 
-			this.numPoints 		= this.data_arr.length;
-			this.numFeatures	= this.data_arr[0].length;
-			this.numNodes 		= this.node_bounds.length;
+			this.numPoints 		= this.tree_data_ref.length;
+			this.numFeatures	= this.tree_data_ref[0].length;
+			this.numNodes 		= this.node_data_ref.length;
 
 			this.components 		= VecUtils.arange(numPoints);
 			this.bounds 			= new double[numNodes];
@@ -211,16 +155,14 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 			this.edges 				= new double[numPoints - 1][3];
 			this.componentUnionFind = new BoruvkaUnionFind(numPoints);
 			
-			long s = System.currentTimeMillis();
+			LogTimer s = new LogTimer();
 			this.partialDistTransform = partialTrans;
 			
 			initComponents();
 			computeBounds();
 
 			if(null != logger)
-				logger.info("completed Boruvka nearest neighbor search in " + 
-					LogTimeFormatter.millis(System.currentTimeMillis()-s, false) + 
-					System.lineSeparator());
+				logger.info("completed Boruvka nearest neighbor search in " + s.toString());
 		}
 		
 		final void initComponents() {
@@ -238,7 +180,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		}
 		
 		final double[][] spanningTree() {
-			int numComponents = this.data_arr.length;
+			int numComponents = this.tree_data_ref.length;
 			
 			while(numComponents > 1) {
 				this.dualTreeTraversal(0, 0);
@@ -267,20 +209,23 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				source = this.candidatePoint[component];
 				sink = this.candidateNeighbors[component];
 				
+				//Src or sink is undefined...
 				if(source == INIT_VAL || sink == INIT_VAL)
 					continue;
 				
 				currentSrcComponent = this.componentUnionFind.find(source);
 				currentSinkComponent= this.componentUnionFind.find(sink);
 				
+
+				// Already joined these so ignore this edge
 				if(currentSrcComponent == currentSinkComponent) {
-					// Already joined so ignore this edge
 					this.candidatePoint[component] = INIT_VAL;
 					this.candidateNeighbors[component] = INIT_VAL;
 					this.candidateDistance[component] = Double.MAX_VALUE;
 					continue;
 				}
 				
+				// Set edge
 				this.edges[numEdges][0] = source;
 				this.edges[numEdges][1] = sink;
 				this.edges[numEdges][2] = this.partialDistTransform ?
@@ -288,9 +233,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 							this.candidateDistance[component]) :
 								this.candidateDistance[component];
 				this.numEdges++;
+				
+				// Join
 				this.componentUnionFind.union(source, sink);
 				
-				// Reset and check for termination condition
+				// Reset everything and check for termination condition
 				this.candidateDistance[component] = Double.MAX_VALUE;
 				if(this.numEdges == this.numPoints - 1) {
 					this.components = this.componentUnionFind.components();
@@ -300,12 +247,14 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 			
 			
 			// After joining everything, we go through to determine
-			// the components of each point for an easier lookup.
-			for(n = 0; n < data_arr.length; n++)
+			// the components of each point for an easier lookup. Makes
+			// for faster pruning later...
+			for(n = 0; n < this.tree_data_ref.length; n++)
 				this.componentOfPoint[n] = this.componentUnionFind.find(n);
 			
-			for(n = node_data.length - 1; n >= 0; n--) {
-				nodeInfo = this.node_data[n];
+			
+			for(n = this.node_data_ref.length - 1; n >= 0; n--) {
+				nodeInfo = this.node_data_ref[n];
 				
 				// If node is leaf, check that every point in node is same component
 				if(nodeInfo.isLeaf()) {
@@ -335,6 +284,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				}
 			}
 			
+			
 			// This is a tie breaking method
 			if(approxMinSpanTree) {
 				lastNumComponents = this.components.length;
@@ -357,7 +307,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		abstract int dualTreeTraversal(int node1, int node2);
 	}
 	
-	class KDTreeBoruvAlg extends BoruvAlg {
+	class KDTreeBoruvAlg extends Boruvka {
 		KDTreeBoruvAlg() {
 			super(true, new KDTree(
 				new Array2DRowRealMatrix(outer_tree.getDataRef(), false), 
@@ -368,8 +318,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		void computeBounds() {
 			int n, i, m;
 			
+			// The python code uses the breadth-first search, but
+			// we eliminated the breadth-first option in favor of depth-first
+			// for all cases for the time being.
 			Neighborhood queryResult =
-				TREE.query(data_arr, minSamples + 1, true, true);
+				TREE.query(tree_data_ref, minSamples + 1, true, true);
 		
 			double[][] knnDist = queryResult.getDistances();
 			int[][] knnIndices = queryResult.getIndices();
@@ -394,8 +347,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				}
 			}
 			
-			updateComponents();
-			
+			this.updateComponents();
 			for(n = 0; n < numNodes; n++)
 				this.bounds[n] = Double.MAX_VALUE;
 		}
@@ -409,8 +361,8 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				newUpperBound, newLowerBound,
 				leftDist, rightDist;
 			
-			NodeData node1Info = node_data[node1],
-					 node2Info = node_data[node2];
+			NodeData node1Info = node_data_ref[node1],
+					 node2Info = node_data_ref[node2];
 			
 			int component1, component2, left, right;
 			
@@ -469,7 +421,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 						// They belong to different components
 						if(component1 != component2) {
 							
-							d = metric.getPartialDistance(this.data_arr[p], this.data_arr[q]);
+							d = metric.getPartialDistance(this.tree_data_ref[p], this.tree_data_ref[q]);
 							
 							mrDist = FastMath.max( 
 									// Avoid repeated division overhead
@@ -522,11 +474,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				left = 2 * node2 + 1;
 				right = 2 * node2 + 2;
 				
-				node2Info = this.node_data[left];
+				node2Info = this.node_data_ref[left];
 				leftDist = kdTreeMinRDistDual(metric, 
 						node1, left, node_bounds, this.numFeatures);
 				
-				node2Info = this.node_data[right];
+				node2Info = this.node_data_ref[right];
 				rightDist= kdTreeMinRDistDual(metric,
 						node1, right,node_bounds, this.numFeatures);
 				
@@ -546,11 +498,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				left = 2 * node1 + 1;
 				right = 2 * node1 + 2;
 				
-				node1Info = this.node_data[left];
+				node1Info = this.node_data_ref[left];
 				leftDist = kdTreeMinRDistDual(metric, 
 						left, node2, node_bounds, this.numFeatures);
 				
-				node1Info = this.node_data[right];
+				node1Info = this.node_data_ref[right];
 				rightDist= kdTreeMinRDistDual(metric,
 						right,node2, node_bounds, this.numFeatures);
 				
@@ -569,7 +521,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		}
 	}
 	
-	class BallTreeBoruvAlg extends BoruvAlg {
+	class BallTreeBoruvAlg extends Boruvka {
 		final double[][] centroidDistances;
 		
 		BallTreeBoruvAlg() {
@@ -585,8 +537,9 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		void computeBounds() {
 			int n, i, m;
 			
+			// No longer doing breadth-first searches
 			Neighborhood queryResult =
-				TREE.query(data_arr, minSamples, true, true);
+				TREE.query(tree_data_ref, minSamples, true, true);
 		
 			double[][] knnDist = queryResult.getDistances();
 			int[][] knnIndices = queryResult.getIndices();
@@ -597,7 +550,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				coreDistance[i] = knnDist[i][minSamples - 1];
 			
 			for(n = 0; n < numPoints; n++) {
-				for(i = minSamples - 1; i < 0; i++) {
+				for(i = minSamples - 1; i > 0; i--) {
 					m = knnIndices[n][i];
 					
 					if(this.coreDistance[m] <= this.coreDistance[n]) {
@@ -625,8 +578,8 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				boundMax, boundMin,
 				leftDist, rightDist;
 			
-			NodeData node1Info = node_data[node1],
-					 node2Info = node_data[node2]
+			NodeData node1Info = node_data_ref[node1],
+					 node2Info = node_data_ref[node2]
 					 ,parentInfo, leftInfo, rightInfo
 					;
 			
@@ -687,7 +640,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 						
 						// They belong to different components
 						if(component1 != component2) {
-							d = metric.getDistance(this.data_arr[p], this.data_arr[q]);
+							d = metric.getDistance(this.tree_data_ref[p], this.tree_data_ref[q]);
 							
 							mrDist = FastMath.max( 
 									// Avoid repeated division overhead
@@ -722,9 +675,9 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 						left = 2 * parent + 1;
 						right = 2 * parent + 2;
 						
-						parentInfo = this.node_data[parent];
-						leftInfo = this.node_data[left];
-						rightInfo = this.node_data[right];
+						parentInfo = this.node_data_ref[parent];
+						leftInfo = this.node_data_ref[left];
+						rightInfo = this.node_data_ref[right];
 						
 						boundMax = FastMath.max(this.bounds[left], this.bounds[right]);
 						boundMin = FastMath.min(this.bounds[left] + 2 * (parentInfo.radius() - leftInfo.radius()), 
@@ -751,11 +704,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				left = 2 * node2 + 1;
 				right = 2 * node2 + 2;
 				
-				node2Info = this.node_data[left];
+				node2Info = this.node_data_ref[left];
 				leftDist = ballTreeMinDistDual(node1Info.radius(),
 						node2Info.radius(), node1, left, this.centroidDistances);
 				
-				node2Info = this.node_data[right];
+				node2Info = this.node_data_ref[right];
 				rightDist= ballTreeMinDistDual(node1Info.radius(),
 						node2Info.radius(), node1, right, this.centroidDistances);
 				
@@ -775,11 +728,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 				left = 2 * node1 + 1;
 				right = 2 * node1 + 2;
 				
-				node1Info = this.node_data[left];
+				node1Info = this.node_data_ref[left];
 				leftDist = ballTreeMinDistDual(node1Info.radius(),
 						node2Info.radius(), left, node2, this.centroidDistances);
 				
-				node1Info = this.node_data[right];
+				node1Info = this.node_data_ref[right];
 				rightDist= ballTreeMinDistDual(node1Info.radius(),
 						node2Info.radius(), right, node2, this.centroidDistances);
 				

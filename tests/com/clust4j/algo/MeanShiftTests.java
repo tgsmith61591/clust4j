@@ -266,8 +266,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		final double[][] X = iris.getData();
 		
-		// MS estimates bw at 1.202076812799869
-		final double bandwidth = 1.202076812799869;
+		// MS estimates bw at 1.2032034114912584
+		final double bandwidth = 1.2032034114912584;
 		assertTrue(MeanShift.autoEstimateBW(iris, 0.3, 
 			Distance.EUCLIDEAN, GlobalState.DEFAULT_RANDOM_STATE, false) == bandwidth);
 		
@@ -411,8 +411,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			.STANDARD_SCALE.operate(data_);
 		final double[][] X = iris.getData();
 		
-		// MS estimates bw at 1.5971266273438016
-		final double bandwidth = 1.5971266273438016;
+		// MS estimates bw at 1.6041295821313855
+		final double bandwidth = 1.6041295821313855;
 		
 		assertTrue(
 			Precision.equals(
@@ -434,18 +434,17 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		for(double[] seed: X)
 			centers.add(MeanShift.singleSeed(seed, r, X, 300));
 		
-		assertTrue(centers.size() == 5);
+		assertTrue(centers.size() == 4);
 		
 		double[][] expected_dists = new double[][]{
-			new double[]{ 0.50161528154395962, -0.31685274298813487,  0.65388162422893481, 0.65270450741975761},
-			new double[]{ 0.4829041180399124,  -0.3184802762043775,   0.6434194172372906,  0.6471200248238047 },
-			new double[]{ 0.52001211065400177, -0.29561728795619946,  0.67106269515983397, 0.67390853215763813},
-			new double[]{ 0.54861244890482475, -0.25718786696105495,  0.68964559485632182, 0.69326664641211422},
-			new double[]{-1.0595457115461515,   0.74408909010240054, -1.2995708885010491, -1.2545442961404225 }
+			new double[]{ 0.50161528154395962, -0.31685274298813487, 0.65388162422893481, 0.65270450741975761 },
+			new double[]{ 0.52001211065400177, -0.29561728795619946, 0.67106269515983397, 0.67390853215763813 },
+			new double[]{ 0.54861244890482475, -0.25718786696105495, 0.68964559485632182, 0.69326664641211422 },
+			new double[]{-1.0595457115461515,   0.74408909010240054,-1.2995708885010491 ,-1.2545442961404225  }
 		};
 		
 		int[] expected_centers= new int[]{
-			82, 81, 80, 77, 45
+			82, 80, 77, 45
 		};
 		
 		int idx = 0;
@@ -513,14 +512,14 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		redundant_ct = unique.length - centroids.size();
 		
-		assertTrue(redundant_ct == 3);
+		assertTrue(redundant_ct == 2);
 		assertTrue(centroids.size() == 2);
-		assertTrue(VecUtils.equalsExactly(centroids.get(0), new double[]{
-			0.4999404345258693, -0.3217963110452594, 0.6517519610505076, 0.6504383581073984
-		}));
-		
+		assertTrue(VecUtils.equalsWithTolerance(centroids.get(0), new double[]{
+			0.4999404345258691, -0.3157948009929614, 0.6516983739795399, 0.6505251874544873
+		}, 1e-6));
+
 		assertTrue(VecUtils.equalsExactly(centroids.get(1), new double[]{
-			-1.05600798643927, 0.7555834087538411, -1.2954688594835102, -1.2498288991228386
+			-1.0560079864392702, 0.7416046454700266, -1.295231741534238, -1.2503554887998656
 		}));
 		
 		

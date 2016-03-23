@@ -106,7 +106,18 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	 * @param logger
 	 */
 	public NearestNeighborHeapSearch(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
-		this.data_arr = X.getData();
+		this(X.getData(), leaf_size, dist, logger);
+	}
+	
+	/**
+	 * Constructor with logger object
+	 * @param X
+	 * @param leaf_size
+	 * @param dist
+	 * @param logger
+	 */
+	protected NearestNeighborHeapSearch(final double[][] X, int leaf_size, DistanceMetric dist, Loggable logger) {
+		this.data_arr = MatUtils.copy(X);
 		this.leaf_size = leaf_size;
 		this.logger = logger;
 		
@@ -132,7 +143,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
         // with numbers of points between leaf_size and 2 * leaf_size
 		MatUtils.checkDims(this.data_arr);
 		N_SAMPLES = data_arr.length;  
-		N_FEATURES = X.getColumnDimension();
+		N_FEATURES = X[0].length;
 		
 		/*
 		// Should round up or always take floor function?...

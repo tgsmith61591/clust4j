@@ -54,6 +54,10 @@ public class KDTree extends NearestNeighborHeapSearch {
 		super(X, leaf_size, dist, logger);
 	}
 	
+	protected KDTree(final double[][] X, int leaf_size, DistanceMetric dist, Loggable logger) {
+		super(X, leaf_size, dist, logger);
+	}
+	
 	/**
 	 * Constructor with logger and distance metric
 	 * @param X

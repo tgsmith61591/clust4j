@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -360,15 +359,6 @@ public class VecUtils {
 		return min_idx;
 	}
 	
-	private static <K> int[] argSort(ArrayList<Map.Entry<K, Integer>> theMap) {
-		int idx = 0;
-		final int[] res = new int[theMap.size()];
-		for(Map.Entry<K,Integer> entry: theMap)
-			res[idx++] = entry.getValue();
-		
-		return res;
-	}
-	
 	/**
 	 * Given a vector, returns a vector of ints corresponding to the position
 	 * of the original elements the indices in which they would be ordered were they sorted.
@@ -380,23 +370,7 @@ public class VecUtils {
 	 */
 	public static int[] argSort(final double[] a) {
 		checkDims(a);
-		
-		final int n = a.length;
-		final ArrayList<Map.Entry<Double, Integer>> out = new ArrayList<>();
-		for(int i = 0; i < n; i++)
-			out.add(new EntryPair<Double, Integer>(a[i], i));
-		
-		Collections.sort(out, new Comparator<Map.Entry<Double,Integer>>(){
-			@Override
-			public int compare(Map.Entry<Double,Integer> m1, Map.Entry<Double,Integer> m2) {
-				int comp = m1.getKey().compareTo(m2.getKey());
-				if(comp == 0)
-					return m1.getValue().compareTo(m2.getValue());
-				return comp;
-			}
-		});
-		
-		return argSort(out);
+		return ArgSorter.argsort(a);
 	}
 	
 	/**
@@ -410,23 +384,65 @@ public class VecUtils {
 	 */
 	public static int[] argSort(final int[] a) {
 		checkDims(a);
+		return ArgSorter.argsort(a);
+	}
+	
+	/**
+	 * Class to arg sort double and int arrays
+	 * @author Taylor G Smith
+	 */
+	static class ArgSorter {
+		static int[] argsort(final double[] a) {
+	        return argsort(a, true);
+	    }
 		
-		final int n = a.length;
-		final ArrayList<Map.Entry<Integer, Integer>> out = new ArrayList<>();
-		for(int i = 0; i < n; i++)
-			out.add(new EntryPair<Integer, Integer>(a[i], i));
+		private static Integer[] _arange(int len) {
+			Integer[] range = new Integer[len];
+	        for (int i = 0; i < len; i++)
+	            range[i] = i;
+	        
+	        return range;
+		}
+
+	    static int[] argsort(final double[] a, final boolean ascending) {
+	        Integer[] indexes = _arange(a.length);
+	        
+	        Arrays.sort(indexes, new Comparator<Integer>() {
+	            @Override
+	            public int compare(final Integer i1, final Integer i2) {
+	                return (ascending ? 1 : -1) * Double.compare(a[i1], a[i2]);
+	            }
+	        });
+	        
+	        return asArray(indexes);
+	    }
 		
-		Collections.sort(out, new Comparator<Map.Entry<Integer, Integer>>(){
-			@Override
-			public int compare(Map.Entry<Integer, Integer> m1, Map.Entry<Integer, Integer> m2) {
-				int comp = m1.getKey().compareTo(m2.getKey());
-				if(comp == 0)
-					return m1.getValue().compareTo(m2.getValue());
-				return comp;
-			}
-		});
-		
-		return argSort(out);
+		static int[] argsort(final int[] a) {
+			return argsort(a, true);
+		}
+	    
+	    static int[] argsort(final int[] a, final boolean ascending) {
+	        Integer[] indexes = _arange(a.length);
+	        
+	        Arrays.sort(indexes, new Comparator<Integer>() {
+	            @Override
+	            public int compare(final Integer i1, final Integer i2) {
+	                return (ascending ? 1 : -1) * Integer.compare(a[i1], a[i2]);
+	            }
+	        });
+	        
+	        return asArray(indexes);
+	    }
+
+	    @SafeVarargs
+		static <T extends Number> int[] asArray(final T... a) {
+	        int[] b = new int[a.length];
+	        for (int i = 0; i < b.length; i++) {
+	            b[i] = a[i].intValue();
+	        }
+	        
+	        return b;
+	    }
 	}
 	
 	/**

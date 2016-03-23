@@ -176,7 +176,7 @@ public class DBSCAN extends AbstractDBSCAN {
 	 */
 	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
 		super(data, planner);
-		m = data.getRowDimension();
+		this.m = data.getRowDimension();
 		
 		// Error handle...
 		String e;

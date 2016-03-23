@@ -7,14 +7,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.HDBSCAN.Algorithm;
+import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
+import com.clust4j.algo.HDBSCAN.CompQuadTup;
 import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
 import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
@@ -24,6 +29,7 @@ import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Inequality;
@@ -41,6 +47,16 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		new double[]{1,2,3},
 		new double[]{4,5,6},
 		new double[]{7,8,9}
+	};
+	
+	final int[] expected_iris_labs  = new int[]{
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	};
 
 	
@@ -136,7 +152,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			new double[]{3.0, 1.0, 0.6, 3.0}
 		};
 		
-		HList<QuadTup<Integer, Integer, Double, Integer>> h = HDBSCAN.LinkageTreeUtils.condenseTree(slt, 5);
+		HList<CompQuadTup<Integer, Integer, Double, Integer>> h = HDBSCAN.LinkageTreeUtils.condenseTree(slt, 5);
 		QuadTup<Integer, Integer, Double, Integer> q = h.get(0);
 		assertTrue(q.one == 3);
 		assertTrue(q.two == 0);
@@ -295,7 +311,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
 				new HDBSCANPlanner(1)
-					.setAlgo(Algorithm.PRIMS_KDTREE)
+					.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)
 					.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
@@ -389,7 +405,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
 				new HDBSCANPlanner(1)
-					.setAlgo(Algorithm.PRIMS_BALLTREE)
+					.setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)
 					.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
@@ -412,11 +428,11 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	
 	@Test
 	public void testSizeOverOne() {
-		HList<QuadTup<Integer, Integer, Double, Integer>> tup = new HList<>();
-		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,2,1.0,1));
-		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
-		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
-		tup.add(new QuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		HList<CompQuadTup<Integer, Integer, Double, Integer>> tup = new HList<>();
+		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,2,1.0,1));
+		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
+		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
 		
 		EntryPair<HList<double[]>, Integer> entry = 
 			HDBSCAN.GetLabelUtils.childSizeGtOneAndMaxChild(tup);
@@ -499,7 +515,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	public void testSepWarn() {
 		HDBSCAN h = new HDBSCAN(TestSuite.getRandom(5, 5), 
 			new HDBSCANPlanner()
-				.setAlgo(Algorithm.PRIMS_KDTREE)
+				.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)
 				.setSep(new GaussianKernel()));
 		assertTrue(h.hasWarnings());
 	}
@@ -518,29 +534,22 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		HDBSCAN h = new HDBSCAN(X).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_KDTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_BALLTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
 		// Test on IRIS
-		h = new HDBSCAN(iris).fit();
+		h = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
 		
-		int[] expectedLabels = new NoiseyLabelEncoder(new int[]{
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		}).fit().getEncodedLabels();
+		int[] expectedLabels = new NoiseyLabelEncoder(expected_iris_labs)
+			.fit().getEncodedLabels();
 		
 		assertTrue(VecUtils.equalsExactly(expectedLabels, h.getLabels()));
 		
 		// TODO fix KD & BALL trees
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(Algorithm.PRIMS_KDTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 		System.out.println(Arrays.toString(h.getLabels()));
 	}
 	
@@ -572,37 +581,790 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		assertTrue(MatUtils.equalsExactly(mr, expected));
 	}
 	
-	/*@Test
-	public void testBoruvkaKDRun() {
-		final double[][] x = new double[][]{
-			new double[]{0,1,0,2},
-			new double[]{0,0,1,2},
-			new double[]{5,6,7,4}
-		};
+	@Test
+	public void testGenericAlgo() {
+		HDBSCAN h = new HDBSCAN(iris,
+			new HDBSCANPlanner()
+				.setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
 		
-		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
-				new HDBSCANPlanner(1)
-					.setAlgo(Algorithm.BORUVKA_KDTREE)
-					.setVerbose(true)).fit();
-		int[] labels = model.getLabels();
-		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
-		System.out.println();
+		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
 	}
 	
 	@Test
-	public void testBoruvkaBallRun() {
-		final double[][] x = new double[][]{
-			new double[]{0,1,0,2},
-			new double[]{0,0,1,2},
-			new double[]{5,6,7,4}
+	public void testPrimsKD() {
+		HDBSCAN h = new HDBSCAN(iris,
+			new HDBSCANPlanner()
+				.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
+
+		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
+	}
+	
+	@Test
+	public void testPrimsBall() {
+		HDBSCAN h = new HDBSCAN(iris,
+			new HDBSCANPlanner()
+				.setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)).fit();
+
+		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
+	}
+	
+	@Test
+	public void testBoruvkaKDTree() {
+		HDBSCAN h = new HDBSCAN(iris,
+			new HDBSCANPlanner()
+				.setAlgo(HDBSCAN_Algorithm.BORUVKA_KDTREE)).fit();
+		
+		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
+	}
+	
+	@Test
+	public void testBoruvkaBallTree() {
+		HDBSCAN h = new HDBSCAN(iris,
+			new HDBSCANPlanner()
+				.setAlgo(HDBSCAN_Algorithm.BORUVKA_BALLTREE)).fit();
+		
+		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
+	}
+	
+	@Test
+	public void testPrimLinkage() {
+		KDTree k = new KDTree(iris);
+		double[] core_dists = MatUtils.getColumn(
+			k.query(iris.getDataRef(), 5, true, true).getDistances(),
+			4
+		);
+		
+		double[][] X = iris.getData();
+		DistanceMetric metric = Distance.EUCLIDEAN;
+		double alpha = 1.0;
+		
+		double[][] cdist = HDBSCAN.LinkageTreeUtils
+			.minSpanTreeLinkageCore_cdist(X, 
+				core_dists, metric, alpha);
+		
+		double[][] expected_cdists = new double[][]{
+			new double[]{  0.00000000e+00,   3.90000000e+01,   1.41421356e-01},
+			new double[]{  3.90000000e+01,   1.70000000e+01,   1.73205081e-01},
+			new double[]{  1.70000000e+01,   2.70000000e+01,   1.73205081e-01},
+			new double[]{  2.70000000e+01,   2.80000000e+01,   1.73205081e-01},
+			new double[]{  2.80000000e+01,   7.00000000e+00,   2.00000000e-01},
+			new double[]{  7.00000000e+00,   4.90000000e+01,   2.23606798e-01},
+			new double[]{  4.90000000e+01,   4.00000000e+00,   2.23606798e-01},
+			new double[]{  4.00000000e+00,   2.60000000e+01,   2.44948974e-01},
+			new double[]{  2.60000000e+01,   4.00000000e+01,   2.44948974e-01},
+			new double[]{  4.00000000e+01,   4.80000000e+01,   2.44948974e-01},
+			new double[]{  4.80000000e+01,   9.00000000e+00,   2.64575131e-01},
+			new double[]{  9.00000000e+00,   1.00000000e+00,   1.73205081e-01},
+			new double[]{  1.00000000e+00,   3.00000000e+01,   1.73205081e-01},
+			new double[]{  3.00000000e+01,   3.40000000e+01,   1.73205081e-01},
+			new double[]{  3.40000000e+01,   3.70000000e+01,   1.73205081e-01},
+			new double[]{  3.70000000e+01,   1.20000000e+01,   1.73205081e-01},
+			new double[]{  1.20000000e+01,   2.50000000e+01,   2.23606798e-01},
+			new double[]{  2.50000000e+01,   2.90000000e+01,   2.23606798e-01},
+			new double[]{  2.90000000e+01,   4.70000000e+01,   2.23606798e-01},
+			new double[]{  4.70000000e+01,   3.00000000e+00,   2.44948974e-01},
+			new double[]{  3.00000000e+00,   1.90000000e+01,   2.64575131e-01},
+			new double[]{  1.90000000e+01,   2.00000000e+00,   2.64575131e-01},
+			new double[]{  2.00000000e+00,   2.10000000e+01,   2.64575131e-01},
+			new double[]{  2.10000000e+01,   4.50000000e+01,   2.64575131e-01},
+			new double[]{  4.50000000e+01,   3.80000000e+01,   3.00000000e-01},
+			new double[]{  3.80000000e+01,   1.10000000e+01,   3.00000000e-01},
+			new double[]{  1.10000000e+01,   4.20000000e+01,   3.00000000e-01},
+			new double[]{  4.20000000e+01,   4.60000000e+01,   3.00000000e-01},
+			new double[]{  4.60000000e+01,   6.00000000e+00,   3.16227766e-01},
+			new double[]{  6.00000000e+00,   3.10000000e+01,   3.16227766e-01},
+			new double[]{  3.10000000e+01,   3.50000000e+01,   3.31662479e-01},
+			new double[]{  3.50000000e+01,   1.00000000e+01,   3.31662479e-01},
+			new double[]{  1.00000000e+01,   8.00000000e+00,   3.46410162e-01},
+			new double[]{  8.00000000e+00,   3.60000000e+01,   3.46410162e-01},
+			new double[]{  3.60000000e+01,   2.00000000e+01,   3.60555128e-01},
+			new double[]{  2.00000000e+01,   4.30000000e+01,   3.74165739e-01},
+			new double[]{  4.30000000e+01,   5.00000000e+00,   3.74165739e-01},
+			new double[]{  5.00000000e+00,   2.30000000e+01,   3.87298335e-01},
+			new double[]{  2.30000000e+01,   1.60000000e+01,   3.87298335e-01},
+			new double[]{  1.60000000e+01,   4.40000000e+01,   4.12310563e-01},
+			new double[]{  4.40000000e+01,   3.30000000e+01,   4.12310563e-01},
+			new double[]{  3.30000000e+01,   3.20000000e+01,   4.24264069e-01},
+			new double[]{  3.20000000e+01,   2.40000000e+01,   4.24264069e-01},
+			new double[]{  2.40000000e+01,   1.30000000e+01,   4.79583152e-01},
+			new double[]{  1.30000000e+01,   1.80000000e+01,   5.09901951e-01},
+			new double[]{  1.80000000e+01,   2.20000000e+01,   5.38516481e-01},
+			new double[]{  2.20000000e+01,   1.40000000e+01,   5.56776436e-01},
+			new double[]{  1.40000000e+01,   1.50000000e+01,   6.16441400e-01},
+			new double[]{  1.50000000e+01,   4.10000000e+01,   7.81024968e-01},
+			new double[]{  4.10000000e+01,   9.80000000e+01,   1.64012195e+00},
+			new double[]{  9.80000000e+01,   5.70000000e+01,   7.93725393e-01},
+			new double[]{  5.70000000e+01,   6.00000000e+01,   7.21110255e-01},
+			new double[]{  6.00000000e+01,   8.00000000e+01,   7.14142843e-01},
+			new double[]{  8.00000000e+01,   6.90000000e+01,   3.00000000e-01},
+			new double[]{  6.90000000e+01,   9.20000000e+01,   2.64575131e-01},
+			new double[]{  9.20000000e+01,   9.90000000e+01,   2.64575131e-01},
+			new double[]{  9.90000000e+01,   9.60000000e+01,   2.44948974e-01},
+			new double[]{  9.60000000e+01,   8.20000000e+01,   3.00000000e-01},
+			new double[]{  8.20000000e+01,   8.90000000e+01,   3.00000000e-01},
+			new double[]{  8.90000000e+01,   9.40000000e+01,   3.00000000e-01},
+			new double[]{  9.40000000e+01,   8.80000000e+01,   3.16227766e-01},
+			new double[]{  8.80000000e+01,   5.50000000e+01,   3.31662479e-01},
+			new double[]{  5.50000000e+01,   9.50000000e+01,   3.31662479e-01},
+			new double[]{  9.50000000e+01,   6.70000000e+01,   3.60555128e-01},
+			new double[]{  6.70000000e+01,   6.10000000e+01,   3.60555128e-01},
+			new double[]{  6.10000000e+01,   7.80000000e+01,   3.60555128e-01},
+			new double[]{  7.80000000e+01,   9.10000000e+01,   3.46410162e-01},
+			new double[]{  9.10000000e+01,   9.70000000e+01,   3.46410162e-01},
+			new double[]{  9.70000000e+01,   7.40000000e+01,   3.87298335e-01},
+			new double[]{  7.40000000e+01,   5.40000000e+01,   3.87298335e-01},
+			new double[]{  5.40000000e+01,   5.80000000e+01,   3.74165739e-01},
+			new double[]{  5.80000000e+01,   7.50000000e+01,   3.16227766e-01},
+			new double[]{  7.50000000e+01,   8.60000000e+01,   3.31662479e-01},
+			new double[]{  8.60000000e+01,   6.50000000e+01,   3.46410162e-01},
+			new double[]{  6.50000000e+01,   5.20000000e+01,   3.46410162e-01},
+			new double[]{  5.20000000e+01,   5.10000000e+01,   3.74165739e-01},
+			new double[]{  5.10000000e+01,   7.60000000e+01,   3.74165739e-01},
+			new double[]{  7.60000000e+01,   7.10000000e+01,   4.00000000e-01},
+			new double[]{  7.10000000e+01,   6.60000000e+01,   4.12310563e-01},
+			new double[]{  6.60000000e+01,   7.70000000e+01,   4.24264069e-01},
+			new double[]{  7.70000000e+01,   1.47000000e+02,   4.24264069e-01},
+			new double[]{  1.47000000e+02,   1.45000000e+02,   3.74165739e-01},
+			new double[]{  1.45000000e+02,   1.12000000e+02,   3.74165739e-01},
+			new double[]{  1.12000000e+02,   1.20000000e+02,   3.74165739e-01},
+			new double[]{  1.20000000e+02,   1.40000000e+02,   3.46410162e-01},
+			new double[]{  1.40000000e+02,   1.43000000e+02,   3.46410162e-01},
+			new double[]{  1.43000000e+02,   1.39000000e+02,   3.74165739e-01},
+			new double[]{  1.39000000e+02,   1.24000000e+02,   3.74165739e-01},
+			new double[]{  1.24000000e+02,   1.15000000e+02,   3.87298335e-01},
+			new double[]{  1.15000000e+02,   1.11000000e+02,   3.87298335e-01},
+			new double[]{  1.11000000e+02,   1.03000000e+02,   3.87298335e-01},
+			new double[]{  1.03000000e+02,   1.16000000e+02,   3.87298335e-01},
+			new double[]{  1.16000000e+02,   1.28000000e+02,   3.87298335e-01},
+			new double[]{  1.28000000e+02,   1.04000000e+02,   3.87298335e-01},
+			new double[]{  1.04000000e+02,   1.44000000e+02,   4.00000000e-01},
+			new double[]{  1.44000000e+02,   1.46000000e+02,   4.12310563e-01},
+			new double[]{  1.46000000e+02,   1.23000000e+02,   4.12310563e-01},
+			new double[]{  1.23000000e+02,   1.27000000e+02,   3.60555128e-01},
+			new double[]{  1.27000000e+02,   1.38000000e+02,   3.16227766e-01},
+			new double[]{  1.38000000e+02,   1.49000000e+02,   3.31662479e-01},
+			new double[]{  1.49000000e+02,   1.01000000e+02,   3.31662479e-01},
+			new double[]{  1.01000000e+02,   1.42000000e+02,   3.31662479e-01},
+			new double[]{  1.42000000e+02,   8.30000000e+01,   3.74165739e-01},
+			new double[]{  8.30000000e+01,   1.26000000e+02,   3.87298335e-01},
+			new double[]{  1.26000000e+02,   7.00000000e+01,   4.24264069e-01},
+			new double[]{  7.00000000e+01,   7.20000000e+01,   4.24264069e-01},
+			new double[]{  7.20000000e+01,   1.10000000e+02,   4.24264069e-01},
+			new double[]{  1.10000000e+02,   9.00000000e+01,   4.24264069e-01},
+			new double[]{  9.00000000e+01,   6.30000000e+01,   4.24264069e-01},
+			new double[]{  6.30000000e+01,   1.33000000e+02,   4.35889894e-01},
+			new double[]{  1.33000000e+02,   5.30000000e+01,   4.35889894e-01},
+			new double[]{  5.30000000e+01,   8.10000000e+01,   4.35889894e-01},
+			new double[]{  8.10000000e+01,   1.32000000e+02,   4.35889894e-01},
+			new double[]{  1.32000000e+02,   1.37000000e+02,   4.35889894e-01},
+			new double[]{  1.37000000e+02,   7.30000000e+01,   4.35889894e-01},
+			new double[]{  7.30000000e+01,   1.36000000e+02,   4.35889894e-01},
+			new double[]{  1.36000000e+02,   7.90000000e+01,   4.47213595e-01},
+			new double[]{  7.90000000e+01,   5.60000000e+01,   4.58257569e-01},
+			new double[]{  5.60000000e+01,   1.21000000e+02,   4.58257569e-01},
+			new double[]{  1.21000000e+02,   5.00000000e+01,   4.58257569e-01},
+			new double[]{  5.00000000e+01,   1.02000000e+02,   4.58257569e-01},
+			new double[]{  1.02000000e+02,   8.50000000e+01,   4.69041576e-01},
+			new double[]{  8.50000000e+01,   1.25000000e+02,   4.69041576e-01},
+			new double[]{  1.25000000e+02,   8.40000000e+01,   4.89897949e-01},
+			new double[]{  8.40000000e+01,   1.30000000e+02,   5.09901951e-01},
+			new double[]{  1.30000000e+02,   1.41000000e+02,   5.09901951e-01},
+			new double[]{  1.41000000e+02,   6.40000000e+01,   5.19615242e-01},
+			new double[]{  6.40000000e+01,   1.13000000e+02,   5.19615242e-01},
+			new double[]{  1.13000000e+02,   1.14000000e+02,   5.19615242e-01},
+			new double[]{  1.14000000e+02,   5.90000000e+01,   5.29150262e-01},
+			new double[]{  5.90000000e+01,   1.07000000e+02,   5.47722558e-01},
+			new double[]{  1.07000000e+02,   1.05000000e+02,   5.47722558e-01},
+			new double[]{  1.05000000e+02,   1.29000000e+02,   5.56776436e-01},
+			new double[]{  1.29000000e+02,   1.00000000e+02,   5.56776436e-01},
+			new double[]{  1.00000000e+02,   1.19000000e+02,   5.83095189e-01},
+			new double[]{  1.19000000e+02,   6.20000000e+01,   5.83095189e-01},
+			new double[]{  6.20000000e+01,   8.70000000e+01,   6.08276253e-01},
+			new double[]{  8.70000000e+01,   1.48000000e+02,   6.16441400e-01},
+			new double[]{  1.48000000e+02,   1.08000000e+02,   6.16441400e-01},
+			new double[]{  1.08000000e+02,   9.30000000e+01,   6.48074070e-01},
+			new double[]{  9.30000000e+01,   1.34000000e+02,   6.63324958e-01},
+			new double[]{  1.34000000e+02,   6.80000000e+01,   6.78232998e-01},
+			new double[]{  6.80000000e+01,   1.35000000e+02,   6.78232998e-01},
+			new double[]{  1.35000000e+02,   1.22000000e+02,   6.78232998e-01},
+			new double[]{  1.22000000e+02,   1.09000000e+02,   7.54983444e-01},
+			new double[]{  1.09000000e+02,   1.06000000e+02,   8.77496439e-01},
+			new double[]{  1.06000000e+02,   1.18000000e+02,   9.27361850e-01},
+			new double[]{  1.18000000e+02,   1.31000000e+02,   9.32737905e-01},
+			new double[]{  1.31000000e+02,   1.17000000e+02,   1.00498756e+00}
 		};
 		
-		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
-				new HDBSCANPlanner(1)
-					.setAlgo(Algorithm.BORUVKA_BALLTREE)
-					.setVerbose(true)).fit();
-		int[] labels = model.getLabels();
-		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
-		System.out.println();
-	}*/
+		assertTrue(MatUtils.equalsWithTolerance(cdist, expected_cdists, 1e-8));
+		
+		double[][] srtd_cdists = MatUtils.sortAscByCol(cdist, 2);
+		double[][] expected_srted = new double[][]{
+			new double[]{  0.00000000e+00,   3.90000000e+01,   1.41421356e-01},
+			new double[]{  3.90000000e+01,   1.70000000e+01,   1.73205081e-01},
+			new double[]{  1.70000000e+01,   2.70000000e+01,   1.73205081e-01},
+			new double[]{  2.70000000e+01,   2.80000000e+01,   1.73205081e-01},
+			new double[]{  3.40000000e+01,   3.70000000e+01,   1.73205081e-01},
+			new double[]{  3.00000000e+01,   3.40000000e+01,   1.73205081e-01},
+			new double[]{  9.00000000e+00,   1.00000000e+00,   1.73205081e-01},
+			new double[]{  1.00000000e+00,   3.00000000e+01,   1.73205081e-01},
+			new double[]{  3.70000000e+01,   1.20000000e+01,   1.73205081e-01},
+			new double[]{  2.80000000e+01,   7.00000000e+00,   2.00000000e-01},
+			new double[]{  1.20000000e+01,   2.50000000e+01,   2.23606798e-01},
+			new double[]{  7.00000000e+00,   4.90000000e+01,   2.23606798e-01},
+			new double[]{  4.90000000e+01,   4.00000000e+00,   2.23606798e-01},
+			new double[]{  2.90000000e+01,   4.70000000e+01,   2.23606798e-01},
+			new double[]{  2.50000000e+01,   2.90000000e+01,   2.23606798e-01},
+			new double[]{  4.00000000e+00,   2.60000000e+01,   2.44948974e-01},
+			new double[]{  2.60000000e+01,   4.00000000e+01,   2.44948974e-01},
+			new double[]{  4.00000000e+01,   4.80000000e+01,   2.44948974e-01},
+			new double[]{  4.70000000e+01,   3.00000000e+00,   2.44948974e-01},
+			new double[]{  9.90000000e+01,   9.60000000e+01,   2.44948974e-01},
+			new double[]{  4.80000000e+01,   9.00000000e+00,   2.64575131e-01},
+			new double[]{  3.00000000e+00,   1.90000000e+01,   2.64575131e-01},
+			new double[]{  1.90000000e+01,   2.00000000e+00,   2.64575131e-01},
+			new double[]{  2.00000000e+00,   2.10000000e+01,   2.64575131e-01},
+			new double[]{  2.10000000e+01,   4.50000000e+01,   2.64575131e-01},
+			new double[]{  9.20000000e+01,   9.90000000e+01,   2.64575131e-01},
+			new double[]{  6.90000000e+01,   9.20000000e+01,   2.64575131e-01},
+			new double[]{  4.50000000e+01,   3.80000000e+01,   3.00000000e-01},
+			new double[]{  4.20000000e+01,   4.60000000e+01,   3.00000000e-01},
+			new double[]{  3.80000000e+01,   1.10000000e+01,   3.00000000e-01},
+			new double[]{  1.10000000e+01,   4.20000000e+01,   3.00000000e-01},
+			new double[]{  8.00000000e+01,   6.90000000e+01,   3.00000000e-01},
+			new double[]{  8.90000000e+01,   9.40000000e+01,   3.00000000e-01},
+			new double[]{  8.20000000e+01,   8.90000000e+01,   3.00000000e-01},
+			new double[]{  9.60000000e+01,   8.20000000e+01,   3.00000000e-01},
+			new double[]{  4.60000000e+01,   6.00000000e+00,   3.16227766e-01},
+			new double[]{  1.27000000e+02,   1.38000000e+02,   3.16227766e-01},
+			new double[]{  6.00000000e+00,   3.10000000e+01,   3.16227766e-01},
+			new double[]{  9.40000000e+01,   8.80000000e+01,   3.16227766e-01},
+			new double[]{  5.80000000e+01,   7.50000000e+01,   3.16227766e-01},
+			new double[]{  8.80000000e+01,   5.50000000e+01,   3.31662479e-01},
+			new double[]{  3.10000000e+01,   3.50000000e+01,   3.31662479e-01},
+			new double[]{  7.50000000e+01,   8.60000000e+01,   3.31662479e-01},
+			new double[]{  1.38000000e+02,   1.49000000e+02,   3.31662479e-01},
+			new double[]{  1.49000000e+02,   1.01000000e+02,   3.31662479e-01},
+			new double[]{  1.01000000e+02,   1.42000000e+02,   3.31662479e-01},
+			new double[]{  5.50000000e+01,   9.50000000e+01,   3.31662479e-01},
+			new double[]{  3.50000000e+01,   1.00000000e+01,   3.31662479e-01},
+			new double[]{  8.60000000e+01,   6.50000000e+01,   3.46410162e-01},
+			new double[]{  1.00000000e+01,   8.00000000e+00,   3.46410162e-01},
+			new double[]{  8.00000000e+00,   3.60000000e+01,   3.46410162e-01},
+			new double[]{  7.80000000e+01,   9.10000000e+01,   3.46410162e-01},
+			new double[]{  9.10000000e+01,   9.70000000e+01,   3.46410162e-01},
+			new double[]{  1.20000000e+02,   1.40000000e+02,   3.46410162e-01},
+			new double[]{  1.40000000e+02,   1.43000000e+02,   3.46410162e-01},
+			new double[]{  6.50000000e+01,   5.20000000e+01,   3.46410162e-01},
+			new double[]{  9.50000000e+01,   6.70000000e+01,   3.60555128e-01},
+			new double[]{  1.23000000e+02,   1.27000000e+02,   3.60555128e-01},
+			new double[]{  3.60000000e+01,   2.00000000e+01,   3.60555128e-01},
+			new double[]{  6.10000000e+01,   7.80000000e+01,   3.60555128e-01},
+			new double[]{  6.70000000e+01,   6.10000000e+01,   3.60555128e-01},
+			new double[]{  1.12000000e+02,   1.20000000e+02,   3.74165739e-01},
+			new double[]{  1.45000000e+02,   1.12000000e+02,   3.74165739e-01},
+			new double[]{  1.47000000e+02,   1.45000000e+02,   3.74165739e-01},
+			new double[]{  1.42000000e+02,   8.30000000e+01,   3.74165739e-01},
+			new double[]{  1.43000000e+02,   1.39000000e+02,   3.74165739e-01},
+			new double[]{  1.39000000e+02,   1.24000000e+02,   3.74165739e-01},
+			new double[]{  5.20000000e+01,   5.10000000e+01,   3.74165739e-01},
+			new double[]{  5.10000000e+01,   7.60000000e+01,   3.74165739e-01},
+			new double[]{  2.00000000e+01,   4.30000000e+01,   3.74165739e-01},
+			new double[]{  5.40000000e+01,   5.80000000e+01,   3.74165739e-01},
+			new double[]{  4.30000000e+01,   5.00000000e+00,   3.74165739e-01},
+			new double[]{  7.40000000e+01,   5.40000000e+01,   3.87298335e-01},
+			new double[]{  9.70000000e+01,   7.40000000e+01,   3.87298335e-01},
+			new double[]{  1.24000000e+02,   1.15000000e+02,   3.87298335e-01},
+			new double[]{  1.16000000e+02,   1.28000000e+02,   3.87298335e-01},
+			new double[]{  1.03000000e+02,   1.16000000e+02,   3.87298335e-01},
+			new double[]{  1.11000000e+02,   1.03000000e+02,   3.87298335e-01},
+			new double[]{  1.15000000e+02,   1.11000000e+02,   3.87298335e-01},
+			new double[]{  8.30000000e+01,   1.26000000e+02,   3.87298335e-01},
+			new double[]{  1.28000000e+02,   1.04000000e+02,   3.87298335e-01},
+			new double[]{  5.00000000e+00,   2.30000000e+01,   3.87298335e-01},
+			new double[]{  2.30000000e+01,   1.60000000e+01,   3.87298335e-01},
+			new double[]{  7.60000000e+01,   7.10000000e+01,   4.00000000e-01},
+			new double[]{  1.04000000e+02,   1.44000000e+02,   4.00000000e-01},
+			new double[]{  1.46000000e+02,   1.23000000e+02,   4.12310563e-01},
+			new double[]{  1.44000000e+02,   1.46000000e+02,   4.12310563e-01},
+			new double[]{  1.60000000e+01,   4.40000000e+01,   4.12310563e-01},
+			new double[]{  4.40000000e+01,   3.30000000e+01,   4.12310563e-01},
+			new double[]{  7.10000000e+01,   6.60000000e+01,   4.12310563e-01},
+			new double[]{  3.30000000e+01,   3.20000000e+01,   4.24264069e-01},
+			new double[]{  1.26000000e+02,   7.00000000e+01,   4.24264069e-01},
+			new double[]{  7.00000000e+01,   7.20000000e+01,   4.24264069e-01},
+			new double[]{  3.20000000e+01,   2.40000000e+01,   4.24264069e-01},
+			new double[]{  7.70000000e+01,   1.47000000e+02,   4.24264069e-01},
+			new double[]{  6.60000000e+01,   7.70000000e+01,   4.24264069e-01},
+			new double[]{  7.20000000e+01,   1.10000000e+02,   4.24264069e-01},
+			new double[]{  1.10000000e+02,   9.00000000e+01,   4.24264069e-01},
+			new double[]{  9.00000000e+01,   6.30000000e+01,   4.24264069e-01},
+			new double[]{  6.30000000e+01,   1.33000000e+02,   4.35889894e-01},
+			new double[]{  5.30000000e+01,   8.10000000e+01,   4.35889894e-01},
+			new double[]{  1.33000000e+02,   5.30000000e+01,   4.35889894e-01},
+			new double[]{  8.10000000e+01,   1.32000000e+02,   4.35889894e-01},
+			new double[]{  1.32000000e+02,   1.37000000e+02,   4.35889894e-01},
+			new double[]{  7.30000000e+01,   1.36000000e+02,   4.35889894e-01},
+			new double[]{  1.37000000e+02,   7.30000000e+01,   4.35889894e-01},
+			new double[]{  1.36000000e+02,   7.90000000e+01,   4.47213595e-01},
+			new double[]{  7.90000000e+01,   5.60000000e+01,   4.58257569e-01},
+			new double[]{  5.60000000e+01,   1.21000000e+02,   4.58257569e-01},
+			new double[]{  1.21000000e+02,   5.00000000e+01,   4.58257569e-01},
+			new double[]{  5.00000000e+01,   1.02000000e+02,   4.58257569e-01},
+			new double[]{  1.02000000e+02,   8.50000000e+01,   4.69041576e-01},
+			new double[]{  8.50000000e+01,   1.25000000e+02,   4.69041576e-01},
+			new double[]{  2.40000000e+01,   1.30000000e+01,   4.79583152e-01},
+			new double[]{  1.25000000e+02,   8.40000000e+01,   4.89897949e-01},
+			new double[]{  1.30000000e+01,   1.80000000e+01,   5.09901951e-01},
+			new double[]{  8.40000000e+01,   1.30000000e+02,   5.09901951e-01},
+			new double[]{  1.30000000e+02,   1.41000000e+02,   5.09901951e-01},
+			new double[]{  1.41000000e+02,   6.40000000e+01,   5.19615242e-01},
+			new double[]{  6.40000000e+01,   1.13000000e+02,   5.19615242e-01},
+			new double[]{  1.13000000e+02,   1.14000000e+02,   5.19615242e-01},
+			new double[]{  1.14000000e+02,   5.90000000e+01,   5.29150262e-01},
+			new double[]{  1.80000000e+01,   2.20000000e+01,   5.38516481e-01},
+			new double[]{  5.90000000e+01,   1.07000000e+02,   5.47722558e-01},
+			new double[]{  1.07000000e+02,   1.05000000e+02,   5.47722558e-01},
+			new double[]{  1.05000000e+02,   1.29000000e+02,   5.56776436e-01},
+			new double[]{  2.20000000e+01,   1.40000000e+01,   5.56776436e-01},
+			new double[]{  1.29000000e+02,   1.00000000e+02,   5.56776436e-01},
+			new double[]{  1.00000000e+02,   1.19000000e+02,   5.83095189e-01},
+			new double[]{  1.19000000e+02,   6.20000000e+01,   5.83095189e-01},
+			new double[]{  6.20000000e+01,   8.70000000e+01,   6.08276253e-01},
+			new double[]{  8.70000000e+01,   1.48000000e+02,   6.16441400e-01},
+			new double[]{  1.48000000e+02,   1.08000000e+02,   6.16441400e-01},
+			new double[]{  1.40000000e+01,   1.50000000e+01,   6.16441400e-01},
+			new double[]{  1.08000000e+02,   9.30000000e+01,   6.48074070e-01},
+			new double[]{  9.30000000e+01,   1.34000000e+02,   6.63324958e-01},
+			new double[]{  1.34000000e+02,   6.80000000e+01,   6.78232998e-01},
+			new double[]{  6.80000000e+01,   1.35000000e+02,   6.78232998e-01},
+			new double[]{  1.35000000e+02,   1.22000000e+02,   6.78232998e-01},
+			new double[]{  6.00000000e+01,   8.00000000e+01,   7.14142843e-01},
+			new double[]{  5.70000000e+01,   6.00000000e+01,   7.21110255e-01},
+			new double[]{  1.22000000e+02,   1.09000000e+02,   7.54983444e-01},
+			new double[]{  1.50000000e+01,   4.10000000e+01,   7.81024968e-01},
+			new double[]{  9.80000000e+01,   5.70000000e+01,   7.93725393e-01},
+			new double[]{  1.09000000e+02,   1.06000000e+02,   8.77496439e-01},
+			new double[]{  1.06000000e+02,   1.18000000e+02,   9.27361850e-01},
+			new double[]{  1.18000000e+02,   1.31000000e+02,   9.32737905e-01},
+			new double[]{  1.31000000e+02,   1.17000000e+02,   1.00498756e+00},
+			new double[]{  4.10000000e+01,   9.80000000e+01,   1.64012195e+00}
+		};
+		
+		//System.out.println(Arrays.toString(VecUtils.argSort(MatUtils.getColumn(cdist, 2))));
+		//fail();
+		
+		
+		/*
+		 * In comparison to sklearn, this can get off by 1 or 2 due to
+		 * rounding errors in the sort. So lets just make sure there is a
+		 * discrepancy less than one or two.
+		 */
+		int wrong_ct = 0;
+		for(int i = 0; i < srtd_cdists.length; i++) {
+			if(!VecUtils.equalsWithTolerance(srtd_cdists[i], expected_srted[i], 1e-8)) {
+				if(!Precision.equals(srtd_cdists[i][2], expected_srted[i][2], 1e-8))
+					wrong_ct++;
+			}
+		}
+		
+		assertTrue(wrong_ct < 2);
+		
+		
+		// Do labeling
+		double[][] labMat = HDBSCAN.label(srtd_cdists);
+		
+		double[][] expected_labMat = new double[][]{
+			new double[]{  0.00000000e+00,   3.90000000e+01,   1.41421356e-01, 2.00000000e+00 },
+			new double[]{  1.50000000e+02,   1.70000000e+01,   1.73205081e-01, 3.00000000e+00 },
+			new double[]{  1.51000000e+02,   2.70000000e+01,   1.73205081e-01, 4.00000000e+00 },
+			new double[]{  1.52000000e+02,   2.80000000e+01,   1.73205081e-01, 5.00000000e+00 },
+			new double[]{  3.40000000e+01,   3.70000000e+01,   1.73205081e-01, 2.00000000e+00 },
+			new double[]{  3.00000000e+01,   1.54000000e+02,   1.73205081e-01, 3.00000000e+00 },
+			new double[]{  9.00000000e+00,   1.00000000e+00,   1.73205081e-01, 2.00000000e+00 },
+			new double[]{  1.56000000e+02,   1.55000000e+02,   1.73205081e-01, 5.00000000e+00 },
+			new double[]{  1.57000000e+02,   1.20000000e+01,   1.73205081e-01, 6.00000000e+00 },
+			new double[]{  1.53000000e+02,   7.00000000e+00,   2.00000000e-01, 6.00000000e+00 },
+			new double[]{  1.58000000e+02,   2.50000000e+01,   2.23606798e-01, 7.00000000e+00 },
+			new double[]{  1.59000000e+02,   4.90000000e+01,   2.23606798e-01, 7.00000000e+00 },
+			new double[]{  1.61000000e+02,   4.00000000e+00,   2.23606798e-01, 8.00000000e+00 },
+			new double[]{  2.90000000e+01,   4.70000000e+01,   2.23606798e-01, 2.00000000e+00 },
+			new double[]{  1.60000000e+02,   1.63000000e+02,   2.23606798e-01, 9.00000000e+00 },
+			new double[]{  1.62000000e+02,   2.60000000e+01,   2.44948974e-01, 9.00000000e+00 },
+			new double[]{  1.65000000e+02,   4.00000000e+01,   2.44948974e-01, 1.00000000e+01 },
+			new double[]{  1.66000000e+02,   4.80000000e+01,   2.44948974e-01, 1.10000000e+01 },
+			new double[]{  1.64000000e+02,   3.00000000e+00,   2.44948974e-01, 1.00000000e+01 },
+			new double[]{  9.90000000e+01,   9.60000000e+01,   2.44948974e-01, 2.00000000e+00 },
+			new double[]{  1.67000000e+02,   1.68000000e+02,   2.64575131e-01, 2.10000000e+01 },
+			new double[]{  1.70000000e+02,   1.90000000e+01,   2.64575131e-01, 2.20000000e+01 },
+			new double[]{  1.71000000e+02,   2.00000000e+00,   2.64575131e-01, 2.30000000e+01 },
+			new double[]{  1.72000000e+02,   2.10000000e+01,   2.64575131e-01, 2.40000000e+01 },
+			new double[]{  1.73000000e+02,   4.50000000e+01,   2.64575131e-01, 2.50000000e+01 },
+			new double[]{  9.20000000e+01,   1.69000000e+02,   2.64575131e-01, 3.00000000e+00 },
+			new double[]{  6.90000000e+01,   1.75000000e+02,   2.64575131e-01, 4.00000000e+00 },
+			new double[]{  1.74000000e+02,   3.80000000e+01,   3.00000000e-01, 2.60000000e+01 },
+			new double[]{  4.20000000e+01,   4.60000000e+01,   3.00000000e-01, 2.00000000e+00 },
+			new double[]{  1.77000000e+02,   1.10000000e+01,   3.00000000e-01, 2.70000000e+01 },
+			new double[]{  1.79000000e+02,   1.78000000e+02,   3.00000000e-01, 2.90000000e+01 },
+			new double[]{  8.00000000e+01,   1.76000000e+02,   3.00000000e-01, 5.00000000e+00 },
+			new double[]{  8.90000000e+01,   9.40000000e+01,   3.00000000e-01, 2.00000000e+00 },
+			new double[]{  8.20000000e+01,   1.82000000e+02,   3.00000000e-01, 3.00000000e+00 },
+			new double[]{  1.81000000e+02,   1.83000000e+02,   3.00000000e-01, 8.00000000e+00 },
+			new double[]{  1.80000000e+02,   6.00000000e+00,   3.16227766e-01, 3.00000000e+01 },
+			new double[]{  1.27000000e+02,   1.38000000e+02,   3.16227766e-01, 2.00000000e+00 },
+			new double[]{  1.85000000e+02,   3.10000000e+01,   3.16227766e-01, 3.10000000e+01 },
+			new double[]{  1.84000000e+02,   8.80000000e+01,   3.16227766e-01, 9.00000000e+00 },
+			new double[]{  5.80000000e+01,   7.50000000e+01,   3.16227766e-01, 2.00000000e+00 },
+			new double[]{  1.88000000e+02,   5.50000000e+01,   3.31662479e-01, 1.00000000e+01 },
+			new double[]{  1.87000000e+02,   3.50000000e+01,   3.31662479e-01, 3.20000000e+01 },
+			new double[]{  1.89000000e+02,   8.60000000e+01,   3.31662479e-01, 3.00000000e+00 },
+			new double[]{  1.86000000e+02,   1.49000000e+02,   3.31662479e-01, 3.00000000e+00 },
+			new double[]{  1.93000000e+02,   1.01000000e+02,   3.31662479e-01, 4.00000000e+00 },
+			new double[]{  1.94000000e+02,   1.42000000e+02,   3.31662479e-01, 5.00000000e+00 },
+			new double[]{  1.90000000e+02,   9.50000000e+01,   3.31662479e-01, 1.10000000e+01 },
+			new double[]{  1.91000000e+02,   1.00000000e+01,   3.31662479e-01, 3.30000000e+01 },
+			new double[]{  1.92000000e+02,   6.50000000e+01,   3.46410162e-01, 4.00000000e+00 },
+			new double[]{  1.97000000e+02,   8.00000000e+00,   3.46410162e-01, 3.40000000e+01 },
+			new double[]{  1.99000000e+02,   3.60000000e+01,   3.46410162e-01, 3.50000000e+01 },
+			new double[]{  7.80000000e+01,   9.10000000e+01,   3.46410162e-01, 2.00000000e+00 },
+			new double[]{  2.01000000e+02,   9.70000000e+01,   3.46410162e-01, 3.00000000e+00 },
+			new double[]{  1.20000000e+02,   1.40000000e+02,   3.46410162e-01, 2.00000000e+00 },
+			new double[]{  2.03000000e+02,   1.43000000e+02,   3.46410162e-01, 3.00000000e+00 },
+			new double[]{  1.98000000e+02,   5.20000000e+01,   3.46410162e-01, 5.00000000e+00 },
+			new double[]{  1.96000000e+02,   6.70000000e+01,   3.60555128e-01, 1.20000000e+01 },
+			new double[]{  1.23000000e+02,   1.95000000e+02,   3.60555128e-01, 6.00000000e+00 },
+			new double[]{  2.00000000e+02,   2.00000000e+01,   3.60555128e-01, 3.60000000e+01 },
+			new double[]{  6.10000000e+01,   2.02000000e+02,   3.60555128e-01, 4.00000000e+00 },
+			new double[]{  2.06000000e+02,   2.09000000e+02,   3.60555128e-01, 1.60000000e+01 },
+			new double[]{  1.12000000e+02,   2.04000000e+02,   3.74165739e-01, 4.00000000e+00 },
+			new double[]{  1.45000000e+02,   2.11000000e+02,   3.74165739e-01, 5.00000000e+00 },
+			new double[]{  1.47000000e+02,   2.12000000e+02,   3.74165739e-01, 6.00000000e+00 },
+			new double[]{  2.07000000e+02,   8.30000000e+01,   3.74165739e-01, 7.00000000e+00 },
+			new double[]{  2.13000000e+02,   1.39000000e+02,   3.74165739e-01, 7.00000000e+00 },
+			new double[]{  2.15000000e+02,   1.24000000e+02,   3.74165739e-01, 8.00000000e+00 },
+			new double[]{  2.05000000e+02,   5.10000000e+01,   3.74165739e-01, 6.00000000e+00 },
+			new double[]{  2.17000000e+02,   7.60000000e+01,   3.74165739e-01, 7.00000000e+00 },
+			new double[]{  2.08000000e+02,   4.30000000e+01,   3.74165739e-01, 3.70000000e+01 },
+			new double[]{  5.40000000e+01,   2.18000000e+02,   3.74165739e-01, 8.00000000e+00 },
+			new double[]{  2.19000000e+02,   5.00000000e+00,   3.74165739e-01, 3.80000000e+01 },
+			new double[]{  7.40000000e+01,   2.20000000e+02,   3.87298335e-01, 9.00000000e+00 },
+			new double[]{  2.10000000e+02,   2.22000000e+02,   3.87298335e-01, 2.50000000e+01 },
+			new double[]{  2.16000000e+02,   1.15000000e+02,   3.87298335e-01, 9.00000000e+00 },
+			new double[]{  1.16000000e+02,   1.28000000e+02,   3.87298335e-01, 2.00000000e+00 },
+			new double[]{  1.03000000e+02,   2.25000000e+02,   3.87298335e-01, 3.00000000e+00 },
+			new double[]{  1.11000000e+02,   2.26000000e+02,   3.87298335e-01, 4.00000000e+00 },
+			new double[]{  2.24000000e+02,   2.27000000e+02,   3.87298335e-01, 1.30000000e+01 },
+			new double[]{  2.14000000e+02,   1.26000000e+02,   3.87298335e-01, 8.00000000e+00 },
+			new double[]{  2.28000000e+02,   1.04000000e+02,   3.87298335e-01, 1.40000000e+01 },
+			new double[]{  2.21000000e+02,   2.30000000e+01,   3.87298335e-01, 3.90000000e+01 },
+			new double[]{  2.31000000e+02,   1.60000000e+01,   3.87298335e-01, 4.00000000e+01 },
+			new double[]{  2.23000000e+02,   7.10000000e+01,   4.00000000e-01, 2.60000000e+01 },
+			new double[]{  2.30000000e+02,   1.44000000e+02,   4.00000000e-01, 1.50000000e+01 },
+			new double[]{  1.46000000e+02,   2.29000000e+02,   4.12310563e-01, 9.00000000e+00 },
+			new double[]{  2.34000000e+02,   2.35000000e+02,   4.12310563e-01, 2.40000000e+01 },
+			new double[]{  2.32000000e+02,   4.40000000e+01,   4.12310563e-01, 4.10000000e+01 },
+			new double[]{  2.37000000e+02,   3.30000000e+01,   4.12310563e-01, 4.20000000e+01 },
+			new double[]{  2.33000000e+02,   6.60000000e+01,   4.12310563e-01, 2.70000000e+01 },
+			new double[]{  2.38000000e+02,   3.20000000e+01,   4.24264069e-01, 4.30000000e+01 },
+			new double[]{  2.36000000e+02,   7.00000000e+01,   4.24264069e-01, 2.50000000e+01 },
+			new double[]{  2.41000000e+02,   7.20000000e+01,   4.24264069e-01, 2.60000000e+01 },
+			new double[]{  2.40000000e+02,   2.40000000e+01,   4.24264069e-01, 4.40000000e+01 },
+			new double[]{  7.70000000e+01,   2.42000000e+02,   4.24264069e-01, 2.70000000e+01 },
+			new double[]{  2.39000000e+02,   2.44000000e+02,   4.24264069e-01, 5.40000000e+01 },
+			new double[]{  2.45000000e+02,   1.10000000e+02,   4.24264069e-01, 5.50000000e+01 },
+			new double[]{  2.46000000e+02,   9.00000000e+01,   4.24264069e-01, 5.60000000e+01 },
+			new double[]{  2.47000000e+02,   6.30000000e+01,   4.24264069e-01, 5.70000000e+01 },
+			new double[]{  2.48000000e+02,   1.33000000e+02,   4.35889894e-01, 5.80000000e+01 },
+			new double[]{  5.30000000e+01,   8.10000000e+01,   4.35889894e-01, 2.00000000e+00 },
+			new double[]{  2.49000000e+02,   2.50000000e+02,   4.35889894e-01, 6.00000000e+01 },
+			new double[]{  2.51000000e+02,   1.32000000e+02,   4.35889894e-01, 6.10000000e+01 },
+			new double[]{  2.52000000e+02,   1.37000000e+02,   4.35889894e-01, 6.20000000e+01 },
+			new double[]{  7.30000000e+01,   1.36000000e+02,   4.35889894e-01, 2.00000000e+00 },
+			new double[]{  2.53000000e+02,   2.54000000e+02,   4.35889894e-01, 6.40000000e+01 },
+			new double[]{  2.55000000e+02,   7.90000000e+01,   4.47213595e-01, 6.50000000e+01 },
+			new double[]{  2.56000000e+02,   5.60000000e+01,   4.58257569e-01, 6.60000000e+01 },
+			new double[]{  2.57000000e+02,   1.21000000e+02,   4.58257569e-01, 6.70000000e+01 },
+			new double[]{  2.58000000e+02,   5.00000000e+01,   4.58257569e-01, 6.80000000e+01 },
+			new double[]{  2.59000000e+02,   1.02000000e+02,   4.58257569e-01, 6.90000000e+01 },
+			new double[]{  2.60000000e+02,   8.50000000e+01,   4.69041576e-01, 7.00000000e+01 },
+			new double[]{  2.61000000e+02,   1.25000000e+02,   4.69041576e-01, 7.10000000e+01 },
+			new double[]{  2.43000000e+02,   1.30000000e+01,   4.79583152e-01, 4.50000000e+01 },
+			new double[]{  2.62000000e+02,   8.40000000e+01,   4.89897949e-01, 7.20000000e+01 },
+			new double[]{  2.63000000e+02,   1.80000000e+01,   5.09901951e-01, 4.60000000e+01 },
+			new double[]{  2.64000000e+02,   1.30000000e+02,   5.09901951e-01, 7.30000000e+01 },
+			new double[]{  2.66000000e+02,   1.41000000e+02,   5.09901951e-01, 7.40000000e+01 },
+			new double[]{  2.67000000e+02,   6.40000000e+01,   5.19615242e-01, 7.50000000e+01 },
+			new double[]{  2.68000000e+02,   1.13000000e+02,   5.19615242e-01, 7.60000000e+01 },
+			new double[]{  2.69000000e+02,   1.14000000e+02,   5.19615242e-01, 7.70000000e+01 },
+			new double[]{  2.70000000e+02,   5.90000000e+01,   5.29150262e-01, 7.80000000e+01 },
+			new double[]{  2.65000000e+02,   2.20000000e+01,   5.38516481e-01, 4.70000000e+01 },
+			new double[]{  2.71000000e+02,   1.07000000e+02,   5.47722558e-01, 7.90000000e+01 },
+			new double[]{  2.73000000e+02,   1.05000000e+02,   5.47722558e-01, 8.00000000e+01 },
+			new double[]{  2.74000000e+02,   1.29000000e+02,   5.56776436e-01, 8.10000000e+01 },
+			new double[]{  2.72000000e+02,   1.40000000e+01,   5.56776436e-01, 4.80000000e+01 },
+			new double[]{  2.75000000e+02,   1.00000000e+02,   5.56776436e-01, 8.20000000e+01 },
+			new double[]{  2.77000000e+02,   1.19000000e+02,   5.83095189e-01, 8.30000000e+01 },
+			new double[]{  2.78000000e+02,   6.20000000e+01,   5.83095189e-01, 8.40000000e+01 },
+			new double[]{  2.79000000e+02,   8.70000000e+01,   6.08276253e-01, 8.50000000e+01 },
+			new double[]{  2.80000000e+02,   1.48000000e+02,   6.16441400e-01, 8.60000000e+01 },
+			new double[]{  2.81000000e+02,   1.08000000e+02,   6.16441400e-01, 8.70000000e+01 },
+			new double[]{  2.76000000e+02,   1.50000000e+01,   6.16441400e-01, 4.90000000e+01 },
+			new double[]{  2.82000000e+02,   9.30000000e+01,   6.48074070e-01, 8.80000000e+01 },
+			new double[]{  2.84000000e+02,   1.34000000e+02,   6.63324958e-01, 8.90000000e+01 },
+			new double[]{  2.85000000e+02,   6.80000000e+01,   6.78232998e-01, 9.00000000e+01 },
+			new double[]{  2.86000000e+02,   1.35000000e+02,   6.78232998e-01, 9.10000000e+01 },
+			new double[]{  2.87000000e+02,   1.22000000e+02,   6.78232998e-01, 9.20000000e+01 },
+			new double[]{  6.00000000e+01,   2.88000000e+02,   7.14142843e-01, 9.30000000e+01 },
+			new double[]{  5.70000000e+01,   2.89000000e+02,   7.21110255e-01, 9.40000000e+01 },
+			new double[]{  2.90000000e+02,   1.09000000e+02,   7.54983444e-01, 9.50000000e+01 },
+			new double[]{  2.83000000e+02,   4.10000000e+01,   7.81024968e-01, 5.00000000e+01 },
+			new double[]{  9.80000000e+01,   2.91000000e+02,   7.93725393e-01, 9.60000000e+01 },
+			new double[]{  2.93000000e+02,   1.06000000e+02,   8.77496439e-01, 9.70000000e+01 },
+			new double[]{  2.94000000e+02,   1.18000000e+02,   9.27361850e-01, 9.80000000e+01 },
+			new double[]{  2.95000000e+02,   1.31000000e+02,   9.32737905e-01, 9.90000000e+01 },
+			new double[]{  2.96000000e+02,   1.17000000e+02,   1.00498756e+00, 1.00000000e+02 },
+			new double[]{  2.92000000e+02,   2.97000000e+02,   1.64012195e+00, 1.50000000e+02 }
+		};
+
+		// ensure the labeling method works and gets what the sklearn method would...
+		assertTrue(MatUtils.equalsExactly(expected_labMat, HDBSCAN.label(expected_srted)));
+		
+		
+		// expected sorted...
+		HList<CompQuadTup<Integer, Integer, Double, Integer>> expected_hlist = new HList<>();
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(150, 151, 0.6097107608496923, 50));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(150, 152, 0.6097107608496923, 100));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 2, 3.7796447300922726, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 5, 2.6726124191242397, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 6, 3.1622776601683857, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 8, 2.886751345948128, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 10, 3.015113445777631, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 11, 3.3333333333333353, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 13, 2.0851441405707485, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 14, 1.796053020267749, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 15, 1.6222142113076248, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 16, 2.5819888974716076, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 18, 1.9611613513818411, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 19, 3.7796447300922766, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 20, 2.773500981126144, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 21, 3.7796447300922726, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 22, 1.85695338177052, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 23, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 24, 2.35702260395516, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 31, 3.1622776601683804, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 32, 2.3570226039551616, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 33, 2.42535625036333, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 35, 3.0151134457776374, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 36, 2.8867513459481273, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 38, 3.3333333333333384, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 41, 1.2803687993289594, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 42, 3.3333333333333353, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 43, 2.6726124191242437, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 44, 2.4253562503633304, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 45, 3.7796447300922726, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 46, 3.3333333333333353, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 153, 3.7796447300922766, 11));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 154, 3.7796447300922766, 10));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 50, 2.1821789023599227, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 53, 2.294157338705618, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 56, 2.1821789023599236, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 57, 1.386750490563073, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 59, 1.8898223650461363, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 60, 1.4002800840280099, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 62, 1.7149858514250882, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 63, 2.357022603955156, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 64, 1.9245008972987536, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 68, 1.4744195615489724, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 73, 2.2941573387056153, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 79, 2.2360679774997894, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 81, 2.294157338705618, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 84, 2.041241452319315, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 85, 2.132007163556105, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 87, 1.6439898730535734, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 90, 2.3570226039551567, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 93, 1.5430334996209187, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 98, 1.2598815766974234, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 100, 1.796053020267749, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 102, 2.1821789023599227, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 105, 1.8257418583505527, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 106, 1.1396057645963797, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 107, 1.8257418583505547, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 108, 1.6222142113076254, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 109, 1.3245323570650438, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 110, 2.3570226039551576, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 113, 1.9245008972987536, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 114, 1.9245008972987536, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 117, 0.995037190209989, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 118, 1.0783277320343838, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 119, 1.7149858514250889, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 121, 2.1821789023599227, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 122, 1.4744195615489704, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 125, 2.132007163556103, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 129, 1.7960530202677494, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 130, 1.9611613513818407, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 131, 1.0721125348377945, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 132, 2.294157338705618, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 133, 2.2941573387056184, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 134, 1.5075567228888174, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 135, 1.474419561548971, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 136, 2.2941573387056153, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 137, 2.294157338705617, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 141, 1.9611613513818398, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 148, 1.6222142113076257, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 155, 2.3570226039551576, 27));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(152, 156, 2.3570226039551576, 27));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 0, 5.773502691896247, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 4, 4.472135954999576, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 7, 5.000000000000003, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 17, 5.773502691896247, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 26, 4.082482904638632, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 27, 5.773502691896247, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 28, 5.773502691896247, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 39, 5.773502691896247, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 40, 4.08248290463863, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 48, 4.0824829046386295, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(153, 49, 4.47213595499958, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 1, 5.773502691896246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 3, 4.082482904638627, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 9, 5.773502691896246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 12, 5.773502691896245, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 25, 4.47213595499958, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 29, 4.472135954999572, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 30, 5.773502691896246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 34, 5.773502691896246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 37, 5.773502691896246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(154, 47, 4.472135954999572, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(155, 66, 2.4253562503633277, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(155, 71, 2.5000000000000013, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(155, 157, 2.5819888974716125, 16));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(155, 158, 2.5819888974716125, 9));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(156, 70, 2.3570226039551603, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(156, 72, 2.3570226039551603, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(156, 77, 2.3570226039551576, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(156, 159, 2.425356250363331, 15));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(156, 160, 2.425356250363331, 9));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 55, 3.0151134457776374, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 61, 2.7735009811261433, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 67, 2.773500981126145, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 69, 3.333333333333332, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 78, 2.7735009811261433, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 80, 3.333333333333332, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 82, 3.3333333333333317, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 88, 3.162277660168379, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 89, 3.3333333333333317, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 91, 2.7735009811261433, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 92, 3.333333333333332, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 94, 3.3333333333333317, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 95, 3.015113445777636, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 96, 3.333333333333332, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 97, 2.7735009811261433, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(157, 99, 3.333333333333332, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 51, 2.672612419124244, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 52, 2.886751345948124, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 54, 2.6726124191242406, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 58, 2.886751345948124, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 65, 2.886751345948124, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 74, 2.5819888974716125, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 75, 2.886751345948124, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 76, 2.672612419124244, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(158, 86, 2.886751345948124, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 103, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 104, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 111, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 112, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 115, 2.5819888974716125, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 116, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 120, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 124, 2.6726124191242446, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 128, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 139, 2.6726124191242455, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 140, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 143, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 144, 2.5000000000000004, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 145, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(159, 147, 2.6726124191242464, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 83, 2.672612419124246, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 101, 3.0151134457776365, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 123, 2.7735009811261446, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 126, 2.581988897471612, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 127, 3.0151134457776365, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 138, 3.0151134457776365, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 142, 3.0151134457776365, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 146, 2.425356250363331, 1));
+		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(160, 149, 3.0151134457776365, 1));
+		
+		
+		// test the condense tree label
+		HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
+			HDBSCAN.LinkageTreeUtils.condenseTree(expected_labMat, 5);
+		// Now sort it for the sake of comparing to the sklearn res...
+		Collections.sort(condensed, new Comparator<QuadTup<Integer, Integer, Double, Integer>>(){
+			@Override
+			public int compare(QuadTup<Integer, Integer, Double, Integer> q1, 
+					QuadTup<Integer, Integer, Double, Integer> q2) {
+				int cmp = q1.one.compareTo(q2.one);
+				
+				if(cmp == 0) {
+					cmp = q1.two.compareTo(q2.two);
+					
+					if(cmp == 0) {
+						cmp = q1.three.compareTo(q2.three);
+						
+						if(cmp == 0) {
+							return q1.four.compareTo(q2.four);
+						}
+						
+						return cmp;
+					}
+					
+					return cmp;
+				}
+				
+				return cmp;
+			}
+		});
+		
+		for(int i = 0; i < condensed.size(); i++) {
+			if(!condensed.get(i).almostEquals(expected_hlist.get(i))) {
+				System.out.println(condensed.get(i));
+				System.out.println(expected_hlist.get(i));
+				fail();
+			}
+		}
+		
+		
+		// If we get here, the condensed labels works!!
+		TreeMap<Integer, Double> stability = HDBSCAN.LinkageTreeUtils.computeStability(condensed);
+		TreeMap<Integer, Double> exp_stab  = new TreeMap<>();
+		exp_stab.put(150, Double.NaN);
+		exp_stab.put(151, 128.9165546745262);
+		exp_stab.put(152, 150.98635723043549);
+		exp_stab.put(153, 13.48314205238124);
+		exp_stab.put(154, 14.343459620092055);
+		exp_stab.put(155, 5.8354683803643868);
+		exp_stab.put(156, 1.6400075137961618);
+		exp_stab.put(157, 8.4148537644752253);
+		exp_stab.put(158, 1.7956828073404498);
+		exp_stab.put(159, 2.99248898237368);
+		exp_stab.put(160, Double.NaN);
+		
+		/*
+		 * Assert near equality...
+		 */
+		for(Map.Entry<Integer, Double> entry: exp_stab.entrySet()) {
+			int key = entry.getKey();
+			double stab = entry.getValue();
+			
+			if(Double.isNaN(stab) && Double.isNaN(stability.get(key)))
+				continue;
+			if(!Precision.equals(stab, stability.get(key), 1e-6)) {
+				System.out.println(key + ", " + stab);
+				System.out.println(key + ", " + stability.get(key));
+				fail();
+			}
+		}
+		
+		
+		// test the treeToLabels method...
+		final int[] labs = HDBSCAN.treeToLabels(iris.getData(), labMat, 5);
+		assertTrue(VecUtils.equalsExactly(labs, expected_iris_labs));
+	}
 }

@@ -730,19 +730,18 @@ public class NNHSTests {
 		}
 		
 		double[][] expectedDists = new double[][]{
-			new double[]{0.        ,  0.09999999999999998       ,  0.1414213562373093  },
-			new double[]{0.        ,  0.14142135623730964		,  0.14142135623730986 },
-			new double[]{0.        ,  0.14142135623730978		,  0.24494897427831802 },
-			new double[]{0.        ,  0.14142135623730964		,  0.17320508075688812 },
-			new double[]{0.        ,  0.14142135623730925		,  0.1414213562373093  },
-			new double[]{0.        ,  0.33166247903553986		,  0.3464101615137753  },
-			new double[]{0.        ,  0.22360679774997871 		,  0.264575131106459   },
-			new double[]{0.        ,  0.09999999999999964       ,  0.14142135623730964 },
-			new double[]{0.        ,  0.14142135623730948		,  0.2999999999999997  },
-			new double[]{0.        ,  0.1        				,  0.17320508075688784 }
+			new double[]{  0.        ,  0.1       ,  0.14142136},
+			new double[]{  0.        ,  0.14142136,  0.14142136},
+			new double[]{  0.        ,  0.14142136,  0.24494897},
+			new double[]{  0.        ,  0.14142136,  0.17320508},
+			new double[]{  0.        ,  0.14142136,  0.17320508},
+			new double[]{  0.        ,  0.33166248,  0.34641016},
+			new double[]{  0.        ,  0.2236068 ,  0.26457513},
+			new double[]{  0.        ,  0.1       ,  0.14142136},
+			new double[]{  0.        ,  0.14142136,  0.3       },
+			new double[]{  0.        ,  0.        ,  0.        }
 		};
 		
-		/*
 		int[][] expectedIndices = new int[][]{
 			new int[]{ 0, 17,  4},
 			new int[]{ 1, 45, 12},
@@ -755,7 +754,6 @@ public class NNHSTests {
 			new int[]{ 8, 38,  3},
 			new int[]{37,  9, 34}
 		};
-		*/
 		
 
 		// Assert node data equal
@@ -779,12 +777,8 @@ public class NNHSTests {
 			
 			neighb= tree.query(query, 3, dualTree, true);
 			
-			// System.out.println(neighb);
-			assertTrue(MatUtils.equalsExactly(expectedDists, neighb.getDistances()));
-			
-			//assertTrue(MatUtils.equalsExactly(expectedIndices, neighb.getIndices()));
-			//TODO the last dist array seems wrong...
-			//TODO indices debugging?
+			assertTrue(MatUtils.equalsWithTolerance(expectedDists, neighb.getDistances(), 1e-8));
+			assertTrue(MatUtils.equalsExactly(expectedIndices, neighb.getIndices()));
 		}
 	}
 	
@@ -1152,16 +1146,12 @@ public class NNHSTests {
 		assertTrue(VecUtils.equalsExactly(corSingle, corDual));
 		assertTrue(VecUtils.equalsExactly(corSingle, VecUtils.repInt(1500, 10)));
 		
-		/*
-		 * sklearn actually yields [12,12,...,12] for this op
-		 * but due to precision differences, we just miss a condition
-		 * that would increment our count twice more. Thus 10 is the Java
-		 * standard here.
-		 */
+		
+
 		corSingle = tree.twoPointCorrelation(query, 0, false);
 		corDual = tree.twoPointCorrelation(query, 0, true);
 		assertTrue(VecUtils.equalsExactly(corSingle, corDual));
-		assertTrue(VecUtils.equalsExactly(corSingle, VecUtils.repInt(10, 10)));
+		assertTrue(VecUtils.equalsExactly(corSingle, VecUtils.repInt(12, 10)));
 		
 		corSingle = tree.twoPointCorrelation(query, -1, false);
 		corDual = tree.twoPointCorrelation(query, -1, true);

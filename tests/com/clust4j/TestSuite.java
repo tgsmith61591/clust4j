@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import com.clust4j.algo.AffinityPropagationTests;
+import com.clust4j.algo.BoruvkaTests;
 import com.clust4j.algo.ClustTests;
 import com.clust4j.algo.DBSCANTests;
 import com.clust4j.algo.HDBSCANTests;
@@ -50,6 +51,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	AffinityPropagationTests.class,
 	BinarySearchTreeTests.class,
 	BootstrapTest.class,
+	BoruvkaTests.class,
 	BufferedMatrixReaderTests.class,
 	ClustTests.class,
 	DBSCANTests.class,
