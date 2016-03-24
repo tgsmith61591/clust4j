@@ -3068,4 +3068,19 @@ public class MatTests {
 				new double[]{3,4,2}
 		}));
 	}
+	
+	@Test
+	public void testNullOK() {
+		double[][] d = null;
+		int[][] i = null;
+		boolean[][] b = null;
+		
+		assertNull(MatUtils.copy(d));
+		assertNull(MatUtils.copy(i));
+		assertNull(MatUtils.copy(b));
+		
+		assertTrue(MatUtils.equalsExactly(d, d));
+		assertTrue(MatUtils.equalsExactly(i, i));
+		assertTrue(MatUtils.equalsExactly(b, b));
+	}
 }

@@ -680,4 +680,23 @@ public class VectorTests {
 		assertTrue(VecUtils.permutation(a,new Random()).length == 6);
 		assertTrue(VecUtils.equalsExactly(VecUtils.permutation(new int[]{}), new int[]{}));
 	}
+	
+	@Test
+	public void testNullOK() {
+		int[] i = null;
+		boolean[] b = null;
+		String[] s = null;
+		double[] d = null;
+		
+		assertNull(VecUtils.copy(i));
+		assertNull(VecUtils.copy(b));
+		assertNull(VecUtils.copy(s));
+		assertNull(VecUtils.copy(d));
+		
+		assertTrue(VecUtils.equalsExactly(i, i));
+		assertTrue(VecUtils.equalsExactly(b, b));
+		assertTrue(VecUtils.equalsExactly(s, s));
+		assertTrue(VecUtils.equalsExactly(d, d));
+		assertTrue(VecUtils.equalsExactlyDistributed(d, d));
+	}
 }

@@ -237,4 +237,17 @@ public class GlobalState {
 		/** The upper bound for the {@link FeatureNormalization#MIN_MAX_SCALE} scaling range. */
 		public static int MIN_MAX_SCALER_RANGE_MAX = 1;
 	}
+	
+	
+	
+	/**
+	 * A class for IO configuration
+	 * @author Taylor G Smith
+	 */
+	public final static class IOConf {
+		/** Default dataset suffix */
+		public static String c4j_suffix = "c4j";
+		/** Where datasets are stored */
+		public static String data_dir = "datasets";
+	}
 }

@@ -263,13 +263,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 	@Override
 	public int[] getLabels() {
-		try {
+		if(null != labels)
 			return VecUtils.copy(labels);
-		} catch(NullPointerException npe) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
+		
+		String error = "model has not yet been fit";
+		error(error);
+		throw new ModelNotFitException(error);
 	}
 
 	@Override

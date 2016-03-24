@@ -42,6 +42,7 @@ import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTupTests;
 import com.clust4j.utils.SeriesTests;
+import com.clust4j.utils.TestArrayFormatter;
 import com.clust4j.utils.TestUtils;
 import com.clust4j.utils.VectorTests;
 import com.clust4j.utils.parallel.ParallelTests;
@@ -81,6 +82,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	TestGlobals.class,
 	TestLabelEncoder.class,
 	TestMetrics.class,
+	TestArrayFormatter.class,
 	TestUtils.class,
 	VectorTests.class
 })

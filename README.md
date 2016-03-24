@@ -8,7 +8,8 @@ ____
  - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
   - The `log4j` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/apache-log4j-1.2.17) and is already in the `.classpath`.
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
-
+ - [Apache commons lang](http://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.4), for the use of `NumberUtils` and others.
+  - The `commons-lang3` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/) and is already in the `.classpath`.
 
 ___
 ### Release notes:

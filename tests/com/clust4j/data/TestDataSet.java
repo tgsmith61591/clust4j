@@ -529,13 +529,16 @@ public class TestDataSet
 		assertTrue(dat.numCols() == 4);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testNullLabels() {
-		new DataSet(MatUtils.randomGaussian(5, 2), null);
+		// make sure we allow this...
+		int[] labels = null;
+		new DataSet(MatUtils.randomGaussian(5, 2), labels);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testNullString() {
+		// make sure we allow this...
 		new DataSet(MatUtils.randomGaussian(5, 2), new int[]{1,2,3,4,5}, null, null);
 	}
 	
@@ -660,5 +663,24 @@ public class TestDataSet
 	public void testSortDescEx() {
 		DataSet i = IRIS.copy();
 		i.sortDescInPlace(6);
+	}
+	
+	@Test
+	public void testSetLabel1() {
+		DataSet i = IRIS.copy();
+		i.setLabels(null);
+		assertNull(i.getLabels());
+	}
+	
+	@Test
+	public void testSetLabel2() {
+		DataSet i = IRIS.copy();
+		i.setLabels(new int[150]);
+	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testSetLabel3() {
+		DataSet i = IRIS.copy();
+		i.setLabels(new int[15]);
 	}
 }

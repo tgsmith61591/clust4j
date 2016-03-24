@@ -44,6 +44,22 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 		return out;
 	}
 	
+	public DataSet(double[][] data) {
+		this(new Array2DRowRealMatrix(data, false /*Going to copy later anyways*/));
+	}
+	
+	public DataSet(Array2DRowRealMatrix data) {
+		this(data, genHeaders(data.getColumnDimension()));
+	}
+	
+	public DataSet(double[][] data, String[] headers) {
+		this(new Array2DRowRealMatrix(data, false /*Going to copy later anyways*/), headers);
+	}
+	
+	public DataSet(Array2DRowRealMatrix data, String[] headers) {
+		this(data, null, headers);
+	}
+	
 	public DataSet(double[][] data, int[] labels) {
 		this(new Array2DRowRealMatrix(data, false /*Going to copy later anyways*/), labels);
 	}
@@ -72,23 +88,29 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 		this(data, labels, headers, formatter, true);
 	}
 	
-	public DataSet(Array2DRowRealMatrix data, int[] labels, String[] headers, MatrixFormatter formatter, boolean copyData) {
+	public DataSet(Array2DRowRealMatrix data, int[] labels, String[] hdrz, MatrixFormatter formatter, boolean copyData) {
+		
+		/*// we should allow this behavior...
 		if(null == labels)
 			throw new IllegalArgumentException("labels cannot be null");
-		if(null == headers)
-			throw new IllegalArgumentException("headers cannot be null");
+		*/
+
 		if(null == data)
 			throw new IllegalArgumentException("data cannot be null");
+		if(null == hdrz)
+			this.headers = genHeaders(data.getColumnDimension());
+		else 
+			this.headers = VecUtils.copy(hdrz);
+		
 		
 		// Check to make sure dims match up...
-		if(labels.length != data.getRowDimension())
+		if((null != labels) && labels.length != data.getRowDimension())
 			throw new DimensionMismatchException(labels.length, data.getRowDimension());
-		if(headers.length != data.getColumnDimension())
-			throw new DimensionMismatchException(headers.length, data.getColumnDimension());
+		if(this.headers.length != data.getColumnDimension())
+			throw new DimensionMismatchException(this.headers.length, data.getColumnDimension());
 		
 		this.data = copyData ? (Array2DRowRealMatrix)data.copy() : data;
 		this.labels = VecUtils.copy(labels);
-		this.headers = VecUtils.copy(headers);
 		this.formatter = null == formatter ? DEF_FORMATTER : formatter;
 	}
 	
@@ -319,7 +341,7 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	 * @return
 	 */
 	public int[] getLabels() {
-		return VecUtils.copy(labels);
+		return null == labels ? null : VecUtils.copy(labels);
 	}
 	
 	/**
@@ -396,6 +418,16 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 			throw new IllegalArgumentException("illegal column index: "+idx);
 		
 		data.setColumn(idx, col);
+	}
+	
+	public void setLabels(final int[] labels) {
+		if(null == labels) // null out existing labels
+			this.labels = labels;
+		else if(labels.length == data.getRowDimension()) {
+			this.labels = labels;
+		} else {
+			throw new DimensionMismatchException(labels.length, data.getRowDimension());
+		}
 	}
 	
 	public void setRow(final int idx, final double[] newRow) {

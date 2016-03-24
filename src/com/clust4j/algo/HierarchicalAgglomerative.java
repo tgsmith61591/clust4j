@@ -670,13 +670,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	
 	@Override
 	public int[] getLabels() {
-		try {
+		if(null != labels)
 			return VecUtils.copy(labels);
-		} catch(NullPointerException e) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
-		}
+		
+		String error = "model has not yet been fit";
+		error(error);
+		throw new ModelNotFitException(error);
 	}
 	
 

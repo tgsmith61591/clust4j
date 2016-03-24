@@ -42,7 +42,14 @@ public abstract class Log {
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
 			NEAREST			{ @Override public String toString(){return "NEAREST";} },
-			RADIUS          { @Override public String toString(){return "RADIUS ";}};
+			RADIUS          { @Override public String toString(){return "RADIUS ";} },
+			
+			/*
+			 * For file parsing...
+			 */
+			PARSER			{ @Override public String toString(){return "PARSER ";} },
+			
+			;
 			
 			
 			boolean _enable;

@@ -610,6 +610,9 @@ public class MatUtils {
 	 * @return a copy of the input matrix
 	 */
 	public static final double[][] copy(final double[][] data) {
+		if(null == data)
+			return null;
+		
 		final double[][] copy = new double[data.length][];
 		for(int i = 0; i < copy.length; i++)
 			copy[i] = VecUtils.copy(data[i]);
@@ -623,6 +626,9 @@ public class MatUtils {
 	 * @return a copy of the input matrix
 	 */
 	public static final boolean[][] copy(final boolean[][] data) {
+		if(null == data)
+			return null;
+		
 		final boolean[][] copy = new boolean[data.length][];
 		for(int i = 0; i < copy.length; i++)
 			copy[i] = VecUtils.copy(data[i]);
@@ -636,6 +642,9 @@ public class MatUtils {
 	 * @return a copy of the input matrix
 	 */
 	public static final int[][] copy(final int[][] data) {
+		if(null == data)
+			return null;
+		
 		final int[][] copy = new int[data.length][];
 		for(int i = 0; i < copy.length; i++)
 			copy[i] = VecUtils.copy(data[i]);
@@ -722,6 +731,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[][] a, final double[][] b, final double tol) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
@@ -740,6 +751,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final int[][] a, final int[][] b) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
@@ -758,6 +771,8 @@ public class MatUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final boolean[][] a, final boolean[][] b) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		

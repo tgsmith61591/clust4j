@@ -49,13 +49,22 @@ public class DistributedEqualityTest extends VectorReduceTask<Boolean> {
 
 	@Override
 	protected Boolean operate(int lo, int hi) {
-		for(int i = lo; i < hi; i++)
+		for(int i = lo; i < hi; i++) {
+			if(Double.isNaN(array[i]) && Double.isNaN(arr_b[i]))
+				continue;
+			
 			if( !Precision.equals(array[i], arr_b[i], tolerance) )
 				return false;
+		}
+		
 		return true;
 	}
 	
 	public static Boolean operate(final double[] array, final double[] array_b, final double tol) {
+		// corner...
+		if(null == array && null == array_b)
+			return true;
+		
 		return getThreadPool().invoke(new DistributedEqualityTest(array,array_b,tol,0,array.length));
 	}
 

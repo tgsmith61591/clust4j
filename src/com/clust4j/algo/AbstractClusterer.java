@@ -235,10 +235,6 @@ public abstract class AbstractClusterer
 		return false;
 	}
 	
-	
-	private void flagWarning() {
-		hasWarnings = true;
-	}
 
 	
 	/**
@@ -315,7 +311,7 @@ public abstract class AbstractClusterer
 	}
 	
 	@Override public void warn(String msg) {
-		flagWarning();
+		hasWarnings = true;
 		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
@@ -329,10 +325,6 @@ public abstract class AbstractClusterer
 	
 	@Override public void debug(String msg) {
 		if(verbose) Log.debug(getLoggerTag(), msg);
-	}
-	
-	@Override public void wallInfo(LogTimer timer, String info) {
-		if(verbose) info(timer.wallMsg() + info);
 	}
 	
 	/**

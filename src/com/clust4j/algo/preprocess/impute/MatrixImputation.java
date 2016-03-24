@@ -115,10 +115,6 @@ public abstract class MatrixImputation extends Clust4j implements Loggable, Name
 		if(verbose) Log.debug(getLoggerTag(), msg);
 	}
 	
-	@Override public void wallInfo(LogTimer timer, String info) {
-		if(verbose) info(timer.wallMsg() + info);
-	}
-	
 	@Override
 	public boolean hasWarnings() {
 		return hasWarnings;

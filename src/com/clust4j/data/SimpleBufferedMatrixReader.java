@@ -12,8 +12,9 @@ import java.io.ObjectInputStream;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 /**
- * A utility class solely for internal use 
- * in creating new datasets.
+ * A simple utility class solely for internal use 
+ * in creating new datasets. Can only read comma separated
+ * value datasets and should not be used on complex I/O
  * @author Taylor G Smith
  */
 class SimpleBufferedMatrixReader {

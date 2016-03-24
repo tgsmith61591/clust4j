@@ -608,6 +608,9 @@ public class VecUtils {
 	 * @return the copy
 	 */
 	public static boolean[] copy(final boolean[] b) {
+		if(null == b)
+			return null;
+		
 		final boolean[] copy = new boolean[b.length];
 		System.arraycopy(b, 0, copy, 0, b.length);
 		return copy;
@@ -619,6 +622,9 @@ public class VecUtils {
 	 * @return the copy
 	 */
 	public static int[] copy(final int[] i) {
+		if(null == i)
+			return null;
+			
 		final int[] copy = new int[i.length];
 		System.arraycopy(i, 0, copy, 0, i.length);
 		return copy;
@@ -630,6 +636,9 @@ public class VecUtils {
 	 * @return the copy
 	 */
 	public static double[] copy(final double[] d) {
+		if(null == d)
+			return null;
+		
 		final double[] copy = new double[d.length];
 		System.arraycopy(d, 0, copy, 0, d.length);
 		return copy;
@@ -641,6 +650,9 @@ public class VecUtils {
 	 * @return the copy
 	 */
 	public static String[] copy(final String[] s) {
+		if(null == s)
+			return null;
+		
 		final String[] copy = new String[s.length];
 		System.arraycopy(s, 0, copy, 0, s.length);
 		return copy;
@@ -714,12 +726,15 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final int[] a, final int[] b) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
 		for(int i = 0; i < a.length; i++)
 			if(a[i] != b[i])
 				return false;
+		
 		return true;
 	}
 	
@@ -732,6 +747,8 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final boolean[] a, final boolean[] b) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
@@ -750,6 +767,8 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final String[] a, final String[] b) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
@@ -856,12 +875,18 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
+		if(null == a && null == b)
+			return true;
 		if(a.length != b.length)
 			return false;
 		
-		for(int i = 0; i < a.length; i++)
+		for(int i = 0; i < a.length; i++) {
+			if(Double.isNaN(a[i]) && Double.isNaN(b[i]))
+				continue;
+			
 			if( !Precision.equals(a[i], b[i], eps) )
 				return false;
+		}
 		
 		return true;
 	}
