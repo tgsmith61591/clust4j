@@ -1,8 +1,6 @@
 package com.clust4j.except;
 
-import java.io.IOException;
-
-public class MatrixParseException extends IOException {
+public class MatrixParseException extends RuntimeException {
 	private static final long serialVersionUID = 5494488803473338495L;
 
 	public MatrixParseException() {

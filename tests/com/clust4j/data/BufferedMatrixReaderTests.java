@@ -36,6 +36,10 @@ public class BufferedMatrixReaderTests {
 		return o;
 	}
 	
+	static DataSet readCSVComplex(boolean b) throws FileNotFoundException, IOException {
+		return new BufferedMatrixReader(new File(file)).read(b);
+	}
+	
 	static DataSet readCSVComplex() throws FileNotFoundException, IOException {
 		return new BufferedMatrixReader(new File(file)).read();
 	}
@@ -609,6 +613,75 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSVComplex();
 			System.out.println();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testParallel1() throws IOException {
+		try {
+			double[][] g = MatUtils.randomGaussian(50, 5);
+			Object[] o = fromDoubleArr(g);
+			
+			writeCSV(o);
+			DataSet d = readCSVComplex(true);
+			
+			assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
+			System.out.println();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testParallelBig() throws IOException {
+		double[][] g = MatUtils.randomGaussian(5000, 150);
+		Object[] o = fromDoubleArr(g);
+		writeCSV(o);
+		
+		try {
+			for(boolean parallel: new boolean[]{false, true}) {
+					System.out.println((parallel?"Parallel":"Serial")+" parsing task");
+					DataSet d = readCSVComplex(parallel);
+					
+					assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
+					System.out.println();
+			}
+
+		} finally {
+			Files.delete(path);
+		}
+		
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testParallelBigNFE1() throws IOException {
+		double[][] g = MatUtils.randomGaussian(5000, 150);
+		Object[] o = fromDoubleArr(g);
+		o[15] = new Object[]{"asdf"};
+		writeCSV(o);
+		
+		try {
+			readCSVComplex(true);
+			System.out.println();
+
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testParallelBigDME1() throws IOException {
+		double[][] g = MatUtils.randomGaussian(5000, 150);
+		Object[] o = fromDoubleArr(g);
+		o[15] = new Integer(1);
+		writeCSV(o);
+		
+		try {
+			readCSVComplex(true);
+			System.out.println();
+
 		} finally {
 			Files.delete(path);
 		}

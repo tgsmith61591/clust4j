@@ -4,9 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.RejectedExecutionException;
 
-import com.clust4j.Clust4j;
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.util.FastMath;
+
 import com.clust4j.GlobalState;
+import com.clust4j.algo.ParallelChunkingTask;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Log;
@@ -299,8 +304,7 @@ public class BufferedMatrixReader implements Loggable {
 	 * separators, etc.
 	 * @author Taylor G Smith
 	 */
-	protected static class MatrixReaderSetup extends Clust4j implements Loggable {
-		private static final long serialVersionUID = 3787576099827219663L;
+	protected static class MatrixReaderSetup implements Loggable {
 		
 		static final int NO_HEADER = -1;
 		static final int GUESS_HEADER = 1;
@@ -742,11 +746,147 @@ public class BufferedMatrixReader implements Loggable {
 	}
 	
 	/**
+	 * A class for parallel reading in of files
+	 * @author Taylor G Smith
+	 */
+	static class ParallelChunkParser extends RecursiveTask<double[][]> {
+		private static final long serialVersionUID = 8556857221656513389L;
+		private ArrayList<InstanceChunk> chunks;
+		private double[][] result;
+		final MatrixReaderSetup setup;
+		final int n, hi, lo;
+		
+		/**
+		 * A chunk of instances to parse
+		 * @author Taylor G Smith
+		 */
+		final static class InstanceChunk {
+			final String[] rows;
+			final int startIdx;
+			
+			InstanceChunk(String[] rows, int startIdx) {
+				this.rows = rows;
+				this.startIdx = startIdx;
+			}
+		}
+		
+		
+		public ParallelChunkParser(ParallelChunkParser instance, int lo, int hi) {
+			this.chunks = instance.chunks;
+			this.result = instance.result;
+			this.setup  = instance.setup;
+			this.n = instance.n;
+			this.lo = lo;
+			this.hi = hi;
+		}
+		
+		private ParallelChunkParser(String[] rows, MatrixReaderSetup setup) {
+			this.setup = setup;
+			this.n = setup.num_cols;
+			this.result = new double[rows.length][n];
+			this.chunks = map(rows);
+			this.lo = setup.header_offset;
+			this.hi = this.chunks.size();
+		}
+
+		/**
+		 * Given a chunk number, read the chunk
+		 * @param chunk
+		 * @param startIdx
+		 */
+		void doChunk(int chunk) {
+			final InstanceChunk c = chunks.get(chunk);
+			
+			int idx = c.startIdx;
+			double[] next;
+			for(String instance: c.rows) {
+				String[] a = getTokens(instance, setup.separator, setup.single_quotes);
+				
+				try {
+					next = tokenize(a);
+					
+					// Ensure not jagged
+					if(next.length != setup.num_cols)
+						throw new DimensionMismatchException(next.length, setup.num_cols);
+					
+					result[idx++] = next;
+				} catch(NumberFormatException e) {
+					throw new NumberFormatException(ArrayFormatter.arrayToString(a));
+				} catch(DimensionMismatchException d) {
+					throw d; // propagate it
+				} catch(Exception e) {
+					throw new RuntimeException("unexpected exception in parallel processing",e);
+				}
+			}
+		}
+
+		@Override
+		protected double[][] compute() {
+			if(hi - lo <= 1) { // generally should equal one...
+				doChunk(lo);
+				return result;
+			} else {
+				int mid = this.lo + (this.hi - this.lo) / 2;
+				ParallelChunkParser left = new ParallelChunkParser(this, lo, mid);
+				ParallelChunkParser right= new ParallelChunkParser(this, mid,hi );
+				
+				left.fork();
+				right.compute();
+				left.join();
+				
+				return result;
+			}
+		}
+		
+		protected static InstanceChunk getChunk(String[] X, int chunkSize, int chunkNum, int header_offset) {
+			String[] chunk;
+			
+			int idx = 0;
+			int startingPt = chunkNum * chunkSize + (chunkNum == 0 ? header_offset : 0);
+			int endingPt = FastMath.min(X.length, startingPt + chunkSize);
+			
+			chunk = new String[endingPt - startingPt];
+			for(int j = startingPt; j < endingPt; j++) {
+				chunk[idx++] = X[j];
+			}
+			
+			return new InstanceChunk(chunk, startingPt);
+		}
+		
+		private ArrayList<InstanceChunk> map(String[] rows) {
+			final ArrayList<InstanceChunk> out = new ArrayList<>();
+			final int chunkSize = ParallelChunkingTask.ChunkingStrategy.getChunkSize(rows.length);
+			final int numChunks = ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, rows.length);
+			
+			for(int i = 0; i < numChunks; i++)
+				out.add(getChunk(rows, chunkSize, i, this.setup.header_offset));
+			
+			return out;
+		}
+		
+		public static double[][] doAll(String[] rows, MatrixReaderSetup setup) {
+			return GlobalState.ParallelismConf.FJ_THREADPOOL
+				.invoke(new ParallelChunkParser(rows, setup));
+		}
+	}
+	
+	
+	/**
 	 * Read in the data
 	 * @return the matrix
 	 * @throws MatrixParseException
 	 */
 	public DataSet read() throws MatrixParseException {
+		return read(false);
+	}
+	
+	/**
+	 * Read in the data
+	 * @param parallel - whether to parallelize the operation
+	 * @return the matrix
+	 * @throws MatrixParseException
+	 */
+	public DataSet read(boolean parallel) throws MatrixParseException {
 		LogTimer timer = new LogTimer();
 		final String[] lines = getLines(setup.stream);
 		
@@ -760,11 +900,49 @@ public class BufferedMatrixReader implements Loggable {
 				+ (lines.length==1?"":"s") + " (" + setup.stream.length
 				+ " byte"+(setup.stream.length==1?"":"s")+") read from file");
 		
+		String msg;
+		double[][] res = null;
+		if(!parallel) {
+			// Let any exceptions propagate
+			res = parseSerial(lines);
+		} else {
+			
+			boolean throwing_exception = true;
+			try {
+				res = ParallelChunkParser.doAll(lines, setup);
+			} catch(NumberFormatException n) {
+				msg = "caught NumberFormatException: " + n.getLocalizedMessage();
+				error(msg);
+				throw new MatrixParseException(msg, n);
+			} catch(DimensionMismatchException d) {
+				msg = "caught row of unexpected dimensions: " + d.getMessage();
+				error(msg);
+				throw new MatrixParseException(msg, d);
+			} catch(RejectedExecutionException r) {
+				throwing_exception = false;
+				warn("unable to schedule parallel job; falling back to serial parse");
+				res = parseSerial(lines);
+			} catch(Exception e) {
+				msg = "encountered Exception in thread" + e.getMessage();
+				error(msg);
+				throw e;
+			} finally {
+				if(null == res && !throwing_exception)
+					throw new RuntimeException("unable to parse data");
+			}
+		}
 		
+		
+		sayBye(timer);
+		return new DataSet(res, setup.headers);
+	}
+	
+	private double[][] parseSerial(String[] lines) {
 		int k = 0;
 		String msg, line;
 		double[] next;
-		final double[][] res = new double[lines.length - setup.header_offset][setup.num_cols];
+		
+		double[][] res = new double[lines.length - setup.header_offset][setup.num_cols];
 		for( int idx = setup.header_offset; idx < lines.length; idx++ ) {
 			line = lines[idx];
 			
@@ -788,9 +966,7 @@ public class BufferedMatrixReader implements Loggable {
 			}
 		}
 		
-		
-		sayBye(timer);
-		return new DataSet(res, setup.headers);
+		return res;
 	}
 	
 	/**
@@ -862,7 +1038,7 @@ public class BufferedMatrixReader implements Loggable {
 	}
 
 	@Override public void sayBye(LogTimer timer) {
-		info("dataset read from file in " + timer.toString());
+		info("dataset parsed from file in " + timer.toString());
 	}
 
 	@Override public Algo getLoggerTag() {

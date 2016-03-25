@@ -231,9 +231,9 @@ public class MeanShift
 		
 		double bw = 0.0;
 		final double[][] X = nn.data.getDataRef();
-		final int minsize = ParallelClusteringTask.ChunkingStrategy.DEF_CHUNK_SIZE;
+		final int minsize = ParallelChunkingTask.ChunkingStrategy.DEF_CHUNK_SIZE;
 		final int chunkSize = X.length < minsize ? minsize : X.length / 5;
-		final int numChunks = ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, m);
+		final int numChunks = ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, m);
 		Neighborhood neighb;
 		
 		
@@ -271,7 +271,7 @@ public class MeanShift
 	 * @author Taylor G Smith
 	 */
 	static class ParallelBandwidthEstimator 
-			extends ParallelClusteringTask<Double> 
+			extends ParallelChunkingTask<Double> 
 			implements java.io.Serializable {
 		
 		private static final long serialVersionUID = 1171269106158790138L;
@@ -572,7 +572,7 @@ public class MeanShift
 	 * @author Taylor G Smith
 	 * @param <T>
 	 */
-	abstract static class ParallelMSTask<T> extends ParallelClusteringTask<T> {
+	abstract static class ParallelMSTask<T> extends ParallelChunkingTask<T> {
 		private static final long serialVersionUID = 2139716909891672022L;
 		final ConcurrentLinkedDeque<SummaryLite> summaries;
 		final double[][] X;

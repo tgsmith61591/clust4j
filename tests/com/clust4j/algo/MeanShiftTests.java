@@ -141,10 +141,10 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testChunkSizeMeanShift() {
 		final int chunkSize = 500;
-		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 500) == 1);
-		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 501) == 2);
-		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 23) == 1);
-		assertTrue(ParallelClusteringTask.ChunkingStrategy.getNumChunks(chunkSize, 10) == 1);
+		assertTrue(ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, 500) == 1);
+		assertTrue(ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, 501) == 2);
+		assertTrue(ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, 23) == 1);
+		assertTrue(ParallelChunkingTask.ChunkingStrategy.getNumChunks(chunkSize, 10) == 1);
 	}
 	
 	@Test

@@ -11,7 +11,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.Named;
 
-abstract class ParallelClusteringTask<T> extends RecursiveTask<T> implements Named {
+public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implements Named {
 	private static final long serialVersionUID = 6377106189203872639L;
 	final LogTimer timer;
 	final ChunkingStrategy strategy;
@@ -61,20 +61,20 @@ abstract class ParallelClusteringTask<T> extends RecursiveTask<T> implements Nam
 			return new Chunk(chunk);
 		}
 		
-		protected static int getChunkSize(int m) {
+		public static int getChunkSize(int m) {
 			return getChunkSize(m, AVAILABLE_CORES);
 		}
 		
-		protected static int getChunkSize(int m, int numChunks) {
+		public static int getChunkSize(int m, int numChunks) {
 			return m < DEF_CHUNK_SIZE ? m / numChunks : 
 				m / numChunks;
 		}
 		
-		protected static int getNumChunks(final int m) {
+		public static int getNumChunks(final int m) {
 			return getNumChunks(getChunkSize(m), m);
 		}
 		
-		protected static int getNumChunks(final int chunkSize, final int m) {
+		public static int getNumChunks(final int chunkSize, final int m) {
 			return (int)FastMath.ceil( ((double)m)/((double)chunkSize) );
 		}
 		
@@ -160,7 +160,7 @@ abstract class ParallelClusteringTask<T> extends RecursiveTask<T> implements Nam
 	 * Default constructor
 	 * @param X
 	 */
-	public ParallelClusteringTask(final double[][] X) {
+	public ParallelChunkingTask(final double[][] X) {
 		this(X, new SimpleChunkingStrategy());
 	}
 	
@@ -169,7 +169,7 @@ abstract class ParallelClusteringTask<T> extends RecursiveTask<T> implements Nam
 	 * @param X
 	 * @param strategy
 	 */
-	public ParallelClusteringTask(final double[][] X, final ChunkingStrategy strategy) {
+	public ParallelChunkingTask(final double[][] X, final ChunkingStrategy strategy) {
 		this.timer = new LogTimer();
 		this.strategy = strategy;
 		this.chunks = strategy.map(X);
@@ -180,7 +180,7 @@ abstract class ParallelClusteringTask<T> extends RecursiveTask<T> implements Nam
 	 * @param chunks
 	 * @param strategy
 	 */
-	public ParallelClusteringTask(ParallelClusteringTask<T> task) {
+	public ParallelChunkingTask(ParallelChunkingTask<T> task) {
 		this.timer = new LogTimer();
 		this.strategy = task.strategy;
 		this.chunks = task.chunks;
