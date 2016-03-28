@@ -36,11 +36,11 @@ public class BufferedMatrixReaderTests {
 		return o;
 	}
 	
-	static DataSet readCSVComplex(boolean b) throws FileNotFoundException, IOException {
+	static DataSet readCSV(boolean b) throws FileNotFoundException, IOException {
 		return new BufferedMatrixReader(new File(file)).read(b);
 	}
 	
-	static DataSet readCSVComplex() throws FileNotFoundException, IOException {
+	static DataSet readCSV() throws FileNotFoundException, IOException {
 		return new BufferedMatrixReader(new File(file)).read();
 	}
 	
@@ -50,6 +50,35 @@ public class BufferedMatrixReaderTests {
 		
 		for(int i= 0; i < in.length; i++) {
 			sb.append(in[i].toString());
+			sb.append(sep);
+		}
+		
+		String out = sb.toString();
+		
+		// Actually do the writing...
+		BufferedWriter bf = new BufferedWriter(new FileWriter(file));
+		try {
+			bf.write(out);
+		} finally {
+			bf.close();
+		}
+	}
+	
+	static void writeCSVHiveSep(double[][] in) throws IOException {
+		final String sep = System.getProperty("line.separator");
+		StringBuilder sb = new StringBuilder();
+		final char hive = (char)0x1;
+		
+		for(int i= 0; i < in.length; i++) {
+			StringBuilder row = new StringBuilder();
+			
+			for(int j= 0; j < in[i].length; j++) {
+				row.append(in[i][j]);
+				if(j != in[i].length - 1)
+					row.append(hive);
+			}
+			
+			sb.append(row.toString());
 			sb.append(sep);
 		}
 		
@@ -78,7 +107,7 @@ public class BufferedMatrixReaderTests {
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,3,4,5},
 					new double[]{6,7,8,9,10}
-				}, readCSVComplex().getDataRef().getDataRef())
+				}, readCSV().getDataRef().getDataRef())
 			);
 			
 			System.out.println();
@@ -197,7 +226,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,3,4,5,Double.NaN},
@@ -221,7 +250,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,Double.POSITIVE_INFINITY,4,5},
@@ -244,7 +273,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,Double.POSITIVE_INFINITY,4,5},
@@ -267,7 +296,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,Double.NEGATIVE_INFINITY,4,5},
@@ -290,7 +319,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,Double.NEGATIVE_INFINITY,4,5},
@@ -313,7 +342,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(MatUtils.containsNaN(d.getDataRef().getDataRef()));
 			System.out.println();
 		} finally {
@@ -330,7 +359,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(MatUtils.containsNaN(d.getDataRef().getDataRef()));
 			System.out.println();
 		} finally {
@@ -347,7 +376,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(MatUtils.containsNaN(d.getDataRef().getDataRef()));
 			System.out.println();
 		} finally {
@@ -364,7 +393,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(MatUtils.containsNaN(d.getDataRef().getDataRef()));
 			System.out.println();
 		} finally {
@@ -381,7 +410,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d= readCSVComplex();
+			DataSet d= readCSV();
 			assertTrue(MatUtils.containsNaN(d.getDataRef().getDataRef()));
 			System.out.println();
 		} finally {
@@ -401,7 +430,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 		} finally {
 			Files.delete(path);
 		}
@@ -420,7 +449,7 @@ public class BufferedMatrixReaderTests {
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,3,4,5},
 					new double[]{6,7,8,9,10}
-				}, readCSVComplex().getDataRef().getDataRef())
+				}, readCSV().getDataRef().getDataRef())
 			);
 			
 			System.out.println();
@@ -439,7 +468,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			DataSet d = readCSVComplex();
+			DataSet d = readCSV();
 			assertTrue(
 				MatUtils.equalsExactly(new double[][]{
 					new double[]{1,2,3,4,5},
@@ -462,7 +491,7 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			assertTrue(
 				MatUtils.equalsExactly(d, 
-					readCSVComplex().getDataRef().getDataRef())
+					readCSV().getDataRef().getDataRef())
 			);
 			
 			System.out.println();
@@ -483,7 +512,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			
 			System.out.println();
 		} finally {
@@ -509,7 +538,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			
 			System.out.println();
 		} finally {
@@ -549,7 +578,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = new Object[]{ "1,2,a,4,5" };
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			System.out.println();
 		} finally {
 			Files.delete(path);
@@ -563,7 +592,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = new Object[]{ "a,b,c,d,e" };
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			System.out.println();
 		} finally {
 			Files.delete(path);
@@ -577,7 +606,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = new Object[]{ "abcde" };
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			System.out.println();
 		} finally {
 			Files.delete(path);
@@ -595,7 +624,7 @@ public class BufferedMatrixReaderTests {
 				};
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			System.out.println();
 		} finally {
 			Files.delete(path);
@@ -611,7 +640,7 @@ public class BufferedMatrixReaderTests {
 			};
 			
 			writeCSV(o);
-			readCSVComplex();
+			readCSV();
 			System.out.println();
 		} finally {
 			Files.delete(path);
@@ -625,7 +654,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = fromDoubleArr(g);
 			
 			writeCSV(o);
-			DataSet d = readCSVComplex(true);
+			DataSet d = readCSV(true);
 			
 			assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
 			System.out.println();
@@ -643,7 +672,7 @@ public class BufferedMatrixReaderTests {
 		try {
 			for(boolean parallel: new boolean[]{false, true}) {
 					System.out.println((parallel?"Parallel":"Serial")+" parsing task");
-					DataSet d = readCSVComplex(parallel);
+					DataSet d = readCSV(parallel);
 					
 					assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
 					System.out.println();
@@ -663,7 +692,7 @@ public class BufferedMatrixReaderTests {
 		writeCSV(o);
 		
 		try {
-			readCSVComplex(true);
+			readCSV(true);
 			System.out.println();
 
 		} finally {
@@ -679,9 +708,142 @@ public class BufferedMatrixReaderTests {
 		writeCSV(o);
 		
 		try {
-			readCSVComplex(true);
+			readCSV(true);
 			System.out.println();
 
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testLeadingAndTrailingCommentsAndEmptyLines() throws IOException {
+		double[][] g = MatUtils.randomGaussian(100, 150);
+		
+		double[][] gp = new double[g.length - 3][g[0].length];
+		for(int i = 1, idx = 0; i < g.length - 2; i++, idx++)
+			gp[idx] = g[i];
+		
+		
+		Object[] o = fromDoubleArr(g);
+		o[0] = "# leading comment";
+		o[g.length - 2] = "";
+		o[g.length - 1] = "# trailing comment";
+		writeCSV(o);
+		
+		try {
+			double[][] gpp = readCSV(true).getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(gp, gpp));
+			System.out.println();
+
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testDifferentConstructors() throws IOException {
+		double[][] g = MatUtils.randomGaussian(10, 10);
+		Object[] o = fromDoubleArr(g);
+		writeCSV(o);
+		
+		try {
+			File f = new File(file);
+			
+			double[][] d = new BufferedMatrixReader(f, true).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(f, false).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(f, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(f, true, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(f, false, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			/*
+			 * Now let's read all the bytes from the file first...
+			 */
+			byte[] bits = BufferedMatrixReader.fileToBytes(f);
+			
+			d = new BufferedMatrixReader(bits).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(bits, true).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(bits, false).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(bits, true, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(bits, false, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			d = new BufferedMatrixReader(bits, (byte)',').read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testHiveSep() throws IOException {
+		double[][] g = MatUtils.randomGaussian(10, 10);
+		writeCSVHiveSep(g);
+		
+		try {
+			// Test auto-detect
+			double[][] d = new BufferedMatrixReader(new File(file)).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+			
+			// test provide
+			d = new BufferedMatrixReader(new File(file), (byte)0x1).read().getDataRef().getDataRef();
+			assertTrue(MatUtils.equalsExactly(d, g));
+			System.out.println();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testEmptySet() throws IOException {
+		writeCSV(new Object[]{});
+		
+		try {
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testOddSeparator() throws IOException {
+		writeCSV(new Object[]{
+			"1,001 5,002 12",	// first and second records need to have differing num ','
+			"3,253 2,162 9,102",// second and third records need to have differing num ','
+			"6,019 194 9,274",	// third and first records need to have same num ','
+		});
+		
+		try {
+			readCSV();
 		} finally {
 			Files.delete(path);
 		}

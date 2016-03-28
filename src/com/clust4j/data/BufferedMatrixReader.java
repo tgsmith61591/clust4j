@@ -73,6 +73,7 @@ public class BufferedMatrixReader implements Loggable {
 	
 	/* Chars to watch for... */
 	private static final byte HIVE = 0x1;
+	private static final byte COMMA = ',';
 	private static final byte TAB = '\t';
 	private static final byte CARRIAGE = 13;
 	private static final byte LINE_FEED = 10;
@@ -88,7 +89,7 @@ public class BufferedMatrixReader implements Loggable {
 	/* Separators to watch for... */
 	static final byte[] known_separators = new byte[]{
 		HIVE /* Hive - '^A' */, 
-		',', 
+		COMMA, 
 		';', 
 		'|' /* MySql, Sqlite */, 
 		TAB, 
@@ -126,30 +127,6 @@ public class BufferedMatrixReader implements Loggable {
 		"-inf",
 		"-infinity",
 	};
-	
-	/* State for parser... */
-	static enum ParseState {
-		SKIP,
-		EXPECT_COND_LF,
-		EOL,
-		TOKEN,
-		COND_QUOTED_TOKEN,
-		NUMBER,
-		NUMBER_SKIP,
-		NUMBER_SKIP_NO_DOT,
-		NUMBER_FRACTION,
-		NUMBER_EXP,
-		NUMBER_EXP_START,
-		NUMBER_END,
-		STRING,
-		COND_QUOTE,
-		SEPARATOR_OR_EOL,
-		WHITESPACE_BEFORE_TOKEN,
-		STRING_END,
-		COND_QUOTED_NUMBER_END,
-		POSSIBLE_EMPTY_LINE,
-		POSSIBLE_CURRENCY
-	}
 	
 	/** Helper functions */
 	static boolean isEscapable(byte b) { for(byte c: escapable_separators) {if(c==b) return true;} return false; }
@@ -288,9 +265,9 @@ public class BufferedMatrixReader implements Loggable {
 	 * @param setup
 	 * @throws MatrixParseException
 	 */
-	protected BufferedMatrixReader(MatrixReaderSetup setup) throws MatrixParseException {
+	private BufferedMatrixReader(MatrixReaderSetup setup) throws MatrixParseException {
 		this.setup = setup;
-		this.hasWarnings = setup.hasWarnings;
+		this.hasWarnings = setup.hasWarnings();
 	}
 	
 	
@@ -305,12 +282,7 @@ public class BufferedMatrixReader implements Loggable {
 	 * @author Taylor G Smith
 	 */
 	protected static class MatrixReaderSetup implements Loggable {
-		
-		static final int NO_HEADER = -1;
-		static final int GUESS_HEADER = 1;
-		static final int HAS_HEADER = 1;
-		static final int GUESS_COL_CNT = -1;
-		static final int GUESS_LINES = 4;
+		private static final int GUESS_LINES = 4;
 		
 		/* Instance vars */
 		boolean single_quotes; // whether single quotes quote a field or double quotes do
@@ -339,6 +311,9 @@ public class BufferedMatrixReader implements Loggable {
 		
 		MatrixReaderSetup(byte[] bits, boolean single_quotes, byte sep) throws MatrixParseException {
 			this.single_quotes = single_quotes;
+			if(single_quotes)
+				info("using single quotes (\"'\")");
+			
 			this.timer = new LogTimer();
 			
 			/* Given the bytes, we look at first few lines and guess the setup... */
@@ -721,6 +696,14 @@ public class BufferedMatrixReader implements Loggable {
 					quotes = 0;
 				} else if(0 == quotes && sep == c || isEOL(c)) {
 					break; // break inner only
+				} else if(sep != COMMA && c == COMMA) { 
+					/*
+					 * This is a corner case where the separator is NOT
+					 * a comma, but the data may contain thousands separators
+					 * and this prevents non-numeric exceptions later.
+					 */
+					++offset;
+					continue;
 				} else {
 					t.append((char)c);
 					++offset;
