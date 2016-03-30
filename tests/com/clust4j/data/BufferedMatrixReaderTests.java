@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.utils.MatUtils;
 
@@ -846,6 +847,43 @@ public class BufferedMatrixReaderTests {
 			readCSV();
 		} finally {
 			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testNoGoodSep() throws IOException {
+		writeCSV(new Object[]{
+			"123 123 123",
+			"123,123,123"
+		});
+		
+		try {
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void testMaxLen() throws IOException {
+		try {
+			double[][] d = new double[GlobalState.MAX_ARRAY_SIZE][];
+			for(int i = 0; i < d.length; i++)
+				d[i] = new double[]{0,1};
+			
+			Object[] o = fromDoubleArr(d);
+			d = null; // force GC
+			
+			
+			writeCSV(o);
+			try {
+				BufferedMatrixReader bmr = new BufferedMatrixReader(new File(file));
+				bmr.read(true);
+				assertTrue(bmr.hasWarnings());
+			} finally {
+				Files.delete(path);
+			}
+		} catch(OutOfMemoryError o) {
 		}
 	}
 }

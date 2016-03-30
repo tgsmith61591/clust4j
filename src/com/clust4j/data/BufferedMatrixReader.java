@@ -411,8 +411,10 @@ public class BufferedMatrixReader implements Loggable {
 				
 				// First guess the separator
 				if(GUESS_SEP == sep) {
-					sep = guessSeparator(lines[0], lines[1], single_quotes);
+					sep = guessSeparator(lines[0], lines[1], single_quotes, this);
 					
+					// extremely difficult-to-replicate corner case... let's keep it simple
+					/*
 					if(GUESS_SEP == sep && lines.length > 2) {
 						sep = guessSeparator(lines[1], lines[2], single_quotes);
 						if(GUESS_SEP == sep)
@@ -422,6 +424,15 @@ public class BufferedMatrixReader implements Loggable {
 					if(GUESS_SEP == sep) {
 						warn("could not determine uniform separator; using space (' ')");
 						sep = SPACE; // bail and go for space...
+					} else {
+						info("separator estimated as '"+new String(new byte[]{sep})+"'");
+					}
+					*/
+					
+					if(GUESS_SEP == sep) {
+						msg = "cannot determine uniform separator";
+						error(msg);
+						throw new MatrixParseException(msg);
 					} else {
 						info("separator estimated as '"+new String(new byte[]{sep})+"'");
 					}
@@ -535,7 +546,7 @@ public class BufferedMatrixReader implements Loggable {
 			return maxCnt;
 		}
 		
-		static byte guessSeparator(String l1, String l2, boolean single_quotes) {
+		static byte guessSeparator(String l1, String l2, boolean single_quotes, Loggable logger) {
 			final byte single = single_quotes ? SQUOTE : -1;
 			int[] s1 = getSeparatorCounts(l1, single);
 			int[] s2 = getSeparatorCounts(l2, single);
@@ -551,6 +562,7 @@ public class BufferedMatrixReader implements Loggable {
 					max = i;
 				if(s1[i] == s2[i]) { // equal counts
 					try {
+						logger.trace("trying to separate using '" + (char)known_separators[i] + "'");
 						String[] t1 = getTokens(l1, known_separators[i], single);
 						String[] t2 = getTokens(l2, known_separators[i], single);
 						
@@ -565,15 +577,18 @@ public class BufferedMatrixReader implements Loggable {
 			}
 			
 			// No separators appeared or we didn't see any equal ones...
-			if(s1[max] == 0) // try the last one (space)
+			/*// if no uniform separators, just going to bail out with exception
+			if(s1[max] == 0) { // try the last one (space) 
 				max = known_separators.length - 1;
-			if(s1[max] != 0) {
+			} if(s1[max] != 0) {
 				String[] t1 = getTokens(l1, known_separators[max], single);
 				String[] t2 = getTokens(l2, known_separators[max], single);
 				
-				if(t1.length == s1[max]+1 && t2.length == s2[max]+1)
+				if(t1.length == s1[max]+1 && t2.length == s2[max]+1 
+					&& t1.length == t2.length) // they are equally split
 					return known_separators[max];
 			}
+			*/
 			
 			return GUESS_SEP;
 		}

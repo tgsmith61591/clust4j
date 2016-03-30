@@ -29,6 +29,7 @@ import com.clust4j.algo.preprocess.ImputationTests;
 import com.clust4j.algo.preprocess.PreProcessorTests;
 import com.clust4j.data.BufferedMatrixReaderTests;
 import com.clust4j.data.TestDataSet;
+import com.clust4j.except.TestExcept;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
 import com.clust4j.metrics.pairwise.HaversineTest;
@@ -79,6 +80,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	SeriesTests.class,
 	TestDataSet.class,
 	TestDistanceEnums.class,
+	TestExcept.class,
 	TestGlobals.class,
 	TestLabelEncoder.class,
 	TestMetrics.class,
