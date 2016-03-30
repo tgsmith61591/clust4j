@@ -6,6 +6,7 @@ import com.clust4j.algo.preprocess.PreProcessor;
 
 public abstract class Pipeline<T extends BaseClassifierPlanner> extends Clust4j {
 	private static final long serialVersionUID = 3491192139356583621L;
+	final transient Object fitLock = new Object();
 	final PreProcessor[] pipe;
 	final T planner;
 
@@ -15,6 +16,11 @@ public abstract class Pipeline<T extends BaseClassifierPlanner> extends Clust4j 
 		this.pipe = copyPipe(pipe);
 	}
 	
+	/**
+	 * Ensure the pipeline remains immutable
+	 * @param pipe
+	 * @return
+	 */
 	final static PreProcessor[] copyPipe(final PreProcessor... pipe) {
 		final PreProcessor[] out = new PreProcessor[pipe.length];
 		

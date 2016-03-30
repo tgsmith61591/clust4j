@@ -1,5 +1,7 @@
 package com.clust4j.algo.pipeline;
 
+import lombok.Synchronized;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
@@ -12,9 +14,10 @@ public class UnsupervisedPipeline extends Pipeline<UnsupervisedClassifierPlanner
 	public UnsupervisedPipeline(final UnsupervisedClassifierPlanner planner, final PreProcessor... pipe) {
 		super(planner, pipe);
 	}
-	
+
+	@Synchronized("fitLock") 
 	public AbstractClusterer fit(final AbstractRealMatrix data) {
-		AbstractRealMatrix copy = (AbstractRealMatrix)data.copy();
+		AbstractRealMatrix copy = data;
 		
 		// Push through pipeline...
 		for(PreProcessor pre: pipe)

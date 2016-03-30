@@ -4,6 +4,8 @@ import java.text.NumberFormat;
 import java.util.Random;
 import java.util.UUID;
 
+import lombok.NonNull;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
@@ -136,7 +138,7 @@ public abstract class AbstractClusterer
 	 * @param planner
 	 */
 	protected AbstractClusterer(AbstractClusterer caller, BaseClustererPlanner planner) {
-		this.dist_metric 		= null == planner ? caller.dist_metric : planner.getSep();
+		this.dist_metric= null == planner ? caller.dist_metric : planner.getSep();
 		this.verbose 	= null == planner ? false : planner.getVerbose(); // if another caller, default to false
 		this.modelKey 	= UUID.randomUUID();
 		this.random_state 		= null == planner ? caller.random_state : planner.getSeed();
@@ -181,7 +183,7 @@ public abstract class AbstractClusterer
 	 * @param data
 	 * @param planner
 	 */
-	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
+	public AbstractClusterer(@NonNull AbstractRealMatrix data, @NonNull BaseClustererPlanner planner) {
 		this(data, planner, false);
 	}
 	
@@ -399,13 +401,14 @@ public abstract class AbstractClusterer
 	}
 	
 	
+	
 
 	/** 
-	 * Fits the model. In order to fit the style of clust4j,
-	 * the execution of this method should be synchronized on 'this'. This
-	 * is due to the volatile nature of many of the instance class variables.
+	 * Fits the model
 	 */
-	@Override abstract public AbstractClusterer fit();
+	@Override
+	abstract public AbstractClusterer fit();
+	
 	protected abstract ModelSummary modelSummary();
 	protected abstract Object[] getModelFitSummaryHeaders();
 }

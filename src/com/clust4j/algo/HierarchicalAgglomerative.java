@@ -3,6 +3,8 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.Random;
 
+import lombok.Synchronized;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -576,47 +578,46 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	}
 
 	@Override
+	@Synchronized("fitLock") 
 	public HierarchicalAgglomerative fit() {
-		synchronized(this) { // synch because alters internal structs
 			
-			if(null != labels) // Then we've already fit this...
+		try {
+			if(null != labels) // already fit
 				return this;
 			
-			try {
-				info("Model fit:");
-				final LogTimer timer = new LogTimer();
-				
-				labels = new int[m];
-				dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
-				
-				// Log info...
-				info("computed distance matrix in " + timer.toString());
-				
-				
-				// Get the tree class for logging...
-				LogTimer treeTimer = new LogTimer();
-				this.tree = this.linkage.buildTree(this);
-				
-				// Tree build
-				info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
-				double[][] children = tree.linkage();
-				
-				
-				
-				// Cut the tree
-				labels = hcCut(num_clusters, children, m);
-				labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
-				
-				
-				sayBye(timer);
-				dist_vec = null;
-				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			}
+			info("Model fit:");
+			final LogTimer timer = new LogTimer();
 			
-		} // End synch
+			labels = new int[m];
+			dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
+			
+			// Log info...
+			info("computed distance matrix in " + timer.toString());
+			
+			
+			// Get the tree class for logging...
+			LogTimer treeTimer = new LogTimer();
+			this.tree = this.linkage.buildTree(this);
+			
+			// Tree build
+			info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
+			double[][] children = tree.linkage();
+			
+			
+			
+			// Cut the tree
+			labels = hcCut(num_clusters, children, m);
+			labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
+			
+			
+			sayBye(timer);
+			dist_vec = null;
+			return this;
+		} catch(OutOfMemoryError | StackOverflowError e) {
+			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+			throw e;
+		}
+		
 	} // End train
 	
 	static int[] hcCut(final int n_clusters, final double[][] children, final int n_leaves) {

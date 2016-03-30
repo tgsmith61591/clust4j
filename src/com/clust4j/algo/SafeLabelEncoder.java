@@ -18,8 +18,6 @@ public class SafeLabelEncoder extends LabelEncoder {
 	
 	@Override
 	public SafeLabelEncoder fit() {
-		synchronized(this) {
-			return (SafeLabelEncoder) super.fit();
-		}
+		return (SafeLabelEncoder) super.fit();
 	}
 }

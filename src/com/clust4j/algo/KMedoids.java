@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import lombok.Synchronized;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -228,123 +230,122 @@ public class KMedoids extends AbstractCentroidClusterer {
 	}
 	
 	@Override
+	@Synchronized("fitLock") 
 	public KMedoids fit() {
-		synchronized(this) {
 			
-			try {
-				if(null != labels) // already fit
-					return this;
-				
-				final LogTimer timer = new LogTimer();
-				final double[][] X = data.getData();
-				
-				// Corner case: K = 1
-				if(1 == k) {
-					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
-					sayBye(timer);
-					return this;
-				}
-				
-				
-				// We do this in KMedoids and not KMeans, because KMedoids uses
-				// real points as medoids and not means for centroids, thus
-				// the recomputation of distances is unnecessary with the dist mat
-				dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
-				info("distance matrix computed in " + timer.toString());
-				
-				
-				// Initialize labels
-				medoid_indices = init_centroid_indices;
-				
-				
-				ClusterAssignments clusterAssignments;
-				MedoidReassignmentHandler rassn;
-				int[] newMedoids = medoid_indices;
-				
-				// Cost vars
-				cost = Double.POSITIVE_INFINITY;
-				double bestCost = Double.POSITIVE_INFINITY, 
-					   maxCost = Double.NEGATIVE_INFINITY,
-					   avgCost = Double.NaN;
-				
-				
-				// Iterate while the cost decreases:
-				boolean convergedFromCost = false; // from cost or system changes?
-				boolean configurationChanged = true;
-				while( configurationChanged
-					&& iter < maxIter ) {
-					
-					/*
-					 * 1. In each cluster, make the point that minimizes 
-					 *    the sum of distances within the cluster the medoid
-					 */
-					clusterAssignments = assignClosestMedoid(newMedoids);
-					rassn = new MedoidReassignmentHandler(clusterAssignments);
-
-					
-					/*
-					 * 2. Reassign each point to the cluster defined by the 
-					 *    closest medoid determined in the previous step.
-					 */
-					newMedoids = rassn.reassignedMedoidIdcs;
-
-					
-					/*
-					 * 2.5 Determine whether configuration changed
-					 */
-					boolean lastIteration = VecUtils.equalsExactly(newMedoids, medoid_indices);
-					
-					
-					/*
-					 * 3. Update the fit summary item
-					 */
-					fitSummary.add(new Object[]{ iter, 
-						converged = lastIteration 
-							|| (convergedFromCost = FastMath.abs(cost - bestCost) < tolerance), 
-						maxCost, cost, avgCost, timer.wallTime() });
-					
-					/*
-					 * 4. Update the costs
-					 */
-					double tmpCost = rassn.new_clusters.total_cst;
-					avgCost = tmpCost / (double)k;
-					if(tmpCost > maxCost)
-						maxCost = tmpCost;
-					
-					if(tmpCost < bestCost) {
-						bestCost = tmpCost;
-						cost = bestCost;
-						labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
-						centroids = rassn.centers;
-						medoid_indices = newMedoids;
-					}
-					
-
-					iter++;
-					configurationChanged = !converged;
-				}
-				
-				if(!converged)
-					warn("algorithm did not converge");
-				else 
-					info("algorithm converged due to " + 
-					(convergedFromCost ? "cost minimization" : "harmonious state"));
-				
-					
-				
-				// wrap things up, create summary..
-				reorderLabelsAndCentroids();
-				sayBye(timer);
-				
-				
+		try {
+			if(null != labels) // already fit
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
+			
+			final LogTimer timer = new LogTimer();
+			final double[][] X = data.getData();
+			
+			// Corner case: K = 1
+			if(1 == k) {
+				labelFromSingularK(X);
+				fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+				sayBye(timer);
+				return this;
 			}
 			
-		} // End synchronized
+			
+			// We do this in KMedoids and not KMeans, because KMedoids uses
+			// real points as medoids and not means for centroids, thus
+			// the recomputation of distances is unnecessary with the dist mat
+			dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
+			info("distance matrix computed in " + timer.toString());
+			
+			
+			// Initialize labels
+			medoid_indices = init_centroid_indices;
+			
+			
+			ClusterAssignments clusterAssignments;
+			MedoidReassignmentHandler rassn;
+			int[] newMedoids = medoid_indices;
+			
+			// Cost vars
+			cost = Double.POSITIVE_INFINITY;
+			double bestCost = Double.POSITIVE_INFINITY, 
+				   maxCost = Double.NEGATIVE_INFINITY,
+				   avgCost = Double.NaN;
+			
+			
+			// Iterate while the cost decreases:
+			boolean convergedFromCost = false; // from cost or system changes?
+			boolean configurationChanged = true;
+			while( configurationChanged
+				&& iter < maxIter ) {
+				
+				/*
+				 * 1. In each cluster, make the point that minimizes 
+				 *    the sum of distances within the cluster the medoid
+				 */
+				clusterAssignments = assignClosestMedoid(newMedoids);
+				rassn = new MedoidReassignmentHandler(clusterAssignments);
+
+				
+				/*
+				 * 2. Reassign each point to the cluster defined by the 
+				 *    closest medoid determined in the previous step.
+				 */
+				newMedoids = rassn.reassignedMedoidIdcs;
+
+				
+				/*
+				 * 2.5 Determine whether configuration changed
+				 */
+				boolean lastIteration = VecUtils.equalsExactly(newMedoids, medoid_indices);
+				
+				
+				/*
+				 * 3. Update the fit summary item
+				 */
+				fitSummary.add(new Object[]{ iter, 
+					converged = lastIteration 
+						|| (convergedFromCost = FastMath.abs(cost - bestCost) < tolerance), 
+					maxCost, cost, avgCost, timer.wallTime() });
+				
+				/*
+				 * 4. Update the costs
+				 */
+				double tmpCost = rassn.new_clusters.total_cst;
+				avgCost = tmpCost / (double)k;
+				if(tmpCost > maxCost)
+					maxCost = tmpCost;
+				
+				if(tmpCost < bestCost) {
+					bestCost = tmpCost;
+					cost = bestCost;
+					labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
+					centroids = rassn.centers;
+					medoid_indices = newMedoids;
+				}
+				
+
+				iter++;
+				configurationChanged = !converged;
+			}
+			
+			if(!converged)
+				warn("algorithm did not converge");
+			else 
+				info("algorithm converged due to " + 
+				(convergedFromCost ? "cost minimization" : "harmonious state"));
+			
+				
+			
+			// wrap things up, create summary..
+			reorderLabelsAndCentroids();
+			sayBye(timer);
+			
+			
+			return this;
+		} catch(OutOfMemoryError | StackOverflowError e) {
+			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+			throw e;
+		}
+		
 	} // End train
 	
 	
@@ -498,7 +499,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	@Override
 	public Algo getLoggerTag() {
-		return com.clust4j.log.Log.Tag.Algo.KMEDOIDS;
+		return Algo.KMEDOIDS;
 	}
 	
 	@Override

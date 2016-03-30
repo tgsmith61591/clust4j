@@ -21,8 +21,6 @@ public class NoiseyLabelEncoder extends SafeLabelEncoder {
 	
 	@Override
 	public NoiseyLabelEncoder fit() {
-		synchronized(this) {
-			return (NoiseyLabelEncoder) super.fit();
-		}
+		return (NoiseyLabelEncoder) super.fit();
 	}
 }
