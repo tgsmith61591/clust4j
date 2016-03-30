@@ -28,7 +28,6 @@ import com.clust4j.utils.parallel.reduce.DistributedSum;
 
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
-import static com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
@@ -131,6 +130,14 @@ public class VecUtils {
 	final static public void checkDimsPermitEmpty(final double[] a, final double[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
 	
 	
+	/**
+	 * Should we use parallel?
+	 * @param a
+	 * @return
+	 */
+	static boolean useParallel(final double[] a) {
+		return (ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN);
+	}
 	
 	
 	
@@ -148,9 +155,7 @@ public class VecUtils {
 	public static double[] abs(final double[] a) {
 		checkDimsPermitEmpty(a);
 		
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return absDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -195,9 +200,7 @@ public class VecUtils {
 	 * @return the result of adding two vectors
 	 */
 	public static double[] add(final double[] a, final double[] b) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return addDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -565,9 +568,7 @@ public class VecUtils {
 	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaN(final double[] a) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return containsNaNDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -787,9 +788,7 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return equalsExactlyDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -838,9 +837,7 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return equalsWithToleranceDistributed(a, b, eps);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -936,9 +933,7 @@ public class VecUtils {
 	 * @return the inner product between a and b
 	 */
 	public static double innerProduct(final double[] a, final double[] b) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && 
-				 a.length>MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return innerProductDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1040,9 +1035,7 @@ public class VecUtils {
 	 * @return the log of the vector
 	 */
 	public static double[] log(final double[] a) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && 
-				 a.length>MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return logDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1181,9 +1174,7 @@ public class VecUtils {
 	 * @return the product of two vectors
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return multiplyDistributed(a, b);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1231,9 +1222,7 @@ public class VecUtils {
 	 * @return the number of nans in the vector
 	 */
 	public static int nanCount(final double[] a) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return nanCountDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1548,9 +1537,7 @@ public class VecUtils {
 	}
 	
 	public static double prod(final double[] a) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return prodDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1818,9 +1805,7 @@ public class VecUtils {
 	
 	
 	public static double[] subtract(final double[] from, final double[] subtractor) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=from && 
-				 from.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(from)) {
 			try {
 				return subtractDistributed(from, subtractor);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
@@ -1852,9 +1837,7 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		if(FORCE_PARALLELISM_WHERE_POSSIBLE || 
-				(ALLOW_AUTO_PARALLELISM && null!=a && 
-				 a.length > MAX_SERIAL_VECTOR_LEN)) {
+		if(useParallel(a)) {
 			try {
 				return sumDistributed(a);
 			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }

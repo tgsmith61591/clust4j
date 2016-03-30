@@ -11,9 +11,6 @@ import com.clust4j.except.NaNException;
 import com.clust4j.utils.MatrixFormatter;
 
 public class ClustTests {
-	{ // initializer
-		com.clust4j.GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
-	}
 	
 	private static boolean print = false;
 	private static final MatrixFormatter formatter = new MatrixFormatter();

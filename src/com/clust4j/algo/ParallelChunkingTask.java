@@ -25,9 +25,11 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 	public static class Chunk implements java.io.Serializable {
 		private static final long serialVersionUID = -4981036399670388292L;
 		final double[][] chunk;
+		final int start;
 		
-		public Chunk(final double[][] c) {
+		public Chunk(final double[][] c, int start_idx) {
 			this.chunk = c;
+			this.start = start_idx;
 		}
 		
 		public double[][] get() { return chunk; }
@@ -58,7 +60,7 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 				chunk[idx++] = X[j];
 			}
 			
-			return new Chunk(chunk);
+			return new Chunk(chunk, startingPt);
 		}
 		
 		public static int getChunkSize(int m) {

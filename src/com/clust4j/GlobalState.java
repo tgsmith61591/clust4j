@@ -205,13 +205,6 @@ public class GlobalState {
 		public static boolean ALLOW_AUTO_PARALLELISM = PARALLELISM_RECOMMENDED;
 		
 		/**
-		 * If true, will try to force parallelism whenever possible. On a machine
-		 * with fewer cores, can dramatically slow down some processes. Use with
-		 * caution!
-		 */
-		public static boolean FORCE_PARALLELISM_WHERE_POSSIBLE = false;
-		
-		/**
 		 * The global ForkJoin thread pool for parallel recursive tasks. */
 		final static public ForkJoinPool FJ_THREADPOOL = new ForkJoinPool();
 		

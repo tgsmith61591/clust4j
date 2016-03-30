@@ -289,7 +289,6 @@ public class BufferedMatrixReader implements Loggable {
 		final int num_cols;
 		final int header_offset; // which row to start on due to headers
 		String[] headers;
-		String[][] nan_strings; // strings used for NaN in a given col
 		String[][] data; // First few rows of parsed data
 		final byte separator;
 		final byte[] stream;
@@ -313,6 +312,7 @@ public class BufferedMatrixReader implements Loggable {
 			this.single_quotes = single_quotes;
 			if(single_quotes)
 				info("using single quotes (\"'\")");
+			else info("using double quotes ('\"')");
 			
 			this.timer = new LogTimer();
 			
@@ -886,10 +886,16 @@ public class BufferedMatrixReader implements Loggable {
 	 */
 	public DataSet read(boolean parallel) throws MatrixParseException {
 		LogTimer timer = new LogTimer();
-		final String[] lines = getLines(setup.stream);
+		String msg;
 		
 		
-		// Potential for cutoff here...
+		/*
+		 * Get lines...
+		 */
+		String[] lines = getLines(setup.stream);
+		
+		
+		// Potential for truncation here...
 		if(lines.length == GlobalState.MAX_ARRAY_SIZE)
 			warn("only " + lines.length + " rows read from data, "
 				+ "as this is the max clust4j allows");
@@ -898,7 +904,10 @@ public class BufferedMatrixReader implements Loggable {
 				+ (lines.length==1?"":"s") + " (" + setup.stream.length
 				+ " byte"+(setup.stream.length==1?"":"s")+") read from file");
 		
-		String msg;
+		
+		/*
+		 * Do double parsing...
+		 */
 		double[][] res = null;
 		if(!parallel) {
 			// Let any exceptions propagate

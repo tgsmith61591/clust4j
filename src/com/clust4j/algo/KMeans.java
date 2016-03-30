@@ -56,6 +56,7 @@ public class KMeans extends AbstractCentroidClusterer {
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private int k = DEF_K;
+		private boolean parallel = false;
 		
 		public KMeansPlanner() { }
 		public KMeansPlanner(int k) {
@@ -77,12 +78,18 @@ public class KMeans extends AbstractCentroidClusterer {
 				.setVerbose(verbose)
 				.setSeed(seed)
 				.setNormalizer(norm)
-				.setInitializationStrategy(strat);
+				.setInitializationStrategy(strat)
+				.setForceParallel(parallel);
 		}
 		
 		@Override
 		public int getK() {
 			return k;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 		
 		@Override
@@ -118,6 +125,12 @@ public class KMeans extends AbstractCentroidClusterer {
 		@Override
 		public boolean getVerbose() {
 			return verbose;
+		}
+		
+		@Override
+		public KMeansPlanner setForceParallel(boolean b) {
+			this.parallel = b;
+			return this;
 		}
 		
 		@Override

@@ -90,6 +90,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
 		private int k = DEF_K;
+		private boolean parallel = false;
 		
 		public KMedoidsPlanner() { }
 		public KMedoidsPlanner(int k) {
@@ -111,7 +112,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 				.setVerbose(verbose)
 				.setSeed(seed)
 				.setNormalizer(norm)
-				.setInitializationStrategy(strat);
+				.setInitializationStrategy(strat)
+				.setForceParallel(parallel);
 		}
 		
 		@Override
@@ -130,8 +132,19 @@ public class KMedoids extends AbstractCentroidClusterer {
 		}
 		
 		@Override
+		public boolean getParallel() {
+			return parallel;
+		}
+		
+		@Override
 		public double getConvergenceTolerance() {
 			return minChange;
+		}
+		
+		@Override
+		public KMedoidsPlanner setForceParallel(boolean b) {
+			this.parallel = b;
+			return this;
 		}
 		
 		@Override

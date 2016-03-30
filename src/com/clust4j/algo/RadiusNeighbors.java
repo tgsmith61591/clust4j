@@ -5,7 +5,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
@@ -59,11 +58,10 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","Radius","Leaf Size","Scale","Force Par.","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","Radius","Leaf Size","Scale","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				alg, radius, leafSize, normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel
 			});
 	}
@@ -89,6 +87,7 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 		private Random seed = DEF_SEED;
 		private double radius;
 		private int leafSize = DEF_LEAF_SIZE;
+		private boolean parallel = false;
 		
 		
 		public RadiusNeighborsPlanner() { this(DEF_RADIUS); }
@@ -113,6 +112,11 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 		public NeighborsAlgorithm getAlgorithm() {
 			return algo;
 		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
+		}
 
 		@Override
 		public RadiusNeighborsPlanner copy() {
@@ -123,7 +127,8 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setLeafSize(leafSize);
+				.setLeafSize(leafSize)
+				.setForceParallel(parallel);
 		}
 		
 		@Override
@@ -198,6 +203,12 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 		@Override
 		public RadiusNeighborsPlanner setSep(GeometricallySeparable dist) {
 			this.dist = dist;
+			return this;
+		}
+		
+		@Override
+		public RadiusNeighborsPlanner setForceParallel(boolean b) {
+			this.parallel = b;
 			return this;
 		}
 	}

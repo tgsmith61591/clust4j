@@ -6,7 +6,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
@@ -126,11 +125,10 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Linkage","Scale","Force Par.","Allow Par.","Num. Clusters"
+				"Num Rows","Num Cols","Metric","Linkage","Scale","Allow Par.","Num. Clusters"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),linkage,normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel,
 				num_clusters
 			});
@@ -168,6 +166,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		private boolean verbose = DEF_VERBOSE;
 		private int num_clusters = 2;
 		private FeatureNormalization norm = DEF_NORMALIZER;
+		private boolean parallel = false;
 		
 		
 		public HierarchicalPlanner(){}
@@ -190,11 +189,17 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 				.setSeed(seed)
 				.setVerbose(verbose)
 				.setNumClusters(num_clusters)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setForceParallel(parallel);
 		}
 		
 		public Linkage getLinkage() {
 			return linkage;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 
 		@Override
@@ -227,6 +232,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			return this;
 		}
 
+		@Override
+		public HierarchicalPlanner setForceParallel(boolean b) {
+			this.parallel = b;
+			return this;
+		}
+		
 		@Override
 		public HierarchicalPlanner setScale(boolean b) {
 			this.scale = b;

@@ -1,6 +1,6 @@
 package com.clust4j.algo;
 
-import com.clust4j.metrics.scoring.ClassificationScoring;
+import com.clust4j.metrics.scoring.BinomialClassificationScoring;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
 import com.clust4j.metrics.scoring.UnsupervisedEvaluationMetric;
@@ -11,7 +11,7 @@ import com.clust4j.metrics.scoring.UnsupervisedEvaluationMetric;
  */
 public interface BaseClassifier extends java.io.Serializable {
 	public final static SupervisedEvaluationMetric DEF_SUPERVISED_METRIC = 
-		ClassificationScoring.ACCURACY;
+		BinomialClassificationScoring.ACCURACY;
 	public final static UnsupervisedEvaluationMetric DEF_UNSUPERVISED_METRIC =
 		SilhouetteScore.getInstance();
 	

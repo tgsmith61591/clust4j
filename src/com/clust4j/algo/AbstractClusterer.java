@@ -98,6 +98,7 @@ public abstract class AbstractClusterer
 		//abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
 		@Override abstract public BaseClustererPlanner copy();
 		abstract public FeatureNormalization getNormalizer();
+		abstract public boolean getParallel();
 		abstract public GeometricallySeparable getSep();
 		abstract public boolean getScale();
 		abstract public Random getSeed();
@@ -107,6 +108,7 @@ public abstract class AbstractClusterer
 		abstract public BaseClustererPlanner setSeed(final Random rand);
 		abstract public BaseClustererPlanner setVerbose(final boolean b);
 		abstract public BaseClustererPlanner setSep(final GeometricallySeparable dist);
+		abstract public BaseClustererPlanner setForceParallel(final boolean b);
 	}
 	
 	
@@ -157,7 +159,7 @@ public abstract class AbstractClusterer
 		this.normalizer = planner.getNormalizer();
 		
 		// Determine whether we should parallelize
-		this.parallel = GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE
+		this.parallel = planner.getParallel()
 			|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 			&& (data.getRowDimension() * data.getColumnDimension()) 
 			> GlobalState.ParallelismConf.MIN_ELEMENTS);

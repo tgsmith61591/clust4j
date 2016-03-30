@@ -1,11 +1,11 @@
 package com.clust4j.algo;
 
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
@@ -66,11 +66,10 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","K","Leaf Size","Scale","Force Par.","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","K","Leaf Size","Scale","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				alg, kNeighbors, leafSize, normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel
 			});
 	}
@@ -89,6 +88,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 		private Random seed = DEF_SEED;
 		private final int k;
 		private int leafSize = DEF_LEAF_SIZE;
+		private boolean parallel = false;
 		
 		
 		public NearestNeighborsPlanner() { this(DEF_K); }
@@ -123,7 +123,8 @@ public class NearestNeighbors extends BaseNeighborsModel {
 				.setSeed(seed)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setLeafSize(leafSize);
+				.setLeafSize(leafSize)
+				.setForceParallel(parallel);
 		}
 		
 		@Override
@@ -144,6 +145,11 @@ public class NearestNeighbors extends BaseNeighborsModel {
 		@Override
 		public FeatureNormalization getNormalizer() {
 			return norm;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 
 		@Override
@@ -200,6 +206,11 @@ public class NearestNeighbors extends BaseNeighborsModel {
 			this.dist = dist;
 			return this;
 		}
+		@Override
+		public NearestNeighborsPlanner setForceParallel(boolean b) {
+			this.parallel = b;
+			return this;
+		}
 	}
 	
 	@Override
@@ -242,9 +253,19 @@ public class NearestNeighbors extends BaseNeighborsModel {
 				int nNeighbors = FastMath.min(kNeighbors + 1, m); //kNeighbors + 1;
 				final LogTimer timer = new LogTimer();
 				
-				Neighborhood initRes = new Neighborhood(
-					tree.query(fit_X, nNeighbors, 
-						DUAL_TREE_SEARCH, SORT));
+				// We can do parallel here!
+				Neighborhood initRes = null;
+				if(parallel) {
+					try {
+						initRes = ParallelNeighborhoodSearch.doAll(fit_X, this, nNeighbors);
+					} catch(RejectedExecutionException r) {
+						warn("parallel neighborhood search failed; falling back to serial query");
+					}
+				}
+				
+				// Gets here in serial mode or if parallel failed...
+				if(null == initRes)
+					initRes = new Neighborhood(tree.query(fit_X, nNeighbors, DUAL_TREE_SEARCH, SORT));
 				info("queried "+this.alg+" for nearest neighbors in " + timer.toString());
 
 				
@@ -339,14 +360,24 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	/**
 	 * For internal use
 	 * @param x
+	 * @param parallelize
+	 * @return
+	 */
+	protected Neighborhood getNeighbors(double[][] x, boolean parallelize) {
+		return getNeighbors(x, kNeighbors, parallelize);
+	}
+	
+	/**
+	 * For internal use
+	 * @param x
 	 * @return
 	 */
 	protected Neighborhood getNeighbors(double[][] x) {
-		return getNeighbors(x, kNeighbors);
+		return getNeighbors(x, kNeighbors, false);
 	}
 	
 	public Neighborhood getNeighbors(AbstractRealMatrix x, int k) {
-		return getNeighbors(x.getData(), k);
+		return getNeighbors(x.getData(), k, parallel);
 	}
 	
 	/**
@@ -355,14 +386,111 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	 * @param k
 	 * @return
 	 */
-	protected Neighborhood getNeighbors(double[][] X, int k) {
+	protected Neighborhood getNeighbors(double[][] X, int k, boolean parallelize) {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
 		
 		validateK(k, m); // Should be X.length  or m??
-		return tree.query(X, k, 
-			DUAL_TREE_SEARCH, SORT);
+		
+		/*
+		 * Try parallel if we can...
+		 */
+		if(parallelize) {
+			try {
+				return ParallelNeighborhoodSearch.doAll(X, this, k);
+			} catch(RejectedExecutionException r) {
+				warn("parallel neighborhood search failed; falling back to serial search");
+			}
+		}
+		
+		return tree.query(X, k, DUAL_TREE_SEARCH, SORT);
 	}
+	
+	/**
+	 * A class to query the tree for neighborhoods in parallel
+	 * @author Taylor G Smith
+	 */
+	static class ParallelNeighborhoodSearch extends ParallelChunkingTask<Neighborhood> {
+		private static final long serialVersionUID = -1600812794470325448L;
+		
+		private final NearestNeighbors model;
+		private final double[][] distances;
+		private final int[][] indices;
+		final int lo;
+		final int hi;
+		final int k;
+
+		public ParallelNeighborhoodSearch(double[][] X, NearestNeighbors model, final int k) {
+			super(X); // this auto-chunks the data
+			
+			this.model = model;
+			this.lo = 0;
+			this.hi = strategy.getNumChunks(X);
+			this.k = k;
+			
+			/*
+			 * First get the length...
+			 */
+			int length = 0;
+			for(Chunk c: this.chunks)
+				length += c.size();
+			
+			this.distances = new double[length][];
+			this.indices = new int[length][];
+		}
+		
+		public ParallelNeighborhoodSearch(ParallelNeighborhoodSearch task, int lo, int hi) {
+			super(task);
+			
+			this.model = task.model;
+			this.lo = lo;
+			this.hi = hi;
+			this.k = task.k;
+			this.distances = task.distances;
+			this.indices = task.indices;
+		}
+
+		@Override
+		public Neighborhood reduce(Chunk chunk) {
+			Neighborhood n = this.model.tree.query(chunk.get(), k, DUAL_TREE_SEARCH, SORT);
+			
+			// assign to low index, since that's how we retrieved the chunk...
+			final int start = chunk.start , end = start + chunk.size();
+			double[][] d = n.getDistances();
+			int[][] i = n.getIndices();
+			
+			// Set the distances and indices in place...
+			for(int j = start, idx = 0; j < end; j++, idx++) {
+				this.distances[j] = d[idx];
+				this.indices[j] = i[idx];
+			}
+			
+			return n;
+		}
+
+		@Override
+		protected Neighborhood compute() {
+			if(hi - lo <= 1) { // generally should equal one...
+				return reduce(chunks.get(lo));
+			} else {
+				int mid = this.lo + (this.hi - this.lo) / 2;
+				ParallelNeighborhoodSearch left  = new ParallelNeighborhoodSearch(this, this.lo, mid);
+				ParallelNeighborhoodSearch right = new ParallelNeighborhoodSearch(this, mid, this.hi);
+				
+				left.fork();
+	            right.compute();
+	            left.join();
+
+	            return new Neighborhood(distances, indices);
+			}
+		}
+		
+		static Neighborhood doAll(double[][] X, NearestNeighbors nn, int k) {
+			return getThreadPool().invoke(new ParallelNeighborhoodSearch(X, nn, k));
+		}
+	}
+	
+	
 
 	@Override
 	public Algo getLoggerTag() {

@@ -552,58 +552,46 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testParallelSmall() {
-		try {
-			MeanShift iris_serial = new MeanShift(data_, new MeanShiftPlanner()).fit();
-
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
-			MeanShift iris_paral = new MeanShift(data_, new MeanShiftPlanner()).fit();
-
-			assertTrue(iris_serial.silhouetteScore() == iris_paral.silhouetteScore());
-			assertTrue(VecUtils.equalsExactly(iris_serial.getLabels(), iris_paral.getLabels()));
-		} finally {
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
-		}
+		MeanShift iris_serial = new MeanShift(data_, new MeanShiftPlanner().setVerbose(true)).fit();
+		System.out.println();
+		
+		MeanShift iris_paral = new MeanShift(data_, new MeanShiftPlanner().setForceParallel(true).setVerbose(true)).fit();
+		System.out.println();
+		
+		assertTrue(iris_serial.silhouetteScore() == iris_paral.silhouetteScore());
+		assertTrue(VecUtils.equalsExactly(iris_serial.getLabels(), iris_paral.getLabels()));
 	}
 	
 	@Test
 	public void testParallelLarger() {
-		try {
-			MeanShift wine_serial = new MeanShift(wine, 
-				new MeanShiftPlanner().setVerbose(true)).fit();
-			System.out.println();
-			
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
-			MeanShift wine_paral = new MeanShift(wine, 
-				new MeanShiftPlanner().setVerbose(true)).fit();
-			System.out.println();
-			
-			assertTrue(Precision.equals(wine_serial.getBandwidth(), wine_paral.getBandwidth(), 1e-9));
-			assertTrue(wine_serial.silhouetteScore() == wine_paral.silhouetteScore());
-			assertTrue(VecUtils.equalsExactly(wine_serial.getLabels(), wine_paral.getLabels()));
-		} finally {
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
-		}
+		MeanShift wine_serial = new MeanShift(wine, 
+			new MeanShiftPlanner().setVerbose(true)).fit();
+		System.out.println();
+		
+		MeanShift wine_paral = new MeanShift(wine, 
+			new MeanShiftPlanner().setVerbose(true).setForceParallel(true)).fit();
+		System.out.println();
+		
+		assertTrue(Precision.equals(wine_serial.getBandwidth(), wine_paral.getBandwidth(), 1e-9));
+		assertTrue(wine_serial.silhouetteScore() == wine_paral.silhouetteScore());
+		assertTrue(VecUtils.equalsExactly(wine_serial.getLabels(), wine_paral.getLabels()));
 	}
 	
 	@Test
 	public void testParallelHuge() {
-		GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = true;
 		final int n = 10;
 		
-		try {
-			// Construct a large matrix of two separate gaussian seeds
-			double[][] A = MatUtils.randomGaussian(1000, n);
-			double[][] B = MatUtils.randomGaussian(1000, n, 25.0);
-			double[][] C = MatUtils.rbind(A, B);
-			
-			new MeanShift(new Array2DRowRealMatrix(C, false),
-				new MeanShiftPlanner()
-					//.setScale(true)
-					.setVerbose(true)).fit();
-			
-			// This should result in one cluster. We are testing that that works.
-		} finally {
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE = false;
-		}
+		// Construct a large matrix of two separate gaussian seeds
+		double[][] A = MatUtils.randomGaussian(1000, n);
+		double[][] B = MatUtils.randomGaussian(1000, n, 25.0);
+		double[][] C = MatUtils.rbind(A, B);
+		
+		new MeanShift(new Array2DRowRealMatrix(C, false),
+			new MeanShiftPlanner()
+				//.setScale(true)
+				.setVerbose(true)
+				.setForceParallel(true)).fit();
+		
+		// This should result in one cluster. We are testing that that works.
 	}
 }

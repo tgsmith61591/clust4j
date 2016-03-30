@@ -7,7 +7,6 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
@@ -101,11 +100,10 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Num Classes",
-			"Shrinkage","Scale","Force Par.","Allow Par."
+			"Shrinkage","Scale","Allow Par."
 		}, new Object[]{
 			m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,
 			shrinkage, normalized,
-			GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 			parallel
 		});
 	}
@@ -122,6 +120,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		private boolean verbose = DEF_VERBOSE;
 		private boolean scale = DEF_SCALE;
 		private Random seed = DEF_SEED;
+		private boolean parallel = false;
 		
 		
 		public NearestCentroidPlanner() { }
@@ -139,12 +138,18 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 				.setSeed(seed)
 				.setSep(met)
 				.setShrinkage(shrinkage)
-				.setVerbose(verbose);
+				.setVerbose(verbose)
+				.setForceParallel(parallel);
 		}
 
 		@Override
 		public FeatureNormalization getNormalizer() {
 			return norm;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 
 		@Override
@@ -170,6 +175,12 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		@Override
 		public NearestCentroidPlanner setNormalizer(FeatureNormalization norm) {
 			this.norm = norm;
+			return this;
+		}
+		
+		@Override
+		public NearestCentroidPlanner setForceParallel(boolean b) {
+			this.parallel = b;
 			return this;
 		}
 

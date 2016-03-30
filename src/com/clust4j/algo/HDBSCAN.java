@@ -250,11 +250,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo.","Scale","Force Par.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
+				"Num Rows","Num Cols","Metric","Algo.","Scale","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),algo,normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel,
 				minPts, min_cluster_size,alpha
 			});
@@ -281,6 +280,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		private boolean approxMinSpanTree = DEF_APPROX_MIN_SPAN;
 		private int min_cluster_size = DEF_MIN_CLUST_SIZE;
 		private int leafSize = DEF_LEAF_SIZE;
+		private boolean parallel;
 		
 		
 		public HDBSCANPlanner() { this(DEF_MIN_PTS); }
@@ -307,12 +307,18 @@ public class HDBSCAN extends AbstractDBSCAN {
 				.setSep(dist)
 				.setSeed(seed)
 				.setVerbose(verbose)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setForceParallel(parallel);
 		}
 
 		@Override
 		public int getMinPts() {
 			return minPts;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 		
 		@Override
@@ -363,6 +369,12 @@ public class HDBSCAN extends AbstractDBSCAN {
 		@Override
 		public HDBSCANPlanner setMinPts(final int minPts) {
 			this.minPts = minPts;
+			return this;
+		}
+		
+		@Override
+		public HDBSCANPlanner setForceParallel(boolean b) {
+			this.parallel = b;
 			return this;
 		}
 		

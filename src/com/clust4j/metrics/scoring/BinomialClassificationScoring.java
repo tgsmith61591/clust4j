@@ -2,13 +2,23 @@ package com.clust4j.metrics.scoring;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
-class ConfMatUtils {
+public enum BinomialClassificationScoring implements SupervisedEvaluationMetric {
+	ACCURACY {
+		@Override
+		public double evaluate(final int[] actual, final int[] predicted) {
+			return numEqual(actual, predicted) / (double)actual.length;
+		}
+	},
+
+	// TODO: more...
+	;
+	
 	private static void checkDims(int[] a, int[] b) {
 		if(a.length != b.length) // Allow empty; so we don't use VecUtils
 			throw new DimensionMismatchException(a.length, b.length);
 	}
 	
-	public static int numEqual(int[] a, int[] b) {
+	private static int numEqual(int[] a, int[] b) {
 		checkDims(a, b);
 		int sum = 0;
 		for(int i = 0; i < a.length; i++)
@@ -17,5 +27,5 @@ class ConfMatUtils {
 		return sum;
 	}
 	
-	// TODO tp/fp/tn/fn for multiclass...
+	// TODO: tp/fp/tn/fn for multiclass...
 }

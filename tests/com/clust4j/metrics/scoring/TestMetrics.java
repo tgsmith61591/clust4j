@@ -9,7 +9,7 @@ import org.junit.Test;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.metrics.pairwise.Distance;
-import com.clust4j.metrics.scoring.ClassificationScoring;
+import com.clust4j.metrics.scoring.BinomialClassificationScoring;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.utils.VecUtils;
 
@@ -18,7 +18,7 @@ public class TestMetrics {
 	
 	@Test
 	public void testAcc() {
-		assertTrue(ClassificationScoring.ACCURACY.evaluate(
+		assertTrue(BinomialClassificationScoring.ACCURACY.evaluate(
 				new int[]{1,1,1,0}, 
 				new int[]{1,1,1,1}) == 0.75);
 	}

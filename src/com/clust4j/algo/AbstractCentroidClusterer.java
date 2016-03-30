@@ -9,7 +9,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -259,10 +258,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","K","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Init."
+				"Num Rows","Num Cols","Metric","K","Scale","Allow Par.","Max Iter","Tolerance","Init."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel,
 				maxIter, tolerance, init.toString()
 			});

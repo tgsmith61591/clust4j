@@ -9,11 +9,11 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
@@ -136,7 +136,7 @@ public class MeanShift
 			if(planner.seeds[0].length != (n=this.data.getColumnDimension())) {
 				e = "seeds column dims do not match data column dims";
 				error(e);
-				throw new org.apache.commons.math3.exception.DimensionMismatchException(planner.seeds[0].length, n);
+				throw new DimensionMismatchException(planner.seeds[0].length, n);
 			}
 			
 			if(planner.seeds.length > this.data.getRowDimension()) {
@@ -175,13 +175,12 @@ public class MeanShift
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Bandwidth","Scale","Force Par.","Allow Par.","Max Iter.","Tolerance"
+				"Num Rows","Num Cols","Metric","Bandwidth","Scale","Allow Par.","Max Iter.","Tolerance"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),
 				(autoEstimate ? "(auto) " : "") + bandwidth,
 				normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel,
 				maxIter, tolerance
 			});
@@ -201,7 +200,13 @@ public class MeanShift
 		
 		return autoEstimateBW(new NearestNeighbors(data,
 			new NearestNeighborsPlanner((int)(data.getRowDimension() * quantile))
-				.setSeed(seed)).fit(), data.getDataRef(), quantile, sep, seed, parallel, null);
+				.setSeed(seed)
+				.setForceParallel(parallel)).fit(), 
+			data.getDataRef(), 
+			quantile, 
+			sep, seed, 
+			parallel, 
+			null);
 	}
 	
 	/**
@@ -213,7 +218,8 @@ public class MeanShift
 	final protected static double autoEstimateBW(MeanShift caller, double quantile) {
 		LogTimer timer = new LogTimer();
 		NearestNeighbors nn = new NearestNeighbors(caller, 
-				(int)(caller.data.getRowDimension() * quantile)).fit();
+				new NearestNeighborsPlanner((int)(caller.data.getRowDimension() * quantile))
+					.setForceParallel(caller.parallel)).fit();
 		caller.info("fit nearest neighbors model for auto-bandwidth automation in " + timer.toString());
 		
 		return autoEstimateBW(nn,
@@ -317,7 +323,7 @@ public class MeanShift
 		@Override
 		public Double reduce(Chunk chunk) {
 			double bw = 0.0;
-			Neighborhood neighb = nn.getNeighbors(chunk.get());
+			Neighborhood neighb = nn.getNeighbors(chunk.get(), false);
 			
 			for(double[] distRow: neighb.getDistances()) {
 				//bw += VecUtils.max(distRow);
@@ -358,6 +364,7 @@ public class MeanShift
 		private double[][] seeds = null;
 		private GeometricallySeparable dist	= DEF_DIST;
 		private boolean verbose	= DEF_VERBOSE;
+		private boolean parallel = false;
 		
 		public MeanShiftPlanner() {
 			this.autoEstimateBW = true;
@@ -386,7 +393,13 @@ public class MeanShift
 				.setSeeds(seeds)
 				.setSep(dist)
 				.setVerbose(verbose)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setForceParallel(parallel);
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 		
 		@Override
@@ -467,6 +480,12 @@ public class MeanShift
 		@Override
 		public MeanShiftPlanner setNormalizer(FeatureNormalization norm) {
 			this.norm = norm;
+			return this;
+		}
+		
+		@Override
+		public MeanShiftPlanner setForceParallel(boolean b) {
+			this.parallel = b;
 			return this;
 		}
 	}
@@ -929,22 +948,20 @@ public class MeanShift
 				
 				
 				// Compute the seeds and center intensity
-				// If parallelism is permitted, try it. Otherwise let's
-				// let it fail so we can figure out why...
+				// If parallelism is permitted, try it. 
 				CenterIntensity intensity = null;
 				if(parallel) {
 					try {
 						intensity = new ParallelCenterIntensity(nbrs);
 					} catch(RejectedExecutionException e) {
 						// Shouldn't happen...
-						error = "cannot execute parallel job";
-						error(error);
-						throw new RuntimeException(error, e);
+						warn("parallel search failed; falling back to serial");
 					}
-				} else {
-					intensity = new SerialCenterIntensity(nbrs);
 				}
 				
+				// Gets here if serial or if parallel failed...
+				if(null == intensity)
+					intensity = new SerialCenterIntensity(nbrs);
 				
 				
 				// Check for points all too far from seeds
@@ -972,7 +989,8 @@ public class MeanShift
 				nbrs = new RadiusNeighbors(sorted_centers,
 					new RadiusNeighborsPlanner(bandwidth)
 						.setSeed(this.random_state)
-						.setSep(this.dist_metric), true).fit();
+						.setSep(this.dist_metric)
+						.setForceParallel(parallel), true).fit();
 				
 				
 
@@ -1037,7 +1055,8 @@ public class MeanShift
 				NearestNeighbors nn = new NearestNeighbors(centers,
 					new NearestNeighborsPlanner(1)
 						.setSeed(this.random_state)
-						.setSep(this.dist_metric), true).fit();
+						.setSep(this.dist_metric)
+						.setForceParallel(false), true).fit();
 				
 				
 				

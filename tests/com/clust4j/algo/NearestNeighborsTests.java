@@ -480,10 +480,20 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	}
 	
 	@Test
-	public void testBig() {
-		final Array2DRowRealMatrix big = TestSuite.getRandom(10000, 3);
-		new NearestNeighbors(big, new NearestNeighborsPlanner(3)
-			.setVerbose(true)).fit();
+	public void testBigWithParallelQuery() {
+		final int k= 3;
+		final Array2DRowRealMatrix big = TestSuite.getRandom(10000, k);
+		NearestNeighbors nn = new NearestNeighbors(big, 
+			new NearestNeighborsPlanner(3)
+				.setVerbose(true)
+				.setForceParallel(true)).fit();
+		
+		// test query now...
+		//final Neighborhood res = nn.tree.query(big.getData(), k, BaseNeighborsModel.DUAL_TREE_SEARCH, BaseNeighborsModel.SORT);
+		//final Neighborhood par = 
+		nn.getNeighbors(big.getDataRef(), true);
+		
+		//assertTrue(res.equals(par));
 	}
 	
 	@Test

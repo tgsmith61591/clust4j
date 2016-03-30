@@ -5,7 +5,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 
 abstract public class BaseNeighborsModel extends AbstractClusterer {
@@ -31,7 +30,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 	interface TreeBuilder extends java.io.Serializable {
 		public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data, 
-				int leafSize, DistanceMetric sep, Loggable logger);
+				int leafSize, DistanceMetric sep, BaseNeighborsModel logger);
 	}
 	
 	public static enum NeighborsAlgorithm implements TreeBuilder {
@@ -39,11 +38,12 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, Loggable logger) {
+					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
 				int mn = data.getColumnDimension() * data.getRowDimension();
-				return mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
-					BALL_TREE.buildTree(data, leafSize, sep, logger) : 
-					KD_TREE.buildTree(data, leafSize, sep, logger);
+				logger.alg = mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
+					BALL_TREE : KD_TREE;
+				
+				return logger.alg.buildTree(data, leafSize, sep, logger);
 			}
 			
 		}, 
@@ -52,7 +52,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, Loggable logger) {
+					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
 				return new KDTree(data, leafSize, sep, logger);
 			}
 			
@@ -62,7 +62,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, Loggable logger) {
+					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
 				return new BallTree(data, leafSize, sep, logger);
 			}
 			
@@ -127,6 +127,34 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
 		return res.copy();
+	}
+	
+	/**
+	 * The query methods end up adding one to the front...
+	 * @param existing
+	 * @return
+	 */
+	protected static Neighborhood trimFirst(Neighborhood existing) {
+		final double[][] d_in = existing.getDistances();
+		final int[][] i_in = existing.getIndices();
+		
+		final double[][] d_out = new double[d_in.length][];
+		final int[][] i_out = new int[i_in.length][];
+		
+		int l;
+		for(int i = 0; i < d_in.length; i++) {
+			l = d_in[i].length;
+			
+			d_out[i] = new double[l - 1];
+			i_out[i] = new int[l - 1];
+			
+			for(int j = 1, k = 0; j < l; j++, k++) {
+				d_out[i][k] = d_in[i][j];
+				i_out[i][k] = i_in[i][j];
+			}
+		}
+		
+		return new Neighborhood(d_out, i_out);
 	}
 	
 	abstract Neighborhood getNeighbors(AbstractRealMatrix matrix);

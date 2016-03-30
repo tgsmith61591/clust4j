@@ -126,10 +126,9 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Damping","Scale","Force Par.","Allow Par.","Max Iter","Tolerance","Add Noise"
+				"Num Rows","Num Cols","Metric","Damping","Scale","Allow Par.","Max Iter","Tolerance","Add Noise"
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel,
 				maxIter, tolerance, addNoise
 			});
@@ -154,6 +153,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		private boolean verbose	= DEF_VERBOSE;
 		private boolean addNoise = DEF_ADD_GAUSSIAN_NOISE;
 		private FeatureNormalization norm = DEF_NORMALIZER;
+		private boolean parallel = false;
 
 		public AffinityPropagationPlanner() { /* Default constructor */ }
 		
@@ -179,7 +179,13 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				.setSep(dist)
 				.setVerbose(verbose)
 				.useGaussianSmoothing(addNoise)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setForceParallel(parallel);
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 		
 		@Override
@@ -231,6 +237,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		@Override
 		public AffinityPropagationPlanner setSeed(Random rand) {
 			seed = rand;
+			return this;
+		}
+		
+		@Override
+		public AffinityPropagationPlanner setForceParallel(boolean b) {
+			this.parallel = b;
 			return this;
 		}
 

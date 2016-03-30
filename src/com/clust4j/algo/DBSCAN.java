@@ -6,7 +6,6 @@ import java.util.Stack;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.GlobalState;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
@@ -60,6 +59,7 @@ public class DBSCAN extends AbstractDBSCAN {
 		private boolean verbose	= DEF_VERBOSE;
 		private Random seed = DEF_SEED;
 		private FeatureNormalization norm = DEF_NORMALIZER;
+		private boolean parallel;
 		
 		
 		public DBSCANPlanner() { }
@@ -81,12 +81,18 @@ public class DBSCAN extends AbstractDBSCAN {
 				.setSep(dist)
 				.setSeed(seed)
 				.setVerbose(verbose)
-				.setNormalizer(norm);
+				.setNormalizer(norm)
+				.setForceParallel(parallel);
 		}
 
 		@Override
 		public int getMinPts() {
 			return minPts;
+		}
+		
+		@Override
+		public boolean getParallel() {
+			return parallel;
 		}
 		
 		@Override
@@ -148,6 +154,12 @@ public class DBSCAN extends AbstractDBSCAN {
 			this.norm = norm;
 			return this;
 		}
+		
+		@Override
+		public DBSCANPlanner setForceParallel(boolean b) {
+			this.parallel = b;
+			return this;
+		}
 	}
 	
 	
@@ -192,11 +204,10 @@ public class DBSCAN extends AbstractDBSCAN {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Force Par.","Allow Par."
+				"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
 				eps, minPts, normalized,
-				GlobalState.ParallelismConf.FORCE_PARALLELISM_WHERE_POSSIBLE,
 				parallel
 			});
 	}
