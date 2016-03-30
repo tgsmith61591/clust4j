@@ -2,6 +2,7 @@ package com.clust4j.utils.parallel.map;
 
 import com.clust4j.utils.parallel.VectorMRTask;
 
+@Deprecated
 abstract class VectorMapTask extends VectorMRTask<double[]> {
 	private static final long serialVersionUID = -7986981765361158408L;
 	

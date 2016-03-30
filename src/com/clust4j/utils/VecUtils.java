@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Random;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -14,6 +13,8 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
+
+/* Deprecated distributed vector operations */
 import com.clust4j.utils.parallel.map.DistributedAbs;
 import com.clust4j.utils.parallel.map.DistributedAdd;
 import com.clust4j.utils.parallel.map.DistributedLog;
@@ -31,6 +32,7 @@ import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
+@SuppressWarnings("deprecation")
 public class VecUtils {
 	final static String VEC_LEN_ERR = "illegal vector length: ";
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
@@ -154,13 +156,6 @@ public class VecUtils {
 	 */
 	public static double[] abs(final double[] a) {
 		checkDimsPermitEmpty(a);
-		
-		if(useParallel(a)) {
-			try {
-				return absDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return absForceSerial(a);
 	}
 	
@@ -170,6 +165,7 @@ public class VecUtils {
 	 * @param a
 	 * @return absolute value of the vector
 	 */
+	@Deprecated
 	public static double[] absDistributed(final double[] a) {
 		return DistributedAbs.operate(a);
 	}
@@ -200,12 +196,6 @@ public class VecUtils {
 	 * @return the result of adding two vectors
 	 */
 	public static double[] add(final double[] a, final double[] b) {
-		if(useParallel(a)) {
-			try {
-				return addDistributed(a, b);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return addForceSerial(a, b);
 	}
 	
@@ -217,6 +207,7 @@ public class VecUtils {
 	 * @throws DimensionMismatchException if dims do not match
 	 * @return the sum of two vectors
 	 */
+	@Deprecated
 	public static double[] addDistributed(final double[] a, final double[] b) {
 		return DistributedAdd.operate(a, b);
 	}
@@ -568,12 +559,6 @@ public class VecUtils {
 	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaN(final double[] a) {
-		if(useParallel(a)) {
-			try {
-				return containsNaNDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return containsNaNForceSerial(a);
 	}
 	
@@ -584,6 +569,7 @@ public class VecUtils {
 	 * @param a
 	 * @return true if vector contains any NaNs
 	 */
+	@Deprecated
 	public static boolean containsNaNDistributed(final double[] a) {
 		return DistributedNaNCheck.operate(a);
 	}
@@ -788,12 +774,6 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
-		if(useParallel(a)) {
-			try {
-				return equalsExactlyDistributed(a, b);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return equalsWithToleranceForceSerial(a, b, 0);
 	}
 	
@@ -807,6 +787,7 @@ public class VecUtils {
 	 * @throws DimensionMismatchException if the dims don't match
 	 * @return true if all equal, false otherwise
 	 */
+	@Deprecated
 	public static boolean equalsExactlyDistributed(final double[] a, final double[] b) {
 		return DistributedEqualityTest.operate(a, b, 0);
 	}
@@ -837,12 +818,6 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
-		if(useParallel(a)) {
-			try {
-				return equalsWithToleranceDistributed(a, b, eps);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return equalsWithToleranceForceSerial(a, b, eps);
 	}
 	
@@ -857,6 +832,7 @@ public class VecUtils {
 	 * @throws DimensionMismatchException if the dims don't match
 	 * @return true if all equal, false otherwise
 	 */
+	@Deprecated
 	public static boolean equalsWithToleranceDistributed(final double[] a, final double[] b, final double eps) {
 		return DistributedEqualityTest.operate(a, b, eps);
 	}
@@ -933,12 +909,6 @@ public class VecUtils {
 	 * @return the inner product between a and b
 	 */
 	public static double innerProduct(final double[] a, final double[] b) {
-		if(useParallel(a)) {
-			try {
-				return innerProductDistributed(a, b);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return innerProductForceSerial(a, b);
 	}
 	
@@ -949,6 +919,7 @@ public class VecUtils {
 	 * @throws DimensionMismatchException if the dims don't match
 	 * @return the inner product between a and b
 	 */
+	@Deprecated
 	public static double innerProductDistributed(final double[] a, final double[] b) {
 		return DistributedInnerProduct.operate(a, b);
 	}
@@ -1035,12 +1006,6 @@ public class VecUtils {
 	 * @return the log of the vector
 	 */
 	public static double[] log(final double[] a) {
-		if(useParallel(a)) {
-			try {
-				return logDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return logForceSerial(a);
 	}
 	
@@ -1050,6 +1015,7 @@ public class VecUtils {
 	 * @param a
 	 * @return the log of the vector
 	 */
+	@Deprecated
 	public static double[] logDistributed(final double[] a) {
 		return DistributedLog.operate(a);
 	}
@@ -1174,12 +1140,6 @@ public class VecUtils {
 	 * @return the product of two vectors
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
-		if(useParallel(a)) {
-			try {
-				return multiplyDistributed(a, b);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return multiplyForceSerial(a, b);
 	}
 	
@@ -1192,6 +1152,7 @@ public class VecUtils {
 	 * @throws DimensionMismatchException if the vector dims don't match
 	 * @return the product of two vectors
 	 */
+	@Deprecated
 	public static double[] multiplyDistributed(final double[] a, final double[] b) {
 		return DistributedMultiply.operate(a, b);
 	}
@@ -1222,12 +1183,6 @@ public class VecUtils {
 	 * @return the number of nans in the vector
 	 */
 	public static int nanCount(final double[] a) {
-		if(useParallel(a)) {
-			try {
-				return nanCountDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return nanCountForceSerial(a);
 	}
 	
@@ -1236,6 +1191,7 @@ public class VecUtils {
 	 * @param a
 	 * @return the number of nans in the vector
 	 */
+	@Deprecated
 	public static int nanCountDistributed(final double[] a) {
 		return DistributedNaNCount.operate(a);
 	}
@@ -1537,12 +1493,6 @@ public class VecUtils {
 	}
 	
 	public static double prod(final double[] a) {
-		if(useParallel(a)) {
-			try {
-				return prodDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-		
 		return prodForceSerial(a);
 	}
 	
@@ -1560,7 +1510,8 @@ public class VecUtils {
 			prod *= d;
 		return prod;
 	}
-	
+
+	@Deprecated
 	public static double prodDistributed(final double[] a) {
 		return DistributedProduct.operate(a);
 	}
@@ -1805,16 +1756,11 @@ public class VecUtils {
 	
 	
 	public static double[] subtract(final double[] from, final double[] subtractor) {
-		if(useParallel(from)) {
-			try {
-				return subtractDistributed(from, subtractor);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-			
 		return subtractForceSerial(from, subtractor);
 	}
 	
-	
+
+	@Deprecated
 	public static double[] subtractDistributed(final double[] from, final double[] subtractor) {
 		return DistributedSubtract.operate(from, subtractor);
 	}
@@ -1837,15 +1783,10 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		if(useParallel(a)) {
-			try {
-				return sumDistributed(a);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
-		}
-			
 		return sumForceSerial(a);
 	}
-	
+
+	@Deprecated
 	public static double sumDistributed(final double[] a) {
 		return DistributedSum.operate(a);
 	}

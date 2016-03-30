@@ -157,5 +157,86 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		return new Neighborhood(d_out, i_out);
 	}
 	
+	/**
+	 * A class to query the tree for neighborhoods in parallel
+	 * @author Taylor G Smith
+	 */
+	abstract static class ParallelNeighborhoodSearch extends ParallelChunkingTask<Neighborhood> {
+		private static final long serialVersionUID = -1600812794470325448L;
+		
+		final BaseNeighborsModel model;
+		final double[][] distances;
+		final int[][] indices;
+		final int lo;
+		final int hi;
+
+		public ParallelNeighborhoodSearch(double[][] X, BaseNeighborsModel model) {
+			super(X); // this auto-chunks the data
+			
+			this.model = model;
+			this.lo = 0;
+			this.hi = strategy.getNumChunks(X);
+			
+			/*
+			 * First get the length...
+			 */
+			int length = 0;
+			for(Chunk c: this.chunks)
+				length += c.size();
+			
+			this.distances = new double[length][];
+			this.indices = new int[length][];
+		}
+		
+		public ParallelNeighborhoodSearch(ParallelNeighborhoodSearch task, int lo, int hi) {
+			super(task);
+			
+			this.model = task.model;
+			this.lo = lo;
+			this.hi = hi;
+			this.distances = task.distances;
+			this.indices = task.indices;
+		}
+
+		@Override
+		public Neighborhood reduce(Chunk chunk) {
+			Neighborhood n = query(model.tree, chunk.get());
+			
+			// assign to low index, since that's how we retrieved the chunk...
+			final int start = chunk.start , end = start + chunk.size();
+			double[][] d = n.getDistances();
+			int[][] i = n.getIndices();
+			
+			// Set the distances and indices in place...
+			for(int j = start, idx = 0; j < end; j++, idx++) {
+				this.distances[j] = d[idx];
+				this.indices[j] = i[idx];
+			}
+			
+			return n;
+		}
+
+		@Override
+		protected Neighborhood compute() {
+			if(hi - lo <= 1) { // generally should equal one...
+				return reduce(chunks.get(lo));
+			} else {
+				int mid = this.lo + (this.hi - this.lo) / 2;
+				ParallelNeighborhoodSearch left  = newInstance(this, this.lo, mid);
+				ParallelNeighborhoodSearch right = newInstance(this, mid, this.hi);
+				
+				left.fork();
+	            right.compute();
+	            left.join();
+
+	            return new Neighborhood(distances, indices);
+			}
+		}
+		
+		abstract ParallelNeighborhoodSearch newInstance(ParallelNeighborhoodSearch p, int lo, int hi);
+		abstract Neighborhood query(NearestNeighborHeapSearch tree, double[][] X);
+	}
+	
+	
 	abstract Neighborhood getNeighbors(AbstractRealMatrix matrix);
 }

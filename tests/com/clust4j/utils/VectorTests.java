@@ -14,6 +14,7 @@ import org.junit.Test;
 import com.clust4j.GlobalState;
 import com.clust4j.utils.VecUtils.VecSeries;
 
+@SuppressWarnings("deprecation")
 public class VectorTests {
 	final static double[] empty = new double[]{};
 

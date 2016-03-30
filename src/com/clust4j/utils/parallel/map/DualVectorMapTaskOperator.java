@@ -7,6 +7,7 @@ package com.clust4j.utils.parallel.map;
  * thrown.
  * @author Taylor G Smith
  */
+@Deprecated
 abstract class DualVectorMapTaskOperator extends DualVectorMapTask {
 
 	/**

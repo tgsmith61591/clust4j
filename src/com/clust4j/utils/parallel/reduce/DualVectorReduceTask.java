@@ -2,6 +2,7 @@ package com.clust4j.utils.parallel.reduce;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
+@Deprecated
 abstract class DualVectorReduceTask<T> extends VectorReduceTask<T> {
 	private static final long serialVersionUID = -4647929958194428774L;
 	

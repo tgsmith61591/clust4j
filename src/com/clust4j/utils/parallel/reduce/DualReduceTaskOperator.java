@@ -7,6 +7,7 @@ package com.clust4j.utils.parallel.reduce;
  * thrown.
  * @author Taylor G Smith
  */
+@Deprecated
 abstract class DualReduceTaskOperator<T> extends DualVectorReduceTask<T> {
 
 	/**

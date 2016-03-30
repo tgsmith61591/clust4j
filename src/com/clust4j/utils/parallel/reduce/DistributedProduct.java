@@ -6,6 +6,7 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed products of vectors
  * @author Taylor G Smith
  */
+@Deprecated
 final public class DistributedProduct extends ReduceTaskOperator<Double> {
 	private static final long serialVersionUID = -1038455192192012983L;
 

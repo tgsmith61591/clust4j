@@ -1,6 +1,7 @@
 package com.clust4j.utils.parallel.reduce;
 import com.clust4j.utils.parallel.VectorMRTask;
 
+@Deprecated
 abstract class VectorReduceTask<T> extends VectorMRTask<T> {
 	private static final long serialVersionUID = -7986981765361158408L;
 	

@@ -572,6 +572,7 @@ public class MatUtils {
 	 * @param mat
 	 * @return true if the matrix contains NaN
 	 */
+	@Deprecated
 	public static boolean containsNaNDistributed(final double[][] mat) {
 		checkDimsPermitEmpty(mat);
 		
@@ -592,13 +593,14 @@ public class MatUtils {
 	public static boolean containsNaN(final AbstractRealMatrix mat) {
 		return containsNaN(mat.getData());
 	}
+	
 	/**
 	 * Returns true if there are any NaN values in the matrix.
 	 * @throws IllegalArgumentException if there are no rows in the data
 	 * @param mat
 	 * @return true if the matrix contains NaN
 	 */
-	
+	@Deprecated
 	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
 		return containsNaNDistributed(mat.getData());
 	}

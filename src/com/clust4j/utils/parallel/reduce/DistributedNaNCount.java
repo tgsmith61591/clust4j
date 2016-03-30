@@ -2,6 +2,7 @@ package com.clust4j.utils.parallel.reduce;
 
 import com.clust4j.utils.VecUtils;
 
+@Deprecated
 final public class DistributedNaNCount extends ReduceTaskOperator<Integer> {
 	private static final long serialVersionUID = 5031788548523204436L;
 

@@ -7,6 +7,7 @@ import org.junit.Test;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
+@SuppressWarnings("deprecation")
 public class ParallelTests {
 
 	@Test

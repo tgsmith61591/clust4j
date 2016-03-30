@@ -5,6 +5,7 @@ import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.utils.VecUtils;
 
+@Deprecated
 public class DistributedEqualityTest extends VectorReduceTask<Boolean> {
 
 	/**

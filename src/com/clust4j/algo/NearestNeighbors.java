@@ -257,7 +257,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 				Neighborhood initRes = null;
 				if(parallel) {
 					try {
-						initRes = ParallelNeighborhoodSearch.doAll(fit_X, this, nNeighbors);
+						initRes = ParallelNNSearch.doAll(fit_X, this, nNeighbors);
 					} catch(RejectedExecutionException r) {
 						warn("parallel neighborhood search failed; falling back to serial query");
 					}
@@ -397,7 +397,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 		 */
 		if(parallelize) {
 			try {
-				return ParallelNeighborhoodSearch.doAll(X, this, k);
+				return ParallelNNSearch.doAll(X, this, k);
 			} catch(RejectedExecutionException r) {
 				warn("parallel neighborhood search failed; falling back to serial search");
 			}
@@ -410,83 +410,32 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	 * A class to query the tree for neighborhoods in parallel
 	 * @author Taylor G Smith
 	 */
-	static class ParallelNeighborhoodSearch extends ParallelChunkingTask<Neighborhood> {
+	static class ParallelNNSearch extends ParallelNeighborhoodSearch {
 		private static final long serialVersionUID = -1600812794470325448L;
-		
-		private final NearestNeighbors model;
-		private final double[][] distances;
-		private final int[][] indices;
-		final int lo;
-		final int hi;
 		final int k;
 
-		public ParallelNeighborhoodSearch(double[][] X, NearestNeighbors model, final int k) {
-			super(X); // this auto-chunks the data
-			
-			this.model = model;
-			this.lo = 0;
-			this.hi = strategy.getNumChunks(X);
+		public ParallelNNSearch(double[][] X, NearestNeighbors model, final int k) {
+			super(X, model); // this auto-chunks the data
 			this.k = k;
-			
-			/*
-			 * First get the length...
-			 */
-			int length = 0;
-			for(Chunk c: this.chunks)
-				length += c.size();
-			
-			this.distances = new double[length][];
-			this.indices = new int[length][];
 		}
 		
-		public ParallelNeighborhoodSearch(ParallelNeighborhoodSearch task, int lo, int hi) {
-			super(task);
-			
-			this.model = task.model;
-			this.lo = lo;
-			this.hi = hi;
+		public ParallelNNSearch(ParallelNNSearch task, int lo, int hi) {
+			super(task, lo, hi);
 			this.k = task.k;
-			this.distances = task.distances;
-			this.indices = task.indices;
-		}
-
-		@Override
-		public Neighborhood reduce(Chunk chunk) {
-			Neighborhood n = this.model.tree.query(chunk.get(), k, DUAL_TREE_SEARCH, SORT);
-			
-			// assign to low index, since that's how we retrieved the chunk...
-			final int start = chunk.start , end = start + chunk.size();
-			double[][] d = n.getDistances();
-			int[][] i = n.getIndices();
-			
-			// Set the distances and indices in place...
-			for(int j = start, idx = 0; j < end; j++, idx++) {
-				this.distances[j] = d[idx];
-				this.indices[j] = i[idx];
-			}
-			
-			return n;
-		}
-
-		@Override
-		protected Neighborhood compute() {
-			if(hi - lo <= 1) { // generally should equal one...
-				return reduce(chunks.get(lo));
-			} else {
-				int mid = this.lo + (this.hi - this.lo) / 2;
-				ParallelNeighborhoodSearch left  = new ParallelNeighborhoodSearch(this, this.lo, mid);
-				ParallelNeighborhoodSearch right = new ParallelNeighborhoodSearch(this, mid, this.hi);
-				
-				left.fork();
-	            right.compute();
-	            left.join();
-
-	            return new Neighborhood(distances, indices);
-			}
 		}
 		
 		static Neighborhood doAll(double[][] X, NearestNeighbors nn, int k) {
-			return getThreadPool().invoke(new ParallelNeighborhoodSearch(X, nn, k));
+			return getThreadPool().invoke(new ParallelNNSearch(X, nn, k));
+		}
+
+		@Override
+		ParallelNNSearch newInstance(ParallelNeighborhoodSearch p, int lo, int hi) {
+			return new ParallelNNSearch((ParallelNNSearch)p, lo, hi);
+		}
+
+		@Override
+		Neighborhood query(NearestNeighborHeapSearch tree, double[][] X) {
+			return tree.query(X, k, DUAL_TREE_SEARCH, SORT);
 		}
 	}
 	

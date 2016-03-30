@@ -4,6 +4,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.utils.VecUtils;
 
+@Deprecated
 public class DistributedLog extends MapTaskOperator {
 	private static final long serialVersionUID = -3885390722365779996L;
 

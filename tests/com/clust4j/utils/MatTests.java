@@ -866,6 +866,7 @@ public class MatTests {
 		MatUtils.colSums(a);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testCompleteCases() {
 		final double[][] a = new double[][]{new double[]{}};

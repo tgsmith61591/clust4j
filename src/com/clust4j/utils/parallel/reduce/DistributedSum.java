@@ -6,6 +6,7 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed summing of vectors
  * @author Taylor G Smith
  */
+@Deprecated
 final public class DistributedSum extends ReduceTaskOperator<Double> {
 	private static final long serialVersionUID = -6086182277529660733L;
 

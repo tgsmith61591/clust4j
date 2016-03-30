@@ -6,6 +6,7 @@ import org.apache.commons.math3.util.FastMath;
  * A class for distributed summing of vectors
  * @author Taylor G Smith
  */
+@Deprecated
 final public class DistributedAbs extends MapTaskOperator {
 	private static final long serialVersionUID = -6086182277529660733L;
 

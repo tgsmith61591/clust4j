@@ -2,6 +2,7 @@ package com.clust4j.utils.parallel.map;
 
 import com.clust4j.utils.VecUtils;
 
+@Deprecated
 abstract class MapTaskOperator extends VectorMapTask {
 
 	/**

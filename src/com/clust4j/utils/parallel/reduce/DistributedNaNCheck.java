@@ -6,6 +6,7 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed NaN checks
  * @author Taylor G Smith
  */
+@Deprecated
 public class DistributedNaNCheck extends ReduceTaskOperator<Boolean> {
 	private static final long serialVersionUID = -4107497709587691394L;
 

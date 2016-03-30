@@ -1014,7 +1014,8 @@ public class MeanShift
 					if(unique[i]) {
 						center = sorted_centers.getRow(i);
 						indcs = nbrs.getNeighbors(
-							new double[][]{center}, bandwidth)
+							new double[][]{center}, 
+							bandwidth, false)
 								.getIndices()[0];
 						
 						for(int id: indcs)
@@ -1148,7 +1149,7 @@ public class MeanShift
 		
 		while(true) {
 
-			Neighborhood nbrs = rn.getNeighbors(new double[][]{seed}, bandwidth);
+			Neighborhood nbrs = rn.getNeighbors(new double[][]{seed}, bandwidth, false);
 			int[] i_nbrs = nbrs.getIndices()[0];
 			
 			// Check if exit

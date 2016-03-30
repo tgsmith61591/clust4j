@@ -1,5 +1,6 @@
 package com.clust4j.utils.parallel.map;
 
+@Deprecated
 abstract class DualVectorMapTask extends VectorMapTask {
 	private static final long serialVersionUID = -4647929958194428774L;
 	

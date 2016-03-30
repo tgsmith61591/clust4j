@@ -6,6 +6,7 @@ import com.clust4j.utils.VecUtils;
  * A class for distributed inner products of vectors
  * @author Taylor G Smith
  */
+@Deprecated
 final public class DistributedInnerProduct extends DualReduceTaskOperator<Double> {
 	private static final long serialVersionUID = 9189105909360824409L;
 

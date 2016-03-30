@@ -488,8 +488,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		for(int i = 0; i < m_prime; i++) {
 			if(unique[i]) {
 				center = sorted_centers.getRow(i);
-				indcs = nbrs.getNeighbors(
-					new double[][]{center}, bandwidth)
+				indcs = nbrs.getNeighbors(new double[][]{center}, bandwidth, false)
 						.getIndices()[0];
 				
 				for(int id: indcs) {

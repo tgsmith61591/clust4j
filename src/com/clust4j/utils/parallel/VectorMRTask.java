@@ -7,6 +7,14 @@ import java.util.concurrent.RecursiveTask;
 
 import com.clust4j.GlobalState;
 
+/**
+ * Deprecating these vector parallelism classes, as they perform poorly
+ * and shouldn't really be used within algorithms that might working in
+ * a parallel fashion.
+ * @author Taylor G Smith
+ * @param <T>
+ */
+@Deprecated
 public abstract class VectorMRTask<T> extends RecursiveTask<T> {
 
 	/**

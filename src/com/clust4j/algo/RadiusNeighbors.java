@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -319,17 +320,82 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 		return getNeighbors(x, radius);
 	}
 	
-	public Neighborhood getNeighbors(AbstractRealMatrix x, double rad) {
-		return getNeighbors(x.getData(), rad);
+	/**
+	 * For internal use
+	 * @param x
+	 * @param parallelize
+	 * @return
+	 */
+	protected Neighborhood getNeighbors(double[][] x, boolean parallelize) {
+		return getNeighbors(x, radius, parallelize);
 	}
 	
-	protected Neighborhood getNeighbors(double[][] X, double rad) {
+	/**
+	 * For internal use
+	 * @param x
+	 * @return
+	 */
+	protected Neighborhood getNeighbors(double[][] x) {
+		return getNeighbors(x, radius, false);
+	}
+	
+	public Neighborhood getNeighbors(AbstractRealMatrix x, double rad) {
+		return getNeighbors(x.getData(), rad, parallel);
+	}
+	
+	protected Neighborhood getNeighbors(double[][] X, double rad, boolean parallelize) {
 		if(null == res)
 			throw new ModelNotFitException("model not yet fit");
-		
 		validateRadius(rad);
+		
+		/*
+		 * Try parallel if we can...
+		 */
+		if(parallelize) {
+			try {
+				return ParallelRadSearch.doAll(X, this, rad);
+			} catch(RejectedExecutionException r) {
+				warn("parallel neighborhood search failed; falling back to serial search");
+			}
+		}
+		
 		return tree.queryRadius(X, rad, false);
 	}
+	
+	
+	/**
+	 * A class to query the tree for neighborhoods in parallel
+	 * @author Taylor G Smith
+	 */
+	static class ParallelRadSearch extends ParallelNeighborhoodSearch {
+		private static final long serialVersionUID = -1600812794470325448L;
+		final double rad;
+
+		public ParallelRadSearch(double[][] X, RadiusNeighbors model, final double rad) {
+			super(X, model); // this auto-chunks the data
+			this.rad = rad;
+		}
+		
+		public ParallelRadSearch(ParallelRadSearch task, int lo, int hi) {
+			super(task, lo, hi);
+			this.rad = task.rad;
+		}
+		
+		static Neighborhood doAll(double[][] X, RadiusNeighbors nn, double rad) {
+			return getThreadPool().invoke(new ParallelRadSearch(X, nn, rad));
+		}
+
+		@Override
+		ParallelRadSearch newInstance(ParallelNeighborhoodSearch p, int lo, int hi) {
+			return new ParallelRadSearch((ParallelRadSearch)p, lo, hi);
+		}
+
+		@Override
+		Neighborhood query(NearestNeighborHeapSearch tree, double[][] X) {
+			return tree.queryRadius(X, rad, false);
+		}
+	}
+	
 
 	@Override
 	public Algo getLoggerTag() {

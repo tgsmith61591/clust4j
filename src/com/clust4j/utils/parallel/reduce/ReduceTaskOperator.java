@@ -1,5 +1,6 @@
 package com.clust4j.utils.parallel.reduce;
 
+@Deprecated
 abstract class ReduceTaskOperator<T> extends VectorReduceTask<T> {
 
 	/**
