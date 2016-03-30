@@ -14,7 +14,6 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.clust4j.GlobalState;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.utils.MatUtils;
 
@@ -866,8 +865,9 @@ public class BufferedMatrixReaderTests {
 	
 	@Test
 	public void testMaxLen() throws IOException {
+		/*
 		try {
-			double[][] d = new double[GlobalState.MAX_ARRAY_SIZE][];
+			double[][] d = new double[com.clust4j.GlobalState.MAX_ARRAY_SIZE][];
 			for(int i = 0; i < d.length; i++)
 				d[i] = new double[]{0,1};
 			
@@ -884,6 +884,8 @@ public class BufferedMatrixReaderTests {
 				Files.delete(path);
 			}
 		} catch(OutOfMemoryError o) {
+			o.printStackTrace();
 		}
+		*/
 	}
 }

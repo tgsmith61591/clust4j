@@ -16,7 +16,7 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 public class GlobalState {
 	/** The default random state */
 	public final static Random DEFAULT_RANDOM_STATE = new Random(999);
-	public final static int MAX_ARRAY_SIZE = 5_000_000;
+	public final static int MAX_ARRAY_SIZE = 25_000_000;
 	
 	
 	
@@ -217,7 +217,7 @@ public class GlobalState {
 		
 		/**
 		 * The max length a vector may be before defaulting to a parallel process, if applicable */
-		static public int MAX_SERIAL_VECTOR_LEN = 1_000_000;
+		static public int MAX_SERIAL_VECTOR_LEN = 10_000_000;
 
 		/** 
 		 * The max length a parallel-processed chunk may be */
