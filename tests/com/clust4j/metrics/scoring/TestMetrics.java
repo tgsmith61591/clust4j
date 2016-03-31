@@ -53,4 +53,9 @@ public class TestMetrics {
 			.getInstance()
 			.evaluate(X, Distance.EUCLIDEAN, labels)));
 	}
+	
+	@Test(expected=DimensionMismatchException.class)
+	public void testDME() {
+		BinomialClassificationScoring.ACCURACY.evaluate(new int[]{1,2}, new int[]{1,2,3});
+	}
 }

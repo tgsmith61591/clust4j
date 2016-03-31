@@ -78,6 +78,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	QuadTupTests.class,
 	RadiusNeighborsTests.class,
 	SeriesTests.class,
+	TestClust4j.class,
 	TestDataSet.class,
 	TestDistanceEnums.class,
 	TestExcept.class,

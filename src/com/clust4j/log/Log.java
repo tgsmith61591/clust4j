@@ -162,7 +162,6 @@ public abstract class Log {
 				result.init(algo, type, ouch, messages, message, lastGoodTimer=new LogTimer());
 			} catch(OutOfMemoryError e) {
 				synchronized(LogEvent.class) {
-					/* This is synchronized in the H2O API, not here */
 					if(lastEvent.printMe) {
 						missed++;
 						return null;
@@ -557,35 +556,9 @@ public abstract class Log {
 	
 	
 	
-	static public <T extends Throwable> T err(Algo t, String msg, T exception) {
-		LogEvent e = LogEvent.make(t, Type.ERROR, exception, msg);
-		write(e, true);
-		return exception;
-	}
-	
 	static public void err(Algo t, String msg) {
 		LogEvent e = LogEvent.make(t, Type.ERROR, null, msg);
 		write(e, true);
-	}
-	
-	static public <T extends Throwable> T err(String msg, T exception) {
-		return err(Algo.CLUST4J, msg, exception);
-	}
-	
-	static public void err(String msg) {
-		err(Algo.CLUST4J, msg);
-	}
-	
-	static public <T extends Throwable> T err(Algo t, T exception) {
-		return err(t, "", exception);
-	}
-	
-	static public <T extends Throwable> T err(T exception) {
-		return err(Algo.CLUST4J, "", exception);
-	}
-	
-	static public RuntimeException errRTException(Throwable exception) {
-		return new RuntimeException(err(Algo.CLUST4J, "", exception));
 	}
 	
 	static public <T extends Throwable> T warn(Algo t, String msg, T exception) {
