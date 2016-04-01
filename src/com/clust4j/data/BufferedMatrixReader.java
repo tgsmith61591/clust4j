@@ -4,12 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
 import com.clust4j.algo.ParallelChunkingTask;
 import com.clust4j.except.MatrixParseException;
@@ -18,6 +20,9 @@ import com.clust4j.log.Log;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.ArrayFormatter;
+import com.clust4j.utils.DeepCloneable;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
 
 
 /**
@@ -281,7 +286,8 @@ public class BufferedMatrixReader implements Loggable {
 	 * separators, etc.
 	 * @author Taylor G Smith
 	 */
-	protected static class MatrixReaderSetup implements Loggable {
+	protected static class MatrixReaderSetup extends Clust4j implements Loggable, DeepCloneable {
+		private static final long serialVersionUID = 5863624610174664028L;
 		private static final int GUESS_LINES = 4;
 		
 		/* Instance vars */
@@ -295,6 +301,21 @@ public class BufferedMatrixReader implements Loggable {
 		private boolean hasWarnings;
 		final LogTimer timer;
 		
+		/**
+		 * Copy constructor
+		 * @param instance
+		 */
+		private MatrixReaderSetup(MatrixReaderSetup instance) {
+			this.single_quotes = instance.single_quotes;
+			this.num_cols = instance.num_cols;
+			this.header_offset = instance.header_offset;
+			this.headers = VecUtils.copy(instance.headers); // if null, sets to null
+			this.data = MatUtils.copy(instance.data);
+			this.separator = instance.separator;
+			this.stream = Arrays.copyOf(instance.stream, instance.stream.length);
+			this.hasWarnings = instance.hasWarnings;
+			this.timer = instance.timer;
+		}
 		
 		MatrixReaderSetup(byte[] bits) throws MatrixParseException {
 			this(bits, false, GUESS_SEP);
@@ -329,7 +350,7 @@ public class BufferedMatrixReader implements Loggable {
 			
 			// Guess separator, columns and header
 			String[] labels;
-			final String[][] data = new String[lines.length][];
+			data = new String[lines.length][];
 			
 			// Corner case first:
 			if( 1 == lines.length ) {
@@ -624,6 +645,11 @@ public class BufferedMatrixReader implements Loggable {
 
 		@Override public boolean hasWarnings() {
 			return hasWarnings;
+		}
+
+		@Override
+		public MatrixReaderSetup copy() {
+			return new MatrixReaderSetup(this);
 		}
 	} // end setup class
 	

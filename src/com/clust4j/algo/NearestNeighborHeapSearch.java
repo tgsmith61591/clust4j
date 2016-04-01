@@ -449,33 +449,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 			iarr[i1] = iarr[i2];
 			iarr[i2] = itmp;
 		}
-		
-		/*
-		private static EntryPair<double[], int[]> copyDual(double[] d, int[] ia) {
-			int n = d.length;
-			double[] out = new double[n];
-			int[] out_i = new int[n];
-			
-			for(int i = 0; i < n; i++) {
-				out[i] = d[i];
-				out_i[i] = ia[i];
-			}
-			
-			return new EntryPair<>(out, out_i);
-		}
-		
-		static void dualOrderInPlace(double[] darr, int[] iarr, int[] order) {
-			int n = darr.length;
-			EntryPair<double[],int[]> copies = copyDual(darr, iarr);
-			double[] dtmp = copies.getKey();
-			int[] itmp = copies.getValue();
-			
-			for(int i = 0; i < n; i++) {
-				darr[i] = dtmp[order[i]];
-				iarr[i] = itmp[order[i]];
-			}
-		}
-		*/
 	}
 	
 	/**
@@ -918,125 +891,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 				d[i][j] = rDistToDist(d[i][j]);
 	}
 	
-	/**
-	 * For this record, split nodes updating the bounds until
-	 * the bounds are within the absolute tolerance and relative tolerance.
-	 * @param pt
-	 * @param kern
-	 * @param h
-	 * @param logKNorm
-	 * @param logAbsTol
-	 * @param logRelTol
-	 * @param nodeHeap
-	 * @param nodeLogMinBounds
-	 * @param nodeLogBoundSpreads
-	 * @return estimated kernel densities
-	 */
-	/*
-	private double estimateKernelDensitySingleBreadthFirst(double[] pt, PartialKernelDensity kern, double h, double logKNorm,
-			double logAbsTol, double logRelTol, NodeHeap nodeHeap, double[] nodeLogMinBounds, double[] nodeLogBoundSpreads) {
-		
-		int i, i1, i2, N1, N2, i_node;
-		double globalLogMinBound, globalLogBoundSpread, globalLogMaxBound;
-		double[][] data = this.data_arr;
-		int N = data.length;
-		
-		NodeData nodeInfo;
-		double distPt, logDensity,
-			logN = FastMath.log(N),
-			logN1, logN2;
-		
-		MutableDouble dist_LB_1 = new MutableDouble(), dist_LB_2 = new MutableDouble(),
-					  dist_UB_1 = new MutableDouble(), dist_UB_2 = new MutableDouble();
-		
-		// Push top node to the heap
-		NodeHeapData nodeHeap_item = new NodeHeapData();
-		nodeHeap_item.val = minDist(this, 0, pt);
-		nodeHeap_item.i1 = 0;
-		nodeHeap.push(nodeHeap_item);
-		
-		globalLogMinBound = logN + kern.getDensity(maxDist(this, 0, pt), h);
-		globalLogMaxBound = logN + kern.getDensity(nodeHeap_item.val, h);
-		globalLogBoundSpread = logSubExp(globalLogMaxBound, globalLogMinBound);
-		
-		nodeLogMinBounds[0] = globalLogMinBound;
-		nodeLogBoundSpreads[0] = globalLogBoundSpread;
-		
-		while(nodeHeap.n > 0) {
-			nodeHeap_item = nodeHeap.pop();
-			i_node = nodeHeap_item.i1;
-			
-			nodeInfo = node_data[i_node];
-			N1 = nodeInfo.idx_end - nodeInfo.idx_start;
-			
-			// local bounds equal to within per-pt tolerance
-			if(logKNorm + nodeLogBoundSpreads[i_node] - Math.log(N1) + logN
-				<= logAddExp(logAbsTol, 
-						(logRelTol + logKNorm + nodeLogMinBounds[i_node]))) { 
-				// Pass
-			} 
-			
-			// global bounds within rel and abs tol
-			else if(logKNorm + globalLogBoundSpread
-				<= logAddExp(logAbsTol, 
-						(logRelTol + logKNorm + globalLogMinBound))) {
-				break;
-			}
-			
-			// node is a leaf
-			else if(nodeInfo.is_leaf) {
-				globalLogMinBound = logSubExp(globalLogMinBound, nodeLogMinBounds[i_node]);
-				globalLogBoundSpread = logSubExp(globalLogBoundSpread, nodeLogBoundSpreads[i_node]);
-				
-				for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
-					distPt = dist(pt, data[idx_array[i]]);
-					logDensity = kern.getDensity(distPt, h);
-					globalLogMinBound = logAddExp(globalLogMinBound, logDensity);
-				}
-			}
-			
-			// split node and query
-			else {
-				i1 = 2 * i_node + 1;
-				i2 = 2 * i_node + 2;
-				
-				N1 = node_data[i1].idx_end - node_data[i1].idx_start;
-				N2 = node_data[i2].idx_end - node_data[i2].idx_start;
-				logN1 = FastMath.log(N1);
-				logN2 = FastMath.log(N2);
-				
-				// Mutates the MutableDouble objects
-				minMaxDist(this, i1, pt, dist_LB_1, dist_UB_1);
-				minMaxDist(this, i2, pt, dist_LB_2, dist_UB_2);
-				
-				nodeLogMinBounds[i1] 	= logN1 + kern.getDensity(dist_UB_1.value, h);
-				nodeLogBoundSpreads[i1]	= logN1 + kern.getDensity(dist_LB_1.value, h);
-				nodeLogMinBounds[i2]	= logN2 + kern.getDensity(dist_UB_2.value, h);
-				nodeLogBoundSpreads[i2]	= logN2 + kern.getDensity(dist_LB_2.value, h);
-				
-				globalLogMinBound = logSubExp(globalLogMinBound, nodeLogMinBounds[i_node]);
-				globalLogMinBound = logAddExp(globalLogMinBound, nodeLogMinBounds[i1]);
-				globalLogMinBound = logAddExp(globalLogMinBound, nodeLogMinBounds[i2]);
-				
-				globalLogBoundSpread = logSubExp(globalLogBoundSpread, nodeLogBoundSpreads[i_node]);
-				globalLogBoundSpread = logAddExp(globalLogBoundSpread, nodeLogBoundSpreads[i1]);
-				globalLogBoundSpread = logAddExp(globalLogBoundSpread, nodeLogBoundSpreads[i2]);
-				
-				nodeHeap_item.val = dist_LB_1.value;
-				nodeHeap_item.i1 = i1;
-				nodeHeap.push(nodeHeap_item);
-				
-				nodeHeap_item.val = dist_LB_2.value;
-				nodeHeap_item.i1 = i2;
-				nodeHeap.push(nodeHeap_item);
-			}
-		} // end while
-		
-		nodeHeap.clear();
-		return logAddExp(globalLogMinBound, globalLogBoundSpread - FastMath.log(2));
-	}
-	*/
-	
 	private void estimateKernelDensitySingleDepthFirst(int i_node, double[] pt, PartialKernelDensity kern, double h,
 			double logKNorm, double logAbsTol, double logRelTol, double localLogMinBound, double localLogBoundSpread,
 			MutableDouble globalLogMinBound, MutableDouble globalLogBoundSpread) {
@@ -1172,15 +1026,18 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	}
 	
 	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern) {
-		return kernelDensity(X, bandwidth, kern, 0, 1e-8, /*true,*/ false); // Default settings
+		return kernelDensity(X, bandwidth, kern, 0, 1e-8, false); // Default settings
 	}
 	
 	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern, 
-			double absTol, double relTol, /*boolean breadthFirst,*/ boolean returnLog) {
+			double absTol, double relTol, boolean returnLog) {
 		
 		double b_c = bandwidth, logAbsTol = FastMath.log(absTol), 
-				logRelTol = FastMath.log(relTol), logMinBound, logMaxBound,
-				logBoundSpread;
+				logRelTol = FastMath.log(relTol); 
+		
+		MutableDouble logMinBound = new MutableDouble(), 
+				logMaxBound = new MutableDouble(), 
+				logBoundSpread = new MutableDouble();
 		MutableDouble dist_LB = new MutableDouble(), dist_UB = new MutableDouble();
 		int m = data_arr.length, n = data_arr[0].length, i;
 		
@@ -1196,40 +1053,20 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		double[][] Xarr = MatUtils.copy(X);
 		double[] logDensity = new double[Xarr.length], pt;
 		
-		/*
-		NodeHeap nodeHeap;
-		double[] nodeLogMinBounds, nodeBoundWidths;
-		if(breadthFirst) {
-			nodeHeap = new NodeHeap(this.data_arr.length / this.leaf_size);
-			nodeLogMinBounds = VecUtils.rep(Double.NEGATIVE_INFINITY, this.n_nodes);
-			nodeBoundWidths = new double[this.n_nodes];
-			
-			for(i = 0; i < Xarr.length; i++) {
-				pt = Xarr[i];
-				logDensity[i] = estimateKernelDensitySingleBreadthFirst(pt, kern, 
-						b_c, logKNorm, logAbsTol, logRelTol, nodeHeap, 
-						nodeLogMinBounds, nodeBoundWidths);
-			}
-		} else {
-		*/
 		for(i = 0; i < Xarr.length; i++) {
 			pt = Xarr[i];
 			
 			minMaxDist(this, 0, pt, dist_LB, dist_UB);
-			logMinBound = logM + kern.getDensity(dist_UB.value, b_c);
-			logMaxBound = logM + kern.getDensity(dist_LB.value, b_c);
-			logBoundSpread = logSubExp(logMaxBound, logMinBound);
+			logMinBound.value = logM + kern.getDensity(dist_UB.value, b_c);
+			logMaxBound.value = logM + kern.getDensity(dist_LB.value, b_c);
+			logBoundSpread.value = logSubExp(logMaxBound.value, logMinBound.value);
 			
 			estimateKernelDensitySingleDepthFirst(0, pt, kern, b_c, logKNorm, 
-					logAbsTol, logRelTol, logMinBound, logBoundSpread, 
-					new MutableDouble(logMinBound), 
-					new MutableDouble(logBoundSpread));
+					logAbsTol, logRelTol, logMinBound.value, logBoundSpread.value, 
+					logMinBound, logBoundSpread);
 			
-			logDensity[i] = logAddExp(logMinBound, logBoundSpread - log2);
+			logDensity[i] = logAddExp(logMinBound.value, logBoundSpread.value - log2);
 		}
-
-		//}
-		
 		
 		// Norm results
 		for(i = 0; i < logDensity.length; i++)
@@ -1237,13 +1074,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		
 		return returnLog ? logDensity : VecUtils.exp(logDensity);
 	}
-	
-	/*
-	private static double kernelNorm(double h, int i, PartialKernelDensity kern, boolean log) {
-		double res = logKernelNorm(h,i,kern);
-		return log ? res : FastMath.exp(res);
-	}
-	*/
 	
 	private double logAddExp(double x1, double x2) {
 		final double a = FastMath.max(x1, x2);

@@ -8,6 +8,7 @@ import lombok.Synchronized;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.NamedEntity;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
@@ -19,7 +20,6 @@ import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.SimpleHeap;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.Named;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -400,7 +400,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		}
 	}
 	
-	abstract class HierarchicalDendrogram implements java.io.Serializable, Named {
+	abstract class HierarchicalDendrogram implements java.io.Serializable, NamedEntity {
 		private static final long serialVersionUID = 5295537901834851676L;
 		public final HierarchicalAgglomerative ref;
 		public final GeometricallySeparable dist;

@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
+import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.VecUtils.VecSeries;
 
 @SuppressWarnings("deprecation")
@@ -255,7 +256,7 @@ public class VectorTests {
 	@Test
 	public void testWhere() {
 		final double[] a = new double[]{1,7,3};
-		final VecSeries series = new VecSeries(a, Inequality.GT, 5);
+		final VecSeries series = new VecSeries(a, Inequality.GREATER_THAN, 5);
 		
 		final double[] b = VecUtils.rep(1, 3);
 		final double[] c = VecUtils.rep(0, 3);
@@ -564,17 +565,17 @@ public class VectorTests {
 	public void testVecSeries() {
 		double[] va = new double[]{1,2,3};
 		double[] vb = new double[]{3,2,1};
-		VecSeries a = new VecSeries(va, Inequality.ET, vb);
+		VecSeries a = new VecSeries(va, Inequality.EQUAL_TO, vb);
 		assertTrue(VecUtils.equalsExactly(a.get(), a.getRef()));
 		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, true, false}));
 		
-		a = new VecSeries(va, Inequality.GT, vb);
+		a = new VecSeries(va, Inequality.GREATER_THAN, vb);
 		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, false, true}));
 		
 		boolean p = false;
-		try {p = false; new VecSeries(va, Inequality.ET, new double[]{1,1}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; new VecSeries(va, Inequality.ET, new double[]{}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; new VecSeries(new double[]{}, Inequality.ET, vb); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecSeries(va, Inequality.EQUAL_TO, new double[]{1,1}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecSeries(va, Inequality.EQUAL_TO, new double[]{}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecSeries(new double[]{}, Inequality.EQUAL_TO, vb); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
 	}
 	
 	@Test

@@ -17,6 +17,7 @@ import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.log.Log;
 import com.clust4j.utils.MatUtils.Axis;
 import com.clust4j.utils.MatUtils.MatSeries;
+import com.clust4j.utils.Series.Inequality;
 
 public class MatTests {
 	final static DataSet IRIS = ExampleDataSets.loadIris();
@@ -298,7 +299,7 @@ public class MatTests {
 			new double[]{7, 8}
 		};
 		
-		final MatSeries ser = new MatSeries(a, Inequality.GT, 5);
+		final MatSeries ser = new MatSeries(a, Inequality.GREATER_THAN, 5);
 		final double[][] b = new double[][]{
 			new double[]{1,2},
 			new double[]{3,4}
@@ -440,7 +441,7 @@ public class MatTests {
 		MatSeries s = new MatSeries(new double[][]{
 			new double[]{-1,0,1},
 			new double[]{0,-1,2},
-		}, Inequality.GTOET, 0);
+		}, Inequality.GREATER_THAN_OR_EQUAL_TO, 0);
 		
 		// {false, true , true }
 		// {true , false, true }
@@ -483,7 +484,7 @@ public class MatTests {
 			new double[]{9,2,0}
 		};
 		
-		MatSeries series = new MatSeries(a, Inequality.ET, 0);
+		MatSeries series = new MatSeries(a, Inequality.EQUAL_TO, 0);
 		assertTrue(MatUtils.equalsExactly(series.getRef(), 
 			new boolean[][] {
 				new boolean[]{false,false,false},
@@ -491,7 +492,7 @@ public class MatTests {
 				new boolean[]{false,false, true}
 		}));
 		
-		series = new MatSeries(a, Inequality.GT, 0);
+		series = new MatSeries(a, Inequality.GREATER_THAN, 0);
 		assertTrue(MatUtils.equalsExactly(series.getRef(), 
 			new boolean[][] {
 				new boolean[]{true, true, true},
@@ -502,7 +503,7 @@ public class MatTests {
 		// Ensure are the same
 		assertTrue(MatUtils.equalsExactly(series.getRef(), series.get()));
 		
-		series = new MatSeries(a, Inequality.LT, 0);
+		series = new MatSeries(a, Inequality.LESS_THAN, 0);
 		assertTrue(MatUtils.equalsExactly(series.getRef(), 
 			new boolean[][] {
 				new boolean[]{false,false,false},
@@ -518,7 +519,7 @@ public class MatTests {
 				new double[][]{
 					new double[]{1,2},
 					new double[]{1}
-				}, Inequality.ET, 0);
+				}, Inequality.EQUAL_TO, 0);
 		} catch(NonUniformMatrixException e) {
 			pass = true;
 		} finally {
@@ -530,7 +531,7 @@ public class MatTests {
 			pass = false;
 			new MatSeries(
 				new double[][]{
-				}, Inequality.ET, 0);
+				}, Inequality.EQUAL_TO, 0);
 		} catch(IllegalArgumentException e) {
 			pass = true;
 		} finally {
@@ -549,7 +550,7 @@ public class MatTests {
 		};
 		*/
 		
-		series = new MatSeries(new double[]{1,2,3}, Inequality.ET, a);
+		series = new MatSeries(new double[]{1,2,3}, Inequality.EQUAL_TO, a);
 		assertTrue(MatUtils.equalsExactly(series.getRef(), 
 			new boolean[][] {
 				new boolean[]{false,false,false},
@@ -557,7 +558,7 @@ public class MatTests {
 				new boolean[]{false,true, false}
 		}));
 		
-		series = new MatSeries(new double[]{1,2,3}, Inequality.GT, a);
+		series = new MatSeries(new double[]{1,2,3}, Inequality.GREATER_THAN, a);
 		assertTrue(MatUtils.equalsExactly(series.getRef(), 
 			new boolean[][] {
 				new boolean[]{false,true ,true },
@@ -569,7 +570,7 @@ public class MatTests {
 		// Test for NUME, DME and IAE
 		try {
 			pass = false;
-			new MatSeries(new double[]{0,0},Inequality.ET,
+			new MatSeries(new double[]{0,0},Inequality.EQUAL_TO,
 				new double[][]{
 					new double[]{1,2},
 					new double[]{1}
@@ -583,7 +584,7 @@ public class MatTests {
 		
 		try {
 			pass = false;
-			new MatSeries(new double[]{}, Inequality.ET,
+			new MatSeries(new double[]{}, Inequality.EQUAL_TO,
 				new double[][]{
 					new double[]{1,2},
 					new double[]{1,2}
@@ -597,7 +598,7 @@ public class MatTests {
 		
 		try {
 			pass = false;
-			new MatSeries(new double[]{1,2,3}, Inequality.ET,
+			new MatSeries(new double[]{1,2,3}, Inequality.EQUAL_TO,
 				new double[][]{
 					new double[]{1,2},
 					new double[]{1,2}
@@ -611,7 +612,7 @@ public class MatTests {
 		
 		try {
 			pass = false;
-			new MatSeries(new double[]{0,0}, Inequality.ET,
+			new MatSeries(new double[]{0,0}, Inequality.EQUAL_TO,
 				new double[][]{
 				});
 		} catch(IllegalArgumentException e) {
@@ -629,7 +630,7 @@ public class MatTests {
 			new double[]{2}
 		};
 		
-		new MatSeries(jagged, Inequality.ET, 0);
+		new MatSeries(jagged, Inequality.EQUAL_TO, 0);
 	}
 	
 	@Test(expected=NonUniformMatrixException.class) 
@@ -639,7 +640,7 @@ public class MatTests {
 			new double[]{2}
 		};
 		
-		new MatSeries(new double[]{1,2,3}, Inequality.ET, jagged);
+		new MatSeries(new double[]{1,2,3}, Inequality.EQUAL_TO, jagged);
 	}
 	
 	@Test(expected=DimensionMismatchException.class) 
@@ -649,7 +650,7 @@ public class MatTests {
 			new double[]{2,1,0}
 		};
 		
-		new MatSeries(new double[]{1,2}, Inequality.ET, a);
+		new MatSeries(new double[]{1,2}, Inequality.EQUAL_TO, a);
 	}
 	
 	@Test
@@ -684,7 +685,7 @@ public class MatTests {
 			new double[]{0,0,1}
 		};
 		
-		MatSeries ser = new MatSeries(a, Inequality.ET, 1);
+		MatSeries ser = new MatSeries(a, Inequality.EQUAL_TO, 1);
 		final double[] b = new double[]{2,3,4};
 		final double[][] c = new double[][]{
 			new double[]{1,2,3},

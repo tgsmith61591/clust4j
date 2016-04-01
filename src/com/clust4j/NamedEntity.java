@@ -1,4 +1,4 @@
-package com.clust4j.utils;
+package com.clust4j;
 
 /**
  * 
@@ -11,11 +11,11 @@ package com.clust4j.utils;
  * <p><ul><tt>Parrot</tt></ul>
  * <p><ul><tt>EchoChamber</tt></ul>
  * 
- * :)
+ * :-)
  * 
  * <p>
  * @author Taylor G Smith
  */
-public interface Named {
+public interface NamedEntity {
 	public String getName();
 }

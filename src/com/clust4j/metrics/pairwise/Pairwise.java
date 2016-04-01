@@ -43,6 +43,9 @@ public class Pairwise {
 		final double[][] out = new double[m][m];
 		double dist;
 		
+		/*
+		 * First loop: O(M choose 2). Do computations
+		 */
 		for(int i = 0; i < m - 1; i++) {
 			for(int j = i + 1; j < m; j++) {
 				
@@ -58,7 +61,10 @@ public class Pairwise {
 			}
 		}
 		
-		// If we want the full matrix, we need to compute the diagonal...
+		/*
+		 *  If we want the full matrix, we need to compute the diagonal...
+		 *  O(M) -- just the diagonal elements
+		 */
 		if(!upper) {
 			for(int i = 0; i < m; i++) {
 				out[i][i] = scalar * (partial ? 

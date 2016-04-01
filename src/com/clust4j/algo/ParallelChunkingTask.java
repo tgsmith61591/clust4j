@@ -7,11 +7,11 @@ import java.util.concurrent.RecursiveTask;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
+import com.clust4j.NamedEntity;
 import com.clust4j.log.LogTimer;
 import com.clust4j.utils.MatrixFormatter;
-import com.clust4j.utils.Named;
 
-public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implements Named {
+public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implements NamedEntity {
 	private static final long serialVersionUID = 6377106189203872639L;
 	final LogTimer timer;
 	final ChunkingStrategy strategy;

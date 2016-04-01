@@ -11,6 +11,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
+import com.clust4j.NamedEntity;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.NaNException;
 import com.clust4j.kernel.Kernel;
@@ -22,7 +23,6 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.DeepCloneable;
-import com.clust4j.utils.Named;
 import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
 
@@ -38,7 +38,7 @@ import com.clust4j.utils.TableFormatter.Table;
  */
 public abstract class AbstractClusterer 
 		extends BaseModel 
-		implements Loggable, Named, java.io.Serializable {
+		implements Loggable, NamedEntity, java.io.Serializable {
 	
 	private static final long serialVersionUID = -3623527903903305017L;
 	final static TableFormatter formatter;
@@ -97,7 +97,6 @@ public abstract class AbstractClusterer
 			implements DeepCloneable, BaseClassifierPlanner {
 		private static final long serialVersionUID = -5830795881133834268L;
 		
-		//abstract public AbstractClusterer buildNewModelInstance(final AbstractRealMatrix data);
 		@Override abstract public BaseClustererPlanner copy();
 		abstract public FeatureNormalization getNormalizer();
 		abstract public boolean getParallel();

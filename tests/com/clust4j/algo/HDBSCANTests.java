@@ -32,7 +32,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.Inequality;
+import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
@@ -68,11 +68,11 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		final double[] core_distances = MatUtils
 			.sortColsAsc(dist_mat)[min_points];
 		
-		final MatSeries ser1 = new MatSeries(core_distances, Inequality.GT, dist_mat);
+		final MatSeries ser1 = new MatSeries(core_distances, Inequality.GREATER_THAN, dist_mat);
 		double[][] stage1 = MatUtils.where(ser1, core_distances, dist_mat);
 		
 		stage1 = MatUtils.transpose(stage1);
-		final MatSeries ser2 = new MatSeries(core_distances, Inequality.GT, stage1);
+		final MatSeries ser2 = new MatSeries(core_distances, Inequality.GREATER_THAN, stage1);
 		final double[][] result = MatUtils.where(ser2, core_distances, stage1);
 		
 		final double[][] res = MatUtils.transpose(result);

@@ -9,6 +9,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
+import com.clust4j.NamedEntity;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -16,7 +17,6 @@ import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.Named;
 import com.clust4j.utils.VecUtils;
 
 public abstract class AbstractCentroidClusterer extends AbstractPartitionalClusterer 
@@ -44,7 +44,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 
 	
 	static interface Initializer { int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed); }
-	public static enum InitializationStrategy implements java.io.Serializable, Initializer, Named {
+	public static enum InitializationStrategy implements java.io.Serializable, Initializer, NamedEntity {
 		/**
 		 * Initialize {@link KMeans} or {@link KMedoids} with a set of randomly
 		 * selected centroids to use as the initial seeds. This is the traditional

@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.clust4j.data.BufferedMatrixReader.MatrixReaderSetup;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.utils.MatUtils;
 
@@ -21,6 +22,7 @@ import com.clust4j.utils.MatUtils;
 public class BufferedMatrixReaderTests {
 	final static String file = new String("tmpbmrtfile.csv");
 	final static Path path = FileSystems.getDefault().getPath(file);
+	final static byte HIVE = (byte)0x1;
 	
 	static Object[] fromDoubleArr(double[][] d) {
 		final Object[] o = new Object[d.length];
@@ -67,7 +69,7 @@ public class BufferedMatrixReaderTests {
 	static void writeCSVHiveSep(double[][] in) throws IOException {
 		final String sep = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
-		final char hive = (char)0x1;
+		final char hive = (char)HIVE;
 		
 		for(int i= 0; i < in.length; i++) {
 			StringBuilder row = new StringBuilder();
@@ -887,5 +889,33 @@ public class BufferedMatrixReaderTests {
 			o.printStackTrace();
 		}
 		*/
+	}
+	
+	@Test
+	public void testSetupCopy() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"1,2,3,4,5",
+				"6,7,8,9,10"
+			};
+			
+			writeCSV(o);
+			final byte[] original = BufferedMatrixReader.fileToBytes(new File(file));
+			final MatrixReaderSetup mrs = new MatrixReaderSetup(original);
+			
+			final MatrixReaderSetup copy= mrs.copy();
+			original[0] = HIVE;
+			assertFalse(copy.stream[0] == original[0]); // assert not the same reference
+			
+			mrs.headers = new String[]{"asdf","asdf","asdf","asdf","asdf"};
+			assertNull(copy.headers); // assert not the same reference
+			
+			mrs.data = null;
+			assertNotNull(copy.data); // assert not same ref
+			
+			writeCSV(o);
+		} finally {
+			Files.delete(path);
+		}
 	}
 }

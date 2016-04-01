@@ -55,7 +55,8 @@ public class MatUtils {
 		final boolean[][] mat;
 		final int m, n;
 		
-		private MatSeries(double[][] x) {
+		private MatSeries(double[][] x, Inequality in) {
+			super(in);
 			checkDimsForUniformity(x);
 			
 			m = x.length;
@@ -73,11 +74,11 @@ public class MatUtils {
 		 * @throws NonUniformMatrixException if the matrix is non-uniform
 		 */
 		public MatSeries(double[][] x, Inequality in, double val) {
-			this(x);
+			this(x, in);
 			
 			for(int i = 0; i < m; i++)
 				for(int j = 0; j < n; j++)
-					mat[i][j] = eval(x[i][j], in, val);
+					mat[i][j] = eval(x[i][j], val);
 		}
 		
 		/**
@@ -91,14 +92,14 @@ public class MatUtils {
 		 * @throws DimensionMismatchException if the dims of the vec don't match the mat col dims
 		 */
 		public MatSeries(double[] a, Inequality in, double[][] x) {
-			this(x);
+			this(x, in);
 			
 			// Implicitly handles case of empty vec (we know x is not empty here)
 			if(a.length != n)
 				throw new DimensionMismatchException(a.length, n);
 			for(int i = 0; i < m; i++)
 				for(int j = 0; j < n; j++)
-					mat[i][j] = eval(a[j], in, x[i][j]);
+					mat[i][j] = eval(a[j], x[i][j]);
 		}
 		
 		/**
@@ -115,6 +116,24 @@ public class MatUtils {
 		@Override
 		public boolean[][] getRef() {
 			return mat;
+		}
+
+		@Override
+		public boolean all() {
+			for(boolean[] d: mat)
+				for(int j = 0; j < d.length; j++)
+					if(!d[j])
+						return false;
+			return true;
+		}
+
+		@Override
+		public boolean any() {
+			for(boolean[] d: mat)
+				for(int j = 0; j < d.length; j++)
+					if(d[j])
+						return true;
+			return false;
 		}
 	}
 	
@@ -648,6 +667,22 @@ public class MatUtils {
 			return null;
 		
 		final int[][] copy = new int[data.length][];
+		for(int i = 0; i < copy.length; i++)
+			copy[i] = VecUtils.copy(data[i]);
+		
+		return copy;
+	}
+	
+	/**
+	 * Copy a 2d String array
+	 * @param data
+	 * @return a copy of the input matrix
+	 */
+	public static final String[][] copy(final String[][] data) {
+		if(null == data)
+			return null;
+		
+		final String[][] copy = new String[data.length][];
 		for(int i = 0; i < copy.length; i++)
 			copy[i] = VecUtils.copy(data[i]);
 		

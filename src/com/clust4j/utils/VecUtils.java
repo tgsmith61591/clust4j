@@ -57,7 +57,8 @@ public class VecUtils {
 		 * @throws IllegalArgumentException if the vector is empty
 		 * @param v
 		 */
-		private VecSeries(double[] v) {
+		private VecSeries(double[] v, Inequality in) {
+			super(in);
 			checkDims(v);
 			this.n = v.length;
 			this.vec = new boolean[n];
@@ -71,9 +72,9 @@ public class VecUtils {
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
 		public VecSeries(double[] v, Inequality in, double val) {
-			this(v);
+			this(v, in);
 			for(int j = 0; j < n; j++)
-				vec[j] = eval(v[j], in, val);
+				vec[j] = eval(v[j], val);
 		}
 		
 		/**
@@ -85,12 +86,12 @@ public class VecUtils {
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
 		public VecSeries(double[] a, Inequality in, double[] b) {
-			this(a);
+			this(a, in);
 			if(n != b.length)
 				throw new DimensionMismatchException(n, b.length);
 			
 			for(int i = 0; i < n; i++)
-				vec[i] = eval(a[i], in, b[i]);
+				vec[i] = eval(a[i], b[i]);
 		}
 		
 		@Override
@@ -101,6 +102,22 @@ public class VecUtils {
 		@Override
 		public boolean[] get() {
 			return copy(vec);
+		}
+
+		@Override
+		public boolean all() {
+			for(boolean b: vec)
+				if(!b)
+					return false;
+			return true;
+		}
+
+		@Override
+		public boolean any() {
+			for(boolean b: vec)
+				if(b)
+					return true;
+			return false;
 		}
 	}
 	
