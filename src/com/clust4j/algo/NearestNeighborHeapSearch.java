@@ -1216,13 +1216,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		// Initialize neighbor heap
 		NeighborsHeap heap = new NeighborsHeap(mPrime, k);
 		
-		// Breadth-first node heap query
-		/*
-		NodeHeap nodeHeap = null;
-		if(breadthFirst)
-			nodeHeap = new NodeHeap(this.N_SAMPLES / this.leaf_size);
-		*/
-		
 		double[] bounds, pt;
 		double reduced_dist_LB;
 		
@@ -1233,38 +1226,17 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		if(dualTree) {
 			NearestNeighborHeapSearch other = newInstance(Xarr, leaf_size, dist_metric, logger);
 			
-			/*
-			if(breadthFirst)
-				queryDualBreadthFirst(other, heap, nodeHeap);
-			else {
-			*/
-			
-				reduced_dist_LB = minRDistDual(this, 0, other, 0);
-				bounds = VecUtils.rep(Double.POSITIVE_INFINITY, this.N_SAMPLES);
-				queryDualDepthFirst(0, other, 0, bounds, heap, reduced_dist_LB);
-				
-			//}
-			
+			reduced_dist_LB = minRDistDual(this, 0, other, 0);
+			bounds = VecUtils.rep(Double.POSITIVE_INFINITY, this.N_SAMPLES);
+			queryDualDepthFirst(0, other, 0, bounds, heap, reduced_dist_LB);
 		} else {
 			int i;
 			
-			/*
-			if(breadthFirst) {
-				for(i = 0; i < mPrime; i++) {
-					pt = Xarr[i];
-					querySingleBreadthFirst(pt, i, heap, nodeHeap);
-				}
-				
-			} else {
-			*/
-			
-				for(i = 0; i < mPrime; i++) {
-					pt = Xarr[i];
-					reduced_dist_LB = minRDist(this, 0, pt);
-					querySingleDepthFirst(0, pt, i, heap, reduced_dist_LB);
-				}
-				
-			//}
+			for(i = 0; i < mPrime; i++) {
+				pt = Xarr[i];
+				reduced_dist_LB = minRDist(this, 0, pt);
+				querySingleDepthFirst(0, pt, i, heap, reduced_dist_LB);
+			}
 		}
 		
 		Neighborhood distances_indices = heap.getArrays(sort);
@@ -1272,112 +1244,8 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		double[][] distances = distances_indices.getKey();
 		rDistToDistInPlace(distances); // set back to dist
 		
-		/* Original code called for reshaping...
-		return new Neighborhood(
-			MatUtils.reshape(distances, mPrime, k), 
-			MatUtils.reshape(indices,   mPrime, k));
-		*/
-		
 		return new Neighborhood(distances, indices);
 	}
-	
-	/*
-	private void queryDualBreadthFirst(NearestNeighborHeapSearch other,
-									   NeighborsHeap heap,
-									   NodeHeap nodeHeap) {
-		// dual-tree k-nn query breadth first
-		int i1, i2, i_node1, i_node2, i_pt;
-		double dist_pt, reduced_dist_LB;
-		double[] bounds = VecUtils
-			.rep(Double.POSITIVE_INFINITY, 
-				other.node_data.length);
-		
-		NodeData[] node_data1 = this.node_data, 
-			node_data2 = other.node_data;
-		NodeData node_info1, node_info2;
-		
-		double[][] data1 = this.data_arr, data2 = other.data_arr;
-		
-		// Push nodes into node heap
-		NodeHeapData nodeHeap_item = new NodeHeapData();
-		nodeHeap_item.val = minRDistDual(this, 0, other, 0);
-		
-		nodeHeap_item.i1 = 0;
-		nodeHeap_item.i2 = 0;
-		nodeHeap.push(nodeHeap_item);
-		
-		
-		while(nodeHeap.n > 0) {
-			nodeHeap_item = nodeHeap.pop();
-			reduced_dist_LB = nodeHeap_item.val;
-			i_node1 = nodeHeap_item.i1;
-			i_node2 = nodeHeap_item.i2;
-			
-			node_info1 = node_data1[i_node1];
-			node_info2 = node_data2[i_node2];
-			
-			
-			// If nodes are farther apart than current bound
-			if(reduced_dist_LB > bounds[i_node2]) { // Pass here
-			} 
-
-			// If both nodes are leaves
-			else if(node_info1.is_leaf && node_info2.is_leaf) {
-				bounds[i_node2] = -1;
-				
-				
-				for(i2 = node_info2.idx_start; i2 < node_info2.idx_end; i2++) {
-					i_pt = other.idx_array[i2];
-					
-					if(heap.largest(i_pt) <= reduced_dist_LB)
-						continue;
-					
-					
-					for(i1 = node_info1.idx_start; i1 < node_info1.idx_end; i1++) {
-						
-						// sklearn line:
-						// dist_pt = self.rdist(
-                        //   data1 + n_features * self.idx_array[i1],
-                        //   data2 + n_features * i_pt,
-                        //   n_features)
-						dist_pt = rDist(data1[this.idx_array[i1]], data2[i_pt]);
-						
-						if(dist_pt < heap.largest(i_pt))
-							heap.push(i_pt, dist_pt, this.idx_array[i1]);
-					}
-					
-					// Keep track of node bound
-					bounds[i_node2] = FastMath.max(bounds[i_node2], 
-										heap.largest(i_pt));
-				}
-			}
-			
-			// When node 1 is a leaf or is smaller
-			else if(node_info1.is_leaf 
-					|| ((!node_info2.is_leaf)
-						&& node_info2.radius 
-							> node_info1.radius)) {
-				
-				nodeHeap_item.i1 = i_node1;
-				for(i2 = 2*i_node2+1; i2 < 2*i_node2+3; i2++) {
-					nodeHeap_item.i2 = i2;
-					nodeHeap_item.val = minRDistDual(this, i_node1, other, i2);
-					nodeHeap.push(nodeHeap_item);
-				}
-			}
-			
-			// Otherwise node 2 is a leaf or is smaller
-			else {
-				nodeHeap_item.i2 = i_node2;
-				for(i1 = 2*i_node1+1; i1 < 2*i_node1+3; i1++) {
-					nodeHeap_item.i1 = i1;
-					nodeHeap_item.val = minRDistDual(this, i1, other, i_node2);
-					nodeHeap.push(nodeHeap_item);
-				}
-			}
-		}
-	}
-	*/
 	
 	private void queryDualDepthFirst(int i_node1, NearestNeighborHeapSearch other,
 									 int i_node2, double[] bounds, NeighborsHeap heap,
@@ -1613,63 +1481,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		
 		return count;
 	}
-	
-	/*
-	private void querySingleBreadthFirst(double[] pt, int i_pt, 
-				NeighborsHeap heap, NodeHeap nodeHeap) {
-		int i, i_node;
-		double dist_pt, reduced_dist_LB;
-		
-		// Will initialize to NodeHeapData(minRDist, 0, 0)
-		NodeHeapData nodeHeap_item = new NodeHeapData();
-		nodeHeap_item.val = minRDist(this, 0, pt);
-		nodeHeap_item.i1 = 0;
-		nodeHeap.push(nodeHeap_item);
-		
-		
-		while(nodeHeap.n > 0) {
-			nodeHeap_item = nodeHeap.pop();
-			reduced_dist_LB = nodeHeap_item.val;
-			System.out.println(reduced_dist_LB + ", " + heap.largest(i_pt));
-			i_node = nodeHeap_item.i1;
-			//System.out.println(i_node + ", " + reduced_dist_LB);
-			
-			// Pt is outside radius:
-			if(reduced_dist_LB > heap.largest(i_pt))
-				this.n_trims++;
-			
-			// This is leaf node
-			else if(this.node_data[i_node].is_leaf) {
-				this.n_leaves++;
-				
-				for(i = this.node_data[i_node].idx_start; 
-					i < this.node_data[i_node].idx_end; 
-					i++) {
-					
-					dist_pt = this.rDist(pt, this.data_arr[idx_array[i]]);
-					//System.out.println(Arrays.toString(pt)+ ", " + i_pt + ", " + i + ", " + dist_pt + ", " +i_node);
-					if(dist_pt < heap.largest(i_pt))
-						heap.push(i_pt, dist_pt, idx_array[i]);
-				}
-			}
-			
-			// Node is not a leaf
-			else {
-				this.n_splits++;
-				for(i = 2 * i_node + 1; 
-					i < 2 * i_node + 3; 
-						i++) {
-					
-					nodeHeap_item.i1 = i;
-					nodeHeap_item.val = minRDist(this, i, pt);
-					System.out.println(Arrays.toString(pt)+ ", " + i_pt + ", " + i + ", " + nodeHeap_item.val + ", " +i_node);
-					nodeHeap.push(nodeHeap_item);
-				}
-			}
-		}
-	}
-	*/
-	
+
 	private void querySingleDepthFirst(int i_node, double[] pt, int i_pt, NeighborsHeap heap, double reduced_dist_LB) {
 		NodeData nodeInfo = this.node_data[i_node];
 		

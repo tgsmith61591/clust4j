@@ -40,7 +40,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	/** Key is the group label, value is the corresponding centroid */
 	volatile protected ArrayList<double[]> centroids = new ArrayList<double[]>();
-	volatile protected TreeMap<Integer, ArrayList<Integer>> cent_to_record = null;
 
 	
 	static interface Initializer { int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed); }
@@ -285,7 +284,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 
 
 	/**
-	 * Returns a matrix with a reference to centroids. Use with care.
+	 * Returns a matrix with a reference to centroids. 
+	 * Use with care (only internally).
 	 * @return Array2DRowRealMatrix
 	 */
 	protected Array2DRowRealMatrix centroidsToMatrix() {

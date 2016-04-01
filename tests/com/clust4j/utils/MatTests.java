@@ -3085,4 +3085,44 @@ public class MatTests {
 		assertTrue(MatUtils.equalsExactly(i, i));
 		assertTrue(MatUtils.equalsExactly(b, b));
 	}
+	
+	@Test
+	public void testSeriesNaNs() {
+		final double[][] a = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,6}
+		};
+		
+		final double[][] b = new double[][]{
+			new double[]{1,2,3},
+			new double[]{4,5,Double.NaN}
+		};
+		
+		MatSeries ase = new MatSeries(a, Inequality.EQUAL_TO, Double.NaN);
+		MatSeries bse = new MatSeries(b, Inequality.EQUAL_TO, Double.NaN);
+		MatSeries asn = new MatSeries(a, Inequality.NOT_EQUAL_TO, Double.NaN);
+		MatSeries bsn = new MatSeries(b, Inequality.NOT_EQUAL_TO, Double.NaN);
+		
+		assertFalse(ase.any());
+		assertFalse(ase.all());
+		assertTrue(bse.any());
+		assertFalse(bse.all());
+		assertTrue(asn.all());
+		assertFalse(bsn.all());
+		assertTrue(asn.any());
+		assertTrue(bsn.any());
+		
+		final double[][] c = new double[][]{
+			new double[]{Double.NaN,Double.NaN},
+			new double[]{Double.NaN,Double.NaN}
+		};
+		
+		MatSeries cse = new MatSeries(c, Inequality.EQUAL_TO, Double.NaN);
+		MatSeries csn = new MatSeries(c, Inequality.NOT_EQUAL_TO, Double.NaN);
+		
+		assertTrue(cse.all());
+		assertTrue(cse.any());
+		assertFalse(csn.all());
+		assertFalse(csn.any());
+	}
 }
