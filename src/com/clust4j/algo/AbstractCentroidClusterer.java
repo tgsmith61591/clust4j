@@ -320,9 +320,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen...
 	}
 	
 	@Override
@@ -397,8 +396,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * with new label order
 	 */
 	void reorderLabelsAndCentroids() {
+		/* internal method, so shouldn't happen...
 		if(null == labels)
 			throw new ModelNotFitException("model not yet fit");
+		*/
 		
 		final LabelEncoder encoder = new LabelEncoder(labels).fit();
 		labels =  encoder.getEncodedLabels();
@@ -428,8 +429,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		final int n = centroid.length;
 		
 		for(double[] instance: instances) {
+			/* internal method, so shouldn't happen...
 			if(n != instance.length)
 				throw new DimensionMismatchException(n, instance.length);
+			*/
 			
 			for(int j = 0; j < n; j++) {
 				diff = instance[j] - centroid[j];

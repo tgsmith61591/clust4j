@@ -2,14 +2,13 @@
 A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
 ____
-### Dependencies:
+### Dependencies (included in `depend/` and in the `.classpath`):
  - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
-  - The `commons-math` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/commons-math-3-3.2) and is already in the `.classpath`
  - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
-  - The `log4j` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/apache-log4j-1.2.17) and is already in the `.classpath`.
   - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
  - [Apache commons lang](http://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.4), for the use of `NumberUtils` and others.
-  - The `commons-lang3` dependency is included in [depend/](https://github.com/tgsmith61591/clust4j/tree/master/depend/) and is already in the `.classpath`.
+ - [lombok](https://github.com/rzwitserloot/lombok), for the use of `@Synchronized` annotations
+
 
 ___
 ### Release notes:

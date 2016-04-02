@@ -39,16 +39,11 @@ public class VecUtils {
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
 	
 	
-	
 	/**
-	 * Create a boolean masking vector to be used in the 
-	 * {@link VecUtils#where(VecSeries, double, double)} family
-	 * of methods.
-	 * @throws IllegalArgumentException if the input vector is empty
-	 * @throws DimensionMismatchException if the input vector dims do not match
+	 * Abstract implementation of a vector series
 	 * @author Taylor G Smith
 	 */
-	public static class VecSeries extends Series<boolean[]> {
+	abstract static class VecSeries extends Series<boolean[]> {
 		final boolean[] vec;
 		final int n;
 		
@@ -57,41 +52,11 @@ public class VecUtils {
 		 * @throws IllegalArgumentException if the vector is empty
 		 * @param v
 		 */
-		private VecSeries(double[] v, Inequality in) {
+		VecSeries(int v, Inequality in) {
 			super(in);
-			checkDims(v);
-			this.n = v.length;
+			dimAssess(v);
+			this.n = v;
 			this.vec = new boolean[n];
-		}
-		
-		/**
-		 * One vector constructor. Elements in the vector to the provided val
-		 * @param a
-		 * @param in
-		 * @param val
-		 * @throws IllegalArgumentException if the vector is empty
-		 */
-		public VecSeries(double[] v, Inequality in, double val) {
-			this(v, in);
-			for(int j = 0; j < n; j++)
-				vec[j] = eval(v[j], val);
-		}
-		
-		/**
-		 * Two vector constructor. Compares respective elements.
-		 * @param a
-		 * @param in
-		 * @param b
-		 * @throws DimensionMismatchException if the dims of A and B don't match
-		 * @throws IllegalArgumentException if the vector is empty
-		 */
-		public VecSeries(double[] a, Inequality in, double[] b) {
-			this(a, in);
-			if(n != b.length)
-				throw new DimensionMismatchException(n, b.length);
-			
-			for(int i = 0; i < n; i++)
-				vec[i] = eval(a[i], b[i]);
 		}
 		
 		@Override
@@ -121,6 +86,106 @@ public class VecUtils {
 		}
 	}
 	
+	
+	/**
+	 * Create a boolean masking vector to be used in the 
+	 * {@link VecUtils#where(VecDoubleSeries, double, double)} family
+	 * of methods.
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @throws DimensionMismatchException if the input vector dims do not match
+	 * @author Taylor G Smith
+	 */
+	public static class VecDoubleSeries extends VecSeries {
+		
+		/**
+		 * Private constructor
+		 * @throws IllegalArgumentException if the vector is empty
+		 * @param v
+		 */
+		private VecDoubleSeries(double[] v, Inequality in) {
+			super(v.length, in);
+		}
+		
+		/**
+		 * One vector constructor. Elements in the vector to the provided val
+		 * @param a
+		 * @param in
+		 * @param val
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
+		public VecDoubleSeries(double[] v, Inequality in, double val) {
+			this(v, in);
+			for(int j = 0; j < n; j++)
+				vec[j] = eval(v[j], val);
+		}
+		
+		/**
+		 * Two vector constructor. Compares respective elements.
+		 * @param a
+		 * @param in
+		 * @param b
+		 * @throws DimensionMismatchException if the dims of A and B don't match
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
+		public VecDoubleSeries(double[] a, Inequality in, double[] b) {
+			this(a, in);
+			if(n != b.length)
+				throw new DimensionMismatchException(n, b.length);
+			
+			for(int i = 0; i < n; i++)
+				vec[i] = eval(a[i], b[i]);
+		}
+	}
+	
+	
+	
+	/**
+	 * Create a boolean masking vector wrapper
+	 * @throws IllegalArgumentException if the input vector is empty
+	 * @throws DimensionMismatchException if the input vector dims do not match
+	 * @author Taylor G Smith
+	 */
+	public static class VecIntSeries extends VecSeries {
+		
+		/**
+		 * Private constructor
+		 * @throws IllegalArgumentException if the vector is empty
+		 * @param v
+		 */
+		private VecIntSeries(int[] v, Inequality in) {
+			super(v.length, in);
+		}
+		
+		/**
+		 * One vector constructor. Elements in the vector to the provided val
+		 * @param a
+		 * @param in
+		 * @param val
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
+		public VecIntSeries(int[] v, Inequality in, int val) {
+			this(v, in);
+			for(int j = 0; j < n; j++)
+				vec[j] = eval(v[j], val);
+		}
+		
+		/**
+		 * Two vector constructor. Compares respective elements.
+		 * @param a
+		 * @param in
+		 * @param b
+		 * @throws DimensionMismatchException if the dims of A and B don't match
+		 * @throws IllegalArgumentException if the vector is empty
+		 */
+		public VecIntSeries(int[] a, Inequality in, int[] b) {
+			this(a, in);
+			if(n != b.length)
+				throw new DimensionMismatchException(n, b.length);
+			
+			for(int i = 0; i < n; i++)
+				vec[i] = eval(a[i], b[i]);
+		}
+	}
 	
 	
 	
@@ -732,6 +797,8 @@ public class VecUtils {
 	public static boolean equalsExactly(final int[] a, final int[] b) {
 		if(null == a && null == b)
 			return true;
+		if(null == a ^ null == b)
+			return false;
 		if(a.length != b.length)
 			return false;
 		
@@ -753,6 +820,8 @@ public class VecUtils {
 	public static boolean equalsExactly(final boolean[] a, final boolean[] b) {
 		if(null == a && null == b)
 			return true;
+		if(null == a ^ null == b)
+			return false;
 		if(a.length != b.length)
 			return false;
 		
@@ -773,6 +842,8 @@ public class VecUtils {
 	public static boolean equalsExactly(final String[] a, final String[] b) {
 		if(null == a && null == b)
 			return true;
+		if(null == a ^ null == b)
+			return false;
 		if(a.length != b.length)
 			return false;
 		
@@ -867,6 +938,8 @@ public class VecUtils {
 	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
 		if(null == a && null == b)
 			return true;
+		if(null == a ^ null == b)
+			return false;
 		if(a.length != b.length)
 			return false;
 		
@@ -1902,7 +1975,7 @@ public class VecUtils {
 		return out;
 	}
 	
-	public static double[] where(final VecSeries series, final double[] x, final double[] y) {
+	public static double[] where(final VecDoubleSeries series, final double[] x, final double[] y) {
 		checkDims(x,y);
 		
 		final int n = x.length;
@@ -1917,15 +1990,15 @@ public class VecUtils {
 		return result;
 	}
 	
-	public static double[] where(final VecSeries series, final double x, final double[] y) {
+	public static double[] where(final VecDoubleSeries series, final double x, final double[] y) {
 		return where(series, rep(x, series.get().length), y);
 	}
 	
-	public static double[] where(final VecSeries series, final double[] x, final double y) {
+	public static double[] where(final VecDoubleSeries series, final double[] x, final double y) {
 		return where(series, x, rep(y, series.get().length));
 	}
 	
-	public static double[] where(final VecSeries series, final double x, final double y) {
+	public static double[] where(final VecDoubleSeries series, final double x, final double y) {
 		return where(series, rep(x,series.get().length), rep(y,series.get().length));
 	}
 }

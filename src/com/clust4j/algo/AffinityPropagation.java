@@ -97,15 +97,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	public AffinityPropagation(final AbstractRealMatrix data, final AffinityPropagationPlanner planner) {
 		super(data, planner);
-		String error;
 		
 		
 		// Check some args
-		if(planner.damping < DEF_DAMPING || planner.damping >= 1) {
-			error = "damping must be between " + DEF_DAMPING + " and 1";
-			error(error);
-			throw new IllegalArgumentException(error);
-		}
+		if(planner.damping < DEF_DAMPING || planner.damping >= 1)
+			error(new IllegalArgumentException("damping "
+				+ "must be between " + DEF_DAMPING + " and 1"));
 		
 		this.damping = planner.damping;
 		this.iterBreak = planner.iterBreak;
@@ -280,9 +277,8 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen...
 	}
 
 	@Override

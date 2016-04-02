@@ -2,6 +2,7 @@ package com.clust4j.log;
 
 public interface Loggable {
 	public void error(String msg);
+	public void error(RuntimeException thrown);
 	public void warn(String msg);
 	public void info(String msg);
 	public void trace(String msg);

@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.utils.Series.Inequality;
-import com.clust4j.utils.VecUtils.VecSeries;
+import com.clust4j.utils.VecUtils.VecDoubleSeries;
 
 @SuppressWarnings("deprecation")
 public class VectorTests {
@@ -256,7 +256,7 @@ public class VectorTests {
 	@Test
 	public void testWhere() {
 		final double[] a = new double[]{1,7,3};
-		final VecSeries series = new VecSeries(a, Inequality.GREATER_THAN, 5);
+		final VecDoubleSeries series = new VecDoubleSeries(a, Inequality.GREATER_THAN, 5);
 		
 		final double[] b = VecUtils.rep(1, 3);
 		final double[] c = VecUtils.rep(0, 3);
@@ -565,17 +565,17 @@ public class VectorTests {
 	public void testVecSeries() {
 		double[] va = new double[]{1,2,3};
 		double[] vb = new double[]{3,2,1};
-		VecSeries a = new VecSeries(va, Inequality.EQUAL_TO, vb);
+		VecDoubleSeries a = new VecDoubleSeries(va, Inequality.EQUAL_TO, vb);
 		assertTrue(VecUtils.equalsExactly(a.get(), a.getRef()));
 		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, true, false}));
 		
-		a = new VecSeries(va, Inequality.GREATER_THAN, vb);
+		a = new VecDoubleSeries(va, Inequality.GREATER_THAN, vb);
 		assertTrue(VecUtils.equalsExactly(a.get(), new boolean[]{false, false, true}));
 		
 		boolean p = false;
-		try {p = false; new VecSeries(va, Inequality.EQUAL_TO, new double[]{1,1}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; new VecSeries(va, Inequality.EQUAL_TO, new double[]{}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; new VecSeries(new double[]{}, Inequality.EQUAL_TO, vb); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecDoubleSeries(va, Inequality.EQUAL_TO, new double[]{1,1}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecDoubleSeries(va, Inequality.EQUAL_TO, new double[]{}); }catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
+		try {p = false; new VecDoubleSeries(new double[]{}, Inequality.EQUAL_TO, vb); }catch(IllegalArgumentException e){p = true;}finally{if(!p)fail();}
 	}
 	
 	@Test
@@ -700,5 +700,48 @@ public class VectorTests {
 		assertTrue(VecUtils.equalsExactly(s, s));
 		assertTrue(VecUtils.equalsExactly(d, d));
 		assertTrue(VecUtils.equalsExactlyDistributed(d, d));
+	}
+	
+	@Test
+	public void testInequalityByNullOrLength() {
+		String[] a = new String[]{};
+		String[] b = new String[]{"a"};
+		String[] c = null;
+		String[] d = new String[]{"b"};
+		
+		assertTrue(VecUtils.equalsExactly(a, a));
+		assertFalse(VecUtils.equalsExactly(a,b));
+		assertTrue(VecUtils.equalsExactly(c, c));
+		assertFalse(VecUtils.equalsExactly(c,b));
+		assertFalse(VecUtils.equalsExactly(d,b)); // coverage love
+		
+		boolean[] ba = new boolean[]{true, false};
+		boolean[] bb = new boolean[]{false};
+		boolean[] bc = null;
+		boolean[] bd = new boolean[]{true};
+		
+		assertTrue(VecUtils.equalsExactly(ba, ba));
+		assertFalse(VecUtils.equalsExactly(ba,bb));
+		assertTrue(VecUtils.equalsExactly(bc, bc));
+		assertFalse(VecUtils.equalsExactly(bc,bb));
+		assertFalse(VecUtils.equalsExactly(bd,bb)); // coverage love
+		
+		int[] ia = new int[]{};
+		int[] ib = new int[]{0};
+		int[] ic = null;
+		
+		assertTrue(VecUtils.equalsExactly(ia, ia));
+		assertFalse(VecUtils.equalsExactly(ia,ib));
+		assertTrue(VecUtils.equalsExactly(ic, ic));
+		assertFalse(VecUtils.equalsExactly(ic,ib));
+		
+		double[] da = new double[]{};
+		double[] db = new double[]{0.0};
+		double[] dc = null;
+		
+		assertTrue(VecUtils.equalsExactly(da, da));
+		assertFalse(VecUtils.equalsExactly(da,db));
+		assertTrue(VecUtils.equalsExactly(dc, dc));
+		assertFalse(VecUtils.equalsExactly(dc,db));
 	}
 }

@@ -31,7 +31,8 @@ import com.clust4j.utils.QuadTup;
 import com.clust4j.utils.TriTup;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
-import com.clust4j.utils.VecUtils.VecSeries;
+import com.clust4j.utils.VecUtils.VecDoubleSeries;
+import com.clust4j.utils.VecUtils.VecIntSeries;
 
 public class NNHSTests {
 	final public static Array2DRowRealMatrix IRIS = ExampleDataSets.loadIris().getData();
@@ -548,7 +549,7 @@ public class NNHSTests {
 		
 		assertTrue(VecUtils.equalsWithTolerance(exp, expected_exp, 1e-8));
 		assertTrue(VecUtils.equalsWithTolerance(log, expected_log, 1e-8));
-		assertTrue(new VecSeries(log, Inequality.NOT_EQUAL_TO, Double.NaN).all());
+		assertTrue(new VecDoubleSeries(log, Inequality.NOT_EQUAL_TO, Double.NaN).all());
 		
 		/*
 		 * COSINE
@@ -557,8 +558,8 @@ public class NNHSTests {
 		log = k.kernelDensity(IRIS.getData(), h, PartialKernelDensity.LOG_COSINE, at, rt, true);
 		
 		// all should be nan...
-		assertTrue(new VecSeries(exp, Inequality.EQUAL_TO, Double.NaN).all());
-		assertTrue(new VecSeries(log, Inequality.EQUAL_TO, Double.NaN).all());
+		assertTrue(new VecDoubleSeries(exp, Inequality.EQUAL_TO, Double.NaN).all());
+		assertTrue(new VecDoubleSeries(log, Inequality.EQUAL_TO, Double.NaN).all());
 	}
 	
 	
@@ -1644,7 +1645,7 @@ public class NNHSTests {
 	@Test(expected=DimensionMismatchException.class)
 	public void testKernelDimMismatch() {
 		NearestNeighborHeapSearch tree = new KDTree(IRIS);
-		tree.kernelDensity(new double[][]{new double[]{1.0}}, 1.0, PartialKernelDensity.LOG_COSINE);
+		tree.kernelDensity(new double[][]{new double[]{1.0}}, 1.0, PartialKernelDensity.LOG_COSINE, 0.0, 1e-8, false);
 	}
 	
 	@Test
@@ -1665,8 +1666,8 @@ public class NNHSTests {
 			}, 3, 3), false);
 		
 		KDTree k = new KDTree(mat, Distance.CHEBYSHEV);
-		Neighborhood n = k.query(mat);
-		Neighborhood p = k.query(mat, 1, false, true);
+		Neighborhood n = k.query(mat.getDataRef());
+		Neighborhood p = k.query(mat.getDataRef(), 1, false, true);
 		assertTrue(n.equals(p));
 		assertTrue(n.equals(n));
 		assertFalse(n.equals("asdf"));
@@ -1715,5 +1716,181 @@ public class NNHSTests {
 		k.query(a);
 		
 		assertTrue(MatUtils.equalsExactly(b, a)); // assert immutability
+	}
+	
+	@Test
+	public void testInfDistQuery() {
+		int[] expected = new int[]{
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 
+			22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 9, 35, 36, 9, 38, 39, 40, 41, 
+			42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 
+			61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 
+			80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 
+			99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 
+			114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 
+			129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 101, 143, 
+			144, 145, 146, 147, 148, 149
+		};
+		
+		
+		/*
+		 * Test KDTree query
+		 */
+		KDTree k = new KDTree(IRIS, Distance.CHEBYSHEV);
+		Neighborhood query = k.query(IRIS.getData());
+		double[][] dists = query.getDistances();
+		
+		// Assert all are zero:
+		assertTrue(new MatUtils.MatSeries(dists, Inequality.EQUAL_TO, 0.0).all());
+		
+		// Assert the indices equal to expected
+		assertTrue(VecUtils.equalsExactly(MatUtils.flatten(query.getIndices()), expected));
+		
+		
+		
+		/*
+		 * Test BallTree query
+		 */
+		BallTree b = new BallTree(IRIS, Distance.CHEBYSHEV);
+		query = b.query(IRIS.getData());
+		dists = query.getDistances();
+		
+		// Assert all are zero:
+		assertTrue(new MatUtils.MatSeries(dists, Inequality.EQUAL_TO, 0.0).all());
+		
+		// Assert the indices equal to expected
+		assertTrue(VecUtils.equalsExactly(MatUtils.flatten(query.getIndices()), expected));
+		
+		
+		/**
+		 * The radius
+		 */
+		final double radius = 0.05;
+		final double[][] expected_dists = new double[][]{
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.,  0.,  0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.,  0.,  0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.,  0.,  0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.,  0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.,  0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.}, new double[]{ 0.},
+		   new double[]{ 0.}, new double[]{ 0.}
+		};
+		
+		int[][] expected_idcs = new int[][]{
+	       new int[]{0}, new int[]{1}, new int[]{2}, new int[]{3}, new int[]{4},
+	       new int[]{5}, new int[]{6}, new int[]{7}, new int[]{8}, new int[]{ 9, 34, 37},
+	       new int[]{10}, new int[]{11}, new int[]{12}, new int[]{13}, new int[]{14},
+	       new int[]{15}, new int[]{16}, new int[]{17}, new int[]{18}, new int[]{19},
+	       new int[]{20}, new int[]{21}, new int[]{22}, new int[]{23}, new int[]{24},
+	       new int[]{25}, new int[]{26}, new int[]{27}, new int[]{28}, new int[]{29},
+	       new int[]{30}, new int[]{31}, new int[]{32}, new int[]{33},
+	       new int[]{ 9, 34, 37}, new int[]{35}, new int[]{36}, new int[]{ 9, 34, 37},
+	       new int[]{38}, new int[]{39}, new int[]{40}, new int[]{41}, new int[]{42},
+	       new int[]{43}, new int[]{44}, new int[]{45}, new int[]{46}, new int[]{47},
+	       new int[]{48}, new int[]{49}, new int[]{50}, new int[]{51}, new int[]{52},
+	       new int[]{53}, new int[]{54}, new int[]{55}, new int[]{56}, new int[]{57},
+	       new int[]{58}, new int[]{59}, new int[]{60}, new int[]{61}, new int[]{62},
+	       new int[]{63}, new int[]{64}, new int[]{65}, new int[]{66}, new int[]{67},
+	       new int[]{68}, new int[]{69}, new int[]{70}, new int[]{71}, new int[]{72},
+	       new int[]{73}, new int[]{74}, new int[]{75}, new int[]{76}, new int[]{77},
+	       new int[]{78}, new int[]{79}, new int[]{80}, new int[]{81}, new int[]{82},
+	       new int[]{83}, new int[]{84}, new int[]{85}, new int[]{86}, new int[]{87},
+	       new int[]{88}, new int[]{89}, new int[]{90}, new int[]{91}, new int[]{92},
+	       new int[]{93}, new int[]{94}, new int[]{95}, new int[]{96}, new int[]{97},
+	       new int[]{98}, new int[]{99}, new int[]{100}, new int[]{101, 142},
+	       new int[]{102}, new int[]{103}, new int[]{104}, new int[]{105},
+	       new int[]{106}, new int[]{107}, new int[]{108}, new int[]{109},
+	       new int[]{110}, new int[]{111}, new int[]{112}, new int[]{113},
+	       new int[]{114}, new int[]{115}, new int[]{116}, new int[]{117},
+	       new int[]{118}, new int[]{119}, new int[]{120}, new int[]{121},
+	       new int[]{122}, new int[]{123}, new int[]{124}, new int[]{125},
+	       new int[]{126}, new int[]{127}, new int[]{128}, new int[]{129},
+	       new int[]{130}, new int[]{131}, new int[]{132}, new int[]{133},
+	       new int[]{134}, new int[]{135}, new int[]{136}, new int[]{137},
+	       new int[]{138}, new int[]{139}, new int[]{140}, new int[]{141},
+	       new int[]{101, 142}, new int[]{143}, new int[]{144}, new int[]{145},
+	       new int[]{146}, new int[]{147}, new int[]{148}, new int[]{149}
+		};
+		
+		
+		/*
+		 * Test KDTree query radius
+		 */
+		query = k.queryRadius(IRIS.getData(), radius, true);
+		dists = query.getDistances();
+		assertTrue(MatUtils.equalsExactly(dists, expected_dists));
+		assertTrue(MatUtils.equalsExactly(query.getIndices(), expected_idcs));
+		
+		
+		/*
+		 * Test BallTree query radius
+		 */
+		query = b.queryRadius(IRIS.getData(), radius, true);
+		dists = query.getDistances();
+		assertTrue(MatUtils.equalsExactly(dists, expected_dists));
+		assertTrue(MatUtils.equalsExactly(query.getIndices(), expected_idcs));
+		
+		assertTrue(k.infinity_dist);
+		assertTrue(b.infinity_dist);
+		
+		
+		
+		/*
+		 * TEST TWO POINT CORRELATION WITH INF DIST
+		 */
+		int[] vis1, vis2;
+		int[] tpc = vis1 = k.twoPointCorrelation(IRIS.getDataRef(), radius);
+		assertTrue(tpc.length == IRIS.getRowDimension());
+		assertTrue(new VecIntSeries(tpc, Inequality.EQUAL_TO, 158).all());
+		// Just so any() gets some coverage love...
+		assertFalse(new VecIntSeries(tpc, Inequality.EQUAL_TO, 0).any());
+		
+		tpc = vis2 = b.twoPointCorrelation(IRIS.getDataRef(), radius);
+		assertTrue(tpc.length == IRIS.getRowDimension());
+		assertTrue(new VecIntSeries(tpc, Inequality.EQUAL_TO, 158).all());
+		
+		/*
+		 * Assert vis1, vis2 are the same
+		 */
+		VecIntSeries vis = new VecIntSeries(vis1, Inequality.EQUAL_TO, vis2);
+		assertTrue(vis.all());
+		
+		// Coverage love, test refs...
+		boolean[] bref = vis.getRef();
+		boolean[] bcop = vis.get();
+		bcop[0] = false;
+		
+		assertFalse(VecUtils.equalsExactly(bref, bcop));
 	}
 }

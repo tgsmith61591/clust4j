@@ -293,8 +293,8 @@ public class BufferedMatrixReader implements Loggable {
 		/* Instance vars */
 		boolean single_quotes; // whether single quotes quote a field or double quotes do
 		final int num_cols;
-		final int header_offset; // which row to start on due to headers
-		String[] headers;
+		int header_offset = 0; // which row to start on due to headers
+		String[] headers = null;
 		String[][] data; // First few rows of parsed data
 		final byte separator;
 		final byte[] stream;
@@ -341,15 +341,10 @@ public class BufferedMatrixReader implements Loggable {
 			String[] lines = getFirstLines(bits);
 			
 			// If data is empty, fail
-			String msg;
-			if(lines.length == 0) {
-				msg = "data is empty!";
-				error(msg);
-				throw new MatrixParseException(msg);
-			}
+			if(lines.length == 0)
+				error(new MatrixParseException("data is empty!"));
 			
 			// Guess separator, columns and header
-			String[] labels;
 			data = new String[lines.length][];
 			
 			// Corner case first:
@@ -405,9 +400,7 @@ public class BufferedMatrixReader implements Loggable {
 					
 					if(!foundSep) { // probably one item
 						// If there's one item, we're just going to fail out
-						msg = "could not find separator in row: " + line;
-						error(msg);
-						throw new MatrixParseException(msg);
+						error(new MatrixParseException("could not find separator in row: " + line));
 					}
 				}
 				
@@ -420,12 +413,9 @@ public class BufferedMatrixReader implements Loggable {
 				
 				// What about the header? Always check...
 				if(allStrings(data[0]) && !data[0][0].isEmpty()) {
-					msg = "singular row is entirely character; maybe an orphaned header?";
-					error(msg);
-					throw new MatrixParseException(msg);
-				} else {
-					labels = null;
-					header_offset = 0;
+					error(new MatrixParseException("singular "
+						+ "row is entirely character; maybe "
+						+ "an orphaned header?"));
 				}
 				
 			} else { // 2+ lines
@@ -451,9 +441,7 @@ public class BufferedMatrixReader implements Loggable {
 					*/
 					
 					if(GUESS_SEP == sep) {
-						msg = "cannot determine uniform separator";
-						error(msg);
-						throw new MatrixParseException(msg);
+						error(new MatrixParseException("cannot determine uniform separator"));
 					} else {
 						info("separator estimated as '"+new String(new byte[]{sep})+"'");
 					}
@@ -472,10 +460,7 @@ public class BufferedMatrixReader implements Loggable {
 				// Check for header
 				if(allStrings(data[0]) && !data[0][0].isEmpty()) {
 					header_offset = 1;
-					labels = data[0];
-				} else {
-					labels = null;
-					header_offset = 0;
+					this.headers = data[0];
 				}
 			}
 			
@@ -489,9 +474,8 @@ public class BufferedMatrixReader implements Loggable {
 				try {
 					tokenize(data[i]);
 				} catch(NumberFormatException e) {
-					msg = "non-numeric row found: " + ArrayFormatter.arrayToString(data[i]);
-					error(msg);
-					throw new MatrixParseException(msg);
+					error(new MatrixParseException("non-numeric row found: " 
+						+ ArrayFormatter.arrayToString(data[i])));
 				}
 			}
 			
@@ -500,7 +484,6 @@ public class BufferedMatrixReader implements Loggable {
 			
 			
 			this.stream = bits;
-			this.headers = labels;
 			this.separator = sep;
 			sayBye(timer);
 		}
@@ -616,6 +599,11 @@ public class BufferedMatrixReader implements Loggable {
 
 		@Override public void error(String msg) {
 			Log.err(getLoggerTag(), msg);
+		}
+		
+		@Override public void error(RuntimeException thrown) {
+			error(thrown.getMessage());
+			throw thrown;
 		}
 
 		@Override public void warn(String msg) {
@@ -1051,6 +1039,11 @@ public class BufferedMatrixReader implements Loggable {
 
 	@Override public void error(String msg) {
 		Log.err(getLoggerTag(), msg);
+	}
+	
+	@Override public void error(RuntimeException thrown) {
+		error(thrown.getMessage());
+		throw thrown;
 	}
 
 	@Override public void warn(String msg) {

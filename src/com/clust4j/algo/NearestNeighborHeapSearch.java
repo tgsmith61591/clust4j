@@ -1025,10 +1025,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		return new TriTup<>(n_trims, n_leaves, n_splits);
 	}
 	
-	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern) {
-		return kernelDensity(X, bandwidth, kern, 0, 1e-8, false); // Default settings
-	}
-	
 	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern, 
 			double absTol, double relTol, boolean returnLog) {
 		
@@ -1177,14 +1173,6 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		int tmp = idcs[i1];
 		idcs[i1] = idcs[i2];
 		idcs[i2] = tmp;
-	}
-	
-	public Neighborhood query(AbstractRealMatrix X) {
-		return query(X.getData());
-	}
-	
-	public Neighborhood query(AbstractRealMatrix X, int k, boolean dualTree, boolean sort) {
-		return query(X.getData(), k, dualTree, sort);
 	}
 	
 	/**
@@ -1336,6 +1324,10 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	
 	private void ensurePositiveRadius(final double radius) {
 		RadiusNeighbors.validateRadius(radius);
+	}
+	
+	public Neighborhood queryRadius(final AbstractRealMatrix X, double[] radius, boolean sort) {
+		return queryRadius(X.getData(), radius, sort);
 	}
 	
 	public Neighborhood queryRadius(double[][] X, double[] radius, boolean sort) {

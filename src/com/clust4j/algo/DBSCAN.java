@@ -193,12 +193,9 @@ public class DBSCAN extends AbstractDBSCAN {
 		this.m = data.getRowDimension();
 		
 		// Error handle...
-		String e;
-		if(this.eps <= 0.0) {
-			e="eps must be greater than 0.0";
-			error(e);
-			throw new IllegalArgumentException(e);
-		}
+		if(this.eps <= 0.0) 
+			error(new IllegalArgumentException("eps "
+				+ "must be greater than 0.0"));
 		
 		logModelSummary();
 	}
@@ -225,9 +222,8 @@ public class DBSCAN extends AbstractDBSCAN {
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen...
 	}
 	
 	@Override

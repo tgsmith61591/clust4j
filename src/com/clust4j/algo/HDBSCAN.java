@@ -34,7 +34,7 @@ import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.VecUtils;
-import com.clust4j.utils.VecUtils.VecSeries;
+import com.clust4j.utils.VecUtils.VecDoubleSeries;
 
 /**
  * Hierarchical Density-Based Spatial Clustering of Applications with Noise. 
@@ -825,7 +825,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 			boolean[] label_filter;
 			boolean val;
 			int current_node, new_node_index, new_node, i, j, trueCt, idx;
-			VecSeries series;
+			VecDoubleSeries series;
 			
 			double[][] result = new double[m-1][3];
 			node_labels = VecUtils.arange(m);
@@ -868,7 +868,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 					right[j] = X[current_node][current_labels[j]];
 				
 				// Build the current_distances vector
-				series = new VecSeries(left, Inequality.LESS_THAN, right);
+				series = new VecDoubleSeries(left, Inequality.LESS_THAN, right);
 				current_distances = VecUtils.where(series, left, right);
 				
 				
@@ -1512,9 +1512,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen...
 	}
 
 	@Override

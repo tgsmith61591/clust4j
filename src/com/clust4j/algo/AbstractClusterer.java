@@ -197,11 +197,10 @@ public abstract class AbstractClusterer
 			for(int j = 0; j < n; j++) {
 				entry = data.getEntry(i, j);
 						
-				if(Double.isNaN(entry)) {
-					String error = "NaN in input data. Select a matrix imputation method for incomplete records";
-					error(error);
-					throw new NaNException(error);
-				}
+				if(Double.isNaN(entry))
+					error(new NaNException("NaN in input data. "
+						+ "Select a matrix imputation method for "
+						+ "incomplete records"));
 				
 				ref[i][j] = entry;
 			}
@@ -311,6 +310,11 @@ public abstract class AbstractClusterer
 	/* -- LOGGER METHODS --  */
 	@Override public void error(String msg) {
 		if(verbose) Log.err(getLoggerTag(), msg);
+	}
+	
+	@Override public void error(RuntimeException thrown) {
+		error(thrown.getMessage());
+		throw thrown;
 	}
 	
 	@Override public void warn(String msg) {

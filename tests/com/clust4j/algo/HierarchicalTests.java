@@ -165,17 +165,6 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 					.setSep(new GaussianKernel())
 					.setVerbose(true)).fit().getLabels();
 	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testWithNullLinkage() {
-		Array2DRowRealMatrix mat = getRandom(200, 5);
-		new HierarchicalAgglomerative(mat,
-			new HierarchicalAgglomerative
-				.HierarchicalPlanner()
-					.setLinkage(null)
-					.setSep(new GaussianKernel())
-					.setVerbose(true)).fit().getLabels();
-	}
 
 	@Test
 	@Override

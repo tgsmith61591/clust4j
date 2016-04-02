@@ -139,11 +139,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	protected static void checkLinkage(HierarchicalAgglomerative algo, Linkage link) {
 		Linkage linkage = algo.getLinkage();
 		
-		if(null == linkage) {
-			String e = "null linkage passed to planner";
-			algo.error(e);
-			throw new IllegalArgumentException(e);
-		} else if(linkage.equals(Linkage.WARD) && !algo.getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
+		if(linkage.equals(Linkage.WARD) && !algo.getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
 			algo.warn("Ward's method implicitly requires Euclidean distance; overriding " + 
 					algo.getSeparabilityMetric().getName());
 			
@@ -685,9 +681,8 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen...
 	}
 	
 

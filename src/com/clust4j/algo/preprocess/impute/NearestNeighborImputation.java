@@ -137,13 +137,10 @@ public class NearestNeighborImputation extends MatrixImputation {
 		String error;
 		info(nc+" complete record" + (nc!=1?"s":"") + " extracted from input matrix");
 		if(nc == 0) {
-			error = "no complete records in input matrix";
-			error(error);
-			throw new NaNException(error);
+			error(new NaNException("no complete records in input matrix"));
 		} else if(k > nc) {
-			error = "number of complete records ("+nc+
-				") is less than k ("+k+"); setting k to "+nc;
-			warn(error);
+			warn("number of complete records ("+nc
+				+ ") is less than k ("+k+"); setting k to "+nc);
 			k = nc;
 		}
 		

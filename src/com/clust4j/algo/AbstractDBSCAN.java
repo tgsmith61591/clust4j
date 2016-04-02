@@ -20,12 +20,8 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 		this.minPts = planner.getMinPts();
 		this.normer = planner.getNormalizer();
 		
-		String e;
-		if(this.minPts < 1) {
-			e="minPts must be greater than 0";
-			error(e);
-			throw new IllegalArgumentException(e);
-		}
+		if(this.minPts < 1)
+			throw new IllegalArgumentException("minPts must be greater than 0");
 	}
 	
 	abstract public static class AbstractDBSCANPlanner 

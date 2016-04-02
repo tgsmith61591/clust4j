@@ -17,9 +17,9 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 		super(data, planner);
 		
 		if(k < 1)
-			throw new IllegalArgumentException("k must exceed 0");
+			error(new IllegalArgumentException("k must exceed 0"));
 		if(k > data.getRowDimension())
-			throw new IllegalArgumentException("k exceeds number of records");
+			error(new IllegalArgumentException("k exceeds number of records"));
 		
 		this.k = k;
 	} // End constructor

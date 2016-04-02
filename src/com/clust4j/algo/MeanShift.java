@@ -120,32 +120,25 @@ public class MeanShift
 		
 		// Check bandwidth...
 		if(planner.bandwidth <= 0.0)
-			throw new IllegalArgumentException("bandwidth must be greater than 0.0");
+			error(new IllegalArgumentException("bandwidth "
+				+ "must be greater than 0.0"));
 		
 		
 		// Check seeds dimension
-		String e;
 		if(null != planner.seeds) {
-			if(planner.seeds.length == 0) {
-				e = "seeds length must be greater than 0";
-				error(e);
-				throw new IllegalArgumentException(e);
-			}
+			if(planner.seeds.length == 0)
+				error(new IllegalArgumentException("seeds "
+					+ "length must be greater than 0"));
 			
 			// Throws NonUniformMatrixException if non uniform...
 			MatUtils.checkDimsForUniformity(planner.seeds);
 			
-			if(planner.seeds[0].length != (n=this.data.getColumnDimension())) {
-				e = "seeds column dims do not match data column dims";
-				error(e);
-				throw new DimensionMismatchException(planner.seeds[0].length, n);
-			}
+			if(planner.seeds[0].length != (n=this.data.getColumnDimension()))
+				error(new DimensionMismatchException(planner.seeds[0].length, n));
 			
-			if(planner.seeds.length > this.data.getRowDimension()) {
-				e = "seeds length cannot exceed number of datapoints";
-				error(e);
-				throw new IllegalArgumentException(e);
-			}
+			if(planner.seeds.length > this.data.getRowDimension())
+				error(new IllegalArgumentException("seeds "
+					+ "length cannot exceed number of datapoints"));
 			
 			info("initializing kernels from given seeds");
 			
@@ -936,7 +929,6 @@ public class MeanShift
 
 			// Put the results into a Map (hash because tree imposes comparable casting)
 			final LogTimer timer = new LogTimer();
-			String error; // Hold any error msgs
 			centroids = new ArrayList<double[]>();
 			
 			
@@ -968,10 +960,9 @@ public class MeanShift
 			
 			// Check for points all too far from seeds
 			if(intensity.isEmpty()) {
-				error = "No point was within bandwidth="+bandwidth+
-						" of any seed; try increasing bandwidth";
-				error(error);
-				throw new IllegalClusterStateException(error);
+				error(new IllegalClusterStateException("No point "
+					+ "was within bandwidth="+bandwidth
+					+" of any seed; try increasing bandwidth"));
 			} else {
 				converged = true;
 				itersElapsed = intensity.getIters(); // max iters elapsed
@@ -1117,17 +1108,16 @@ public class MeanShift
 
 	@Override
 	public ArrayList<double[]> getCentroids() {
-		try {
+		if(null != centroids) {
 			final ArrayList<double[]> cent = new ArrayList<double[]>();
 			for(double[] d : centroids)
 				cent.add(VecUtils.copy(d));
 			
 			return cent;
-		} catch(NullPointerException e) {
-			String error = "model has not yet been fit";
-			error(error);
-			throw new ModelNotFitException(error);
 		}
+		
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen
 	}
 
 	@Override
@@ -1135,9 +1125,8 @@ public class MeanShift
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen
 	}
 	
 	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {

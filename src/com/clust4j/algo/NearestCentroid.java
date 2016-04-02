@@ -66,13 +66,9 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	public NearestCentroid(AbstractRealMatrix data, int[] y, NearestCentroidPlanner planner) {
 		super(data, planner);
 
-		String err;
 		VecUtils.checkDims(y);
-		if((m=data.getRowDimension()) != y.length) {
-			err = "mismatch in label dimensions and row dimension of data";
-			error(err);
-			throw new DimensionMismatchException(y.length, m);
-		}
+		if((m=data.getRowDimension()) != y.length)
+			error(new DimensionMismatchException(y.length, m));
 		
 		
 		// Build the label encoder
@@ -246,9 +242,8 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		if(null != labels)
 			return VecUtils.copy(labels);
 		
-		String error = "model has not yet been fit";
-		error(error);
-		throw new ModelNotFitException(error);
+		error(new ModelNotFitException("model has not yet been fit"));
+		return null; // can't happen
 	}
 
 	@Override
