@@ -591,6 +591,21 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			final LogTimer timer = new LogTimer();
 			labels = new int[m];
 			
+			/*
+			 * All elements singular
+			 */
+			if(this.singular_value) {
+				warn("algorithm converged immediately due to all elements being equal in input matrix");
+				this.converged = true;
+				this.fitSummary.add(new Object[]{
+					0,converged,timer.formatTime(),timer.formatTime(),1,timer.wallMsg()
+				});
+				
+				sayBye(timer);
+				return this;
+			}
+			
+			
 			sim_mat = computeSmoothedSimilarity(data.getData(), getSeparabilityMetric(), getSeed(), addNoise);
 			info("computed similarity matrix and smoothed degeneracies in " + timer.toString());
 			

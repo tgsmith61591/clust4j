@@ -8,4 +8,5 @@ public interface ClusterTest {
 	@Test public void testPlannerConst();
 	@Test public void testFit();
 	@Test public void testFromPlanner();
+	@Test public void testAllSame();
 }

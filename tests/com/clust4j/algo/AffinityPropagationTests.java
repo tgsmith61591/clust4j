@@ -22,6 +22,7 @@ import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final DataSet irisds = ExampleDataSets.loadIris();
@@ -313,5 +314,20 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 			new double[]{ 8.52651283e-14,   0.00000000e+00,  -2.11578750e+02,  2.11578750e+02},
 			new double[]{ 8.52651283e-14,   0.00000000e+00,   2.11578750e+02, -2.11578750e+02}
 		}, 1e-12));
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new AffinityPropagation(X, new AffinityPropagationPlanner().setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		System.out.println();
 	}
 }

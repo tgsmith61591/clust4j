@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.text.NumberFormat;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
 
@@ -74,6 +75,8 @@ public abstract class AbstractClusterer
 	final boolean parallel;
 	/** The normalizer */
 	final FeatureNormalization normalizer;
+	/** Whether the entire matrix is comprised of only one unique value */
+	protected boolean singular_value;
 	
 	
 	
@@ -146,6 +149,7 @@ public abstract class AbstractClusterer
 		this.parallel 	= caller.parallel;
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 		this.normalizer = null == planner ? caller.normalizer : planner.getNormalizer();
+		this.singular_value = caller.singular_value;
 	}
 	
 	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner, boolean as_is) {
@@ -172,6 +176,8 @@ public abstract class AbstractClusterer
 		this.data = as_is ? 
 			(Array2DRowRealMatrix)data : // internally, always 2d...
 				initData(data);
+		if(singular_value)
+			warn("all elements in input matrix are equal ("+data.getEntry(0, 0)+")");
 			
 		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
 	}
@@ -191,6 +197,7 @@ public abstract class AbstractClusterer
 	final private Array2DRowRealMatrix initData(final AbstractRealMatrix data) {
 		final int m = data.getRowDimension(), n = data.getColumnDimension();
 		final double[][] ref = new double[m][n];
+		final HashSet<Double> unique = new HashSet<>();
 		
 		double entry;
 		for(int i = 0; i < m; i++) {
@@ -203,11 +210,14 @@ public abstract class AbstractClusterer
 						+ "incomplete records"));
 				
 				ref[i][j] = entry;
+				unique.add(entry);
 			}
 		}
 		
 		if(!normalized)
 			warn("feature normalization option is set to false; this is discouraged");
+		if(unique.size() == 1)
+			this.singular_value = true;
 		
 		return new Array2DRowRealMatrix(
 			normalized ? normalizer.operate(ref) : ref,

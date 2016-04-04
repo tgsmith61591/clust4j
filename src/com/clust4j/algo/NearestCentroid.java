@@ -453,8 +453,8 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		for(int i = 0; i < data.length; i++) {
 			row = data[i];
 			
-			double minDist = Double.POSITIVE_INFINITY, dist;
-			int nearestLabel = -1;
+			double minDist = Double.POSITIVE_INFINITY, dist = minDist;
+			int nearestLabel = 0; // should not equal -1, because dist could be infinity
 			
 			for(int j = 0; j < centroids.size(); j++) {
 				centroid = centroids.get(j);

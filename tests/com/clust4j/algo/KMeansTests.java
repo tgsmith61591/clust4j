@@ -20,6 +20,7 @@ import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
+//import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -423,6 +424,9 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		// it's not linearly separable, so most won't perform incredibly well...
 		KMeans model;
 		for(DistanceMetric dist: Distance.values()) {
+			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
+				continue;
+			
 			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
 			double i = -1;
 			
@@ -444,10 +448,48 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		System.out.println("BEST: " + best.getName() + ", " + ia);
 	}
 	
+	/*
+	@Test
+	public void findBestKernelMetric() {
+		DataSet ds = ExampleDataSets.loadIris().shuffle();
+		final int[] actual = ds.getLabelRef();
+		GeometricallySeparable best = null;
+		double ia = 0;
+		
+		// it's not linearly separable, so most won't perform incredibly well...
+		KMeans model;
+		for(Kernel dist: KernelTestCases.all_kernels) {
+			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
+				continue;
+			
+			System.out.println(dist);
+			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
+			double i = -1;
+			
+			model = km.buildNewModelInstance(ds.getDataRef()).fit();
+			if(model.getK() != 3) // gets modified if totally equal
+				continue;
+			
+			i = model.indexAffinityScore(actual);
+			
+
+			System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
+			if(i > ia) {
+				ia = i;
+				best = model.getSeparabilityMetric();
+			}
+		}
+		
+		
+		System.out.println("BEST: " + best.getName() + ", " + ia);
+	}
+	*/
+	
 	/**
-	 * Asser that when all of the matrix entries are exactly the same,
+	 * Assert that when all of the matrix entries are exactly the same,
 	 * the algorithm will still converge, yet produce one label: 0
 	 */
+	@Override
 	@Test
 	public void testAllSame() {
 		final double[][] x = MatUtils.rep(-1, 3, 3);
@@ -455,6 +497,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		
 		int[] labels = new KMeans(X, new KMeansPlanner(3).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		System.out.println();
 	}
 	
 	/**
@@ -468,5 +511,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 					.fit();
 		assertTrue(km.hasWarnings());
 		assertTrue(km.getSeparabilityMetric().equals(Distance.EUCLIDEAN));
+		System.out.println();
 	}
 }

@@ -21,6 +21,9 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	final DataSet irisds = ExampleDataSets.loadIris();
@@ -196,5 +199,22 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		};
 		
 		assertTrue(Precision.equals(0.95, db.indexAffinityScore(expected), 0.05));
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new DBSCAN(X, new DBSCANPlanner(1).setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // these might be noise in DBSCAN
+		
+		labels = new DBSCAN(X, new DBSCANPlanner().setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all());
 	}
 }

@@ -581,10 +581,23 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			if(null != labels) // already fit
 				return this;
 			
-			info("Model fit:");
 			final LogTimer timer = new LogTimer();
-			
 			labels = new int[m];
+			
+			/*
+			 * Corner case: k = 1 (due to singularity?)
+			 */
+			if(1 == k) {
+				this.fitSummary.add(new Object[]{
+					0,0,Double.NaN,timer.formatTime(),timer.formatTime(),timer.wallMsg()
+				});
+				
+				warn("converged immediately due to " + (this.singular_value ? 
+						"singular nature of input matrix" : "k = 1"));
+				sayBye(timer);
+				return this;
+			}
+			
 			dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
 			
 			// Log info...

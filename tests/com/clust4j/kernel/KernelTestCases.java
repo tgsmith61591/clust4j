@@ -19,6 +19,27 @@ public class KernelTestCases {
 	
 	final static MatrixFormatter formatter = new MatrixFormatter();
 	final static Random rand = new Random();
+	public final static Kernel[] all_kernels = new Kernel[]{
+		new ANOVAKernel(), 
+		new CauchyKernel(), 
+		new CircularKernel(), 
+		new ExponentialKernel(),
+		new GaussianKernel(), 
+		new GeneralizedMinKernel(),
+		new HyperbolicTangentKernel(),
+		new InverseMultiquadricKernel(),
+		new LaplacianKernel(),
+		new LinearKernel(),
+		new LogKernel(),
+		new MinKernel(),
+		new MultiquadricKernel(),
+		new PolynomialKernel(),
+		new PowerKernel(),
+		new RadialBasisKernel(), 
+		new RationalQuadraticKernel(),
+		new SphericalKernel(),
+		new SplineKernel()
+	};
 	
 	public static double[] randomVector(int length) {
 		final double[] a = new double[length];
@@ -197,29 +218,7 @@ public class KernelTestCases {
 	public void testForCoverage() {
 		double[] a = new double[]{1,2,3,4,5};
 		
-		Kernel[] kernels = new Kernel[]{
-			new ANOVAKernel(), 
-			new CauchyKernel(), 
-			new CircularKernel(), 
-			new ExponentialKernel(),
-			new GaussianKernel(), 
-			new GeneralizedMinKernel(),
-			new HyperbolicTangentKernel(),
-			new InverseMultiquadricKernel(),
-			new LaplacianKernel(),
-			new LinearKernel(),
-			new LogKernel(),
-			new MinKernel(),
-			new MultiquadricKernel(),
-			new PolynomialKernel(),
-			new PowerKernel(),
-			new RadialBasisKernel(), 
-			new RationalQuadraticKernel(),
-			new SphericalKernel(),
-			new SplineKernel()
-		};
-		
-		for(Kernel k: kernels) {
+		for(Kernel k: all_kernels) {
 			assertNotNull(k.getName());
 			k.getSimilarity(a, a); // ensure throws no exception with default constructor
 			

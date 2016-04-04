@@ -20,6 +20,7 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
@@ -340,5 +341,24 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		NearestCentroid n = new NearestCentroid(TestSuite.getRandom(1200, 10), 
 				VecUtils.repInt(1, 1200)).fit();
 		assertTrue(VecUtils.equalsExactly(VecUtils.repInt(1, 5), n.predict(TestSuite.getRandom(5, 10))));
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidPlanner().setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		System.out.println();
+		
+		labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidPlanner().setVerbose(true)).fit().predict(X);
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		System.out.println();
 	}
 }

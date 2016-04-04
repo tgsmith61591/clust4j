@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -12,6 +13,12 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
+import com.clust4j.kernel.CircularKernel;
+import com.clust4j.kernel.GeneralizedMinKernel;
+import com.clust4j.kernel.LogKernel;
+import com.clust4j.kernel.MinKernel;
+import com.clust4j.kernel.MultiquadricKernel;
+import com.clust4j.kernel.PowerKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -49,6 +56,25 @@ public class KMedoids extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = -4468316488158880820L;
 	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
 	final public static int DEF_MAX_ITER = 10;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		UNSUPPORTED_METRICS.add(Distance.HAMMING.getClass());
+		UNSUPPORTED_METRICS.add(Distance.DICE.getClass());
+		UNSUPPORTED_METRICS.add(Distance.KULSINSKI.getClass());
+		UNSUPPORTED_METRICS.add(Distance.ROGERS_TANIMOTO.getClass());
+		UNSUPPORTED_METRICS.add(Distance.RUSSELL_RAO.getClass());
+		UNSUPPORTED_METRICS.add(Distance.SOKAL_SNEATH.getClass());
+		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
+		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
+		UNSUPPORTED_METRICS.add(PowerKernel.class);
+		UNSUPPORTED_METRICS.add(MinKernel.class);
+		UNSUPPORTED_METRICS.add(CircularKernel.class);
+		UNSUPPORTED_METRICS.add(LogKernel.class);
+	}
+	
+	@Override protected HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics(){ return UNSUPPORTED_METRICS; }
 
 	/**
 	 * Stores the indices of the current medoids. Each index,
@@ -241,7 +267,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 			final LogTimer timer = new LogTimer();
 			final double[][] X = data.getData();
 			
-			// Corner case: K = 1
+			// Corner case: K = 1 or all singular
 			if(1 == k) {
 				labelFromSingularK(X);
 				fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
@@ -281,17 +307,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				 * 1. In each cluster, make the point that minimizes 
 				 *    the sum of distances within the cluster the medoid
 				 */
-				try {
-					clusterAssignments = assignClosestMedoid(newMedoids);
-				} catch(IllegalClusterStateException stochastic) {
-					warn("only one label detected. Were all entries in the input matrix equal?");
-					this.k = 1;
-					
-					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
-					sayBye(timer);
-					return this;
-				}
+				clusterAssignments = assignClosestMedoid(newMedoids);
 				
 				
 				/*
@@ -415,7 +431,8 @@ public class KMedoids extends AbstractCentroidClusterer {
 		
 		
 		/*
-		 * If everything is tied, we need to bail.
+		 * If everything is tied, we need to bail. Shouldn't happen, now
+		 * that we explicitly check earlier on...
 		 */
 		if(all_tied) {
 			throw new IllegalClusterStateException("entirely "

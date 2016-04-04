@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -233,6 +234,15 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 			CentroidClustererPlanner planner) {
 		super(data, planner, planner.getK());
 		
+		/*
+		 * Check for prohibited dist metrics...
+		 */
+		if(getUnsupportedMetrics().contains(this.dist_metric.getClass())) {
+			warn(this.dist_metric.getName() + " is unsupported by "+getName()+"; "
+					+ "falling back to default (" + DEF_DIST.getName() + ")");
+			this.setSeparabilityMetric(DEF_DIST);
+		}
+		
 		this.init = planner.getInitializationStrategy();
 		this.maxIter = planner.getMaxIter();
 		this.tolerance = planner.getConvergenceTolerance();
@@ -353,6 +363,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		iter++;
 		converged = true;
+
 		warn("k=1; converged immediately with a TSS of "+cost);
 	}
 	
@@ -442,4 +453,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		return clust_cost;
 	}
+	
+	protected abstract HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics();
 }

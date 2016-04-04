@@ -11,7 +11,7 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 	 * The number of clusters to find. This field is not final, as in
 	 * some corner cases, the algorithm will modify k for convergence.
 	 */
-	protected int k;
+	final protected int k;
 	
 	public AbstractPartitionalClusterer(
 			AbstractRealMatrix data, 
@@ -25,7 +25,10 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 		if(k > data.getRowDimension())
 			error(new IllegalArgumentException("k exceeds number of records"));
 		
-		this.k = k;
+		this.k = this.singular_value ? 1 : k;
+		if(this.singular_value && k!=1) {
+			warn("coerced k to 1 due to equality of all elements in input matrix");
+		}
 	} // End constructor
 	
 	public int getK() {

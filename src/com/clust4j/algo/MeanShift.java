@@ -157,12 +157,25 @@ public class MeanShift
 
 		this.autoEstimate = planner.autoEstimateBW;
 		final LogTimer aeTimer = new LogTimer();
-		this.bandwidth = autoEstimate ? 
-			autoEstimateBW(this, planner.autoEstimateBWQuantile) : 
-				planner.bandwidth;
+		
+		
+		/*
+		 * Assign bandwidth
+		 */
+		this.bandwidth = 
+			/* if all singular, just pick a number... */
+			this.singular_value ? 0.5 :
+			/* Otherwise if we're auto-estimating, estimate it */
+			autoEstimate ? 
+				autoEstimateBW(this, planner.autoEstimateBWQuantile) : 
+					planner.bandwidth;
 			
-		if(autoEstimate) info("bandwidth auto-estimated in " + 
+		/*
+		 * Give auto-estimation timer update	
+		 */
+		if(autoEstimate && !this.singular_value) info("bandwidth auto-estimated in " + 
 			(parallel?"parallel in ":"") + aeTimer.toString());
+		
 		
 		logModelSummary();
 	}

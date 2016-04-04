@@ -30,6 +30,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final static Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
@@ -592,5 +593,22 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 				.setForceParallel(true)).fit();
 		
 		// This should result in one cluster. We are testing that that works.
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new MeanShift(X, new MeanShiftPlanner().setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		
+		labels = new MeanShift(X, new MeanShiftPlanner(0.5).setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 }

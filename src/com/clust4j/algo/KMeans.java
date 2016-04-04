@@ -11,13 +11,16 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.kernel.GeneralizedMinKernel;
+import com.clust4j.kernel.MinKernel;
+import com.clust4j.kernel.MultiquadricKernel;
+import com.clust4j.kernel.PowerKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.VecUtils;
-import com.clust4j.utils.Series.Inequality;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
@@ -33,12 +36,24 @@ public class KMeans extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
-	final public static HashSet<GeometricallySeparable> UNSUPPORTED_METRICS;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
 	
 	static {
 		UNSUPPORTED_METRICS = new HashSet<>();
-		UNSUPPORTED_METRICS.add(Distance.HAMMING);
+		UNSUPPORTED_METRICS.add(Distance.HAMMING.getClass());
+		UNSUPPORTED_METRICS.add(Distance.DICE.getClass());
+		UNSUPPORTED_METRICS.add(Distance.KULSINSKI.getClass());
+		UNSUPPORTED_METRICS.add(Distance.ROGERS_TANIMOTO.getClass());
+		UNSUPPORTED_METRICS.add(Distance.RUSSELL_RAO.getClass());
+		UNSUPPORTED_METRICS.add(Distance.SOKAL_SNEATH.getClass());
+		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
+		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
+		UNSUPPORTED_METRICS.add(PowerKernel.class);
+		UNSUPPORTED_METRICS.add(MinKernel.class);
 	}
+	
+	@Override protected HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics(){ return UNSUPPORTED_METRICS; }
+	
 	
 	
 	public KMeans(final AbstractRealMatrix data) {
@@ -51,15 +66,6 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
 		super(data, planner);
-		
-		/*
-		 * Check for prohibited dist metrics...
-		 */
-		if(UNSUPPORTED_METRICS.contains(this.dist_metric)) {
-			warn(this.dist_metric.getName() + " is unsupported by KMeans; "
-					+ "falling back to default (" + DEF_DIST.getName() + ")");
-			this.setSeparabilityMetric(DEF_DIST);
-		}
 	}
 	
 	
@@ -225,7 +231,7 @@ public class KMeans extends AbstractCentroidClusterer {
 			final int n = data.getColumnDimension();
 			
 			
-			// Corner case: K = 1
+			// Corner case: K = 1 or all singular values
 			if(1 == k) {
 				labelFromSingularK(X);
 				fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
@@ -259,23 +265,6 @@ public class KMeans extends AbstractCentroidClusterer {
 				
 				// unpack the EntryPair
 				labels = label_dist.getKey();
-				
-				
-				/*
-				 * There is a corner case we can catch here: if first iter 
-				 * and all of the labels are zero, then we KNOW all the dists
-				 * were equal (or all of the entries in the input matrix).
-				 * We can bail here.
-				 */
-				if(0 == iter && (new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all())) {
-					warn("only one label detected. Were all entries in the input matrix equal?");
-					this.k = 1;
-					
-					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
-					sayBye(timer);
-					return this;
-				}
 				
 				
 				// Start by computing TSS using barycentric dist

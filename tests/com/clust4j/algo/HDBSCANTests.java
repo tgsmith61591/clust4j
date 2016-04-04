@@ -1367,4 +1367,21 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		final int[] labs = HDBSCAN.treeToLabels(iris.getData(), labMat, 5);
 		assertTrue(VecUtils.equalsExactly(labs, expected_iris_labs));
 	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new HDBSCAN(X, new HDBSCANPlanner(1).setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
+		
+		labels = new HDBSCAN(X, new HDBSCANPlanner().setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
+	}
 }

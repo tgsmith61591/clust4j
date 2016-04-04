@@ -23,6 +23,7 @@ import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	final Array2DRowRealMatrix data = ExampleDataSets.loadIris().getData();
@@ -505,5 +506,34 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		for(double[] d : n.getDistances()) {
 			assertTrue(VecUtils.max(d) == d[d.length - 1]);
 		}
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Override
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 6, 6);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		Neighborhood neighb = new NearestNeighbors(X, new NearestNeighborsPlanner(3).setVerbose(true)).fit().getNeighbors();
+		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
+		System.out.println();
+		
+		/*
+		 * Test def constructor
+		 */
+		neighb = new NearestNeighbors(X, new NearestNeighborsPlanner().setVerbose(true)).fit().getNeighbors();
+		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
+		System.out.println();
+		
+		/*
+		 * Test BallTree
+		 */
+		neighb = new NearestNeighbors(X, new NearestNeighborsPlanner().setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
+		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
+		System.out.println();
 	}
 }
