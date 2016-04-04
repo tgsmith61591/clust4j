@@ -683,4 +683,18 @@ public class TestDataSet
 		DataSet i = IRIS.copy();
 		i.setLabels(new int[15]);
 	}
+	
+	@Test
+	public void ensureShuffleImmutability() {
+		DataSet d = IRIS.copy();
+		int[] label_ref = d.getLabelRef();
+		double[][] mat_ref = d.getDataRef().getDataRef();
+		
+		DataSet p = d.shuffle();
+		p.getLabelRef()[0] = 1_000_000;
+		assertFalse(p.getLabelRef()[0] == label_ref[0]);
+		
+		p.getDataRef().getDataRef()[0][0] = 1_000_000;
+		assertFalse(mat_ref[0][0] == p.getDataRef().getDataRef()[0][0]);
+	}
 }

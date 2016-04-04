@@ -11,10 +11,15 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.kernel.CauchyKernel;
 import com.clust4j.kernel.GeneralizedMinKernel;
+import com.clust4j.kernel.HyperbolicTangentKernel;
+import com.clust4j.kernel.InverseMultiquadricKernel;
 import com.clust4j.kernel.MinKernel;
 import com.clust4j.kernel.MultiquadricKernel;
+import com.clust4j.kernel.PolynomialKernel;
 import com.clust4j.kernel.PowerKernel;
+import com.clust4j.kernel.SplineKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -40,16 +45,25 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	static {
 		UNSUPPORTED_METRICS = new HashSet<>();
-		UNSUPPORTED_METRICS.add(Distance.HAMMING.getClass());
-		UNSUPPORTED_METRICS.add(Distance.DICE.getClass());
-		UNSUPPORTED_METRICS.add(Distance.KULSINSKI.getClass());
-		UNSUPPORTED_METRICS.add(Distance.ROGERS_TANIMOTO.getClass());
-		UNSUPPORTED_METRICS.add(Distance.RUSSELL_RAO.getClass());
-		UNSUPPORTED_METRICS.add(Distance.SOKAL_SNEATH.getClass());
+		
+		/*
+		 * Add all binary distances
+		 */
+		for(Distance d: Distance.binaryDistances())
+			UNSUPPORTED_METRICS.add(d.getClass());
+		
+		/*
+		 * Kernels that create NaNs or Infs
+		 */
+		UNSUPPORTED_METRICS.add(CauchyKernel.class);
 		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
-		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(PowerKernel.class);
+		UNSUPPORTED_METRICS.add(HyperbolicTangentKernel.class);
+		UNSUPPORTED_METRICS.add(InverseMultiquadricKernel.class);
 		UNSUPPORTED_METRICS.add(MinKernel.class);
+		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
+		UNSUPPORTED_METRICS.add(PolynomialKernel.class);
+		UNSUPPORTED_METRICS.add(PowerKernel.class);
+		UNSUPPORTED_METRICS.add(SplineKernel.class);
 	}
 	
 	@Override protected HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics(){ return UNSUPPORTED_METRICS; }

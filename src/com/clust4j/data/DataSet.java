@@ -3,13 +3,11 @@ package com.clust4j.data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.Clust4j;
-import com.clust4j.GlobalState;
 import com.clust4j.log.Loggable;
 import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.MatUtils;
@@ -444,33 +442,34 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	 * in place
 	 */
 	public DataSet shuffle() {
-		return shuffle(GlobalState.DEFAULT_RANDOM_STATE);
-	}
-	
-	/**
-	 * Shuffle the rows (and corresponding labels)
-	 * and return the new dataset
-	 * in place
-	 */
-	public DataSet shuffle(Random seed) {
-		final int m = data.getRowDimension();
+		final int m = numRows();
+		
+		/*
+		 * Generate range of indices...
+		 */
 		ArrayList<Integer> indices = new ArrayList<Integer>();
 		for(int i = 0; i < m; i++)
 			indices.add(i);
 		
-		Collections.shuffle(indices, seed);
+		/*
+		 * Shuffle indices in place...
+		 */
+		Collections.shuffle(indices);
 		final int[] newLabels = new int[m];
 		final double[][] newData = new double[m][];
 		
+		/*
+		 * Reorder things...
+		 */
 		int j = 0;
 		for(Integer idx: indices) {
 			newLabels[j] = this.labels[idx];
-			newData[j] = this.data.getRow(idx);
+			newData[j] = VecUtils.copy(this.data.getRow(idx));
 			j++;
 		}
 		
 		return new DataSet(
-			new Array2DRowRealMatrix(newData, false),
+			new Array2DRowRealMatrix(newData, true),
 			newLabels,
 			getHeaders(),
 			formatter,

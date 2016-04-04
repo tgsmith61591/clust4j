@@ -1,5 +1,7 @@
 package com.clust4j.algo;
 
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -13,7 +15,6 @@ import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
-import com.clust4j.utils.TriTup;
 import com.clust4j.utils.VecUtils;
 
 import static com.clust4j.GlobalState.Mathematics.*;
@@ -1021,8 +1022,8 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		return new QuadTup<>(data_arr, idx_array, node_data, node_bounds);
 	}
 	
-	public TriTup<Integer, Integer, Integer> getTreeStats() {
-		return new TriTup<>(n_trims, n_leaves, n_splits);
+	public Triple<Integer, Integer, Integer> getTreeStats() {
+		return new ImmutableTriple<>(n_trims, n_leaves, n_splits);
 	}
 	
 	public double[] kernelDensity(double[][] X, double bandwidth, PartialKernelDensity kern, 

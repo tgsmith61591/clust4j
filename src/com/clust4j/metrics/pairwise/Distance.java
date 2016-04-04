@@ -188,7 +188,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
-			double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird();
 			
 			// If all values in a and b are 0s, the distance will be NaN.
 			// Do we want to call that a distance of positive infinity? Or zero?
@@ -212,7 +212,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
-			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird();
 			
 			return (ctf + cft - ctt + a.length) / (cft + ctf + a.length);
 		}
@@ -233,7 +233,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double getPartialDistance(final double[]a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
-			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
+			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird(), cff = bool.getFourth();
 			final double R = 2 * (cft + ctf);
 			return R / (ctt + cff + R);
 		}
@@ -260,7 +260,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);			
 			final double n = (double)a.length;
-			return (n - bool.one) / n;
+			return (n - bool.getFirst()) / n;
 		}
 		
 		@Override
@@ -284,7 +284,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
-			final double ctt = bool.one, ctf = bool.two, cft = bool.three;
+			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird();
 			final double R = 2 * (cft + ctf);
 
 			// If all values in a and b are 0s, the distance will be NaN.
@@ -298,7 +298,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 	},
 	
-	/*
 	YULE {
 		@Override
 		final public double getP() {
@@ -308,7 +307,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
-			final double ctt = bool.one, ctf = bool.two, cft = bool.three, cff = bool.four;
+			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird(), cff = bool.getFourth();
 			final double R = 2 * cft * ctf;
 			final double v = R / (ctt * cff + (cft * ctf));
 
@@ -322,7 +321,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			return "Yule";
 		}
 	}
-	*/
 	
 	;
 	
@@ -351,5 +349,13 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	@Override
 	public double distanceToPartialDistance(double d) {
 		return d;
+	}
+	
+	public static Distance[] binaryDistances() {
+		return new Distance[]{
+			HAMMING, DICE, KULSINSKI, 
+			ROGERS_TANIMOTO, RUSSELL_RAO,
+			SOKAL_SNEATH, YULE
+		};
 	}
 }

@@ -28,6 +28,8 @@ import com.clust4j.algo.pipeline.PipelineTest;
 import com.clust4j.algo.preprocess.ImputationTests;
 import com.clust4j.algo.preprocess.PreProcessorTests;
 import com.clust4j.data.BufferedMatrixReaderTests;
+import com.clust4j.data.DataSet;
+import com.clust4j.data.ExampleDataSets;
 import com.clust4j.data.TestDataSet;
 import com.clust4j.except.TestExcept;
 import com.clust4j.kernel.KernelTestCases;
@@ -97,6 +99,13 @@ public class TestSuite {
 	public static String tmpSerPath = "model.ser";
 	public static File file = new File(tmpSerPath);
 	public static Path path = FileSystems.getDefault().getPath(tmpSerPath);
+	
+	/*
+	 * Data sets
+	 */
+	public static final DataSet IRIS_DATASET = ExampleDataSets.loadIris();
+	public static final DataSet WINE_DATASET = ExampleDataSets.loadWine();
+	public static final DataSet BC_DATASET = ExampleDataSets.loadBreastCancer();
 	
 	
 	public static final double[][] bigMatrix = new double[][]{

@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.Kernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -26,9 +27,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	private static final long serialVersionUID = -424476075361612324L;
 	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
 	final public static int DEF_K = BaseNeighborsModel.DEF_K;
-	final public static InitializationStrategy DEF_INIT = InitializationStrategy.KM_AUGMENTED;
+	final public static InitializationStrategy DEF_INIT = InitializationStrategy.AUTO;
 	
-	final protected InitializationStrategy init;
+	protected InitializationStrategy init;
 	final protected int maxIter;
 	final protected double tolerance;
 	final protected int[] init_centroid_indices;
@@ -43,8 +44,20 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	volatile protected ArrayList<double[]> centroids = new ArrayList<double[]>();
 
 	
-	static interface Initializer { int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed); }
+	static interface Initializer { int[] getInitialCentroidSeeds(AbstractCentroidClusterer model, double[][] X, int k, final Random seed); }
 	public static enum InitializationStrategy implements java.io.Serializable, Initializer, NamedEntity {
+		AUTO {
+			@Override public int[] getInitialCentroidSeeds(AbstractCentroidClusterer model, double[][] X, int k, final Random seed) {
+				if(model.dist_metric instanceof Kernel)
+					return RANDOM.getInitialCentroidSeeds(model, X, k, seed);
+				return KM_AUGMENTED.getInitialCentroidSeeds(model, X, k, seed);
+			}
+			
+			@Override public String getName() {
+				return "auto initialization";
+			}
+		},
+		
 		/**
 		 * Initialize {@link KMeans} or {@link KMedoids} with a set of randomly
 		 * selected centroids to use as the initial seeds. This is the traditional
@@ -52,7 +65,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		 * worse than using {@link InitializationStrategy#KM_AUGMENTED}
 		 */
 		RANDOM {
-			@Override public int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed) {
+			@Override public int[] getInitialCentroidSeeds(AbstractCentroidClusterer model, double[][] X, int k, final Random seed) {
+				model.init = this;
 				final int m = X.length;
 				
 				// Corner case: k = m
@@ -79,7 +93,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		 * @see <a href="http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf">k-means++ paper</a>
 		 */
 		KM_AUGMENTED {
-			@Override public int[] getInitialCentroidSeeds(double[][] X, int k, final Random seed) {
+			@Override public int[] getInitialCentroidSeeds(AbstractCentroidClusterer model, double[][] X, int k, final Random seed) {
+				model.init = this;
+				
 				final int m = X.length, n = X[0].length;
 				final int[] range = VecUtils.arange(k);
 				final double[][] centers = new double[k][n];
@@ -255,7 +271,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		// set centroids
 		final LogTimer centTimer = new LogTimer();
 		this.init_centroid_indices = init.getInitialCentroidSeeds(
-			this.data.getData(), k, getSeed());
+			this, this.data.getData(), k, getSeed());
 		for(int i: this.init_centroid_indices)
 			centroids.add(this.data.getRow(i));
 		

@@ -154,10 +154,10 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		HList<CompQuadTup<Integer, Integer, Double, Integer>> h = HDBSCAN.LinkageTreeUtils.condenseTree(slt, 5);
 		QuadTup<Integer, Integer, Double, Integer> q = h.get(0);
-		assertTrue(q.one == 3);
-		assertTrue(q.two == 0);
+		assertTrue(q.getFirst() == 3);
+		assertTrue(q.getSecond() == 0);
 		// Three is a repeating decimal...
-		assertTrue(q.four == 1);
+		assertTrue(q.getFourth() == 1);
 		
 		TreeMap<Integer, Double> computedStability = HDBSCAN.LinkageTreeUtils.computeStability(h);
 		assertTrue(computedStability.size() == 1);
@@ -1300,16 +1300,16 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			@Override
 			public int compare(QuadTup<Integer, Integer, Double, Integer> q1, 
 					QuadTup<Integer, Integer, Double, Integer> q2) {
-				int cmp = q1.one.compareTo(q2.one);
+				int cmp = q1.getFirst().compareTo(q2.getFirst());
 				
 				if(cmp == 0) {
-					cmp = q1.two.compareTo(q2.two);
+					cmp = q1.getSecond().compareTo(q2.getSecond());
 					
 					if(cmp == 0) {
-						cmp = q1.three.compareTo(q2.three);
+						cmp = q1.getThird().compareTo(q2.getThird());
 						
 						if(cmp == 0) {
-							return q1.four.compareTo(q2.four);
+							return q1.getFourth().compareTo(q2.getFourth());
 						}
 						
 						return cmp;

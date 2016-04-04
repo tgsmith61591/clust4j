@@ -17,7 +17,6 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
 import com.clust4j.data.DataSet;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
 //import com.clust4j.kernel.KernelTestCases;
@@ -30,7 +29,9 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
+	final Array2DRowRealMatrix irisdata = TestSuite.IRIS_DATASET.getData();
+	final Array2DRowRealMatrix winedata = TestSuite.WINE_DATASET.getData();
+	final Array2DRowRealMatrix bcdata = TestSuite.BC_DATASET.getData();
 	
 	/**
 	 * This is the method as it is used in the KMedoids class,
@@ -66,59 +67,59 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	@Test
 	@Override
 	public void testItersElapsed() {
-		assertTrue(new KMedoids(data_).fit().itersElapsed() > 0);
+		assertTrue(new KMedoids(irisdata).fit().itersElapsed() > 0);
 	}
 
 
 	@Test
 	@Override
 	public void testConverged() {
-		assertTrue(new KMedoids(data_).fit().didConverge());
+		assertTrue(new KMedoids(irisdata).fit().didConverge());
 	}
 
 
 	@Test
 	@Override
 	public void testScoring() {
-		new KMedoids(data_).fit().silhouetteScore();
+		new KMedoids(irisdata).fit().silhouetteScore();
 	}
 
 
 	@Test
 	@Override
 	public void testDefConst() {
-		new KMedoids(data_);
+		new KMedoids(irisdata);
 	}
 
 
 	@Test
 	@Override
 	public void testArgConst() {
-		new KMedoids(data_, 3);
+		new KMedoids(irisdata, 3);
 	}
 
 
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new KMedoids(data_, new KMedoidsPlanner());
-		new KMedoids(data_, new KMedoidsPlanner(3));
+		new KMedoids(irisdata, new KMedoidsPlanner());
+		new KMedoids(irisdata, new KMedoidsPlanner(3));
 	}
 
 
 	@Test
 	@Override
 	public void testFit() {
-		new KMedoids(data_, new KMedoidsPlanner()).fit();
-		new KMedoids(data_, new KMedoidsPlanner(3)).fit();
+		new KMedoids(irisdata, new KMedoidsPlanner()).fit();
+		new KMedoids(irisdata, new KMedoidsPlanner(3)).fit();
 	}
 
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new KMedoidsPlanner().buildNewModelInstance(data_);
-		new KMedoidsPlanner(3).buildNewModelInstance(data_);
+		new KMedoidsPlanner().buildNewModelInstance(irisdata);
+		new KMedoidsPlanner(3).buildNewModelInstance(irisdata);
 	}
 
 	/** Scale = false */
@@ -322,7 +323,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	@Test
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
-		KMedoids km = new KMedoids(data_,
+		KMedoids km = new KMedoids(irisdata,
 			new KMedoids.KMedoidsPlanner(3)
 				.setScale(true)
 				.setVerbose(true)).fit();
@@ -338,27 +339,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	}
 	
 	@Test
-	public void testWineData() {
-		final DataSet wine = ExampleDataSets.loadWine();
-		Array2DRowRealMatrix data = wine.getData();
-		
-		// assert that scaling is better...
-		
-		assertTrue(
-			new KMedoids(data, new KMedoidsPlanner(3)
-			.setScale(true)).fit().indexAffinityScore(wine.getLabels())
-			
-			>= // scaled should produce a better score
-			
-			new KMedoids(data, new KMedoidsPlanner(3)
-			.setScale(false)).fit().indexAffinityScore(wine.getLabels())
-		);
-	}
-	
-	@Test
 	public void findBestDistMetric() {
-		DataSet ds = ExampleDataSets.loadIris();
-		final int[] actual = ds.getLabelRef();
+		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		final Array2DRowRealMatrix d = ds.getData();
+		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
 		double ia = 0;
 		
@@ -370,7 +354,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			KMedoidsPlanner km = new KMedoidsPlanner(3).setSep(dist);
 			double i = -1;
 			
-			i = km.buildNewModelInstance(ds.getDataRef()).fit().indexAffinityScore(actual);
+			i = km.buildNewModelInstance(d).fit().indexAffinityScore(actual);
 			
 			System.out.println(dist.getName() + ", " + i);
 			if(i > ia) {
@@ -384,17 +368,17 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		System.out.println(best);
 	}
 	
-	/*
 	@Test
 	public void findBestKernelMetric() {
-		DataSet ds = ExampleDataSets.loadIris().shuffle();
-		final int[] actual = ds.getLabelRef();
+		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		final Array2DRowRealMatrix d = ds.getData();
+		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
 		double ia = 0;
 		
 		// it's not linearly separable, so most won't perform incredibly well...
 		KMedoids model;
-		for(Kernel dist: KernelTestCases.all_kernels) {
+		for(Kernel dist: com.clust4j.kernel.KernelTestCases.all_kernels) {
 			if(KMedoids.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
@@ -402,7 +386,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			KMedoidsPlanner km = new KMedoidsPlanner(3).setScale(true).setSep(dist);
 			double i = -1;
 			
-			model = km.buildNewModelInstance(ds.getDataRef()).fit();
+			model = km.buildNewModelInstance(d).fit();
 			if(model.getK() != 3) // gets modified if totally equal
 				continue;
 			
@@ -419,7 +403,6 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		System.out.println("BEST: " + best.getName() + ", " + ia);
 	}
-	*/
 	
 	/**
 	 * Assert that when all of the matrix entries are exactly the same,

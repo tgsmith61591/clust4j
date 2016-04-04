@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -28,7 +29,6 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.QuadTup;
-import com.clust4j.utils.TriTup;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.VecUtils.VecDoubleSeries;
@@ -50,15 +50,15 @@ public class NNHSTests {
 		
 		QuadTup<double[][], int[], NodeData[], double[][][]> arrays = kd.getArrays();
 		
-		assertTrue(MatUtils.equalsExactly(arrays.one, a));
-		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2}, arrays.two));
+		assertTrue(MatUtils.equalsExactly(arrays.getFirst(), a));
+		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2}, arrays.getSecond()));
 		
-		TriTup<Integer, Integer, Integer> stats = kd.getTreeStats();
-		assertTrue(stats.one == 0);
-		assertTrue(stats.two == 0);
-		assertTrue(stats.three==0);
+		Triple<Integer, Integer, Integer> stats = kd.getTreeStats();
+		assertTrue(stats.getLeft() == 0);
+		assertTrue(stats.getMiddle() == 0);
+		assertTrue(stats.getRight() ==0);
 		
-		NodeData data = arrays.three[0];
+		NodeData data = arrays.getThird()[0];
 		assertTrue(data.idx_start == 0);
 		assertTrue(data.idx_end == 3);
 		assertTrue(data.is_leaf);
@@ -72,21 +72,21 @@ public class NNHSTests {
 		
 		QuadTup<double[][], int[], NodeData[], double[][][]> arrays = ball.getArrays();
 		
-		assertTrue(MatUtils.equalsExactly(arrays.one, a));
-		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2}, arrays.two));
+		assertTrue(MatUtils.equalsExactly(arrays.getFirst(), a));
+		assertTrue(VecUtils.equalsExactly(new int[]{0,1,2}, arrays.getSecond()));
 		
-		TriTup<Integer, Integer, Integer> stats = ball.getTreeStats();
-		assertTrue(stats.one == 0);
-		assertTrue(stats.two == 0);
-		assertTrue(stats.three==0);
+		Triple<Integer, Integer, Integer> stats = ball.getTreeStats();
+		assertTrue(stats.getLeft() == 0);
+		assertTrue(stats.getMiddle() == 0);
+		assertTrue(stats.getRight() ==0);
 		
-		NodeData data = arrays.three[0];
+		NodeData data = arrays.getThird()[0];
 		assertTrue(data.idx_start == 0);
 		assertTrue(data.idx_end == 3);
 		assertTrue(data.is_leaf);
 		assertTrue(data.radius == 6.716480559869961);
 		
-		double[][][] trip = arrays.four;
+		double[][][] trip = arrays.getFourth();
 		assertTrue(trip.length == 1);
 		assertTrue(trip[0][0][0] == 1.6666666666666667);
 		assertTrue(trip[0][0][1] == 2.3333333333333333);

@@ -10,7 +10,8 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith
  */
 class BooleanSimilarity extends QuadTup<Double, Double, Double, Double> {
-	
+	private static final long serialVersionUID = 6735795579759248156L;
+
 	private BooleanSimilarity(Double one, Double two, Double three, Double four) {
 		super(one, two, three, four);
 	}

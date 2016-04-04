@@ -2,6 +2,7 @@ package com.clust4j.utils;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.junit.Test;
 
 public class QuadTupTests {
@@ -15,8 +16,8 @@ public class QuadTupTests {
 	
 	@Test
 	public void testTris() {
-		TriTup<Integer, Integer, Integer> tt =
-			new TriTup<>(1,null,2);
+		ImmutableTriple<Integer, Integer, Integer> tt =
+			new ImmutableTriple<>(1,null,2);
 		assertNotNull(tt.toString());
 	}
 

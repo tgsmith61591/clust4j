@@ -475,6 +475,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 											 THREE extends Number, 
 											 FOUR extends Number> 
 		extends QuadTup<ONE, TWO, THREE, FOUR> {
+		private static final long serialVersionUID = -8699738868282635229L;
 
 		public CompQuadTup(ONE one, TWO two, THREE three, FOUR four) {
 			super(one, two, three, four);
@@ -605,10 +606,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 				minParent = Integer.MAX_VALUE,
 				maxParent = Integer.MIN_VALUE;
 			for(CompQuadTup<Integer, Integer, Double, Integer> q: condensed) {
-				parent= q.one;
-				child = q.two;
-				lambda= q.three;
-				childSize= q.four;
+				parent= q.getFirst();
+				child = q.getSecond();
+				lambda= q.getThird();
+				childSize= q.getFourth();
 				
 				if(child > largestChild)
 					largestChild = child;
@@ -633,10 +634,10 @@ public class HDBSCAN extends AbstractDBSCAN {
 				@Override
 				public int compare(QuadTup<Integer, Integer, Double, Integer> q1, 
 						QuadTup<Integer, Integer, Double, Integer> q2) {
-					int cmp = q1.two.compareTo(q2.two);
+					int cmp = q1.getSecond().compareTo(q2.getSecond());
 					
 					if(cmp == 0) {
-						cmp = q1.three.compareTo(q2.three);
+						cmp = q1.getThird().compareTo(q2.getThird());
 						return cmp;
 					}
 					
@@ -650,8 +651,8 @@ public class HDBSCAN extends AbstractDBSCAN {
 			 */
 			for(row = 0; row < condensed.size(); row++) {
 				CompQuadTup<Integer, Integer, Double, Integer> q = condensed.get(row);
-				child = q.two;
-				lambda= q.three;
+				child = q.getSecond();
+				lambda= q.getThird();
 				
 				if(child == currentChild)
 					minLambda = FastMath.min(minLambda, lambda);
@@ -1413,13 +1414,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 		int minParent = Integer.MAX_VALUE;
 		for(i = 0; i < n; i++) {
 			quad = tree.get(i);
-			parentArr[i]= quad.one;
-			childArr[i] = quad.two;
+			parentArr[i]= quad.getFirst();
+			childArr[i] = quad.getSecond();
 			
-			if(quad.one < minParent)
-				minParent = quad.one;
-			if(quad.one > maxParent)
-				maxParent = quad.one;
+			if(quad.getFirst() < minParent)
+				minParent = quad.getFirst();
+			if(quad.getFirst() > maxParent)
+				maxParent = quad.getFirst();
 		}
 		
 		rootCluster = minParent;
@@ -1569,15 +1570,15 @@ public class HDBSCAN extends AbstractDBSCAN {
 			
 			// [parent, child, lambda, size]
 			for(CompQuadTup<Integer, Integer, Double, Integer> tup: tree) {
-				if(tup.four > 1)
+				if(tup.getFourth() > 1)
 					out.add(new double[]{
-						tup.one,
-						tup.two,
-						tup.three,
-						tup.four
+						tup.getFirst(),
+						tup.getSecond(),
+						tup.getThird(),
+						tup.getFourth()
 					});
-				else if(tup.four == 1)
-					max = FastMath.max(max, tup.two);
+				else if(tup.getFourth() == 1)
+					max = FastMath.max(max, tup.getSecond());
 			}
 			
 			return new EntryPair<>(out, max + 1);

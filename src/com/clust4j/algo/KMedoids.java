@@ -14,11 +14,7 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.kernel.CircularKernel;
-import com.clust4j.kernel.GeneralizedMinKernel;
 import com.clust4j.kernel.LogKernel;
-import com.clust4j.kernel.MinKernel;
-import com.clust4j.kernel.MultiquadricKernel;
-import com.clust4j.kernel.PowerKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -60,16 +56,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	static {
 		UNSUPPORTED_METRICS = new HashSet<>();
-		UNSUPPORTED_METRICS.add(Distance.HAMMING.getClass());
-		UNSUPPORTED_METRICS.add(Distance.DICE.getClass());
-		UNSUPPORTED_METRICS.add(Distance.KULSINSKI.getClass());
-		UNSUPPORTED_METRICS.add(Distance.ROGERS_TANIMOTO.getClass());
-		UNSUPPORTED_METRICS.add(Distance.RUSSELL_RAO.getClass());
-		UNSUPPORTED_METRICS.add(Distance.SOKAL_SNEATH.getClass());
-		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
-		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(PowerKernel.class);
-		UNSUPPORTED_METRICS.add(MinKernel.class);
+		UNSUPPORTED_METRICS.addAll(KMeans.UNSUPPORTED_METRICS);
 		UNSUPPORTED_METRICS.add(CircularKernel.class);
 		UNSUPPORTED_METRICS.add(LogKernel.class);
 	}

@@ -17,7 +17,6 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.data.DataSet;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 //import com.clust4j.kernel.KernelTestCases;
@@ -29,12 +28,9 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest, BaseModelTest {
-	final DataSet irisds = ExampleDataSets.loadIris();
-	final DataSet wineds = ExampleDataSets.loadWine();
-	final DataSet bcds = ExampleDataSets.loadBreastCancer().shuffle();
-	final Array2DRowRealMatrix data_ = irisds.getData();
-	final Array2DRowRealMatrix wine = wineds.getData();
-	final Array2DRowRealMatrix bc = bcds.getData();
+	final Array2DRowRealMatrix data_ = TestSuite.IRIS_DATASET.getData();
+	final Array2DRowRealMatrix wine = TestSuite.WINE_DATASET.getData();
+	final Array2DRowRealMatrix bc = TestSuite.BC_DATASET.getData();
 
 	@Test
 	@Override
@@ -355,7 +351,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void testOnIris() {
-		DataSet iris = irisds.shuffle();
+		DataSet iris = TestSuite.IRIS_DATASET.shuffle();
 		Array2DRowRealMatrix data = iris.getData();
 		int[] labels = iris.getLabels();
 		
@@ -386,38 +382,25 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void testWineData() {
+		final DataSet wineds = TestSuite.WINE_DATASET.copy();
+		
 		// assert that scaling is better...
 		assertTrue(
-			new KMeans(wine, new KMeansPlanner(3)
-			.setScale(true)).fit().indexAffinityScore(wineds.getLabels())
+			new KMeans(wineds.getData(), new KMeansPlanner(3)
+				.setScale(true)).fit().indexAffinityScore(wineds.getLabels())
 			
 			> // scaled should produce a better score
 			
-			new KMeans(wine, new KMeansPlanner(3)
-			.setScale(false)).fit().indexAffinityScore(wineds.getLabels())
-		);
-	}
-	
-	@Test
-	public void testBCData() {
-		// assert that scaling is better...
-		assertTrue(
-			new KMeans(bc, new KMeansPlanner(2)
-				.setScale(true).setVerbose(true)).fit()
-				.indexAffinityScore(bcds.getLabels())
-			
-			> // scaled should produce a better score
-			
-			new KMeans(bc, new KMeansPlanner(2)
-				.setScale(false).setVerbose(true)).fit()
-				.indexAffinityScore(bcds.getLabels())
+			new KMeans(wineds.getData(), new KMeansPlanner(3)
+				.setScale(false)).fit().indexAffinityScore(wineds.getLabels())
 		);
 	}
 	
 	@Test
 	public void findBestDistMetric() {
-		DataSet ds = ExampleDataSets.loadIris().shuffle();
-		final int[] actual = ds.getLabelRef();
+		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		final Array2DRowRealMatrix d = ds.getData();
+		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
 		double ia = 0;
 		
@@ -430,7 +413,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
 			double i = -1;
 			
-			model = km.buildNewModelInstance(ds.getDataRef()).fit();
+			model = km.buildNewModelInstance(d).fit();
 			if(model.getK() != 3) // gets modified if totally equal
 				continue;
 			
@@ -448,25 +431,27 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		System.out.println("BEST: " + best.getName() + ", " + ia);
 	}
 	
-	/*
 	@Test
 	public void findBestKernelMetric() {
-		DataSet ds = ExampleDataSets.loadIris().shuffle();
-		final int[] actual = ds.getLabelRef();
+		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		Array2DRowRealMatrix d = ds.getData();
+		final int[] actual = ds.getLabels();
+		
 		GeometricallySeparable best = null;
 		double ia = 0;
 		
 		// it's not linearly separable, so most won't perform incredibly well...
 		KMeans model;
-		for(Kernel dist: KernelTestCases.all_kernels) {
+		for(Kernel dist: com.clust4j.kernel.KernelTestCases.all_kernels) {
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			System.out.println(dist);
 			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
 			double i = -1;
 			
-			model = km.buildNewModelInstance(ds.getDataRef()).fit();
+			model = km.buildNewModelInstance(d);
+			System.out.println(dist);
+			model.fit();
 			if(model.getK() != 3) // gets modified if totally equal
 				continue;
 			
@@ -483,7 +468,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		
 		System.out.println("BEST: " + best.getName() + ", " + ia);
 	}
-	*/
 	
 	/**
 	 * Assert that when all of the matrix entries are exactly the same,
@@ -505,7 +489,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	 */
 	@Test
 	public void testHamming() {
-		final Array2DRowRealMatrix X = ExampleDataSets.loadIris().shuffle().getDataRef();
+		final Array2DRowRealMatrix X = TestSuite.IRIS_DATASET.shuffle().getData();
 		KMeans km = new KMeans(X, new KMeansPlanner(3)
 				.setVerbose(true).setSep(Distance.HAMMING))
 					.fit();
