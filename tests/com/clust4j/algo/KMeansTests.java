@@ -20,8 +20,12 @@ import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTest, BaseModelTest {
 	final DataSet irisds = ExampleDataSets.loadIris();
@@ -398,12 +402,71 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		// assert that scaling is better...
 		assertTrue(
 			new KMeans(bc, new KMeansPlanner(2)
-			.setScale(true).setVerbose(true)).fit().indexAffinityScore(bcds.getLabels())
+				.setScale(true).setVerbose(true)).fit()
+				.indexAffinityScore(bcds.getLabels())
 			
 			> // scaled should produce a better score
 			
 			new KMeans(bc, new KMeansPlanner(2)
-			.setScale(false).setVerbose(true)).fit().indexAffinityScore(bcds.getLabels())
+				.setScale(false).setVerbose(true)).fit()
+				.indexAffinityScore(bcds.getLabels())
 		);
+	}
+	
+	@Test
+	public void findBestDistMetric() {
+		DataSet ds = ExampleDataSets.loadIris().shuffle();
+		final int[] actual = ds.getLabelRef();
+		GeometricallySeparable best = null;
+		double ia = 0;
+		
+		// it's not linearly separable, so most won't perform incredibly well...
+		KMeans model;
+		for(DistanceMetric dist: Distance.values()) {
+			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
+			double i = -1;
+			
+			model = km.buildNewModelInstance(ds.getDataRef()).fit();
+			if(model.getK() != 3) // gets modified if totally equal
+				continue;
+			
+			i = model.indexAffinityScore(actual);
+			
+
+			System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
+			if(i > ia) {
+				ia = i;
+				best = model.getSeparabilityMetric();
+			}
+		}
+		
+		
+		System.out.println("BEST: " + best.getName() + ", " + ia);
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new KMeans(X, new KMeansPlanner(3).setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+	}
+	
+	/**
+	 * Hamming is unsupported. Test that it falls back to Euclidean
+	 */
+	@Test
+	public void testHamming() {
+		final Array2DRowRealMatrix X = ExampleDataSets.loadIris().shuffle().getDataRef();
+		KMeans km = new KMeans(X, new KMeansPlanner(3)
+				.setVerbose(true).setSep(Distance.HAMMING))
+					.fit();
+		assertTrue(km.hasWarnings());
+		assertTrue(km.getSeparabilityMetric().equals(Distance.EUCLIDEAN));
 	}
 }

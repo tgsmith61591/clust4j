@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 
 import lombok.Synchronized;
@@ -16,6 +17,7 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 /**
  * <a href="https://en.wikipedia.org/wiki/K-means_clustering">KMeans clustering</a> is
@@ -31,6 +33,12 @@ public class KMeans extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
+	final public static HashSet<GeometricallySeparable> UNSUPPORTED_METRICS;
+	
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		UNSUPPORTED_METRICS.add(Distance.HAMMING);
+	}
 	
 	
 	public KMeans(final AbstractRealMatrix data) {
@@ -43,6 +51,15 @@ public class KMeans extends AbstractCentroidClusterer {
 	
 	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
 		super(data, planner);
+		
+		/*
+		 * Check for prohibited dist metrics...
+		 */
+		if(UNSUPPORTED_METRICS.contains(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is unsupported by KMeans; "
+					+ "falling back to default (" + DEF_DIST.getName() + ")");
+			this.setSeparabilityMetric(DEF_DIST);
+		}
 	}
 	
 	
@@ -219,7 +236,7 @@ public class KMeans extends AbstractCentroidClusterer {
 			
 			
 			// Nearest centroid model to predict labels
-			NearestCentroid model;
+			NearestCentroid model = null;
 			EntryPair<int[], double[]> label_dist;
 			
 			
@@ -227,7 +244,6 @@ public class KMeans extends AbstractCentroidClusterer {
 			double maxCost = Double.NEGATIVE_INFINITY;
 			cost = Double.POSITIVE_INFINITY;
 			ArrayList<double[]> new_centroids;
-			
 			
 			for(iter = 0; iter < maxIter; iter++) {
 				
@@ -238,10 +254,28 @@ public class KMeans extends AbstractCentroidClusterer {
 						.setSeed(getSeed())
 						.setSep(getSeparabilityMetric())
 						.setVerbose(false)).fit();
+				
 				label_dist = model.predict(X);
 				
 				// unpack the EntryPair
 				labels = label_dist.getKey();
+				
+				
+				/*
+				 * There is a corner case we can catch here: if first iter 
+				 * and all of the labels are zero, then we KNOW all the dists
+				 * were equal (or all of the entries in the input matrix).
+				 * We can bail here.
+				 */
+				if(0 == iter && (new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all())) {
+					warn("only one label detected. Were all entries in the input matrix equal?");
+					this.k = 1;
+					
+					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
+					sayBye(timer);
+					return this;
+				}
 				
 				
 				// Start by computing TSS using barycentric dist
@@ -284,8 +318,6 @@ public class KMeans extends AbstractCentroidClusterer {
 					system_cost += clust_cost;
 					
 				} // end centroid re-assignment
-				
-				
 				
 				// Add current state to fitSummary
 				fitSummary.add(new Object[]{ iter, converged, maxCost, cost, timer.wallTime() });

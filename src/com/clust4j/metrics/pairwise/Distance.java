@@ -298,7 +298,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 	},
 	
-	
+	/*
 	YULE {
 		@Override
 		final public double getP() {
@@ -321,7 +321,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Yule";
 		}
-	};
+	}
+	*/
+	
+	;
 	
 	
 	/**

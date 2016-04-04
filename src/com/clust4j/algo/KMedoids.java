@@ -11,6 +11,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -255,7 +256,6 @@ public class KMedoids extends AbstractCentroidClusterer {
 			dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
 			info("distance matrix computed in " + timer.toString());
 			
-			
 			// Initialize labels
 			medoid_indices = init_centroid_indices;
 			
@@ -281,7 +281,22 @@ public class KMedoids extends AbstractCentroidClusterer {
 				 * 1. In each cluster, make the point that minimizes 
 				 *    the sum of distances within the cluster the medoid
 				 */
-				clusterAssignments = assignClosestMedoid(newMedoids);
+				try {
+					clusterAssignments = assignClosestMedoid(newMedoids);
+				} catch(IllegalClusterStateException stochastic) {
+					warn("only one label detected. Were all entries in the input matrix equal?");
+					this.k = 1;
+					
+					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+					sayBye(timer);
+					return this;
+				}
+				
+				
+				/*
+				 * 1.5 The entries are not 100% equal, so we can (re)assign medoids...
+				 */
 				rassn = new MedoidReassignmentHandler(clusterAssignments);
 
 				
@@ -351,10 +366,12 @@ public class KMedoids extends AbstractCentroidClusterer {
 	
 	private ClusterAssignments assignClosestMedoid(int[] medoidIdcs) {
 		double minDist;
+		boolean all_tied = true;
 		int nearest, rowIdx, colIdx;
 		final int[] assn = new int[m];
 		final double[] costs = new double[m];
 		for(int i = 0; i < m; i++) {
+			boolean is_a_medoid = false;
 			minDist = Double.POSITIVE_INFINITY;
 			
 			/*
@@ -369,6 +386,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				if(i == medoid) {
 					nearest = medoid;
 					minDist = dist_mat[i][i];
+					is_a_medoid = true;
 					break;
 				}
 				
@@ -381,8 +399,27 @@ public class KMedoids extends AbstractCentroidClusterer {
 				}
 			}
 			
+			
+			/*
+			 * If all of the distances are equal, we can end up with a -1 idx...
+			 */
+			if(-1 == nearest)
+				nearest = medoidIdcs[getSeed().nextInt(k)];
+			else if(!is_a_medoid)
+				all_tied = false;
+			
+			
 			assn[i]	 = nearest;
 			costs[i] = minDist; 
+		}
+		
+		
+		/*
+		 * If everything is tied, we need to bail.
+		 */
+		if(all_tied) {
+			throw new IllegalClusterStateException("entirely "
+				+ "stochastic process: all distances are equal");
 		}
 		
 		return new ClusterAssignments(assn, costs);
@@ -425,7 +462,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				members = pair.getValue();
 				
 				double medoidCost, minCost = Double.POSITIVE_INFINITY;
-				int rowIdx, colIdx, bestMedoid = -1;
+				int rowIdx, colIdx, bestMedoid = -1; // start at 0, not -1 in case of all ties...
 				for(int a: members) { // check cost if A is the medoid...
 					
 					medoidCost = 0.0;

@@ -22,7 +22,11 @@ import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.LaplacianKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+import com.clust4j.utils.Series.Inequality;
 
 public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
 	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
@@ -347,5 +351,43 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			new KMedoids(data, new KMedoidsPlanner(3)
 			.setScale(false)).fit().indexAffinityScore(wine.getLabels())
 		);
+	}
+	
+	@Test
+	public void findBestDistMetric() {
+		DataSet ds = ExampleDataSets.loadIris();
+		final int[] actual = ds.getLabelRef();
+		GeometricallySeparable best = null;
+		double ia = 0;
+		
+		// it's not linearly separable, so most won't perform incredibly well...
+		for(DistanceMetric dist: Distance.values()) {
+			KMedoidsPlanner km = new KMedoidsPlanner(3).setVerbose(true).setSep(dist);
+			double i = -1;
+			
+			i = km.buildNewModelInstance(ds.getDataRef()).fit().indexAffinityScore(actual);
+			
+			if(i > ia) {
+				ia = i;
+				best = dist;
+			}
+		}
+		
+		
+		// ALWAYS converges
+		System.out.println(best);
+	}
+	
+	/**
+	 * Asser that when all of the matrix entries are exactly the same,
+	 * the algorithm will still converge, yet produce one label: 0
+	 */
+	@Test
+	public void testAllSame() {
+		final double[][] x = MatUtils.rep(-1, 3, 3);
+		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
+		
+		int[] labels = new KMedoids(X, new KMedoidsPlanner(3).setVerbose(true)).fit().getLabels();
+		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 }

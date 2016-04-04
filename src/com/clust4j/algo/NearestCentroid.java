@@ -70,7 +70,6 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		if((m=data.getRowDimension()) != y.length)
 			error(new DimensionMismatchException(y.length, m));
 		
-		
 		// Build the label encoder
 		/*
 		try {
@@ -471,7 +470,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 			predictions[i] = nearestLabel;
 			dists[i] = minDist;
 		}
-		
+
 		return new EntryPair<>(encoder.reverseTransform(predictions), dists);
 	}
 }

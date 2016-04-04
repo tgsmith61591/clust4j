@@ -7,7 +7,11 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 	 * 
 	 */
 	private static final long serialVersionUID = 8489725366968682469L;
-	final protected int k;
+	/**
+	 * The number of clusters to find. This field is not final, as in
+	 * some corner cases, the algorithm will modify k for convergence.
+	 */
+	protected int k;
 	
 	public AbstractPartitionalClusterer(
 			AbstractRealMatrix data, 
