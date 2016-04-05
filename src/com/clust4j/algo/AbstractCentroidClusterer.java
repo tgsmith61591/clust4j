@@ -256,7 +256,11 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		if( !isValidMetric(this.dist_metric) ) {
 			warn(this.dist_metric.getName() + " is unsupported by "+getName()+"; "
 					+ "falling back to default (" + DEF_DIST.getName() + ")");
-			this.setSeparabilityMetric(DEF_DIST);
+			
+			/*
+			 * If this is KMedoids, we set it to Mahattan
+			 */
+			this.setSeparabilityMetric(defMetric());
 		}
 		
 		this.init = planner.getInitializationStrategy();
@@ -470,4 +474,5 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 	protected abstract HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics();
+	protected GeometricallySeparable defMetric() { return Distance.EUCLIDEAN; }
 }

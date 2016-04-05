@@ -549,4 +549,6 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			"Iter. #","Converged","Max Cost","Min Cost","Avg Clust. Cost","Wall"
 		};
 	}
+	
+	@Override final protected GeometricallySeparable defMetric() { return KMedoids.DEF_DIST; }
 }
