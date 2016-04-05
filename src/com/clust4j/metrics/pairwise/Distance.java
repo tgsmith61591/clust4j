@@ -24,11 +24,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
 		public String getName() {
 			return "Hamming";
 		}
@@ -75,6 +70,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		
 		@Override
 		final public double getP() {
+			// if the default changes, we don't want to forget this is here...
 			return 2.0;
 		}
 		
@@ -123,11 +119,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
 		public String getName() {
 			return "BrayCurtis";
 		}
@@ -150,11 +141,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			}
 			
 			return sum;
-		}
-		
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
 		}
 		
 		@Override
@@ -212,11 +198,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
 		public String getName() {
 			return "Dice";
 		}
@@ -233,11 +214,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird();
 			
 			return (ctf + cft - ctt + a.length) / (cft + ctf + a.length);
-		}
-		
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
 		}
 		
 		@Override
@@ -258,11 +234,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			return 0 == R ? 0 : 
 				// Should be impossible to be NaN:
 				nanInf(R / (ctt + cff + R));
-		}
-		
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
 		}
 		
 		@Override
@@ -288,11 +259,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
-		
-		@Override
 		public String getName() {
 			return "RussellRao";
 		}
@@ -302,10 +268,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	
 	
 	SOKAL_SNEATH {
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
 		
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
@@ -328,10 +290,6 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	},
 	
 	YULE {
-		@Override
-		final public double getP() {
-			return DEFAULT_P;
-		}
 		
 		@Override
 		public double getPartialDistance(final double[] a, final double[] b) {
@@ -447,6 +405,11 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	@Override
 	public double distanceToPartialDistance(double d) {
 		return d;
+	}
+	
+	@Override
+	public double getP() {
+		return DEFAULT_P;
 	}
 	
 	public static Collection<Distance> binaryDistances() {
