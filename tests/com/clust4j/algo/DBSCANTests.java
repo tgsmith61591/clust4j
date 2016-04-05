@@ -22,14 +22,13 @@ import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final DataSet irisds = TestSuite.IRIS_DATASET;
+	final DataSet irisds = TestSuite.IRIS_DATASET.copy();
 	final Array2DRowRealMatrix data = irisds.getData();
 
 
@@ -247,9 +246,15 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		/*
 		 * Now haversine...
 		 */
-		d = new HaversineDistance();
+		final Array2DRowRealMatrix small = TestSuite.IRIS_SMALL.getData();
 		
-		model = new DBSCAN(TestSuite.IRIS_SMALL.getData(), new DBSCANPlanner().setMetric(d)).fit();
+		d = Distance.HAVERSINE.MI;
+		model = new DBSCAN(small, new DBSCANPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
+		
+
+		d = Distance.HAVERSINE.KM;
+		model = new DBSCAN(small, new DBSCANPlanner().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 	}
 }

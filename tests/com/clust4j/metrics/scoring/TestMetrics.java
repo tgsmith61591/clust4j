@@ -6,14 +6,14 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
 import com.clust4j.data.DataSet;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.metrics.scoring.BinomialClassificationScoring;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.utils.VecUtils;
 
 public class TestMetrics {
-	final static DataSet IRIS = ExampleDataSets.loadIris();
+	final static DataSet IRIS = TestSuite.IRIS_DATASET.copy();
 	
 	@Test
 	public void testAcc() {

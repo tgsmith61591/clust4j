@@ -354,9 +354,85 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		}
 		
 		@Override public boolean isBinaryDistance() { return true; }
+	},
+	;
+	
+	
+	
+	/**
+	 * A distance metric by which to measure distance between two points on Earth.
+	 * If the vector lengths do not equal 2, it will throw an exception.
+	 * @author Taylor G Smith
+	 * @throws IllegalArgumentException if the length does not equal two
+	 */
+	public enum HAVERSINE implements DistanceMetric, java.io.Serializable {
+		MI(3959), KM(6371);
+		private final int radius;
+		
+		HAVERSINE(int radius) {
+			this.radius = radius;
+		}
+		
+		@Override
+		public double getDistance(double[] a, double[] b) {
+			VecUtils.checkDims(a,b);
+			
+			final int n = a.length;
+			if(n != 2)
+				throw new IllegalArgumentException("haversine "
+					+ "distance can only take arrays of length 2: [lat, long]");
+			
+			double dLat = FastMath.toRadians(b[0] - a[0]);
+			double dLong= FastMath.toRadians(b[1] - a[1]);
+			
+			double a0 = FastMath.toRadians(a[0]);
+			double b0 = FastMath.toRadians(b[0]);
+			
+			double aPrime = haversine(dLat) + FastMath.cos(a0) * FastMath.cos(b0) * haversine(dLong);
+			double c = 2 * FastMath.atan2(FastMath.sqrt(aPrime), FastMath.sqrt(1 - aPrime));
+			
+			return c * radius;
+		}
+		
+		@Override
+		final public double getP() {
+			return DEFAULT_P;
+		}
+		
+		@Override
+		public double getPartialDistance(final double[] a, final double[] b) {
+			return getDistance(a, b);
+		}
+		
+		@Override
+		public double partialDistanceToDistance(double d) {
+			return d;
+		}
+
+		@Override
+		public double distanceToPartialDistance(double d) {
+			return d;
+		}
+		
+		private static double haversine(double val) {
+			return FastMath.pow(FastMath.sin(val / 2d), 2);
+		}
+		
+		@Override
+		public String getName() {
+			return "Haversine";
+		}
+		
+		@Override
+		public String toString() {
+			return getName();
+		}
 	}
 	
-	;
+	
+	
+	
+	
 	
 	@Override
 	public double getDistance(double[] a, double[] b) {

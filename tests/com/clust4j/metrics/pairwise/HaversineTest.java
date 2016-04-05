@@ -12,7 +12,6 @@ import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.algo.KMedoids.KMedoidsPlanner;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.utils.VecUtils;
 
 public class HaversineTest {
@@ -31,7 +30,7 @@ public class HaversineTest {
 		AbstractCentroidClusterer km = new KMeans(mat, 
 						new KMeansPlanner(2)
 								.setVerbose(true)
-								.setMetric(new HaversineDistance())
+								.setMetric(Distance.HAVERSINE.MI)
 								.setVerbose(true)
 								.setScale(true)).fit();
 		
@@ -46,7 +45,7 @@ public class HaversineTest {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
 		AbstractCentroidClusterer km = new KMedoids(mat, new KMedoidsPlanner(2)
 								.setVerbose(true)
-								.setMetric(new HaversineDistance())
+								.setMetric(Distance.HAVERSINE.MI)
 								.setVerbose(true)
 								.setScale(false)).fit();
 		

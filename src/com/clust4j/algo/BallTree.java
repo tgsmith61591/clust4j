@@ -10,7 +10,6 @@ import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 
 /**
@@ -40,7 +39,8 @@ public class BallTree extends NearestNeighborHeapSearch {
 		}
 		
 		VALID_METRICS.add(MinkowskiDistance.class);
-		VALID_METRICS.add(HaversineDistance.class);
+		VALID_METRICS.add(Distance.HAVERSINE.MI.getClass());
+		VALID_METRICS.add(Distance.HAVERSINE.KM.getClass());
 	}
 	
 	

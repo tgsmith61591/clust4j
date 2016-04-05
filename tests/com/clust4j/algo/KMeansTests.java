@@ -381,22 +381,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	}
 	
 	@Test
-	public void testWineData() {
-		final DataSet wineds = TestSuite.WINE_DATASET.copy();
-		
-		// assert that scaling is better...
-		assertTrue(
-			new KMeans(wineds.getData(), new KMeansPlanner(3)
-				.setScale(true)).fit().indexAffinityScore(wineds.getLabels())
-			
-			> // scaled should produce a better score
-			
-			new KMeans(wineds.getData(), new KMeansPlanner(3)
-				.setScale(false)).fit().indexAffinityScore(wineds.getLabels())
-		);
-	}
-	
-	@Test
 	public void findBestDistMetric() {
 		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
 		final Array2DRowRealMatrix d = ds.getData();

@@ -283,7 +283,7 @@ public class PairwiseTests {
 		/*
 		 * Test for Haversine
 		 */
-		DistanceMetric metric = new HaversineDistance();
+		DistanceMetric metric = Distance.HAVERSINE.MI;
 		double[][] completeDistance = Pairwise.getDistance(Xh, metric, true, false);
 		double[][] partialDistance  = Pairwise.getDistance(Xh, metric, true, true);
 		
@@ -327,7 +327,7 @@ public class PairwiseTests {
 		/*
 		 * Test for Haversine
 		 */
-		DistanceMetric metric = new HaversineDistance();
+		DistanceMetric metric = Distance.HAVERSINE.MI;
 		double[][] completeDistance = Pairwise.getDistance(Xh, metric, false, false);
 		double[][] partialDistance  = Pairwise.getDistance(Xh, metric, false, true);
 			

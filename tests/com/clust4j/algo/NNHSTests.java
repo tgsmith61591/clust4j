@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
 import com.clust4j.algo.BallTree;
 import com.clust4j.algo.KDTree;
 import com.clust4j.algo.NearestNeighborHeapSearch.Heap;
@@ -22,11 +23,9 @@ import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeHeap;
 import com.clust4j.algo.NearestNeighborHeapSearch.PartialKernelDensity;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.utils.VecUtils;
@@ -35,7 +34,7 @@ import com.clust4j.utils.VecUtils.VecDoubleSeries;
 import com.clust4j.utils.VecUtils.VecIntSeries;
 
 public class NNHSTests {
-	final public static Array2DRowRealMatrix IRIS = ExampleDataSets.loadIris().getData();
+	final public static Array2DRowRealMatrix IRIS = TestSuite.IRIS_DATASET.getData();
 	
 	final static double[][] a = new double[][]{
 		new double[]{0,1,0,2},
@@ -1699,7 +1698,7 @@ public class NNHSTests {
 				1,2,3,4,5,6,7,8,9
 			}, 3, 3), false);
 		
-		KDTree k = new KDTree(mat, new HaversineDistance(), new KMeans(mat,1));
+		KDTree k = new KDTree(mat, Distance.HAVERSINE.MI, new KMeans(mat,1));
 		assertTrue(k.logger.hasWarnings());
 	}
 	

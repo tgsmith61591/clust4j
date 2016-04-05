@@ -17,13 +17,11 @@ import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
 import com.clust4j.data.DataSet;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
@@ -32,7 +30,7 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class AffinityPropagationTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final DataSet irisds = ExampleDataSets.loadIris();
+	final DataSet irisds = TestSuite.IRIS_DATASET.copy();
 	final Array2DRowRealMatrix data = irisds.getData();
 	
 	@Test
@@ -353,7 +351,11 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		
 		// Haversine?
-		d = new HaversineDistance();
+		d = Distance.HAVERSINE.KM;
+		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert didn't change
+		
+		d = Distance.HAVERSINE.MI;
 		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationPlanner().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		

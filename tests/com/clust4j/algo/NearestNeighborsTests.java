@@ -17,11 +17,9 @@ import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.MatUtils;
@@ -29,7 +27,7 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
-	final Array2DRowRealMatrix data = ExampleDataSets.loadIris().getData();
+	final Array2DRowRealMatrix data = TestSuite.IRIS_DATASET.getData();
 	
 	@Test
 	@Override
@@ -565,7 +563,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			assertFalse(model.hasWarnings());
 			
 			// haversine
-			planner.setMetric(new HaversineDistance());
+			planner.setMetric(Distance.HAVERSINE.MI);
 			model = planner.buildNewModelInstance(small).fit();
 			
 			if(na.equals(NeighborsAlgorithm.BALL_TREE)) // else it WILL

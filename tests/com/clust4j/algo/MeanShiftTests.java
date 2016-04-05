@@ -23,12 +23,10 @@ import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
@@ -38,8 +36,8 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class MeanShiftTests implements ClusterTest, ClassifierTest, ConvergeableTest, BaseModelTest {
-	final static Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
-	final static Array2DRowRealMatrix wine = ExampleDataSets.loadWine().getData();
+	final static Array2DRowRealMatrix data_ = TestSuite.IRIS_DATASET.getData();
+	final static Array2DRowRealMatrix wine = TestSuite.WINE_DATASET.getData();
 
 	@Test
 	public void MeanShiftTest1() {
@@ -643,7 +641,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change
 			
 			// haversine?
-			d = new HaversineDistance();
+			d = Distance.HAVERSINE.MI;
 			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
 			planner = planner.setMetric(d);
 			model = planner.buildNewModelInstance(small).fit();

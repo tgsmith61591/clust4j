@@ -15,13 +15,11 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.MatUtils;
@@ -29,8 +27,8 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
-	final int[] target_ = ExampleDataSets.loadIris().getLabels();
+	final Array2DRowRealMatrix data_ = TestSuite.IRIS_DATASET.getData();
+	final int[] target_ = TestSuite.IRIS_DATASET.getLabels();
 
 	@Test
 	@Override
@@ -387,7 +385,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		assertTrue(model.dist_metric.equals(d)); // assert no change
 		System.out.println(d + ", " + model.score());
 		
-		d = new HaversineDistance();
+		d = Distance.HAVERSINE.MI;
 		planner.setMetric(d);
 		model = planner.buildNewModelInstance(small, target_).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert no change

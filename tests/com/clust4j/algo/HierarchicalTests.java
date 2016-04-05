@@ -19,14 +19,12 @@ import com.clust4j.utils.SimpleHeap;
 import com.clust4j.algo.HierarchicalAgglomerative.HierarchicalPlanner;
 import com.clust4j.algo.HierarchicalAgglomerative.EfficientDistanceMatrix;
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
@@ -34,7 +32,7 @@ import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final Array2DRowRealMatrix data_ = ExampleDataSets.loadIris().getData();
+	final Array2DRowRealMatrix data_ = TestSuite.IRIS_DATASET.getData();
 	private static Array2DRowRealMatrix matrix = getRandom(250, 10);
 	static final MatrixFormatter formatter = new MatrixFormatter();
 	
@@ -328,7 +326,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
 			
 			// haversine
-			d = new HaversineDistance();
+			d = Distance.HAVERSINE.MI;
 			model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
 			
@@ -354,7 +352,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		
 		// haversine
-		d = new HaversineDistance();
+		d = Distance.HAVERSINE.MI;
 		model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		

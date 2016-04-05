@@ -32,7 +32,6 @@ import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.metrics.pairwise.Similarity;
@@ -1470,7 +1469,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			// Try minkowski and haversine...
 			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(new MinkowskiDistance(1.5))).fit();
 			assertFalse(model.hasWarnings());
-			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(new HaversineDistance())).fit();
+			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Distance.HAVERSINE.MI)).fit();
 			assertFalse(model.hasWarnings());
 			
 			// assert sim doesn't fly for ball tree...

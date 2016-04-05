@@ -6,9 +6,7 @@ import org.junit.Test;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
 import com.clust4j.metrics.pairwise.Distance;
-import com.clust4j.metrics.pairwise.HaversineDistance;
 import com.clust4j.metrics.pairwise.MinkowskiDistance;
-import com.clust4j.metrics.pairwise.HaversineDistance.DistanceUnit;
 
 public class TestDistanceEnums {
 
@@ -39,6 +37,7 @@ public class TestDistanceEnums {
 		final double[] a = new double[] {0d, 0d};
 		final double[] b = new double[] {3d, 4d};
 		assertTrue(new MinkowskiDistance(1d).getDistance(a, b) == Distance.MANHATTAN.getDistance(a, b));
+		
 	}
 
 	@Test(expected=DimensionMismatchException.class)
@@ -82,20 +81,17 @@ public class TestDistanceEnums {
 		final double[] a = new double[]{47.6788206, -122.3271205};
 		final double[] b = new double[]{47.6788206, -122.5271205};
 		
-		HaversineDistance km = new HaversineDistance(DistanceUnit.KM);
-		assertTrue(km.getDistance(a, b) == 14.97319048158622);
-		
-		HaversineDistance mi = new HaversineDistance();
-		assertTrue(mi.getDistance(a, b) == 9.304482988008138);
+		DistanceMetric haversine = Distance.HAVERSINE.KM;
+		assertTrue(haversine.getDistance(a, b) == 14.97319048158622);
+		haversine = Distance.HAVERSINE.MI;
+		assertTrue(haversine.getDistance(a, b) == 9.304482988008138);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testHaversineFail() {
 		final double[] a = new double[]{47.6788206, -122.3271205, 0d};
 		final double[] b = new double[]{47.6788206, -122.5271205, 1d};
-		
-		HaversineDistance km = new HaversineDistance(DistanceUnit.KM);
-		km.getDistance(a, b);
+		Distance.HAVERSINE.KM.getDistance(a, b);
 	}
 	
 	@Test
