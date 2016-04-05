@@ -258,7 +258,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 					+ "falling back to default (" + defMetric().getName() + ")");
 			
 			/*
-			 * If this is KMedoids, we set it to Mahattan
+			 * If this is KMedoids, we set it to Mahattan, otherwise Euclidean
 			 */
 			this.setSeparabilityMetric(defMetric());
 		}
@@ -473,6 +473,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return clust_cost;
 	}
 	
+	/**
+	 * Each algo has a different set of algos they can't support
+	 * @return
+	 */
 	protected abstract HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics();
-	protected GeometricallySeparable defMetric() { return Distance.EUCLIDEAN; }
+	protected GeometricallySeparable defMetric() { return AbstractClusterer.DEF_DIST; }
 }

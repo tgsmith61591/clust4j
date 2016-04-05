@@ -1,5 +1,8 @@
 package com.clust4j.metrics.pairwise;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.utils.VecUtils;
@@ -370,12 +373,14 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		return d;
 	}
 	
-	public static Distance[] binaryDistances() {
-		return new Distance[]{
-			HAMMING, DICE, KULSINSKI, 
-			ROGERS_TANIMOTO, RUSSELL_RAO,
-			SOKAL_SNEATH, YULE
-		};
+	public static Collection<Distance> binaryDistances() {
+		final ArrayList<Distance> binary= new ArrayList<>();
+		for(Distance d: values()) {
+			if(d.isBinaryDistance())
+				binary.add(d);
+		}
+		
+		return binary;
 	}
 	
 	private static double nanInf(double d) {
