@@ -40,9 +40,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	}
 
 	public NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner) {
-		super(data, planner);
-		validateK(kNeighbors, m);
-		logModelSummary();
+		this(data, planner, false);
 	}
 	
 	protected NearestNeighbors(AbstractClusterer caller, NearestNeighborsPlanner planner) {
@@ -123,7 +121,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 				.setNormalizer(norm)
 				.setScale(scale)
 				.setSeed(seed)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.setLeafSize(leafSize)
 				.setForceParallel(parallel);
@@ -204,7 +202,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 		}
 
 		@Override
-		public NearestNeighborsPlanner setSep(GeometricallySeparable dist) {
+		public NearestNeighborsPlanner setMetric(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

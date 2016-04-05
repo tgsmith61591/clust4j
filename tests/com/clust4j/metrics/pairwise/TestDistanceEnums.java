@@ -147,6 +147,26 @@ public class TestDistanceEnums {
 		assertTrue(Distance.CANBERRA.getDistance(a, b) == 1.0);
 	}
 	
+	/*
+	 * We added smoothing, so this should == 0
+	 */
+	@Test
+	public void testCanberraNaN() {
+		final double[] a = new double[]{1,0,1,1,3};
+		final double[] b = new double[]{1,0,1,1,3};
+		assertTrue(Distance.CANBERRA.getDistance(a, b) == 0);
+	}
+	
+	/*
+	 * We added smoothing, so this should == 1
+	 */
+	@Test
+	public void testCanberraNaN2() {
+		final double[] a = new double[]{1,0,1,1,3};
+		final double[] b = new double[]{1,0,0,1,3};
+		assertTrue(Distance.CANBERRA.getDistance(a, b) == 1);
+	}
+	
 	@Test
 	public void testDice() {
 		final double[] a = new double[]{1,1,1,1,3};
@@ -182,12 +202,58 @@ public class TestDistanceEnums {
 		}
 	}
 	
+	/**
+	 * Metrics that would return nan but are smoothed to return zero...
+	 * ...but then can also return INF
+	 */
 	@Test
-	public void testNans() {
+	public void testNansToZero() {
+		double[] a = new double[]{0,0,0,0};
+		double[] b = new double[]{0,0,0,0};
+		assertTrue(0.0 == Distance.DICE.getDistance(a, b));
+		assertTrue(0.0 == Distance.ROGERS_TANIMOTO.getDistance(a, b));
+		assertTrue(0.0 == Distance.SOKAL_SNEATH.getDistance(a, b));
+		assertTrue(0.0 == Distance.YULE.getDistance(a, b));
+	}
+	
+	@Test
+	public void testDice1() {
+		double[] a = new double[]{0,1,0,1};
+		double[] b = new double[]{1,0,1,0};
+		assertTrue(Distance.DICE.getDistance(a, b) == 1);
+		
+		a = new double[]{1,1,1,1};
+		b = new double[]{1,1,1,1};
+		assertTrue(Distance.DICE.getDistance(a, b) == 0);
+	}
+	
+	/**
+	 * Per Wolfram Alpha
+	 */
+	@Test
+	public void testY1() {
+		double[] a = new double[]{1,0,1,1,0};
+		double[] b = new double[]{1,1,0,1,1};
+		assertTrue(Distance.YULE.getDistance(a, b) == 2.0);
+	}
+	
+	/**
+	 * Per Wolfram Alpha
+	 */
+	@Test
+	public void testY2() {
+		double[] a = new double[]{1,0,1};
+		double[] b = new double[]{1,1,0};
+		assertTrue(Distance.YULE.getDistance(a, b) == 2.0);
+	}
+	
+	@Test
+	public void testBrayCurtisNaN() {
+		/*
+		 * this should be nan without smoothing..
+		 */
 		final double[] a = new double[]{0,0,0,0};
 		final double[] b = new double[]{0,0,0,0};
-		assertTrue(Double.POSITIVE_INFINITY == Distance.DICE.getDistance(a, b));
-		assertTrue(Double.POSITIVE_INFINITY == Distance.SOKAL_SNEATH.getDistance(a, b));
-		assertTrue(Double.POSITIVE_INFINITY == Distance.YULE.getDistance(a, b));	
+		assertTrue(Distance.BRAY_CURTIS.getDistance(a, b) == 0);
 	}
 }

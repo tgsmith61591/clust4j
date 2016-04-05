@@ -251,7 +251,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		for(int k : ks) {
 			km = new KMeans(mat, new KMeans
 					.KMeansPlanner(k)
-					.setSep(kernel)
+					.setMetric(kernel)
 					.setVerbose(true)
 					.setScale(false));
 			km.fit();
@@ -410,7 +410,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
+			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setMetric(dist);
 			double i = -1;
 			
 			model = km.buildNewModelInstance(d).fit();
@@ -446,7 +446,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setSep(dist);
+			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setMetric(dist);
 			double i = -1;
 			
 			model = km.buildNewModelInstance(d);
@@ -491,7 +491,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	public void testHamming() {
 		final Array2DRowRealMatrix X = TestSuite.IRIS_DATASET.shuffle().getData();
 		KMeans km = new KMeans(X, new KMeansPlanner(3)
-				.setVerbose(true).setSep(Distance.HAMMING))
+				.setVerbose(true).setMetric(Distance.HAMMING))
 					.fit();
 		assertTrue(km.hasWarnings());
 		assertTrue(km.getSeparabilityMetric().equals(Distance.EUCLIDEAN));

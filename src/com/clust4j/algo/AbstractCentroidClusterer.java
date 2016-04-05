@@ -253,7 +253,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		/*
 		 * Check for prohibited dist metrics...
 		 */
-		if(getUnsupportedMetrics().contains(this.dist_metric.getClass())) {
+		if( !isValidMetric(this.dist_metric) ) {
 			warn(this.dist_metric.getName() + " is unsupported by "+getName()+"; "
 					+ "falling back to default (" + DEF_DIST.getName() + ")");
 			this.setSeparabilityMetric(DEF_DIST);
@@ -278,6 +278,11 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		info("selected centroid centers via " + init.getName() + " in " + centTimer.toString());
 		logModelSummary();
+	}
+	
+	@Override
+	final public boolean isValidMetric(GeometricallySeparable geo) {
+		return !getUnsupportedMetrics().contains(geo.getClass());
 	}
 	
 	@Override
@@ -398,14 +403,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	/** {@inheritDoc} */
 	@Override
 	public double silhouetteScore() {
-		return silhouetteScore(getSeparabilityMetric());
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public double silhouetteScore(GeometricallySeparable dist) {
 		// Propagates ModelNotFitException
-		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
+		return SilhouetteScore.getInstance().evaluate(this, getLabels());
 	}
 	
 	/**

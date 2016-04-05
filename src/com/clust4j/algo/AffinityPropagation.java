@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 
 import lombok.Synchronized;
@@ -41,6 +42,28 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	 *  true, but the {@link AffinityPropagationPlanner#useGaussianSmoothing(boolean)}
 	 *  method can disable this option */
 	final public static boolean DEF_ADD_GAUSSIAN_NOISE = true;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	
+	/**
+	 * Static initializer
+	 */
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		
+		/*
+		 *  can produce negative inf, but should be OK:
+		 *  UNSUPPORTED_METRICS.add(CircularKernel.class); 
+		 *  UNSUPPORTED_METRICS.add(LogKernel.class);
+		 */
+		
+		// Add more metrics here if necessary...
+	}
+	
+	@Override final public boolean isValidMetric(GeometricallySeparable geo) {
+		return !UNSUPPORTED_METRICS.contains(geo.getClass());
+	}
+	
 	
 	
 	/** Damping factor */
@@ -119,6 +142,12 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			warn("not scaling with Gaussian noise can cause the algorithm not to converge");
 		}
 		
+		if(!isValidMetric(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is not valid for "+getName()+". "
+				+ "Falling back to default Euclidean dist");
+			setSeparabilityMetric(DEF_DIST);
+		}
+		
 		logModelSummary();
 	}
 	
@@ -175,7 +204,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				.setMinChange(minChange)
 				.setScale(scale)
 				.setSeed(seed)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.useGaussianSmoothing(addNoise)
 				.setNormalizer(norm)
@@ -252,7 +281,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 		}
 
 		@Override
-		public AffinityPropagationPlanner setSep(GeometricallySeparable dist) {
+		public AffinityPropagationPlanner setMetric(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -444,7 +473,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 			// Compute row maxes
 			double runningMax = Double.NEGATIVE_INFINITY;
 			double secondMax  = Double.NEGATIVE_INFINITY;
-			int runningMaxIdx = -1;			// Idx of max row element
+			int runningMaxIdx = 0; //-1; // Idx of max row element -- start at 0 in case metric produces -Infs
 			
 			for(int j = 0; j < m; j++) { 	// Create tmp as A + sim_mat
 				tmp[i][j] = A[i][j] + S[i][j];

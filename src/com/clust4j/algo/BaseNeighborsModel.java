@@ -6,6 +6,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 abstract public class BaseNeighborsModel extends AbstractClusterer {
 	private static final long serialVersionUID = 1054047329248586585L;
@@ -28,9 +29,9 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	/** Resultant neighborhood from fit method */
 	volatile Neighborhood res;
 
-	interface TreeBuilder extends java.io.Serializable {
+	interface TreeBuilder extends MetricValidator {
 		public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data, 
-				int leafSize, DistanceMetric sep, BaseNeighborsModel logger);
+				int leafSize, BaseNeighborsModel logger);
 	}
 	
 	public static enum NeighborsAlgorithm implements TreeBuilder {
@@ -38,12 +39,15 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
-				int mn = data.getColumnDimension() * data.getRowDimension();
-				logger.alg = mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
-					BALL_TREE : KD_TREE;
+					int leafSize, BaseNeighborsModel logger) {
 				
-				return logger.alg.buildTree(data, leafSize, sep, logger);
+				NeighborsAlgorithm alg = delegateAlgorithm(data);
+				return alg.buildTree(data, leafSize, logger);
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable geo) {
+				throw new UnsupportedOperationException("auto has no metric validity criteria");
 			}
 			
 		}, 
@@ -52,22 +56,54 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
-				return new KDTree(data, leafSize, sep, logger);
+					int leafSize, BaseNeighborsModel logger) {
+				logger.alg = this;
+				return new KDTree(data, leafSize, handleMetric(this, logger), logger);
 			}
 			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return KDTree.VALID_METRICS.contains(g.getClass());
+			}
 		}, 
 		
 		BALL_TREE {
 
 			@Override
 			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
-					int leafSize, DistanceMetric sep, BaseNeighborsModel logger) {
-				return new BallTree(data, leafSize, sep, logger);
+					int leafSize, BaseNeighborsModel logger) {
+				logger.alg = this;
+				return new BallTree(data, leafSize, handleMetric(this, logger), logger);
 			}
 			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return BallTree.VALID_METRICS.contains(g.getClass());
+			}
 		};
+		
+		private static NeighborsAlgorithm delegateAlgorithm(AbstractRealMatrix arm) {
+			int mn = arm.getColumnDimension() * arm.getRowDimension();
+			return mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
+				BALL_TREE : KD_TREE;
+		}
+		
+		private static DistanceMetric handleMetric(NeighborsAlgorithm na, BaseNeighborsModel logger) {
+			GeometricallySeparable g = logger.dist_metric;
+			if(!na.isValidMetric(g)) {
+				logger.warn(g.getName()+" is not a valid metric for " + na + ". "
+					+ "Falling back to default Euclidean");
+				logger.setSeparabilityMetric(DEF_DIST);
+			}
+			
+			return (DistanceMetric) logger.dist_metric;
+		}
 	}
+	
+	@Override final public boolean isValidMetric(GeometricallySeparable g) {
+		return this.alg.isValidMetric(g);
+	}
+	
 	
 	protected BaseNeighborsModel(AbstractClusterer caller, BaseNeighborsPlanner planner) {
 		super(caller, planner);
@@ -91,20 +127,21 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		
 		radiusMode = null != radius;
 		
-		
+		/*
 		if(!(planner.getSep() instanceof DistanceMetric)) {
 			warn(planner.getSep() + " not a valid metric for neighbors models. "
 				+ "Falling back to default: " + DEF_DIST);
 			super.setSeparabilityMetric(DEF_DIST);
 		}
+		*/
 		
 		if(leafSize < 1)
 			throw new IllegalArgumentException("leafsize must be positive");
 		
-		
-		DistanceMetric sep = (DistanceMetric)this.getSeparabilityMetric();
-		this.alg = planner.getAlgorithm();
-		this.tree = this.alg.buildTree(this.data, this.leafSize, sep, this);
+		/*
+		 * Internally handles metric validation...
+		 */
+		this.tree = planner.getAlgorithm().buildTree(this.data, this.leafSize, this);
 		
 		// Get the data ref from the tree
 		fit_X = tree.getData();

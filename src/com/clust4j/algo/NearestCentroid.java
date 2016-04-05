@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 
 import lombok.Synchronized;
@@ -11,6 +12,8 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.CircularKernel;
+import com.clust4j.kernel.LogKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -29,6 +32,23 @@ import com.clust4j.utils.VecUtils;
  */
 public class NearestCentroid extends AbstractClusterer implements SupervisedClassifier, CentroidLearner {
 	private static final long serialVersionUID = 8136673281643080951L;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	
+	/**
+	 * Static initializer
+	 */
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		UNSUPPORTED_METRICS.add(CircularKernel.class);
+		UNSUPPORTED_METRICS.add(LogKernel.class);
+		// Add metrics here if necessary...
+	}
+	
+	@Override final public boolean isValidMetric(GeometricallySeparable geo) {
+		return !UNSUPPORTED_METRICS.contains(geo.getClass());
+	}
+	
 	
 	private Double shrinkage = null;
 	private final int[] y_truth;
@@ -88,6 +108,14 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		this.y_truth = VecUtils.copy(y);
 		this.y_encodings = encoder.getEncodedLabels();
 		
+		/*
+		 * Check metric for validity
+		 */
+		if(!isValidMetric(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is not valid for "+getName()+". "
+				+ "Falling back to default Euclidean dist");
+			setSeparabilityMetric(DEF_DIST);
+		}
 		
 		this.shrinkage = planner.shrinkage;
 		logModelSummary();
@@ -133,7 +161,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 				.setNormalizer(norm)
 				.setScale(scale)
 				.setSeed(seed)
-				.setSep(met)
+				.setMetric(met)
 				.setShrinkage(shrinkage)
 				.setVerbose(verbose)
 				.setForceParallel(parallel);
@@ -205,7 +233,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 		}
 
 		@Override
-		public NearestCentroidPlanner setSep(GeometricallySeparable dist) {
+		public NearestCentroidPlanner setMetric(GeometricallySeparable dist) {
 			this.met = dist;
 			return this;
 		}

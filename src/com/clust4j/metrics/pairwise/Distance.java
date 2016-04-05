@@ -29,6 +29,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Hamming";
 		}
+
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	MANHATTAN {
@@ -55,6 +57,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Manhattan";
 		}
+
+		@Override public boolean isBinaryDistance() { return false; }
 	},
 	
 	
@@ -94,6 +98,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Euclidean";
 		}
+
+		@Override public boolean isBinaryDistance() { return false; }
 	},
 	
 	
@@ -110,7 +116,7 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 				sum_2 += FastMath.abs(a[i] + b[i]);
 			}
 			
-			return sum_1 / sum_2;
+			return 0 == sum_1 ? 0 : nanInf(sum_1 / (sum_2));
 		}
 		
 		@Override
@@ -122,6 +128,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "BrayCurtis";
 		}
+
+		@Override public boolean isBinaryDistance() { return false; }
 	},
 	
 	
@@ -132,10 +140,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			VecUtils.checkDims(a,b);
 			
 			final int n = a.length;
-			double sum=0;
+			double sum=0, numer;
 			for(int i = 0; i < n; i++) {
-				sum += ( FastMath.abs(a[i] - b[i]) /
-					(FastMath.abs(a[i]) + FastMath.abs(b[i])) );
+				numer = FastMath.abs(a[i] - b[i]);
+				sum += 0 == numer ? 0 : nanInf( numer / (FastMath.abs(a[i]) + FastMath.abs(b[i])) );
 			}
 			
 			return sum;
@@ -150,6 +158,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Canberra";
 		}
+
+		@Override public boolean isBinaryDistance() { return false; }
 	},
 	
 	
@@ -180,6 +190,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Chebyshev";
 		}
+
+		@Override public boolean isBinaryDistance() { return false; }
 	},
 	
 	
@@ -190,9 +202,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird();
 			
-			// If all values in a and b are 0s, the distance will be NaN.
-			// Do we want to call that a distance of positive infinity? Or zero?
-			return filterNaN((ctf + cft) / (2 * ctt + cft + ctf));
+			double numer = (ctf + cft);
+			
+			// This hack covers the case where all true (1) or all false (0)
+			return 0 == numer ? 0 : numer / (2 * ctt + cft + ctf);
 		}
 		
 		@Override
@@ -204,6 +217,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Dice";
 		}
+
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	
@@ -226,6 +241,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "Kulsinski";
 		}
+
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	
@@ -235,7 +252,9 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird(), cff = bool.getFourth();
 			final double R = 2 * (cft + ctf);
-			return R / (ctt + cff + R);
+			return 0 == R ? 0 : 
+				// Should be impossible to be NaN:
+				nanInf(R / (ctt + cff + R));
 		}
 		
 		@Override
@@ -247,6 +266,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "RogersTanimoto";
 		}
+
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	
@@ -272,6 +293,8 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public String getName() {
 			return "RussellRao";
 		}
+		
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	
@@ -289,13 +312,16 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 
 			// If all values in a and b are 0s, the distance will be NaN.
 			// Do we want to call that a distance of positive infinity? Or zero?
-			return filterNaN(R / (ctt + R));
+			return 0 == R ? 0 : 
+				nanInf(R / (ctt + R));
 		}
 		
 		@Override
 		public String getName() {
 			return "SokalSneath";
 		}
+		
+		@Override public boolean isBinaryDistance() { return true; }
 	},
 	
 	YULE {
@@ -308,33 +334,26 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		public double getPartialDistance(final double[] a, final double[] b) {
 			BooleanSimilarity bool = BooleanSimilarity.build(a, b);
 			final double ctt = bool.getFirst(), ctf = bool.getSecond(), cft = bool.getThird(), cff = bool.getFourth();
-			final double R = 2 * cft * ctf;
-			final double v = R / (ctt * cff + (cft * ctf));
-
+			final double R = 2 * cft * ctf; // per scipy 0.17. 0.14 had 2 * (cft + ctf)
+			
 			// If all values in a and b are 0s, the distance will be NaN.
 			// Do we want to call that a distance of positive infinity? Or zero?
-			return filterNaN(v);
+			if(0 == R)
+				return 0;
+			
+			// Shouldn't ever have a NaN?...
+			return nanInf(R / (ctt * cff + cft * ctf));
 		}
 		
 		@Override
 		public String getName() {
 			return "Yule";
 		}
+		
+		@Override public boolean isBinaryDistance() { return true; }
 	}
 	
 	;
-	
-	
-	/**
-	 * Should be used on distance methods which may have a 0
-	 * in the denominator, creating a distance of {@link Double#NaN}. This will
-	 * return a distance of {@link Double#POSITIVE_INFINITY} instead.
-	 * @param a
-	 * @return infinity if NaN, the distance otherwise.
-	 */
-	private static double filterNaN(double a) {
-		return Double.isNaN(a) ? Double.POSITIVE_INFINITY : a;
-	}
 	
 	@Override
 	public double getDistance(double[] a, double[] b) {
@@ -358,4 +377,10 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 			SOKAL_SNEATH, YULE
 		};
 	}
+	
+	private static double nanInf(double d) {
+		return Double.isNaN(d) ? Double.POSITIVE_INFINITY : d;
+	}
+	
+	abstract public boolean isBinaryDistance();
 }

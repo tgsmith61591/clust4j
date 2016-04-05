@@ -19,7 +19,14 @@ import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.Similarity;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
@@ -139,7 +146,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 						.AffinityPropagationPlanner()
 							.useGaussianSmoothing(bool)
 							.setVerbose(true)
-							.setSep(new GaussianKernel())
+							.setMetric(new GaussianKernel())
 							.setSeed(seed)).fit();
 					
 					final int[] labels = a.getLabels();
@@ -154,7 +161,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		final Array2DRowRealMatrix mat = getRandom(1000, 10);
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
-				.setSep(new GaussianKernel())
+				.setMetric(new GaussianKernel())
 				.setVerbose(true)).fit();
 	}
 
@@ -329,5 +336,37 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		int[] labels = new AffinityPropagation(X, new AffinityPropagationPlanner().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		AffinityPropagation model;
+		
+		for(Distance d: Distance.values()) {
+			model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(d)).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert didn't change
+		}
+		
+		// what about minkowski?
+		DistanceMetric d = new MinkowskiDistance(1.5);
+		model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert didn't change
+		
+		// Haversine?
+		d = new HaversineDistance();
+		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert didn't change
+		
+		
+		// Affinity should be able to support basically anything you throw at it, including similarity metrics:
+		for(Kernel k: KernelTestCases.all_kernels) {
+			model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(k)).fit();
+			assertTrue(model.dist_metric.equals(k));
+		}
+		
+		// What about cosine similarity?
+		SimilarityMetric sim = Similarity.COSINE;
+		model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(sim)).fit();
+		assertTrue(model.dist_metric.equals(sim));
 	}
 }

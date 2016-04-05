@@ -18,7 +18,6 @@ import com.clust4j.utils.MatUtils;
 
 public class RadiusNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 3620377771231699918L;
-
 	
 	
 	public RadiusNeighbors(AbstractRealMatrix data) {
@@ -128,7 +127,7 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 				.setNormalizer(norm)
 				.setScale(scale)
 				.setSeed(seed)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.setLeafSize(leafSize)
 				.setForceParallel(parallel);
@@ -204,7 +203,7 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 		}
 
 		@Override
-		public RadiusNeighborsPlanner setSep(GeometricallySeparable dist) {
+		public RadiusNeighborsPlanner setMetric(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

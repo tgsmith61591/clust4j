@@ -1,6 +1,8 @@
 package com.clust4j.algo;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
@@ -39,7 +41,7 @@ import com.clust4j.utils.TableFormatter.Table;
  */
 public abstract class AbstractClusterer 
 		extends BaseModel 
-		implements Loggable, NamedEntity, java.io.Serializable {
+		implements Loggable, NamedEntity, java.io.Serializable, MetricValidator {
 	
 	private static final long serialVersionUID = -3623527903903305017L;
 	final static TableFormatter formatter;
@@ -82,6 +84,7 @@ public abstract class AbstractClusterer
 	
 	/** Have any warnings occurred -- volatile because can change */
 	volatile private boolean hasWarnings = false;
+	final private ArrayList<String> warnings = new ArrayList<>();
 	final ModelSummary fitSummary;
 	
 
@@ -111,7 +114,7 @@ public abstract class AbstractClusterer
 		abstract public BaseClustererPlanner setScale(final boolean b);
 		abstract public BaseClustererPlanner setSeed(final Random rand);
 		abstract public BaseClustererPlanner setVerbose(final boolean b);
-		abstract public BaseClustererPlanner setSep(final GeometricallySeparable dist);
+		abstract public BaseClustererPlanner setMetric(final GeometricallySeparable dist);
 		abstract public BaseClustererPlanner setForceParallel(final boolean b);
 	}
 	
@@ -316,6 +319,14 @@ public abstract class AbstractClusterer
 		return verbose;
 	}
 	
+	/**
+	 * Returns a collection of warnings if there are any, otherwise null
+	 * @return
+	 */
+	final public Collection<String> getWarnings() {
+		return warnings.isEmpty() ? null : warnings;
+	}
+	
 	
 	/* -- LOGGER METHODS --  */
 	@Override public void error(String msg) {
@@ -329,6 +340,7 @@ public abstract class AbstractClusterer
 	
 	@Override public void warn(String msg) {
 		hasWarnings = true;
+		warnings.add(msg);
 		if(verbose) Log.warn(getLoggerTag(), msg);
 	}
 	
@@ -419,9 +431,7 @@ public abstract class AbstractClusterer
 	/** 
 	 * Fits the model
 	 */
-	@Override
-	abstract public AbstractClusterer fit();
-	
+	@Override abstract public AbstractClusterer fit();
 	protected abstract ModelSummary modelSummary();
 	protected abstract Object[] getModelFitSummaryHeaders();
 }

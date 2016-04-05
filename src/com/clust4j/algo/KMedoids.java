@@ -44,7 +44,7 @@ import com.clust4j.utils.VecUtils;
  * @see {@link AbstractPartitionalClusterer}
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
-public class KMedoids extends AbstractCentroidClusterer {
+final public class KMedoids extends AbstractCentroidClusterer {
 	
 	/**
 	 * 
@@ -85,7 +85,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 	}
 	
 	public KMedoids(final AbstractRealMatrix data, final int k) {
-		this(data, new KMedoidsPlanner(k).setSep(Distance.MANHATTAN));
+		this(data, new KMedoidsPlanner(k).setMetric(Distance.MANHATTAN));
 	}
 	
 	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner planner) {
@@ -124,7 +124,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 				.setMaxIter(maxIter)
 				.setConvergenceCriteria(minChange)
 				.setScale(scale)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
 				.setNormalizer(norm)
@@ -184,7 +184,7 @@ public class KMedoids extends AbstractCentroidClusterer {
 		}
 		
 		@Override
-		public KMedoidsPlanner setSep(final GeometricallySeparable dist) {
+		public KMedoidsPlanner setMetric(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

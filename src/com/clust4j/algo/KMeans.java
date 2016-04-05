@@ -37,7 +37,7 @@ import com.clust4j.utils.VecUtils;
  * 
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  */
-public class KMeans extends AbstractCentroidClusterer {
+final public class KMeans extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
@@ -113,7 +113,7 @@ public class KMeans extends AbstractCentroidClusterer {
 				.setMaxIter(maxIter)
 				.setConvergenceCriteria(minChange)
 				.setScale(scale)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.setSeed(seed)
 				.setNormalizer(norm)
@@ -173,7 +173,7 @@ public class KMeans extends AbstractCentroidClusterer {
 		}
 		
 		@Override
-		public KMeansPlanner setSep(final GeometricallySeparable dist) {
+		public KMeansPlanner setMetric(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -272,7 +272,7 @@ public class KMeans extends AbstractCentroidClusterer {
 					VecUtils.arange(k), new NearestCentroidPlanner()
 						.setScale(false) // already scaled maybe
 						.setSeed(getSeed())
-						.setSep(getSeparabilityMetric())
+						.setMetric(getSeparabilityMetric())
 						.setVerbose(false)).fit();
 				
 				label_dist = model.predict(X);

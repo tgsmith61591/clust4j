@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Stack;
 
@@ -14,6 +15,7 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.VecUtils;
 
 
@@ -31,12 +33,26 @@ import com.clust4j.utils.VecUtils;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn implementation by Lars Buitinck
  *
  */
-public class DBSCAN extends AbstractDBSCAN {
+final public class DBSCAN extends AbstractDBSCAN {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6749407933012974992L;
 	final private int m;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	
+	/**
+	 * Static initializer
+	 */
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		// Add metrics here if necessary...
+	}
+	
+	@Override final public boolean isValidMetric(GeometricallySeparable geo) {
+		return !UNSUPPORTED_METRICS.contains(geo.getClass()) && !(geo instanceof SimilarityMetric);
+	}
 	
 	// Race conditions exist in retrieving either one of these...
 	private volatile int[] labels = null;
@@ -80,7 +96,7 @@ public class DBSCAN extends AbstractDBSCAN {
 			return new DBSCANPlanner(eps)
 				.setMinPts(minPts)
 				.setScale(scale)
-				.setSep(dist)
+				.setMetric(dist)
 				.setSeed(seed)
 				.setVerbose(verbose)
 				.setNormalizer(norm)
@@ -136,7 +152,7 @@ public class DBSCAN extends AbstractDBSCAN {
 		}
 		
 		@Override
-		public DBSCANPlanner setSep(final GeometricallySeparable dist) {
+		public DBSCANPlanner setMetric(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -197,6 +213,12 @@ public class DBSCAN extends AbstractDBSCAN {
 			error(new IllegalArgumentException("eps "
 				+ "must be greater than 0.0"));
 		
+		if(!isValidMetric(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is not valid for "+getName()+". "
+				+ "Falling back to default Euclidean dist");
+			setSeparabilityMetric(DEF_DIST);
+		}
+		
 		logModelSummary();
 	}
 	
@@ -256,7 +278,7 @@ public class DBSCAN extends AbstractDBSCAN {
 				new RadiusNeighborsPlanner(eps)
 					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 					.setSeed(getSeed())
-					.setSep(getSeparabilityMetric())
+					.setMetric(getSeparabilityMetric())
 					.setNormalizer(normer) // Don't really need because not normalizing...
 					.setVerbose(false))
 				.fit();

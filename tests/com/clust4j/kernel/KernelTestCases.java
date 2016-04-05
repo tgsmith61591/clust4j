@@ -149,7 +149,7 @@ public class KernelTestCases {
 		// Test with KMEANS
 		KMeans km = new KMeans(train, 
 				new KMeans.KMeansPlanner(2)
-					.setSep(kernel)
+					.setMetric(kernel)
 					.setVerbose(true)
 				);
 		km.fit();

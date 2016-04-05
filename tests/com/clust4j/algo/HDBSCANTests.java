@@ -26,11 +26,16 @@ import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.data.ExampleDataSets;
+import com.clust4j.data.DataSet;
 import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.metrics.pairwise.Pairwise;
+import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.MatUtils;
@@ -40,7 +45,7 @@ import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTup;
 
 public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final Array2DRowRealMatrix DATA = ExampleDataSets.loadIris().getData();
+	final Array2DRowRealMatrix DATA = TestSuite.IRIS_DATASET.getData();
 	final Array2DRowRealMatrix iris = DATA;
 	final static MatrixFormatter formatter = TestSuite.formatter;
 	final static double[][] dist_mat = new double[][]{
@@ -516,7 +521,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		HDBSCAN h = new HDBSCAN(TestSuite.getRandom(5, 5), 
 			new HDBSCANPlanner()
 				.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)
-				.setSep(new GaussianKernel()));
+				.setMetric(new GaussianKernel()));
 		assertTrue(h.hasWarnings());
 	}
 	
@@ -1383,5 +1388,94 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		labels = new HDBSCAN(X, new HDBSCANPlanner().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		HDBSCAN model;
+		HDBSCAN_Algorithm algo;
+		
+		/*
+		 * Generic first... should theoretically allow similarity metrics as well...
+		 */
+		algo = HDBSCAN_Algorithm.GENERIC;
+		for(DistanceMetric d: Distance.values()) {
+			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+			
+			if(!model.isValidMetric(d)) {
+				assertTrue(model.hasWarnings());
+				assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+			}
+		}
+		
+		for(Kernel k: KernelTestCases.all_kernels) {
+			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(k)).fit();
+			
+			if(!model.isValidMetric(k)) {
+				assertTrue(model.hasWarnings());
+				assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+			}
+		}
+		
+		
+		
+		/*
+		 * Prims/Boruvka KD tree now -- first assert no warnings for KD valid and then assert warnings for others.
+		 */
+		for(HDBSCAN_Algorithm al: new HDBSCAN_Algorithm[]{HDBSCAN_Algorithm.PRIMS_KDTREE, HDBSCAN_Algorithm.BORUVKA_KDTREE}) {
+			algo = al;
+			boolean warnings_thrown = false;
+			for(DistanceMetric d: new DistanceMetric[]{Distance.EUCLIDEAN, 
+					Distance.MANHATTAN, Distance.CHEBYSHEV, new MinkowskiDistance(2.0)}) {
+				model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				
+				if(model.hasWarnings()) {
+					warnings_thrown= true;
+					System.out.println(d + ", " + model.getWarnings());
+				}
+			}
+			
+			assertFalse(warnings_thrown);
+			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Distance.CANBERRA)).fit();
+			assertTrue(model.hasWarnings());
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+			
+			// try a few sim metrics to assert the same
+			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			assertTrue(model.hasWarnings());
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+		}
+		
+		
+		
+		/*
+		 * Prims/Boruvka ball tree
+		 */
+		for(HDBSCAN_Algorithm al: new HDBSCAN_Algorithm[]{HDBSCAN_Algorithm.PRIMS_BALLTREE, HDBSCAN_Algorithm.BORUVKA_BALLTREE}) {
+			algo = al;
+			// need to use a smaller dataset here because haversine is an option...
+			DataSet irisSmall = TestSuite.IRIS_DATASET.copy();
+			irisSmall.dropCol(3);
+			irisSmall.dropCol(2);
+			final Array2DRowRealMatrix small = irisSmall.getData();
+			
+			for(Distance d: Distance.values()) {
+				model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				
+				if(model.hasWarnings()) {
+					assertTrue(!model.isValidMetric(d));
+				}
+			}
+			
+			// Try minkowski and haversine...
+			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(new MinkowskiDistance(1.5))).fit();
+			assertFalse(model.hasWarnings());
+			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(new HaversineDistance())).fit();
+			assertFalse(model.hasWarnings());
+			
+			// assert sim doesn't fly for ball tree...
+			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+		}
 	}
 }

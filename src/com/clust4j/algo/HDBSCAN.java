@@ -26,6 +26,7 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.Pairwise;
@@ -48,7 +49,7 @@ import com.clust4j.utils.VecUtils.VecDoubleSeries;
  * <a href="http://dl.acm.org/citation.cfm?id=2733381">the paper</a> by 
  * R. Campello, D. Moulavi, and J. Sander
  */
-public class HDBSCAN extends AbstractDBSCAN {
+final public class HDBSCAN extends AbstractDBSCAN {
 	private static final long serialVersionUID = -5112901322434131541L;
 	public static final HDBSCAN_Algorithm DEF_ALGO = HDBSCAN_Algorithm.AUTO;
 	public static final double DEF_ALPHA = 1.0;
@@ -75,7 +76,9 @@ public class HDBSCAN extends AbstractDBSCAN {
 	private volatile double[][] dataData = null;
 	
 
-	private interface HInitializer { public HDBSCANLinkageTree initTree(HDBSCAN h); }
+	private interface HInitializer extends MetricValidator { 
+		public HDBSCANLinkageTree initTree(HDBSCAN h);
+	}
 	public static enum HDBSCAN_Algorithm implements HInitializer {
 		/**
 		 * Automatically selects the appropriate algorithm
@@ -84,8 +87,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		AUTO {
 			@Override
 			public HDBSCANLinkageTree initTree(HDBSCAN h) {
-				final Class<? extends GeometricallySeparable> clz =
-					h.dist_metric.getClass();
+				final Class<? extends GeometricallySeparable> clz = h.dist_metric.getClass();
 				final int n = h.data.getColumnDimension();
 				
 				// rare situation... only if sim metric or kernel
@@ -104,6 +106,11 @@ public class HDBSCAN extends AbstractDBSCAN {
 					BORUVKA_BALLTREE.initTree(h) :
 						PRIMS_BALLTREE.initTree(h);
 			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				throw new UnsupportedOperationException("auto does not have supported metrics");
+			}
 		},
 		
 		/**
@@ -118,7 +125,19 @@ public class HDBSCAN extends AbstractDBSCAN {
 			public GenericTree initTree(HDBSCAN h) {
 				// we set this in case it was called by auto
 				h.algo = this;
+				ensureMetric(h, this);
 				return h.new GenericTree();
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				HashSet<Class<? extends GeometricallySeparable>> unsupported = new HashSet<>();
+				
+				for(DistanceMetric d: Distance.binaryDistances())
+					unsupported.add(d.getClass());
+					
+				// if we ever have MORE invalid ones, add them here...
+				return !unsupported.contains(g.getClass());
 			}
 		},
 		
@@ -137,7 +156,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			public PrimsKDTree initTree(HDBSCAN h) {
 				// we set this in case it was called by auto
 				h.algo = this;
+				ensureMetric(h, this);
 				return h.new PrimsKDTree(h.leafSize);
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return KDTree.VALID_METRICS.contains(g.getClass());
 			}
 		},
 		
@@ -156,7 +181,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			public PrimsBallTree initTree(HDBSCAN h) {
 				// we set this in case it was called by auto
 				h.algo = this;
+				ensureMetric(h, this);
 				return h.new PrimsBallTree(h.leafSize);
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return BallTree.VALID_METRICS.contains(g.getClass());
 			}
 		},
 		
@@ -172,7 +203,13 @@ public class HDBSCAN extends AbstractDBSCAN {
 			public BoruvkaKDTree initTree(HDBSCAN h) {
 				// we set this in case it was called by auto
 				h.algo = this;
+				ensureMetric(h, this);
 				return h.new BoruvkaKDTree(h.leafSize);
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return KDTree.VALID_METRICS.contains(g.getClass());
 			}
 		},
 		
@@ -188,9 +225,26 @@ public class HDBSCAN extends AbstractDBSCAN {
 			public BoruvkaBallTree initTree(HDBSCAN h) {
 				// we set this in case it was called by auto
 				h.algo = this;
+				ensureMetric(h, this);
 				return h.new BoruvkaBallTree(h.leafSize);
 			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable g) {
+				return BallTree.VALID_METRICS.contains(g.getClass())
+					// For some reason Boruvka hates Canberra...
+					&& !g.equals(Distance.CANBERRA)
+					;
+			}
 		};
+		
+		private static void ensureMetric(HDBSCAN h, HDBSCAN_Algorithm a) {
+			if(!a.isValidMetric(h.dist_metric)) {
+				h.warn(h.dist_metric.getName() + " is not valid for " + a + 
+					". Falling back to default Euclidean.");
+				h.setSeparabilityMetric(DEF_DIST);
+			}
+		}
 	}
 	
 	
@@ -199,6 +253,14 @@ public class HDBSCAN extends AbstractDBSCAN {
 		fast_metrics_ = new HashSet<Class<? extends GeometricallySeparable>>();
 		fast_metrics_.addAll(KDTree.VALID_METRICS);
 		fast_metrics_.addAll(BallTree.VALID_METRICS);
+	}
+	
+	
+	/**
+	 * Is the provided metric valid for this model?
+	 */
+	@Override final public boolean isValidMetric(GeometricallySeparable geo) {
+		return this.algo.isValidMetric(geo);
 	}
 	
 	
@@ -238,13 +300,6 @@ public class HDBSCAN extends AbstractDBSCAN {
 			throw new IllegalArgumentException("alpha must be greater than 0");
 		if(leafSize < 1)
 			throw new IllegalArgumentException("leafsize must be greater than 0");
-		
-		
-		if(!algo.equals(HDBSCAN_Algorithm.GENERIC) && !(planner.getSep() instanceof DistanceMetric)) {
-			warn("algorithms leveraging NearestNeighborHeapSearch require a DistanceMetric; "
-					+ "using default Euclidean distance");
-			setSeparabilityMetric(DEF_DIST);
-		}
 		
 		logModelSummary();
 	}
@@ -306,7 +361,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 				.setMinClustSize(min_cluster_size)
 				.setMinPts(minPts)
 				.setScale(scale)
-				.setSep(dist)
+				.setMetric(dist)
 				.setSeed(seed)
 				.setVerbose(verbose)
 				.setNormalizer(norm)
@@ -393,7 +448,7 @@ public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		@Override
-		public HDBSCANPlanner setSep(final GeometricallySeparable dist) {
+		public HDBSCANPlanner setMetric(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}

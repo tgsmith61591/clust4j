@@ -30,8 +30,15 @@ public class BallTree extends NearestNeighborHeapSearch {
 	public final static HashSet<Class<? extends GeometricallySeparable>> VALID_METRICS;
 	static {
 		VALID_METRICS = new HashSet<>();
-		for(DistanceMetric dm: Distance.values())
-			VALID_METRICS.add(dm.getClass());
+		
+		/*
+		 * Want all distance metrics EXCEPT binary dist metrics
+		 */
+		for(Distance dm: Distance.values()) {
+			if(!dm.isBinaryDistance())
+				VALID_METRICS.add(dm.getClass());
+		}
+		
 		VALID_METRICS.add(MinkowskiDistance.class);
 		VALID_METRICS.add(HaversineDistance.class);
 	}

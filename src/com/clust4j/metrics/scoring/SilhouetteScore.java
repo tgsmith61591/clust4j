@@ -9,7 +9,8 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.LabelEncoder;
-import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -19,9 +20,10 @@ public class SilhouetteScore implements UnsupervisedEvaluationMetric {
 	private SilhouetteScore() { }
 	
 	@Override
-	public double evaluate(AbstractRealMatrix data, GeometricallySeparable metric, final int[] labels) {
+	public double evaluate(AbstractRealMatrix data, final int[] labels) {
 
 		double[][] X = data.getData();
+		DistanceMetric metric = Distance.EUCLIDEAN;
 		
 		final int m = data.getRowDimension();
 		if(labels.length != m)
@@ -139,8 +141,8 @@ public class SilhouetteScore implements UnsupervisedEvaluationMetric {
 	}
 
 	@Override
-	public double evaluate(AbstractClusterer model, GeometricallySeparable metric, final int[] labels) {
-		return evaluate(model.getData(), metric, labels);
+	public double evaluate(AbstractClusterer model, final int[] labels) {
+		return evaluate(model.getData(), labels);
 	}
 	
 	public static SilhouetteScore getInstance() {

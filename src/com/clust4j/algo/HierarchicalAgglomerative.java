@@ -1,6 +1,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 
 import lombok.Synchronized;
@@ -11,6 +12,8 @@ import org.apache.commons.math3.util.FastMath;
 import com.clust4j.NamedEntity;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.CircularKernel;
+import com.clust4j.kernel.LogKernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.Distance;
@@ -38,19 +41,25 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-agglomerative-clustering-1.html">Agglomerative Clustering</a>
  * @see <a href="http://www.unesco.org/webworld/idams/advguide/Chapt7_1_5.htm">Divisive Clustering</a>
  */
-public class HierarchicalAgglomerative extends AbstractPartitionalClusterer implements UnsupervisedClassifier {
+final public class HierarchicalAgglomerative extends AbstractPartitionalClusterer implements UnsupervisedClassifier {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7563413590708853735L;
 	public static final Linkage DEF_LINKAGE = Linkage.WARD;
+	final static HashSet<Class<? extends GeometricallySeparable>> comp_avg_unsupported;
+	static {
+		comp_avg_unsupported = new HashSet<>();
+		comp_avg_unsupported.add(CircularKernel.class);
+		comp_avg_unsupported.add(LogKernel.class);
+	}
 	
 	/**
 	 * Which {@link Linkage} to use for the clustering algorithm
 	 */
 	final Linkage linkage;
 	
-	interface LinkageTreeBuilder {
+	interface LinkageTreeBuilder extends MetricValidator {
 		public HierarchicalDendrogram buildTree(HierarchicalAgglomerative h);
 	}
 	
@@ -64,12 +73,22 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			public AverageLinkageTree buildTree(HierarchicalAgglomerative h) {
 				return h.new AverageLinkageTree();
 			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable geo) {
+				return !comp_avg_unsupported.contains(geo.getClass());
+			}
 		}, 
 		
 		COMPLETE {
 			@Override
 			public CompleteLinkageTree buildTree(HierarchicalAgglomerative h) {
 				return h.new CompleteLinkageTree();
+			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable geo) {
+				return !comp_avg_unsupported.contains(geo.getClass());
 			}
 		}, 
 		
@@ -78,8 +97,20 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			public WardTree buildTree(HierarchicalAgglomerative h) {
 				return h.new WardTree();
 			}
+			
+			@Override
+			public boolean isValidMetric(GeometricallySeparable geo) {
+				return geo.equals(Distance.EUCLIDEAN);
+			}
 		};
 	}
+	
+	
+	@Override
+	final public boolean isValidMetric(GeometricallySeparable geo) {
+		return this.linkage.isValidMetric(geo);
+	}
+	
 	
 	
 	
@@ -116,7 +147,12 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 			HierarchicalPlanner planner) {
 		super(data, planner, planner.num_clusters);
 		this.linkage = planner.getLinkage();
-		checkLinkage(this, linkage);
+		
+		if(!isValidMetric(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is invalid for " + this.linkage + 
+				". Falling back to default Euclidean dist");
+			setSeparabilityMetric(DEF_DIST);
+		}
 		
 		this.m = data.getRowDimension();
 		this.num_clusters = planner.num_clusters;
@@ -134,18 +170,6 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 				parallel,
 				num_clusters
 			});
-	}
-	
-	protected static void checkLinkage(HierarchicalAgglomerative algo, Linkage link) {
-		Linkage linkage = algo.getLinkage();
-		
-		if(linkage.equals(Linkage.WARD) && !algo.getSeparabilityMetric().equals(Distance.EUCLIDEAN)) {
-			algo.warn("Ward's method implicitly requires Euclidean distance; overriding " + 
-					algo.getSeparabilityMetric().getName());
-			
-			algo.setSeparabilityMetric(Distance.EUCLIDEAN);
-			algo.info("New distance metric: "+algo.getSeparabilityMetric().getName());
-		}
 	}
 	
 	
@@ -182,7 +206,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		@Override
 		public HierarchicalPlanner copy() {
 			return new HierarchicalPlanner(linkage)
-				.setSep(dist)
+				.setMetric(dist)
 				.setScale(scale)
 				.setSeed(seed)
 				.setVerbose(verbose)
@@ -255,7 +279,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 		}
 
 		@Override
-		public HierarchicalPlanner setSep(GeometricallySeparable dist) {
+		public HierarchicalPlanner setMetric(GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -721,13 +745,7 @@ public class HierarchicalAgglomerative extends AbstractPartitionalClusterer impl
 	/** {@inheritDoc} */
 	@Override
 	public double silhouetteScore() {
-		return silhouetteScore(getSeparabilityMetric());
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public double silhouetteScore(GeometricallySeparable dist) {
 		// Propagates ModelNotFitException
-		return SilhouetteScore.getInstance().evaluate(this, dist, getLabels());
+		return SilhouetteScore.getInstance().evaluate(this, getLabels());
 	}
 }

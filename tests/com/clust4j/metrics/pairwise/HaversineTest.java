@@ -31,7 +31,7 @@ public class HaversineTest {
 		AbstractCentroidClusterer km = new KMeans(mat, 
 						new KMeansPlanner(2)
 								.setVerbose(true)
-								.setSep(new HaversineDistance())
+								.setMetric(new HaversineDistance())
 								.setVerbose(true)
 								.setScale(true)).fit();
 		
@@ -46,7 +46,7 @@ public class HaversineTest {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
 		AbstractCentroidClusterer km = new KMedoids(mat, new KMedoidsPlanner(2)
 								.setVerbose(true)
-								.setSep(new HaversineDistance())
+								.setMetric(new HaversineDistance())
 								.setVerbose(true)
 								.setScale(false)).fit();
 		

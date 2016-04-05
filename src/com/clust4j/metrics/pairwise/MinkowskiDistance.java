@@ -52,4 +52,9 @@ public class MinkowskiDistance implements DistanceMetric {
 	public String getName() {
 		return "Minkowski";
 	}
+	
+	@Override
+	public String toString() {
+		return getName();
+	}
 }

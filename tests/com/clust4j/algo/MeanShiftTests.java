@@ -27,6 +27,11 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.Similarity;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -610,5 +615,47 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		labels = new MeanShift(X, new MeanShiftPlanner(0.5).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		MeanShift model;
+		MeanShiftPlanner planner;
+		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
+		double bandwidth = 1.5;
+		
+		/*
+		 * Estimate bw and not
+		 */
+		for(boolean b: new boolean[]{true, false}) {
+			for(Distance d: Distance.values()) {
+				planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+				planner = planner.setMetric(d);
+				model = planner.buildNewModelInstance(data_).fit();
+				assertTrue(model.dist_metric.equals(d)); // assert didn't change
+			}
+			
+			// minkowski?
+			DistanceMetric d = new MinkowskiDistance(1.5);
+			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = planner.setMetric(d);
+			model = planner.buildNewModelInstance(data_).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert didn't change
+			
+			// haversine?
+			d = new HaversineDistance();
+			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = planner.setMetric(d);
+			model = planner.buildNewModelInstance(small).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert didn't change
+			
+			// prove that similarity gets rejected
+			d = Distance.EUCLIDEAN;
+			SimilarityMetric sim = Similarity.COSINE;
+			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = planner.setMetric(sim);
+			model = planner.buildNewModelInstance(data_).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert DID change
+		}
 	}
 }

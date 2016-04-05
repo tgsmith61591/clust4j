@@ -17,16 +17,19 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.DBSCAN.DBSCANPlanner;
 import com.clust4j.data.DataSet;
-import com.clust4j.data.ExampleDataSets;
 import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.kernel.RadialBasisKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
 
 public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
-	final DataSet irisds = ExampleDataSets.loadIris();
+	final DataSet irisds = TestSuite.IRIS_DATASET;
 	final Array2DRowRealMatrix data = irisds.getData();
 
 
@@ -145,7 +148,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		Kernel kernel = new RadialBasisKernel(0.05);
 		DBSCAN db = new DBSCAN(mat, 
 				new DBSCAN.DBSCANPlanner(0.05)
-					.setSep(kernel)
+					.setMetric(kernel)
 					.setScale(true)
 					.setVerbose(true)).fit();
 		System.out.println();
@@ -216,5 +219,37 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		
 		labels = new DBSCAN(X, new DBSCANPlanner().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all());
+	}
+	
+	@Test
+	public void testNoSimilaritiesAllowed() {
+		DBSCAN model;
+		for(Kernel k: KernelTestCases.all_kernels) {
+			model = new DBSCAN(data, new DBSCANPlanner().setMetric(k)).fit();
+			assertTrue(model.hasWarnings());
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+		}
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		DBSCAN model;
+		
+		for(Distance d: Distance.values()) {
+			model = new DBSCAN(data, new DBSCANPlanner().setMetric(d)).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
+		}
+		
+		DistanceMetric d= new MinkowskiDistance(1.5);
+		model = new DBSCAN(data, new DBSCANPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
+		
+		/*
+		 * Now haversine...
+		 */
+		d = new HaversineDistance();
+		
+		model = new DBSCAN(TestSuite.IRIS_SMALL.getData(), new DBSCANPlanner().setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 	}
 }

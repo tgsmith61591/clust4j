@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
-import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.scoring.BinomialClassificationScoring;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.utils.VecUtils;
@@ -30,7 +29,7 @@ public class TestMetrics {
 		
 		double silhouette = SilhouetteScore
 			.getInstance()
-			.evaluate(X, Distance.EUCLIDEAN, labels);
+			.evaluate(X, labels);
 		assertTrue(silhouette == 0.5032506980665507);
 	}
 	
@@ -41,7 +40,7 @@ public class TestMetrics {
 		
 		SilhouetteScore
 			.getInstance()
-			.evaluate(X, Distance.EUCLIDEAN, labels);
+			.evaluate(X, labels);
 	}
 	
 	@Test
@@ -51,7 +50,7 @@ public class TestMetrics {
 		
 		assertTrue(Double.isNaN(SilhouetteScore
 			.getInstance()
-			.evaluate(X, Distance.EUCLIDEAN, labels)));
+			.evaluate(X, labels)));
 	}
 	
 	@Test(expected=DimensionMismatchException.class)

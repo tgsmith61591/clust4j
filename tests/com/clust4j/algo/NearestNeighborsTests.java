@@ -21,6 +21,9 @@ import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
+import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
@@ -122,7 +125,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		NearestNeighbors nn = new NearestNeighbors(mat, 
 			new NearestNeighbors.NearestNeighborsPlanner(1)
 				.setVerbose(true)
-				.setSep(new GaussianKernel())).fit();
+				.setMetric(new GaussianKernel())).fit();
 		
 		int[][] ne = nn.getNeighbors().getIndices();
 		assertTrue(ne[0].length == 1);
@@ -132,7 +135,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		new RadiusNeighbors(mat, 
 			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
 				.setVerbose(true)
-				.setSep(new GaussianKernel()) ).fit();
+				.setMetric(new GaussianKernel()) ).fit();
 	}
 	
 	@Test
@@ -144,7 +147,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			new NearestNeighbors(mat, 
 				new NearestNeighbors.NearestNeighborsPlanner(k)
 					.setVerbose(true)
-					.setSep(new GaussianKernel()) ).fit();
+					.setMetric(new GaussianKernel()) ).fit();
 		}
 	}
 	
@@ -157,7 +160,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			new RadiusNeighbors(mat, 
 				new RadiusNeighbors.RadiusNeighborsPlanner(radius)
 					.setVerbose(true)
-					.setSep(new GaussianKernel()) ).fit();
+					.setMetric(new GaussianKernel()) ).fit();
 			System.out.println();
 		}
 	}
@@ -243,7 +246,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 					.setLeafSize(3)
 					.setNormalizer(FeatureNormalization.MIN_MAX_SCALE)
 					.setSeed(new Random())
-					.setSep(Distance.RUSSELL_RAO) ).fit();
+					.setMetric(Distance.RUSSELL_RAO) ).fit();
 		}
 	}
 	
@@ -251,7 +254,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testWarning() {
 		BaseNeighborsModel n = new NearestNeighbors(DATA, 
 			new NearestNeighbors.NearestNeighborsPlanner(1)
-				.setSep(new GaussianKernel()));
+				.setMetric(new GaussianKernel()));
 		assertTrue(n.hasWarnings());
 	}
 	
@@ -396,7 +399,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			.setScale(true)
 			.setNormalizer(FeatureNormalization.MEAN_CENTER)
 			.setSeed(new Random())
-			.setSep(new GaussianKernel())
+			.setMetric(new GaussianKernel())
 			.setVerbose(false).copy().buildNewModelInstance(data);
 		
 		assertTrue(nn.hasWarnings()); // Sep method
@@ -535,5 +538,43 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		neighb = new NearestNeighbors(X, new NearestNeighborsPlanner().setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		NearestNeighbors model;
+		final int nn = 3;
+		final NearestNeighborsPlanner planner = new NearestNeighborsPlanner(nn).setScale(true);
+		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
+		
+		/*
+		 * For each of AUTO, KD and BALL
+		 */
+		for(NeighborsAlgorithm na: NeighborsAlgorithm.values()) {
+			planner.setAlgorithm(na);
+			
+			for(Distance d: Distance.values()) {
+				planner.setMetric(d);
+				model = planner.buildNewModelInstance(data).fit();
+				assertTrue(BallTree.VALID_METRICS.contains(model.dist_metric.getClass()));
+			}
+			
+			// minkowski
+			planner.setMetric(new MinkowskiDistance(1.5));
+			model = planner.buildNewModelInstance(data).fit();
+			assertFalse(model.hasWarnings());
+			
+			// haversine
+			planner.setMetric(new HaversineDistance());
+			model = planner.buildNewModelInstance(small).fit();
+			
+			if(na.equals(NeighborsAlgorithm.BALL_TREE)) // else it WILL
+				assertFalse(model.hasWarnings());
+			
+			// try a sim metric...
+			planner.setMetric(Similarity.COSINE);
+			model = planner.buildNewModelInstance(small).fit();
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+		}
 	}
 }

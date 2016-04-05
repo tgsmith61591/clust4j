@@ -2,6 +2,7 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.TreeSet;
@@ -28,6 +29,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -55,6 +57,21 @@ public class MeanShift
 	final public static int DEF_MAX_ITER = 300;
 	final public static int DEF_MIN_BIN_FREQ = 1;
 	final static double incrementAmt = 0.25;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	
+	/**
+	 * Static initializer
+	 */
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		// Add metrics here if necessary... already vetoes any
+		// similarity metrics, so this might be sufficient...
+	}
+	
+	@Override final public boolean isValidMetric(GeometricallySeparable geo) {
+		return !UNSUPPORTED_METRICS.contains(geo.getClass()) && !(geo instanceof SimilarityMetric);
+	}
 	
 	
 	
@@ -148,6 +165,15 @@ public class MeanShift
 			info("no seeds provided; defaulting to all datapoints");
 			seeds = this.data.getData(); // use THIS as it's already scaled...
 			n = this.data.getColumnDimension();
+		}
+		
+		/*
+		 * Check metric for validity
+		 */
+		if(!isValidMetric(this.dist_metric)) {
+			warn(this.dist_metric.getName() + " is not valid for "+getName()+". "
+				+ "Falling back to default Euclidean dist");
+			setSeparabilityMetric(DEF_DIST);
 		}
 		
 		
@@ -399,7 +425,7 @@ public class MeanShift
 				.setScale(scale)
 				.setSeed(seed)
 				.setSeeds(seeds)
-				.setSep(dist)
+				.setMetric(dist)
 				.setVerbose(verbose)
 				.setNormalizer(norm)
 				.setForceParallel(parallel);
@@ -469,7 +495,7 @@ public class MeanShift
 		}
 		
 		@Override
-		public MeanShiftPlanner setSep(final GeometricallySeparable dist) {
+		public MeanShiftPlanner setMetric(final GeometricallySeparable dist) {
 			this.dist = dist;
 			return this;
 		}
@@ -995,7 +1021,7 @@ public class MeanShift
 			nbrs = new RadiusNeighbors(sorted_centers,
 				new RadiusNeighborsPlanner(bandwidth)
 					.setSeed(this.random_state)
-					.setSep(this.dist_metric)
+					.setMetric(this.dist_metric)
 					.setForceParallel(parallel), true).fit();
 			
 			
@@ -1062,7 +1088,7 @@ public class MeanShift
 			NearestNeighbors nn = new NearestNeighbors(centers,
 				new NearestNeighborsPlanner(1)
 					.setSeed(this.random_state)
-					.setSep(this.dist_metric)
+					.setMetric(this.dist_metric)
 					.setForceParallel(false), true).fit();
 			
 			

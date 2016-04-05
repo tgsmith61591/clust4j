@@ -296,7 +296,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		for(int k : ks) {
 			km = new KMedoids(mat, 
 					new KMedoids.KMedoidsPlanner(k)
-						.setSep(kernel)
+						.setMetric(kernel)
 						.setVerbose(true)
 						.setScale(false));
 			km.fit();
@@ -313,7 +313,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		for(int k : ks) {
 			new KMedoids(mat, 
 				new KMedoids.KMedoidsPlanner(k)
-					.setSep(kernel)
+					.setMetric(kernel)
 					.setVerbose(true)
 					.setScale(false)).fit();
 		}
@@ -351,7 +351,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			if(KMedoids.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMedoidsPlanner km = new KMedoidsPlanner(3).setSep(dist);
+			KMedoidsPlanner km = new KMedoidsPlanner(3).setMetric(dist);
 			double i = -1;
 			
 			i = km.buildNewModelInstance(d).fit().indexAffinityScore(actual);
@@ -383,7 +383,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 				continue;
 			
 			System.out.println(dist);
-			KMedoidsPlanner km = new KMedoidsPlanner(3).setScale(true).setSep(dist);
+			KMedoidsPlanner km = new KMedoidsPlanner(3).setScale(true).setMetric(dist);
 			double i = -1;
 			
 			model = km.buildNewModelInstance(d).fit();

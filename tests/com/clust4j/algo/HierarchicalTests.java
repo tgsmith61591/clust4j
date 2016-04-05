@@ -22,6 +22,12 @@ import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.KernelTestCases;
+import com.clust4j.metrics.pairwise.Distance;
+import com.clust4j.metrics.pairwise.DistanceMetric;
+import com.clust4j.metrics.pairwise.HaversineDistance;
+import com.clust4j.metrics.pairwise.MinkowskiDistance;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
@@ -97,7 +103,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 					new HierarchicalAgglomerative
 						.HierarchicalPlanner()
 							.setLinkage(linkage)
-							.setSep(new GaussianKernel())
+							.setMetric(new GaussianKernel())
 							.setVerbose(false)).fit();
 			
 			labels = hac.getLabels();
@@ -164,7 +170,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 			new HierarchicalAgglomerative
 				.HierarchicalPlanner()
 					.setLinkage(Linkage.AVERAGE)
-					.setSep(new GaussianKernel())
+					.setMetric(new GaussianKernel())
 					.setVerbose(true)).fit().getLabels();
 	}
 
@@ -296,5 +302,66 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		
 		labels = new HierarchicalAgglomerative(X, new HierarchicalPlanner(Linkage.WARD).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+	}
+	
+	@Test
+	public void testValidMetrics() {
+		HierarchicalAgglomerative model;
+		Linkage link;
+		
+		// small dataset for haversine
+		Array2DRowRealMatrix small = TestSuite.IRIS_SMALL.getData();
+		
+		/*
+		 * First try Complete and Average -- should allow anything...
+		 */
+		for(Linkage l: new Linkage[]{Linkage.COMPLETE, Linkage.AVERAGE}) {
+			link = l;
+			for(Distance d: Distance.values()) {
+				model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+				assertTrue(model.dist_metric.equals(d)); // assert didn't change...
+			}
+			
+			// minkowski
+			DistanceMetric d = new MinkowskiDistance(1.5);
+			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
+			
+			// haversine
+			d = new HaversineDistance();
+			model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
+			
+			// similarity?
+			for(Kernel k: KernelTestCases.all_kernels) {
+				model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(k)).fit();
+			}
+		}
+		
+		
+		/*
+		 * Ward. Should only allow Euclidean distance
+		 */
+		link = Linkage.WARD;
+		for(Distance d: Distance.values()) {
+			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
+		}
+		
+		// minkowski
+		DistanceMetric d = new MinkowskiDistance(1.5);
+		model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
+		
+		// haversine
+		d = new HaversineDistance();
+		model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
+		
+		// similarity?
+		for(Kernel k: KernelTestCases.all_kernels) {
+			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(k)).fit();
+			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
+		}
 	}
 }

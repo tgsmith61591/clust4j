@@ -108,6 +108,15 @@ public class TestSuite {
 	public static final DataSet BC_DATASET = ExampleDataSets.loadBreastCancer();
 	
 	
+	/*
+	 * Condensed dataset (first two cols) for haversine...
+	 */
+	public static final DataSet IRIS_SMALL = IRIS_DATASET.copy();
+	static {
+		IRIS_SMALL.dropCol(3);
+		IRIS_SMALL.dropCol(2);
+	}
+	
 	public static final double[][] bigMatrix = new double[][]{
 		new double[]{ 0.08594657,  0.60925865,  0.39881186,  0.26410921,  0.19803359, 0.21035565,  0.11966197,  0.52581139,  0.38387628,  0.4825036 },
 		new double[]{ 0.56943745,  0.9438055 ,  0.03867595,  0.49143331,  0.27470736, 0.08862225,  0.6203588 ,  0.76004573,  0.28224907,  0.98504973},
