@@ -255,7 +255,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		 */
 		if( !isValidMetric(this.dist_metric) ) {
 			warn(this.dist_metric.getName() + " is unsupported by "+getName()+"; "
-					+ "falling back to default (" + DEF_DIST.getName() + ")");
+					+ "falling back to default (" + defMetric().getName() + ")");
 			
 			/*
 			 * If this is KMedoids, we set it to Mahattan
