@@ -168,9 +168,13 @@ public abstract class AbstractClusterer
 		
 		// Determine whether we should parallelize
 		this.parallel = planner.getParallel()
+			/*
+			// Let's just let the user force this condition if they want it...
 			|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
 			&& (data.getRowDimension() * data.getColumnDimension()) 
-			> GlobalState.ParallelismConf.MIN_ELEMENTS);
+			> GlobalState.ParallelismConf.MIN_ELEMENTS)
+			*/
+			;
 		
 		if(this.dist_metric instanceof Kernel)
 			warn("running " + getName() + " in Kernel mode can be an expensive option");
@@ -298,7 +302,8 @@ public abstract class AbstractClusterer
 			^ (dist_metric instanceof DistanceMetric ? 31 :
 				dist_metric instanceof SimilarityMetric ? 53 : 1)
 			// ^ (hasWarnings ? 1 : 0) // removed because forces state dependency
-			^ random_state.hashCode();
+			^ random_state.hashCode()
+			^ data.hashCode();
 	}
 	
 	

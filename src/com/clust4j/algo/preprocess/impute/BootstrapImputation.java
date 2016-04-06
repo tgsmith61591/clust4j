@@ -5,7 +5,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
-import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
@@ -48,10 +47,10 @@ public class BootstrapImputation extends MatrixImputation {
 		this.strap = planner.strap;
 		this.ratio = planner.ratio;
 
-		if(ratio < 0 )
+		if(ratio <= 0 )
 			throw new IllegalArgumentException("ratio must be greater than 0");
 		if(null == strap)
-			throw new IllegalClusterStateException("null bootstrapper");
+			throw new IllegalArgumentException("null bootstrapper");
 		
 		info("central tendency="+ctm);
 		info("bootstrapper="+strap);

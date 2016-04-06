@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
@@ -17,6 +18,7 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.data.DataSet;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 //import com.clust4j.kernel.KernelTestCases;
@@ -480,5 +482,36 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		assertTrue(km.hasWarnings());
 		assertTrue(km.getSeparabilityMetric().equals(Distance.EUCLIDEAN));
 		System.out.println();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testTooLowK() {
+		int k = 0;
+		new KMeans(data_, k);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testTooHighK() {
+		int k = 155;
+		new KMeans(data_, k);
+	}
+	
+	@Test(expected=ModelNotFitException.class)
+	public void testNotFit() {
+		new KMeans(data_, 3).getLabels();
+	}
+	
+	@Test
+	public void testMethods() {
+		KMeans k = new KMeans(data_, new KMeansPlanner(150)
+			.setInitializationStrategy(InitializationStrategy.RANDOM));
+		assertTrue(k.getMaxIter() == KMeans.DEF_MAX_ITER);
+		assertTrue(k.getConvergenceTolerance() == KMeans.DEF_CONVERGENCE_TOLERANCE);
+		
+		HashSet<Integer> idcs = new HashSet<Integer>();
+		for(int i: k.init_centroid_indices)
+			idcs.add(i);
+		
+		assertTrue(idcs.size() == 150);
 	}
 }

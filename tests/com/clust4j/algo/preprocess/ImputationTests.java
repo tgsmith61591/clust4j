@@ -157,4 +157,39 @@ public class ImputationTests {
 		
 		new MeanImputation().operate(d);
 	}
+	
+	@Test
+	public void testDefConst() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 2},
+			new double[]{1, 		 Double.NaN, 3},
+			new double[]{8.5,		 7.9,        6},
+			new double[]{9,			 8,			 Double.NaN},
+			new double[]{3.5,		 2.9,        6.1},
+			new double[]{3, 		 Double.NaN, 1},
+			new double[]{0,	 		 0, 		 0},
+			new double[]{2,	 		 4, 		 9},
+			new double[]{1.4,	 	 5, 		 6},
+		};
+		
+		new BootstrapImputation().operate(d);
+		new MeanImputation().operate(d);
+		new MedianImputation().operate(d);
+		new NearestNeighborImputation().operate(d);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNullBootstrapPlanner() {
+		new BootstrapImputation(new BootstrapImputationPlanner().setBootstrapper(null));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testBadBootstrapPlannerRatio() {
+		new BootstrapImputation(new BootstrapImputationPlanner().setRatio(0.0));
+	}
+	
+	@Test
+	public void testBootstrapFromCopyConst() {
+		new BootstrapImputation().copy();
+	}
 }

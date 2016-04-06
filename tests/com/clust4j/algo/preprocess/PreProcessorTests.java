@@ -6,6 +6,7 @@ import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -60,4 +61,36 @@ public class PreProcessorTests {
 		}
 	}
 
+	@Test(expected=NonUniformMatrixException.class)
+	public void testNUME1() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		FeatureNormalization.MEAN_CENTER.operate(data);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testNUME2() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		FeatureNormalization.MIN_MAX_SCALE.operate(data);
+	}
+	
+	@Test(expected=NonUniformMatrixException.class)
+	public void testNUME3() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		FeatureNormalization.STANDARD_SCALE.operate(data);
+	}
 }

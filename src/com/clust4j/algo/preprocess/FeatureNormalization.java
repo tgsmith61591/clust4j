@@ -14,13 +14,6 @@ import com.clust4j.except.NonUniformMatrixException;
  */
 public enum FeatureNormalization implements PreProcessor {
 	MEAN_CENTER {
-		@Override
-		public PreProcessor copy() { return this; }
-
-		@Override
-		public AbstractRealMatrix operate(AbstractRealMatrix data) {
-			return new Array2DRowRealMatrix(operate(data.getData()), false);
-		}
 		
 		@Override
 		public double[][] operate(double[][] data) {
@@ -67,14 +60,6 @@ public enum FeatureNormalization implements PreProcessor {
 	MIN_MAX_SCALE {
 		int RANGE_MIN = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
 		int RANGE_MAX = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
-		
-		@Override
-		public PreProcessor copy() { return this; }
-		
-		@Override
-		public AbstractRealMatrix operate(AbstractRealMatrix data) {
-			return new Array2DRowRealMatrix(operate(data.getData()), false);
-		}
 		
 		/**
 		 * @throws IllegalStateException if {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MIN} is greater
@@ -127,13 +112,6 @@ public enum FeatureNormalization implements PreProcessor {
 	 * Scales the feature to mean 0, unit variance
 	 */
 	STANDARD_SCALE {
-		@Override
-		public PreProcessor copy() { return this; }
-
-		@Override
-		public AbstractRealMatrix operate(AbstractRealMatrix data) {
-			return new Array2DRowRealMatrix(operate(data.getData()), false);
-		}
 
 		@Override
 		public double[][] operate(double[][] data) {
@@ -206,5 +184,13 @@ public enum FeatureNormalization implements PreProcessor {
 		}
 		
 	},
-	
+	;
+
+	@Override
+	public AbstractRealMatrix operate(AbstractRealMatrix data) {
+		return new Array2DRowRealMatrix(operate(data.getData()), false);
+	}
+
+	@Override
+	public PreProcessor copy() { return this; }
 }

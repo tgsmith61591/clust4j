@@ -573,6 +573,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			planner.setMetric(Similarity.COSINE);
 			model = planner.buildNewModelInstance(small).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
+			assertFalse(model.isValidMetric(new GaussianKernel()));
 		}
 	}
 }
