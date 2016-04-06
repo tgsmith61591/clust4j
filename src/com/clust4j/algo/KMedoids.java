@@ -288,6 +288,21 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				 * 1.5 The entries are not 100% equal, so we can (re)assign medoids...
 				 */
 				rassn = new MedoidReassignmentHandler(clusterAssignments);
+				
+				/*
+				 * 1.75 This happens in the case of bad kernels that cause
+				 * infinities to propagate... we can't segment the input
+				 * space and need to just return a single cluster.
+				 */
+				if(rassn.new_clusters.size() == 1) {
+					this.k = 1;
+					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					
+					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+					sayBye(timer);
+					return this;
+				}
 
 				
 				/*
@@ -318,7 +333,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				avgCost = tmpCost / (double)k;
 				if(tmpCost > maxCost)
 					maxCost = tmpCost;
-				
+
 				if(tmpCost < bestCost) {
 					bestCost = tmpCost;
 					cost = bestCost;
@@ -339,7 +354,6 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				(convergedFromCost ? "cost minimization" : "harmonious state"));
 			
 				
-			
 			// wrap things up, create summary..
 			reorderLabelsAndCentroids();
 			sayBye(timer);
@@ -453,7 +467,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				members = pair.getValue();
 				
 				double medoidCost, minCost = Double.POSITIVE_INFINITY;
-				int rowIdx, colIdx, bestMedoid = -1; // start at 0, not -1 in case of all ties...
+				int rowIdx, colIdx, bestMedoid = 0; // start at 0, not -1 in case of all ties...
 				for(int a: members) { // check cost if A is the medoid...
 					
 					medoidCost = 0.0;
@@ -466,7 +480,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 						
 						medoidCost += dist_mat[rowIdx][colIdx];
 					}
-					
+
 					if(medoidCost < minCost) {
 						minCost = medoidCost;
 						bestMedoid = a;

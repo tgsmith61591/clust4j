@@ -426,6 +426,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		
 		// it's not linearly separable, so most won't perform incredibly well...
 		KMeans model;
+		int count = 0;
 		for(DistanceMetric dist: Distance.values()) {
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
@@ -437,6 +438,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			
+			count++;
 			i = model.indexAffinityScore(actual);
 			
 
@@ -448,7 +450,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		}
 		
 		
-		System.out.println("BEST: " + best.getName() + ", " + ia);
+		System.out.println("BEST: " + best.getName() + ", " + ia + ", successfully tried " + count);
 	}
 	
 	static void findBestKernelMetric(DataSet ds, int k) {
@@ -459,6 +461,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		double ia = 0;
 		
 		// it's not linearly separable, so most won't perform incredibly well...
+		int count = 0;
 		KMeans model;
 		for(Kernel dist: com.clust4j.kernel.KernelTestCases.all_kernels) {
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
@@ -472,6 +475,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			
+			count++;
 			i = model.indexAffinityScore(actual);
 			
 
@@ -483,7 +487,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		}
 		
 		
-		System.out.println("BEST: " + best.getName() + ", " + ia);
+		System.out.println("BEST: " + best.getName() + ", " + ia + ", successfully tried " + count);
 	}
 	
 	/**

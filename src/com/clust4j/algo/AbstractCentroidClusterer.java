@@ -11,18 +11,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.kernel.CauchyKernel;
-import com.clust4j.kernel.CircularKernel;
-import com.clust4j.kernel.GeneralizedMinKernel;
-import com.clust4j.kernel.HyperbolicTangentKernel;
-import com.clust4j.kernel.InverseMultiquadricKernel;
 import com.clust4j.kernel.Kernel;
-import com.clust4j.kernel.LogKernel;
-import com.clust4j.kernel.MinKernel;
-import com.clust4j.kernel.MultiquadricKernel;
-import com.clust4j.kernel.PolynomialKernel;
-import com.clust4j.kernel.PowerKernel;
-import com.clust4j.kernel.SplineKernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -53,6 +42,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		 * Kernels that conditional positive def or 
 		 * may propagate NaNs or Infs or 100% zeros
 		 */
+		
+		/*// should be handled now by returning just one cluster...
 		UNSUPPORTED_METRICS.add(CauchyKernel.class);
 		UNSUPPORTED_METRICS.add(CircularKernel.class);
 		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
@@ -64,6 +55,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		UNSUPPORTED_METRICS.add(PolynomialKernel.class);
 		UNSUPPORTED_METRICS.add(PowerKernel.class);
 		UNSUPPORTED_METRICS.add(SplineKernel.class);
+		*/
 	}
 	
 	

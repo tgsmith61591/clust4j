@@ -10,6 +10,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -232,18 +233,39 @@ final public class KMeans extends AbstractCentroidClusterer {
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				// Get labels for nearest centroids
-				model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
-					VecUtils.arange(k), new NearestCentroidPlanner()
-						.setScale(false) // already scaled maybe
-						.setSeed(getSeed())
-						.setMetric(getSeparabilityMetric())
-						.setVerbose(false)).fit();
+				try {
+					model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
+						VecUtils.arange(k), new NearestCentroidPlanner()
+							.setScale(false) // already scaled maybe
+							.setSeed(getSeed())
+							.setMetric(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+				} catch(NaNException nan) {
+					/*
+					 * If they metric used produces lots of infs or -infs, it 
+					 * makes it hard if not impossible to effectively segment the
+					 * input space. Thus, the centroid assignment portion below can
+					 * yield a zero count (denominator) for one or more of the centroids
+					 * which makes the entire row NaN. We should tell the user to
+					 * try a different metric, if that's the case.
+					 *
+					error(new IllegalClusterStateException(dist_metric.getName()+" produced an entirely " +
+					  "infinite distance matrix, making it difficult to segment the input space. Try a different " +
+					  "metric."));
+					 */
+					this.k = 1;
+					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					
+					labelFromSingularK(X);
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+					sayBye(timer);
+					return this;
+				}
 				
 				label_dist = model.predict(X);
 				
 				// unpack the EntryPair
 				labels = label_dist.getKey();
-				
 				
 				// Start by computing TSS using barycentric dist
 				double system_cost = 0.0;

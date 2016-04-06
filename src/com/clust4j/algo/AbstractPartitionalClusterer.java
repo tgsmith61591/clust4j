@@ -11,7 +11,7 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 	 * The number of clusters to find. This field is not final, as in
 	 * some corner cases, the algorithm will modify k for convergence.
 	 */
-	final protected int k;
+	protected int k;
 	
 	public AbstractPartitionalClusterer(
 			AbstractRealMatrix data, 
