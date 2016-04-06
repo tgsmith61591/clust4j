@@ -586,6 +586,24 @@ public class MatUtils {
 	}
 	
 	/**
+	 * Returns true if there are any Inf (positive or negative) values in the matrix.
+	 * @throws IllegalArgumentException if there are no rows in the data
+	 * @param mat
+	 * @return true if the matrix contains Inf
+	 */
+	public static boolean containsInf(final double[][] mat) {
+		checkDimsPermitEmpty(mat);
+		
+		final int m = mat.length;
+		for(int i = 0; i < m; i++)
+			for(int j = 0; j < mat[i].length; j++)
+				if(Double.isInfinite(mat[i][j]))
+					return true;
+		
+		return false;
+	}
+	
+	/**
 	 * Returns true if there are any NaN values in the matrix.
 	 * @throws IllegalArgumentException if there are no rows in the data
 	 * @param mat

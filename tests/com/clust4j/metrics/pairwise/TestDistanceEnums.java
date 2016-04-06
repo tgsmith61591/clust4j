@@ -252,4 +252,11 @@ public class TestDistanceEnums {
 		final double[] b = new double[]{0,0,0,0};
 		assertTrue(Distance.BRAY_CURTIS.getDistance(a, b) == 0);
 	}
+	
+	@Test
+	public void testMinkowskiShortcut() {
+		final double[] a = new double[]{1,0,3,0};
+		final double[] b = new double[]{0,2,5,1};
+		assertTrue(Distance.MINKOWSKI(1.5).getDistance(a, b) == new MinkowskiDistance(1.5).getDistance(a, b));
+	}
 }

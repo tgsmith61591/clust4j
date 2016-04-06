@@ -1236,4 +1236,10 @@ public class MeanShift
 	public int getNumberOfNoisePoints() {
 		return numNoisey;
 	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		return CentroidUtils.predict(this, newData);
+	}
 }

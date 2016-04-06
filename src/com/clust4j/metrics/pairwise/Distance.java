@@ -315,6 +315,17 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 	},
 	;
 	
+	/**
+	 * This method merely mimics the signature of the enums in
+	 * the distance class, but serves as an intermediary constructor
+	 * for building an instance of the {@link MinkowskiDistance}
+	 * @param p
+	 * @return
+	 */
+	public static MinkowskiDistance MINKOWSKI(double p) {
+		return new MinkowskiDistance(p);
+	}
+	
 	
 	
 	/**

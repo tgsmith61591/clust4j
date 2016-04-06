@@ -241,13 +241,14 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		S_noise = AffinityPropagation
 			.computeSmoothedSimilarity(X, Distance.EUCLIDEAN, 
 				GlobalState.DEFAULT_RANDOM_STATE, true);
+		
 		assertTrue(MatUtils.equalsWithTolerance(S_noise, 
 			new double[][]{
 				new double[]{-8.88345000e+02, -1.00000000e-01, -1.73466000e+03, -1.94721000e+03},
 				new double[]{-1.00000000e-01, -8.88345000e+02, -1.73932000e+03, -1.95249000e+03},
 				new double[]{-1.73466000e+03, -1.73932000e+03, -8.88345000e+02, -4.20300000e+01},
 				new double[]{-1.94721000e+03, -1.95249000e+03, -4.20300000e+01, -8.88345000e+02}
-			}, 1e-12));
+			}, 1e-8));
 		
 		
 		final int m = S_noise.length;
@@ -266,14 +267,14 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		assertTrue(VecUtils.equalsExactly(I, new int[]{1,0,3,2}));
 		assertTrue(VecUtils.equalsWithTolerance(Y, new double[]{-0.1, -0.1 , -42.03, -42.03}, 1e-12));
 		assertTrue(VecUtils.equalsWithTolerance(Y2, new double[]{-888.345, -888.345, -888.345, -888.345}, 1e-12));
-		
+
 		assertTrue(MatUtils.equalsWithTolerance(tmp, 
 			new double[][]{
 				new double[]{-8.88345000e+02, Double.NEGATIVE_INFINITY, -1.73466000e+03, -1.94721000e+03},
 				new double[]{Double.NEGATIVE_INFINITY, -8.88345000e+02, -1.73932000e+03, -1.95249000e+03},
 				new double[]{-1.73466000e+03, -1.73932000e+03, -8.88345000e+02, Double.NEGATIVE_INFINITY},
 				new double[]{-1.94721000e+03, -1.95249000e+03, Double.NEGATIVE_INFINITY, -8.88345000e+02}
-			}, 1e-12));
+			}, 1e-8));
 		
 		
 		// Performs the work IN PLACE
@@ -370,5 +371,11 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		SimilarityMetric sim = Similarity.COSINE;
 		model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(sim)).fit();
 		assertTrue(model.dist_metric.equals(sim));
+	}
+	
+	@Test
+	public void testPredict() {
+		AffinityPropagation a = new AffinityPropagation(data).fit();
+		System.out.println("AffinityProp prediction affinity: " + a.indexAffinityScore(a.predict(data)));
 	}
 }

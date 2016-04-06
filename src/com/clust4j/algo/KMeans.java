@@ -1,7 +1,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Random;
 
 import lombok.Synchronized;
@@ -11,15 +10,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.kernel.CauchyKernel;
-import com.clust4j.kernel.GeneralizedMinKernel;
-import com.clust4j.kernel.HyperbolicTangentKernel;
-import com.clust4j.kernel.InverseMultiquadricKernel;
-import com.clust4j.kernel.MinKernel;
-import com.clust4j.kernel.MultiquadricKernel;
-import com.clust4j.kernel.PolynomialKernel;
-import com.clust4j.kernel.PowerKernel;
-import com.clust4j.kernel.SplineKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -41,32 +31,6 @@ final public class KMeans extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = 1102324012006818767L;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
 	final public static int DEF_MAX_ITER = 100;
-	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
-	
-	static {
-		UNSUPPORTED_METRICS = new HashSet<>();
-		
-		/*
-		 * Add all binary distances
-		 */
-		for(Distance d: Distance.binaryDistances())
-			UNSUPPORTED_METRICS.add(d.getClass());
-		
-		/*
-		 * Kernels that create NaNs or Infs
-		 */
-		UNSUPPORTED_METRICS.add(CauchyKernel.class);
-		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
-		UNSUPPORTED_METRICS.add(HyperbolicTangentKernel.class);
-		UNSUPPORTED_METRICS.add(InverseMultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(MinKernel.class);
-		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(PolynomialKernel.class);
-		UNSUPPORTED_METRICS.add(PowerKernel.class);
-		UNSUPPORTED_METRICS.add(SplineKernel.class);
-	}
-	
-	@Override protected HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics(){ return UNSUPPORTED_METRICS; }
 	
 	
 	
@@ -268,7 +232,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 			for(iter = 0; iter < maxIter; iter++) {
 				
 				// Get labels for nearest centroids
-				model = new NearestCentroid(centroidsToMatrix(), 
+				model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
 					VecUtils.arange(k), new NearestCentroidPlanner()
 						.setScale(false) // already scaled maybe
 						.setSeed(getSeed())

@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
 
-import lombok.NonNull;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
@@ -195,7 +193,7 @@ public abstract class AbstractClusterer
 	 * @param data
 	 * @param planner
 	 */
-	public AbstractClusterer(@NonNull AbstractRealMatrix data, @NonNull BaseClustererPlanner planner) {
+	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
 		this(data, planner, false);
 	}
 	
@@ -206,6 +204,9 @@ public abstract class AbstractClusterer
 		final double[][] ref = new double[m][n];
 		final HashSet<Double> unique = new HashSet<>();
 		
+		/*
+		 * Internally performs the copy
+		 */
 		double entry;
 		for(int i = 0; i < m; i++) {
 			for(int j = 0; j < n; j++) {
@@ -225,10 +226,11 @@ public abstract class AbstractClusterer
 			warn("feature normalization option is set to false; this is discouraged");
 		if(unique.size() == 1)
 			this.singular_value = true;
-		
-		return new Array2DRowRealMatrix(
-			normalized ? normalizer.operate(ref) : ref,
-		false);
+
+		/*
+		 * Don't need to copy again, because already internally copied...
+		 */
+		return new Array2DRowRealMatrix(normalized ? normalizer.operate(ref) : ref, false);
 	}
 	
 	
@@ -429,7 +431,6 @@ public abstract class AbstractClusterer
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {
 		this.dist_metric = sep;
 	}
-	
 	
 	
 

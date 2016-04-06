@@ -9,6 +9,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
+import com.clust4j.TestSuite;
 import com.clust4j.algo.KMeans;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.MatUtils;
@@ -239,4 +240,38 @@ public class KernelTestCases {
 				1e-8));
 		}
 	}
+	
+	@Test
+	public void testMatForDataSets() {
+		String[] sets = new String[]{"iris","wine","breastcancer"};
+		
+		String set;
+		int idx = 0;
+		for(Array2DRowRealMatrix data: new Array2DRowRealMatrix[]
+				{
+					TestSuite.IRIS_DATASET.getData(),
+					TestSuite.WINE_DATASET.getData(),
+					TestSuite.BC_DATASET.getData()
+				}) {
+			set = sets[idx];
+			double[][] mat;
+			
+			for(Kernel k: all_kernels) {
+				for(boolean partial: new boolean[]{true, false}) {
+					mat = Pairwise.getSimilarity(data, k, false, partial);
+					if(MatUtils.containsNaN(mat)) {
+						System.out.println(k + " yields NaN in "+set+", partial=" + partial);
+					}
+					
+					if(MatUtils.containsInf(mat)) {
+						System.out.println(k + " yields Inf in "+set+", partial=" + partial);
+					}
+				}
+			}
+			
+			idx++;
+		}
+	}
+	
+	
 }

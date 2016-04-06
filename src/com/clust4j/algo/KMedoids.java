@@ -1,7 +1,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -13,8 +12,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
-import com.clust4j.kernel.CircularKernel;
-import com.clust4j.kernel.LogKernel;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -52,17 +49,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	private static final long serialVersionUID = -4468316488158880820L;
 	final public static GeometricallySeparable DEF_DIST = Distance.MANHATTAN;
 	final public static int DEF_MAX_ITER = 10;
-	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
 	
-	static {
-		UNSUPPORTED_METRICS = new HashSet<>();
-		UNSUPPORTED_METRICS.addAll(KMeans.UNSUPPORTED_METRICS);
-		UNSUPPORTED_METRICS.add(CircularKernel.class);
-		UNSUPPORTED_METRICS.add(LogKernel.class);
-	}
-	
-	@Override protected HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics(){ return UNSUPPORTED_METRICS; }
-
 	/**
 	 * Stores the indices of the current medoids. Each index,
 	 * 0 thru k-1, corresponds to the class label for the cluster.

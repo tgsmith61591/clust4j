@@ -383,8 +383,42 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	}
 	
 	@Test
-	public void findBestDistMetric() {
+	public void testBestDistIris() {
 		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		findBestDistMetric(ds,3);
+	}
+	
+	@Test
+	public void testBestDistWine() {
+		DataSet ds = TestSuite.WINE_DATASET.shuffle();
+		findBestDistMetric(ds,3);
+	}
+	
+	@Test
+	public void testBestDistBC() {
+		DataSet ds = TestSuite.BC_DATASET.shuffle();
+		findBestDistMetric(ds,2);
+	}
+	
+	@Test
+	public void testBestKernIris() {
+		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+		findBestKernelMetric(ds,3);
+	}
+	
+	@Test
+	public void testBestKernWine() {
+		DataSet ds = TestSuite.WINE_DATASET.shuffle();
+		findBestKernelMetric(ds,3);
+	}
+	
+	@Test
+	public void testBestKernBC() {
+		DataSet ds = TestSuite.BC_DATASET.shuffle();
+		findBestKernelMetric(ds,2);
+	}
+	
+	static void findBestDistMetric(DataSet ds, int k) {
 		final Array2DRowRealMatrix d = ds.getData();
 		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
@@ -396,17 +430,17 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setMetric(dist);
+			KMeansPlanner km = new KMeansPlanner(k).setScale(true).setMetric(dist);
 			double i = -1;
 			
 			model = km.buildNewModelInstance(d).fit();
-			if(model.getK() != 3) // gets modified if totally equal
+			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			
 			i = model.indexAffinityScore(actual);
 			
 
-			System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
+			//System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
 			if(i > ia) {
 				ia = i;
 				best = model.getSeparabilityMetric();
@@ -417,9 +451,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		System.out.println("BEST: " + best.getName() + ", " + ia);
 	}
 	
-	@Test
-	public void findBestKernelMetric() {
-		DataSet ds = TestSuite.IRIS_DATASET.shuffle();
+	static void findBestKernelMetric(DataSet ds, int k) {
 		Array2DRowRealMatrix d = ds.getData();
 		final int[] actual = ds.getLabels();
 		
@@ -432,19 +464,18 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansPlanner km = new KMeansPlanner(3).setScale(true).setMetric(dist);
+			KMeansPlanner km = new KMeansPlanner(k).setScale(true).setMetric(dist);
 			double i = -1;
 			
 			model = km.buildNewModelInstance(d);
-			System.out.println(dist);
 			model.fit();
-			if(model.getK() != 3) // gets modified if totally equal
+			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			
 			i = model.indexAffinityScore(actual);
 			
 
-			System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
+			//System.out.println(model.getSeparabilityMetric().getName() + ", " + i);
 			if(i > ia) {
 				ia = i;
 				best = model.getSeparabilityMetric();
@@ -513,5 +544,11 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			idcs.add(i);
 		
 		assertTrue(idcs.size() == 150);
+	}
+	
+	@Test
+	public void testPredict() {
+		KMeans k = new KMeans(data_, 3).fit();
+		System.out.println("KMeans prediction affinity: " + k.indexAffinityScore(k.predict(data_)));
 	}
 }

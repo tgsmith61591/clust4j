@@ -10,10 +10,8 @@ import com.clust4j.metrics.scoring.UnsupervisedEvaluationMetric;
  * @author Taylor G Smith
  */
 public interface BaseClassifier extends java.io.Serializable {
-	public final static SupervisedEvaluationMetric DEF_SUPERVISED_METRIC = 
-		BinomialClassificationScoring.ACCURACY;
-	public final static UnsupervisedEvaluationMetric DEF_UNSUPERVISED_METRIC =
-		SilhouetteScore.getInstance();
+	public final static SupervisedEvaluationMetric DEF_SUPERVISED_METRIC = BinomialClassificationScoring.ACCURACY;
+	public final static UnsupervisedEvaluationMetric DEF_UNSUPERVISED_METRIC = SilhouetteScore.getInstance();
 	
 	/**
 	 * Returns a copy of the assigned class labels in

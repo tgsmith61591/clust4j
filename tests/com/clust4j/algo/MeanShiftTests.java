@@ -656,4 +656,10 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			assertTrue(model.dist_metric.equals(d)); // assert DID change
 		}
 	}
+	
+	@Test
+	public void testPredict() {
+		MeanShift a = new MeanShift(data_).fit();
+		System.out.println("MeanShift prediction affinity: " + a.indexAffinityScore(a.predict(data_)));
+	}
 }

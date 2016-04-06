@@ -7,12 +7,22 @@ import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.CauchyKernel;
+import com.clust4j.kernel.CircularKernel;
+import com.clust4j.kernel.GeneralizedMinKernel;
+import com.clust4j.kernel.HyperbolicTangentKernel;
+import com.clust4j.kernel.InverseMultiquadricKernel;
 import com.clust4j.kernel.Kernel;
+import com.clust4j.kernel.LogKernel;
+import com.clust4j.kernel.MinKernel;
+import com.clust4j.kernel.MultiquadricKernel;
+import com.clust4j.kernel.PolynomialKernel;
+import com.clust4j.kernel.PowerKernel;
+import com.clust4j.kernel.SplineKernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -28,6 +38,34 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final public static double DEF_CONVERGENCE_TOLERANCE = 0.005; // Not same as Convergeable.DEF_TOL
 	final public static int DEF_K = BaseNeighborsModel.DEF_K;
 	final public static InitializationStrategy DEF_INIT = InitializationStrategy.AUTO;
+	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
+	
+	static {
+		UNSUPPORTED_METRICS = new HashSet<>();
+		
+		/*
+		 * Add all binary distances
+		 */
+		for(Distance d: Distance.binaryDistances())
+			UNSUPPORTED_METRICS.add(d.getClass());
+		
+		/*
+		 * Kernels that conditional positive def or 
+		 * may propagate NaNs or Infs or 100% zeros
+		 */
+		UNSUPPORTED_METRICS.add(CauchyKernel.class);
+		UNSUPPORTED_METRICS.add(CircularKernel.class);
+		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
+		UNSUPPORTED_METRICS.add(HyperbolicTangentKernel.class);
+		UNSUPPORTED_METRICS.add(InverseMultiquadricKernel.class);
+		UNSUPPORTED_METRICS.add(LogKernel.class);
+		UNSUPPORTED_METRICS.add(MinKernel.class);
+		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
+		UNSUPPORTED_METRICS.add(PolynomialKernel.class);
+		UNSUPPORTED_METRICS.add(PowerKernel.class);
+		UNSUPPORTED_METRICS.add(SplineKernel.class);
+	}
+	
 	
 	protected InitializationStrategy init;
 	final protected int maxIter;
@@ -286,7 +324,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	@Override
 	final public boolean isValidMetric(GeometricallySeparable geo) {
-		return !getUnsupportedMetrics().contains(geo.getClass());
+		return !UNSUPPORTED_METRICS.contains(geo.getClass());
 	}
 	
 	@Override
@@ -316,22 +354,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 
-
-
-	/**
-	 * Returns a matrix with a reference to centroids. 
-	 * Use with care (only internally).
-	 * @return Array2DRowRealMatrix
-	 */
-	protected Array2DRowRealMatrix centroidsToMatrix() {
-		double[][] c = new double[k][];
-		
-		int i = 0;
-		for(double[] row: centroids)
-			c[i++] = row;
-		
-		return new Array2DRowRealMatrix(c, false);
-	}
 	
 	@Override
 	public boolean didConverge() {
@@ -403,6 +425,12 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		// Propagates ModelNotFitException
 		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
 	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		return CentroidUtils.predict(this, newData);
+	}
 
 	/** {@inheritDoc} */
 	@Override
@@ -472,11 +500,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		return clust_cost;
 	}
-	
-	/**
-	 * Each algo has a different set of algos they can't support
-	 * @return
-	 */
-	protected abstract HashSet<Class<? extends GeometricallySeparable>> getUnsupportedMetrics();
+
 	protected GeometricallySeparable defMetric() { return AbstractClusterer.DEF_DIST; }
 }

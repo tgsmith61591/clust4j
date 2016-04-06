@@ -179,6 +179,28 @@ public class MatTests {
 	}
 	
 	@Test
+	public void testPosInf() {
+		final double[][] data = new double[][] {
+			new double[] {0.000, 	 0.000,     0.000},
+			new double[] {1.000,     Double.POSITIVE_INFINITY,     1.000},
+			new double[] {3.000,     3.000,     3.000}
+		};
+		
+		assertTrue(MatUtils.containsInf(data));
+	}
+	
+	@Test
+	public void testNegInf() {
+		final double[][] data = new double[][] {
+			new double[] {0.000, 	 0.000,     0.000},
+			new double[] {1.000,     Double.NEGATIVE_INFINITY,     1.000},
+			new double[] {3.000,     3.000,     3.000}
+		};
+		
+		assertTrue(MatUtils.containsInf(data));
+	}
+	
+	@Test
 	public void testFlatten() {
 		final double[] a = new double[]{0,0,0,1,1,1,3,3,3};
 		

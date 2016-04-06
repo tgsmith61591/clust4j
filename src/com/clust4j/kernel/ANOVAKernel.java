@@ -45,14 +45,15 @@ public class ANOVAKernel extends RadialBasisKernel {
 	
 	@Override
 	public double getPartialSimilarity(final double[] a, final double[] b) {
-		final double[] xMinY2 = VecUtils.pow( VecUtils.subtractForceSerial(a, b), 2 );
-		final double[] sigmaXY2 = VecUtils.scalarMultiply(xMinY2, -getSigma());
+		VecUtils.checkDims(a, b);
 		
-		double sum = 0;
-		for(double d: sigmaXY2)
-			sum += FastMath.exp(d);
+		double s = 0, diff;
+		for(int i = 0; i < a.length; i++) {
+			diff = a[i] - b[i];
+			s += FastMath.exp((diff * diff) * -getSigma());
+		}
 		
-		return sum;
+		return s;
 	}
 	
 	@Override
