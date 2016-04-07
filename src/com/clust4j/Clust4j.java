@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import lombok.NonNull;
-
 /**
  * The absolute super type for all clust4j objects (models and datasets)
  * that should be able to commonly serialize their data.
@@ -38,7 +36,7 @@ public abstract class Clust4j implements java.io.Serializable {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static Clust4j loadObject(@NonNull final FileInputStream fis) throws IOException, ClassNotFoundException {
+	public static Clust4j loadObject(final FileInputStream fis) throws IOException, ClassNotFoundException {
 		ObjectInputStream in = null;
 		Clust4j bm = null;
 			
@@ -60,7 +58,7 @@ public abstract class Clust4j implements java.io.Serializable {
 	 * @param fos
 	 * @throws IOException
 	 */
-	public void saveObject(@NonNull final FileOutputStream fos) throws IOException {
+	public void saveObject(final FileOutputStream fos) throws IOException {
 		ObjectOutputStream out = null;
 		
 		try {

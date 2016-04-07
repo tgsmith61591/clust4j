@@ -285,7 +285,7 @@ public class BufferedMatrixReader implements Loggable {
 	 * @param setup
 	 * @throws MatrixParseException
 	 */
-	private BufferedMatrixReader(MatrixReaderSetup setup) throws MatrixParseException {
+	protected BufferedMatrixReader(MatrixReaderSetup setup) throws MatrixParseException {
 		this.setup = setup;
 		this.hasWarnings = setup.hasWarnings();
 	}

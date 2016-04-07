@@ -17,10 +17,11 @@ package com.clust4j.data;
 
 import static org.junit.Assert.*;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -439,55 +440,6 @@ public class TestDataSet
 	}
 	
 	@Test
-	public void testFileNotFound() {
-		try {
-			ExampleDataSets.datasetLoader("fake_dataset.data");
-		} catch(RuntimeException r) {
-			if(!(r.getCause() instanceof FileNotFoundException))
-				fail();
-		}
-	}
-	
-	@Test
-	public void testClassCast() {
-		
-		boolean clzcst = false;
-		try {
-			/*
-			 * This is a hard exception to mimic... 
-			 * we'll generate an anonymous class to try
-			 * to load a class that doesn't exist in the classpath
-			 */
-			new SerializableObject(){
-				private static final long serialVersionUID = -1079143488798469266L;
-	
-				@Override
-				public void foo() {
-					;
-				}
-			}.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
-			
-			/*
-			 * Now try loading it in...
-			 */
-			ExampleDataSets.datasetLoader(TestSuite.tmpSerPath);
-		} catch(IOException e) {
-			e.printStackTrace();
-		} catch(RuntimeException r) {
-			if(r.getCause() instanceof ClassCastException)
-				clzcst = true;
-		} finally {
-			try {
-				Files.delete(TestSuite.path);
-			} catch(Exception e) {
-			}
-			
-			if(!clzcst)
-				fail();
-		}
-	}
-	
-	@Test
 	public void testConst1() {
 		double[][] d = IRIS.getData().getDataRef();
 		int[] labs= IRIS.getLabels();
@@ -711,5 +663,57 @@ public class TestDataSet
 		
 		p.getDataRef().getDataRef()[0][0] = 1_000_000;
 		assertFalse(mat_ref[0][0] == p.getDataRef().getDataRef()[0][0]);
+	}
+	
+	@Test
+	public void testWrite1() throws IOException {
+		String path = "iris.csv";
+		final File file= new File(path);
+		Path ppath = FileSystems.getDefault().getPath(path);
+		
+		try {
+			TestSuite.IRIS_DATASET.toFlatFile(true, file);
+		}finally{
+			Files.delete(ppath);
+		}
+	}
+	
+	@Test
+	public void testWrite2() throws IOException {
+		String path = "iris.csv";
+		final File file= new File(path);
+		Path ppath = FileSystems.getDefault().getPath(path);
+		
+		try {
+			TestSuite.IRIS_DATASET.toFlatFile(false, file);
+		}finally{
+			Files.delete(ppath);
+		}
+	}
+	
+	@Test
+	public void testWrite3() throws IOException {
+		String path = "iris.csv";
+		final File file= new File(path);
+		Path ppath = FileSystems.getDefault().getPath(path);
+		
+		try {
+			TestSuite.IRIS_DATASET.toFlatFile(true, file, '|');
+		}finally{
+			Files.delete(ppath);
+		}
+	}
+	
+	@Test
+	public void testWrite4() throws IOException {
+		String path = "iris.csv";
+		final File file= new File(path);
+		Path ppath = FileSystems.getDefault().getPath(path);
+		
+		try {
+			TestSuite.IRIS_DATASET.toFlatFile(false, file, '|');
+		}finally{
+			Files.delete(ppath);
+		}
 	}
 }

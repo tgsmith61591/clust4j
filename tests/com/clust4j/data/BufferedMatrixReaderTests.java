@@ -933,4 +933,110 @@ public class BufferedMatrixReaderTests {
 			Files.delete(path);
 		}
 	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testEmpty() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				""
+			};
+			
+			writeCSV(o);
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testOneRowNoConventionalSep() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"1*1*1"
+			};
+			
+			writeCSV(o);
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testOrphanedHeader() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"column_a column_b column_c"
+			};
+			
+			writeCSV(o);
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testInconsistentSeparator() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"1 1 1",
+				"2,2,2",
+				"3;3;3"
+			};
+			
+			writeCSV(o);
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test(expected=MatrixParseException.class)
+	public void testLurkingAlpha() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"1 1 1",
+				"2 a 2",
+				"3 3 3"
+			};
+			
+			writeCSV(o);
+			readCSV();
+		} finally {
+			Files.delete(path);
+		}
+	}
+	
+	@Test
+	public void coverageLove() throws IOException {
+		try {
+			Object[] o = new Object[]{
+				"1 1 1",
+				"2 2 2",
+				"3 3 3"
+			};
+			
+			writeCSV(o);
+			byte[] bits = BufferedMatrixReader.fileToBytes(new File(file));
+			
+			MatrixReaderSetup mrs = new MatrixReaderSetup(bits);
+			mrs.debug("coverage love!");
+			mrs.trace("coverage love!");
+			
+			BufferedMatrixReader bmr = new BufferedMatrixReader(mrs);
+			bmr.warn("coverage warn!");
+			bmr.trace("coverage love!");
+			bmr.debug("coverage love!");
+			
+			try {
+				bmr.error(new RuntimeException("coverage error!"));
+			} catch(RuntimeException r) {
+				// expected this.
+			}
+			
+		} finally {
+			Files.delete(path);
+		}
+	}
 }

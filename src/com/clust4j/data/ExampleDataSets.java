@@ -15,30 +15,8 @@
  *******************************************************************************/
 package com.clust4j.data;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import com.clust4j.GlobalState;
-
 
 public class ExampleDataSets {
-	
-	/**
-	 * Build the path
-	 * @param filenm
-	 * @return
-	 */
-	private static String formulatePath(String filenm) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(GlobalState.IOConf.data_dir);
-		sb.append(File.separator);
-		sb.append(filenm);
-		sb.append(".");
-		sb.append(GlobalState.IOConf.c4j_suffix);
-		return sb.toString();
-	}
 	
 	/**
 	 * 1. Title: Iris Plants Database Updated Sept 21 by C.Blake - Added
@@ -109,7 +87,7 @@ public class ExampleDataSets {
 	 * @see <a href="https://archive.ics.uci.edu/ml/datasets/Iris">ics.uci.edu</a>
 	 */
 	public final static DataSet loadIris() {
-		return datasetLoader(formulatePath("iris"));
+		return IrisLoader.load();
 	}
 	
 	
@@ -210,7 +188,7 @@ public class ExampleDataSets {
 	 * @see <a href="https://archive.ics.uci.edu/ml/datasets/Wine">ics.uci.edu</a>
 	 */
 	public static DataSet loadWine() {
-		return datasetLoader(formulatePath("wine"));
+		return WineLoader.load();
 	}
 	
 	
@@ -351,29 +329,6 @@ public class ExampleDataSets {
 	 * @return the breast cancer dataset
 	 */
 	public static DataSet loadBreastCancer() {
-		return datasetLoader(formulatePath("breastcancer"));
-	}
-	
-	protected static DataSet datasetLoader(final String location) {
-		Object obj = null;
-		DataSet bc = null;
-		
-		try {
-			// Can throw classnotfound
-			obj = DataSet.loadObject(new FileInputStream(location));
-			
-			// Can throw classcast
-			bc = (DataSet)obj;
-		} catch(FileNotFoundException f) {
-			throw new RuntimeException("File not found: " + location, f);
-		} catch(ClassNotFoundException c) { // Can't mimic this one in test...
-			throw new RuntimeException("Cannot find classtype", c);
-		} catch(ClassCastException c) {
-			throw new RuntimeException(obj.getClass() + " cannot be cast to DataSet", c);
-		} catch(IOException i) {
-			throw new RuntimeException("exception occurred in dataset loading: ", i);
-		}
-		
-		return bc;
+		return BreastCancerLoader.load();
 	}
 }

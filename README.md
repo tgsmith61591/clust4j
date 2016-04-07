@@ -12,10 +12,25 @@ ____
 
 ___
 ### Release notes:
-There are currently no formal releases of clust4j. However, this repository has been set up for easy cloning into your Eclipse environment. The classpath includes all dependencies required. Once a formal release point has been reached, a dependency-inclusive jar file will be uploaded, but for now, simply use:
+__Clust4j 1.0.0 is now available!__ The dependency-inclusive jar file is located in the root directory. To use it, simply reference the jar in your build path. Alternatively, clone the project and do with it what you please:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
+```
+
+___
+### Clust4j includes some datasets:
+- Iris
+- Wine
+- Breast cancer
+
+Usage:
+
+```java
+DataSet data;
+data = ExampleDataSets.loadIris();
+data = ExampleDataSets.loadWine();
+data = ExampleDataSets.loadBreastCancer();
 ```
 
 

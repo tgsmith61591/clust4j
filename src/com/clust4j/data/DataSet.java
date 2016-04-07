@@ -15,6 +15,10 @@
  *******************************************************************************/
 package com.clust4j.data;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -521,6 +525,88 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	 */
 	public void stdOut() {
 		System.out.println(this.toString());
+	}
+	
+	/**
+	 * Write the dataset to a CSV
+	 * @param header
+	 * @throws IOException
+	 */
+	public void toFlatFile(boolean header, final File file) throws IOException {
+		toFlatFile(header, file, ',');
+	}
+	
+	/**
+	 * Write the dataset to a flat file
+	 * @param header
+	 * @param sep
+	 * @throws IOException
+	 */
+	public void toFlatFile(boolean header, final File file, char sep) throws IOException {
+		synchronized(this) {
+			boolean target = null != labels;
+			
+			int idx = 0, row_idx = 0;
+			Object[] new_row;
+			String[] output = new String[this.numRows() + (header?1:0)];
+			
+			/*
+			 * If header, append.
+			 */
+			if(header) {
+				new_row = new Object[this.headers.length + (target?1:0)];
+				for(int i = 0; i < this.headers.length; i++) {
+					new_row[i] = this.headers[i];
+				}
+				
+				if(target) new_row[new_row.length - 1] = "target";
+				output[idx++] = toString(new_row, sep);
+			}
+			
+			/*
+			 * Stringify data...
+			 */
+			for(double[] row: this.data.getData()) {
+				new_row = new Object[this.headers.length + (target?1:0)];
+				for(int i = 0; i < row.length; i++) {
+					new_row[i] = row[i];
+				}
+				
+				if(target) new_row[new_row.length - 1] = this.labels[row_idx++];
+				output[idx++] = toString(new_row, sep);
+			}
+			
+			/*
+			 * Write the bytes...
+			 */
+			BufferedWriter bw = null;
+			try {
+				bw = new BufferedWriter(new FileWriter(file));
+				
+				String out, newline = System.getProperty("line.separator");
+				for(int i = 0; i < output.length; i++) {
+					out = output[i];
+					bw.write(out);
+					if(i!=output.length-1) bw.write(newline);
+				}
+			} finally {
+				try {
+					bw.close();
+				} catch(IOException e) {
+					// ignore...
+				}
+			}
+		}
+	}
+	
+	private static String toString(Object[] obj, char sep) {
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < obj.length; i++) {
+			sb.append(obj[i]);
+			if(i!=obj.length - 1) sb.append(sep);
+		}
+		
+		return sb.toString();
 	}
 
 	@Override
