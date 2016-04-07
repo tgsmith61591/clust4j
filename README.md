@@ -143,7 +143,6 @@ Alternatively, the `silhouetteScore` method can be called as follows:
 
 ```java
 km.silhouetteScore(); // Uses internally predicted labels
-km.silhouetteScore(Distance.HAMMING); // Define a different metric, if you wish
 ```
 
 
