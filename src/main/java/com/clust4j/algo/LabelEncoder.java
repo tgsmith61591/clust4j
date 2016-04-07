@@ -18,8 +18,6 @@ package com.clust4j.algo;
 import java.util.LinkedHashSet;
 import java.util.TreeMap;
 
-import lombok.Synchronized;
-
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.VecUtils;
 
@@ -80,30 +78,30 @@ public class LabelEncoder extends BaseModel implements java.io.Serializable {
 	}
 	
 	@Override
-	@Synchronized("fitLock") 
 	public LabelEncoder fit() {
-		
-		if(fit) 
-			return this;
-		
-		int nextLabel = 0, label;
-		Integer val;
-		for(int i = 0; i < n; i++) {
-			label = rawLabels[i];
-			val = encodedMapping.get(label);
+		synchronized(fitLock) {
+			if(fit) 
+				return this;
 			
-			if(null == val) { // not yet seen
-				val = nextLabel++;
-				encodedMapping.put(label, val);
-				reverseMapping.put(val, label);
+			int nextLabel = 0, label;
+			Integer val;
+			for(int i = 0; i < n; i++) {
+				label = rawLabels[i];
+				val = encodedMapping.get(label);
+				
+				if(null == val) { // not yet seen
+					val = nextLabel++;
+					encodedMapping.put(label, val);
+					reverseMapping.put(val, label);
+				}
+				
+				encodedLabels[i] = val;
 			}
 			
-			encodedLabels[i] = val;
+			
+			fit = true;
+			return this;
 		}
-		
-		
-		fit = true;
-		return this;
 	}
 	
 	public Integer encodeOrNull(int label) {

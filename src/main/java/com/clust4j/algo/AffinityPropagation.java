@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
-import lombok.Synchronized;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -622,270 +620,270 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	
 	@Override
-	@Synchronized("fitLock")
 	public AffinityPropagation fit() {
-			
-		try {
-			if(null != labels)
-				return this;
-			
-			
-			
-			// Init labels
-			final LogTimer timer = new LogTimer();
-			labels = new int[m];
-			
-			/*
-			 * All elements singular
-			 */
-			if(this.singular_value) {
-				warn("algorithm converged immediately due to all elements being equal in input matrix");
-				this.converged = true;
-				this.fitSummary.add(new Object[]{
-					0,converged,timer.formatTime(),timer.formatTime(),1,timer.wallMsg()
-				});
+		synchronized(fitLock) {
+			try {
+				if(null != labels)
+					return this;
 				
-				sayBye(timer);
-				return this;
-			}
-			
-			
-			sim_mat = computeSmoothedSimilarity(data.getData(), getSeparabilityMetric(), getSeed(), addNoise);
-			info("computed similarity matrix and smoothed degeneracies in " + timer.toString());
-			
-			
-			// Affinity propagation uses two matrices: the responsibility 
-			// matrix, R, and the availability matrix, A
-			double[][] A = new double[m][m];
-			double[][] R = new double[m][m];
-			double[][] tmp = new double[m][m]; // Intermediate staging...
-			
-			
-			// Begin here
-			int[] I = new int[m];
-			double[][] e = new double[m][iterBreak];
-			double[] Y;		// vector of arg maxes
-			double[] Y2;	// vector of maxes post neg inf
-			double[] sum_e;
-			
-			
-			final LogTimer iterTimer = new LogTimer();
-			info("beginning affinity computations " + timer.wallMsg());
-			
-			
-			
-			long iterStart = Long.MAX_VALUE;
-			for(iterCt = 0; iterCt < maxIter; iterCt++) {
-				iterStart = iterTimer.now();
+				
+				
+				// Init labels
+				final LogTimer timer = new LogTimer();
+				labels = new int[m];
 				
 				/*
-				 * First piece in place
+				 * All elements singular
 				 */
-				Y = new double[m];
-				Y2 = new double[m]; // Second max for each row
-				affinityPiece1(A, sim_mat, tmp, I, Y, Y2);
-				
-				
-				/*
-				 * Second piece in place
-				 */
-				final double[] columnSums = new double[m];
-				affinityPiece2(columnSums, tmp, I, sim_mat, R, Y, Y2, damping);
-				
-				
-				/*
-				 * Third piece in place
-				 */
-				final double[] mask = new double[m];
-				affinityPiece3(tmp, columnSums, A, R, mask, damping);
+				if(this.singular_value) {
+					warn("algorithm converged immediately due to all elements being equal in input matrix");
+					this.converged = true;
+					this.fitSummary.add(new Object[]{
+						0,converged,timer.formatTime(),timer.formatTime(),1,timer.wallMsg()
+					});
 					
-					
-				// Set the mask in `e`
-				MatUtils.setColumnInPlace(e, iterCt % iterBreak, mask);
-				numClusters = (int)VecUtils.sum(mask);
-				
-				
-				
-				if(iterCt >= iterBreak) { // Time to check convergence criteria...
-					sum_e = MatUtils.rowSums(e);
-					
-					// masking
-					int maskCt = 0;
-					for(int i = 0; i < sum_e.length; i++)
-						maskCt += sum_e[i] == 0 || sum_e[i] == iterBreak ? 1 : 0;
-					
-					converged = maskCt == m;
-					
-					if((converged && numClusters > 0) || iterCt == maxIter) {
-						info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
-							" in " + iterTimer.toString());
-						break;
-					} // Else did not converge...
-				} // End outer if
-				
-				
-				fitSummary.add(new Object[]{
-					iterCt, converged, 
-					iterTimer.formatTime( iterTimer.now() - iterStart ),
-					timer.formatTime(),
-					numClusters,
-					timer.wallTime()
-				});
-			} // End for
-
-			
-			
-			if(!converged) warn("algorithm did not converge");
-			else { // needs one last info
-				fitSummary.add(new Object[]{
-					iterCt, converged, 
-					iterTimer.formatTime( iterTimer.now() - iterStart ),
-					timer.formatTime(),
-					numClusters,
-					timer.wallTime()
-				});
-			}
-			
-			
-			info("labeling clusters from availability and responsibility matrices");
-			
-			
-			// sklearn line: I = np.where(np.diag(A + R) > 0)[0]
-			final ArrayList<Integer> arWhereOver0 = new ArrayList<>();
-			
-			// Get diagonal of A + R and add to arWhereOver0 if > 0
-			// Could do this: MatUtils.diagFromSquare(MatUtils.add(A, R));
-			// But takes 3M time... this takes M
-			for(int i = 0; i < m; i++)
-				if(A[i][i] + R[i][i] > 0)
-					arWhereOver0.add(i);
-			
-			// Reassign to array, so whole thing takes 1M + K rather than 3M + K
-			I = new int[arWhereOver0.size()];
-			for(int j = 0; j < I.length; j++) I[j] = arWhereOver0.get(j);
-			
-			
-			
-			
-			// Assign final K -- sklearn line: K = I.size  # Identify exemplars
-			numClusters = I.length;
-			info(numClusters+" cluster" + (numClusters!=1?"s":"") + " identified");
-			
-			
-			
-			// Assign the labels
-			if(numClusters > 0) {
-				
-				/*
-				 * I holds the columns we want out of sim_mat,
-				 * retrieve this cols, do a row-wise argmax to get 'c'
-				 * sklearn line: c = np.argmax(S[:, I], axis=1)
-				 */
-				double[][] over0cols = new double[m][numClusters];
-				int over_idx = 0;
-				for(int i: I)
-					MatUtils.setColumnInPlace(over0cols, over_idx++, MatUtils.getColumn(sim_mat, i));
-
-				
-				
-				/*
-				 * Identify clusters
-				 * sklearn line: c[I] = np.arange(K)  # Identify clusters
-				 */
-				int[] c = MatUtils.argMax(over0cols, Axis.ROW);
-				int k = 0;
-				for(int i: I)
-					c[i] = k++;
-				
-				
-				/* Refine the final set of exemplars and clusters and return results
-				 * sklearn:
-				 * 
-				 *  for k in range(K):
-			     *      ii = np.where(c == k)[0]
-			     *      j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
-			     *      I[k] = ii[j]
-				 */
-				ArrayList<Integer> ii = null;
-				int[] iii = null;
-				for(k = 0; k < numClusters; k++) {
-					// indices where c == k; sklearn line: 
-					// ii = np.where(c == k)[0]
-					ii = new ArrayList<Integer>();
-					for(int u = 0; u < c.length; u++)
-						if(c[u] == k)
-							ii.add(u);
-					
-					// Big block to break down sklearn process
-					// overall sklearn line: j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
-					iii = new int[ii.size()]; // convert to int array for MatUtils
-					for(int j = 0; j < iii.length; j++) iii[j] = ii.get(j);
-					
-					
-					// sklearn line: S[ii[:, np.newaxis], ii]
-					double[][] cube = MatUtils.getRows(MatUtils.getColumns(sim_mat, iii), iii);
-					double[] colSums = MatUtils.colSums(cube);
-					final int argMax = VecUtils.argMax(colSums);
-					
-					
-					// sklearn: I[k] = ii[j]
-					I[k] = iii[argMax];
+					sayBye(timer);
+					return this;
 				}
 				
 				
-				// sklearn line: c = np.argmax(S[:, I], axis=1)
-				double[][] colCube = MatUtils.getColumns(sim_mat, I);
-				c = MatUtils.argMax(colCube, Axis.ROW);
+				sim_mat = computeSmoothedSimilarity(data.getData(), getSeparabilityMetric(), getSeed(), addNoise);
+				info("computed similarity matrix and smoothed degeneracies in " + timer.toString());
 				
 				
-				// sklearn line: c[I] = np.arange(K)
-				for(int j = 0; j < I.length; j++) // I.length == K, == numClusters
-					c[I[j]] = j;
+				// Affinity propagation uses two matrices: the responsibility 
+				// matrix, R, and the availability matrix, A
+				double[][] A = new double[m][m];
+				double[][] R = new double[m][m];
+				double[][] tmp = new double[m][m]; // Intermediate staging...
 				
 				
-				// sklearn line: labels = I[c]
-				for(int j = 0; j < m; j++)
-					labels[j] = I[c[j]];
+				// Begin here
+				int[] I = new int[m];
+				double[][] e = new double[m][iterBreak];
+				double[] Y;		// vector of arg maxes
+				double[] Y2;	// vector of maxes post neg inf
+				double[] sum_e;
 				
 				
-				/* 
-				 * Reduce labels to a sorted, gapless, list
-				 * sklearn line: cluster_centers_indices = np.unique(labels)
-				 */
-				centroidIndices = new ArrayList<Integer>(numClusters);
-				for(Integer i: labels) // force autobox
-					if(!centroidIndices.contains(i)) // Not race condition because synchronized
-						centroidIndices.add(i);
+				final LogTimer iterTimer = new LogTimer();
+				info("beginning affinity computations " + timer.wallMsg());
 				
-				/*
-				 * final label assignment...
-				 * sklearn line: labels = np.searchsorted(cluster_centers_indices, labels)
-				 */
-				for(int i = 0; i < labels.length; i++)
-					labels[i] = centroidIndices.indexOf(labels[i]);
 				
-			} else {
-				centroids = new ArrayList<>(); // Empty
-				centroidIndices = new ArrayList<>(); // Empty
+				
+				long iterStart = Long.MAX_VALUE;
+				for(iterCt = 0; iterCt < maxIter; iterCt++) {
+					iterStart = iterTimer.now();
+					
+					/*
+					 * First piece in place
+					 */
+					Y = new double[m];
+					Y2 = new double[m]; // Second max for each row
+					affinityPiece1(A, sim_mat, tmp, I, Y, Y2);
+					
+					
+					/*
+					 * Second piece in place
+					 */
+					final double[] columnSums = new double[m];
+					affinityPiece2(columnSums, tmp, I, sim_mat, R, Y, Y2, damping);
+					
+					
+					/*
+					 * Third piece in place
+					 */
+					final double[] mask = new double[m];
+					affinityPiece3(tmp, columnSums, A, R, mask, damping);
+						
+						
+					// Set the mask in `e`
+					MatUtils.setColumnInPlace(e, iterCt % iterBreak, mask);
+					numClusters = (int)VecUtils.sum(mask);
+					
+					
+					
+					if(iterCt >= iterBreak) { // Time to check convergence criteria...
+						sum_e = MatUtils.rowSums(e);
+						
+						// masking
+						int maskCt = 0;
+						for(int i = 0; i < sum_e.length; i++)
+							maskCt += sum_e[i] == 0 || sum_e[i] == iterBreak ? 1 : 0;
+						
+						converged = maskCt == m;
+						
+						if((converged && numClusters > 0) || iterCt == maxIter) {
+							info("converged after " + (iterCt) + " iteration"+(iterCt!=1?"s":"") + 
+								" in " + iterTimer.toString());
+							break;
+						} // Else did not converge...
+					} // End outer if
+					
+					
+					fitSummary.add(new Object[]{
+						iterCt, converged, 
+						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.formatTime(),
+						numClusters,
+						timer.wallTime()
+					});
+				} // End for
+	
+				
+				
+				if(!converged) warn("algorithm did not converge");
+				else { // needs one last info
+					fitSummary.add(new Object[]{
+						iterCt, converged, 
+						iterTimer.formatTime( iterTimer.now() - iterStart ),
+						timer.formatTime(),
+						numClusters,
+						timer.wallTime()
+					});
+				}
+				
+				
+				info("labeling clusters from availability and responsibility matrices");
+				
+				
+				// sklearn line: I = np.where(np.diag(A + R) > 0)[0]
+				final ArrayList<Integer> arWhereOver0 = new ArrayList<>();
+				
+				// Get diagonal of A + R and add to arWhereOver0 if > 0
+				// Could do this: MatUtils.diagFromSquare(MatUtils.add(A, R));
+				// But takes 3M time... this takes M
 				for(int i = 0; i < m; i++)
-					labels[i] = -1; // Missing
+					if(A[i][i] + R[i][i] > 0)
+						arWhereOver0.add(i);
+				
+				// Reassign to array, so whole thing takes 1M + K rather than 3M + K
+				I = new int[arWhereOver0.size()];
+				for(int j = 0; j < I.length; j++) I[j] = arWhereOver0.get(j);
+				
+				
+				
+				
+				// Assign final K -- sklearn line: K = I.size  # Identify exemplars
+				numClusters = I.length;
+				info(numClusters+" cluster" + (numClusters!=1?"s":"") + " identified");
+				
+				
+				
+				// Assign the labels
+				if(numClusters > 0) {
+					
+					/*
+					 * I holds the columns we want out of sim_mat,
+					 * retrieve this cols, do a row-wise argmax to get 'c'
+					 * sklearn line: c = np.argmax(S[:, I], axis=1)
+					 */
+					double[][] over0cols = new double[m][numClusters];
+					int over_idx = 0;
+					for(int i: I)
+						MatUtils.setColumnInPlace(over0cols, over_idx++, MatUtils.getColumn(sim_mat, i));
+	
+					
+					
+					/*
+					 * Identify clusters
+					 * sklearn line: c[I] = np.arange(K)  # Identify clusters
+					 */
+					int[] c = MatUtils.argMax(over0cols, Axis.ROW);
+					int k = 0;
+					for(int i: I)
+						c[i] = k++;
+					
+					
+					/* Refine the final set of exemplars and clusters and return results
+					 * sklearn:
+					 * 
+					 *  for k in range(K):
+				     *      ii = np.where(c == k)[0]
+				     *      j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
+				     *      I[k] = ii[j]
+					 */
+					ArrayList<Integer> ii = null;
+					int[] iii = null;
+					for(k = 0; k < numClusters; k++) {
+						// indices where c == k; sklearn line: 
+						// ii = np.where(c == k)[0]
+						ii = new ArrayList<Integer>();
+						for(int u = 0; u < c.length; u++)
+							if(c[u] == k)
+								ii.add(u);
+						
+						// Big block to break down sklearn process
+						// overall sklearn line: j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
+						iii = new int[ii.size()]; // convert to int array for MatUtils
+						for(int j = 0; j < iii.length; j++) iii[j] = ii.get(j);
+						
+						
+						// sklearn line: S[ii[:, np.newaxis], ii]
+						double[][] cube = MatUtils.getRows(MatUtils.getColumns(sim_mat, iii), iii);
+						double[] colSums = MatUtils.colSums(cube);
+						final int argMax = VecUtils.argMax(colSums);
+						
+						
+						// sklearn: I[k] = ii[j]
+						I[k] = iii[argMax];
+					}
+					
+					
+					// sklearn line: c = np.argmax(S[:, I], axis=1)
+					double[][] colCube = MatUtils.getColumns(sim_mat, I);
+					c = MatUtils.argMax(colCube, Axis.ROW);
+					
+					
+					// sklearn line: c[I] = np.arange(K)
+					for(int j = 0; j < I.length; j++) // I.length == K, == numClusters
+						c[I[j]] = j;
+					
+					
+					// sklearn line: labels = I[c]
+					for(int j = 0; j < m; j++)
+						labels[j] = I[c[j]];
+					
+					
+					/* 
+					 * Reduce labels to a sorted, gapless, list
+					 * sklearn line: cluster_centers_indices = np.unique(labels)
+					 */
+					centroidIndices = new ArrayList<Integer>(numClusters);
+					for(Integer i: labels) // force autobox
+						if(!centroidIndices.contains(i)) // Not race condition because synchronized
+							centroidIndices.add(i);
+					
+					/*
+					 * final label assignment...
+					 * sklearn line: labels = np.searchsorted(cluster_centers_indices, labels)
+					 */
+					for(int i = 0; i < labels.length; i++)
+						labels[i] = centroidIndices.indexOf(labels[i]);
+					
+				} else {
+					centroids = new ArrayList<>(); // Empty
+					centroidIndices = new ArrayList<>(); // Empty
+					for(int i = 0; i < m; i++)
+						labels[i] = -1; // Missing
+				}
+	
+				
+				// Clean up
+				sim_mat = null;
+				
+				// Since cachedA/R are volatile, it's more expensive to make potentially hundreds(+)
+				// of writes to a volatile class member. To save this time, reassign A/R only once.
+				cachedA = A;
+				cachedR = R;				
+				
+				sayBye(timer);
+				
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
 			}
-
-			
-			// Clean up
-			sim_mat = null;
-			
-			// Since cachedA/R are volatile, it's more expensive to make potentially hundreds(+)
-			// of writes to a volatile class member. To save this time, reassign A/R only once.
-			cachedA = A;
-			cachedR = R;				
-			
-			sayBye(timer);
-			
-			return this;
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-			throw e;
 		}
 		
 	} // End fit

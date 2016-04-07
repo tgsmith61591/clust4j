@@ -15,8 +15,6 @@
  *******************************************************************************/
 package com.clust4j.algo.pipeline;
 
-import lombok.Synchronized;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
@@ -30,18 +28,19 @@ public class SupervisedPipeline extends Pipeline<SupervisedClassifierPlanner> {
 		super(planner, pipe);
 	}
 
-	@Synchronized("fitLock") 
 	public AbstractClusterer fit(final AbstractRealMatrix data, int[] y) {
-		AbstractRealMatrix copy = data; // no need to copy, as handled in each processor...
-		
-		// Push through pipeline...
-		for(PreProcessor pre: pipe)
-			copy = pre.operate(copy);
-
-		// Build the model -- the model should handle the dim check internally
-		final AbstractClusterer model = planner.buildNewModelInstance(copy, y);
-		
-		// Fit the model
-		return model.fit();
+		synchronized(fitLock) {
+			AbstractRealMatrix copy = data; // no need to copy, as handled in each processor...
+			
+			// Push through pipeline...
+			for(PreProcessor pre: pipe)
+				copy = pre.operate(copy);
+	
+			// Build the model -- the model should handle the dim check internally
+			final AbstractClusterer model = planner.buildNewModelInstance(copy, y);
+			
+			// Fit the model
+			return model.fit();
+		}
 	}
 }

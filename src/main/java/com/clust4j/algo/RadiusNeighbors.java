@@ -18,8 +18,6 @@ package com.clust4j.algo;
 import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
-import lombok.Synchronized;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -260,74 +258,74 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 	}
 
 	@Override
-	@Synchronized("fitLock") 
 	public RadiusNeighbors fit() {
-		try {
-			if(null != res)
-				return this;
-
-			final LogTimer timer = new LogTimer();
-			Neighborhood initRes = new Neighborhood(tree.queryRadius(fit_X, radius, false));
-			info("queried "+this.alg+" for radius neighbors in " + timer.toString());
-			
-			
-			double[][] dists = initRes.getDistances();
-			int[][] indices  = initRes.getIndices();
-			int[] tmp_ind_neigh, ind_neighbor;
-			double[] tmp_dists, dist_row;
-			
-			
-			for(int ind = 0; ind < indices.length; ind++) {
-				ind_neighbor = indices[ind];
-				dist_row = dists[ind];
+		synchronized(fitLock) {
+			try {
+				if(null != res)
+					return this;
+	
+				final LogTimer timer = new LogTimer();
+				Neighborhood initRes = new Neighborhood(tree.queryRadius(fit_X, radius, false));
+				info("queried "+this.alg+" for radius neighbors in " + timer.toString());
 				
-				// Keep track for summary
-				double v, sum = 0,
-					minDist = Double.POSITIVE_INFINITY, 
-					maxDist = Double.NEGATIVE_INFINITY;
 				
-				int b_count = 0;
-				boolean b_val;
-				boolean[] mask = new boolean[ind_neighbor.length];
-				for(int j = 0; j < ind_neighbor.length; j++) {
-					b_val = ind_neighbor[j] != ind;
-					mask[j] = b_val;
-					v = dist_row[j];
+				double[][] dists = initRes.getDistances();
+				int[][] indices  = initRes.getIndices();
+				int[] tmp_ind_neigh, ind_neighbor;
+				double[] tmp_dists, dist_row;
+				
+				
+				for(int ind = 0; ind < indices.length; ind++) {
+					ind_neighbor = indices[ind];
+					dist_row = dists[ind];
 					
-					if(b_val) {
-						sum += v;
-						minDist = FastMath.min(minDist, v);
-						maxDist = FastMath.max(maxDist, v);
-						b_count++;
+					// Keep track for summary
+					double v, sum = 0,
+						minDist = Double.POSITIVE_INFINITY, 
+						maxDist = Double.NEGATIVE_INFINITY;
+					
+					int b_count = 0;
+					boolean b_val;
+					boolean[] mask = new boolean[ind_neighbor.length];
+					for(int j = 0; j < ind_neighbor.length; j++) {
+						b_val = ind_neighbor[j] != ind;
+						mask[j] = b_val;
+						v = dist_row[j];
+						
+						if(b_val) {
+							sum += v;
+							minDist = FastMath.min(minDist, v);
+							maxDist = FastMath.max(maxDist, v);
+							b_count++;
+						}
 					}
+					
+					tmp_ind_neigh = new int[b_count];
+					tmp_dists = new double[b_count];
+					
+					for(int j = 0, k = 0; j < mask.length; j++) {
+						if(mask[j]) {
+							tmp_ind_neigh[k] = ind_neighbor[j];
+							tmp_dists[k] = dist_row[j];
+							k++;
+						}
+					}
+					
+					indices[ind] = tmp_ind_neigh;
+					dists[ind] = tmp_dists;
+					
+					fitSummary.add(new Object[]{ind, b_count, minDist, (double)sum/(double)b_count, maxDist, timer.wallTime()});
 				}
 				
-				tmp_ind_neigh = new int[b_count];
-				tmp_dists = new double[b_count];
+				res = new Neighborhood(dists, indices);
 				
-				for(int j = 0, k = 0; j < mask.length; j++) {
-					if(mask[j]) {
-						tmp_ind_neigh[k] = ind_neighbor[j];
-						tmp_dists[k] = dist_row[j];
-						k++;
-					}
-				}
-				
-				indices[ind] = tmp_ind_neigh;
-				dists[ind] = tmp_dists;
-				
-				fitSummary.add(new Object[]{ind, b_count, minDist, (double)sum/(double)b_count, maxDist, timer.wallTime()});
-			}
-			
-			res = new Neighborhood(dists, indices);
-			
-			sayBye(timer);
-			return this;
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-			throw e;
-		} // end try/catch
-			
+				sayBye(timer);
+				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			} // end try/catch
+		}
 	}
 
 	@Override

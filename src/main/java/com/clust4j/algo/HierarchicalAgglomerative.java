@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
-import lombok.Synchronized;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -613,57 +611,57 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	}
 
 	@Override
-	@Synchronized("fitLock") 
 	public HierarchicalAgglomerative fit() {
-			
-		try {
-			if(null != labels) // already fit
-				return this;
-			
-			final LogTimer timer = new LogTimer();
-			labels = new int[m];
-			
-			/*
-			 * Corner case: k = 1 (due to singularity?)
-			 */
-			if(1 == k) {
-				this.fitSummary.add(new Object[]{
-					0,0,Double.NaN,timer.formatTime(),timer.formatTime(),timer.wallMsg()
-				});
+		synchronized(fitLock) {
+			try {
+				if(null != labels) // already fit
+					return this;
 				
-				warn("converged immediately due to " + (this.singular_value ? 
-						"singular nature of input matrix" : "k = 1"));
+				final LogTimer timer = new LogTimer();
+				labels = new int[m];
+				
+				/*
+				 * Corner case: k = 1 (due to singularity?)
+				 */
+				if(1 == k) {
+					this.fitSummary.add(new Object[]{
+						0,0,Double.NaN,timer.formatTime(),timer.formatTime(),timer.wallMsg()
+					});
+					
+					warn("converged immediately due to " + (this.singular_value ? 
+							"singular nature of input matrix" : "k = 1"));
+					sayBye(timer);
+					return this;
+				}
+				
+				dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
+				
+				// Log info...
+				info("computed distance matrix in " + timer.toString());
+				
+				
+				// Get the tree class for logging...
+				LogTimer treeTimer = new LogTimer();
+				this.tree = this.linkage.buildTree(this);
+				
+				// Tree build
+				info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
+				double[][] children = tree.linkage();
+				
+				
+				
+				// Cut the tree
+				labels = hcCut(num_clusters, children, m);
+				labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
+				
+				
 				sayBye(timer);
+				dist_vec = null;
 				return this;
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
 			}
-			
-			dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
-			
-			// Log info...
-			info("computed distance matrix in " + timer.toString());
-			
-			
-			// Get the tree class for logging...
-			LogTimer treeTimer = new LogTimer();
-			this.tree = this.linkage.buildTree(this);
-			
-			// Tree build
-			info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
-			double[][] children = tree.linkage();
-			
-			
-			
-			// Cut the tree
-			labels = hcCut(num_clusters, children, m);
-			labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
-			
-			
-			sayBye(timer);
-			dist_vec = null;
-			return this;
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-			throw e;
 		}
 		
 	} // End train

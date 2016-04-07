@@ -26,8 +26,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import lombok.Synchronized;
-
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -1516,65 +1514,65 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	@Synchronized("fitLock") 
 	public HDBSCAN fit() {
-			
-		try {
-			if(null!=labels) // Then we've already fit this...
+		synchronized(fitLock) {	
+			try {
+				if(null!=labels) // Then we've already fit this...
+					return this;
+				
+				// First get the dist matrix
+				info("Model fit:");
+				final LogTimer timer = new LogTimer();
+				
+				// Meant to prevent multiple .getData() copy calls
+				dataData = this.data.getData();
+				
+				// Build the tree
+				info("constructing HDBSCAN single linkage dendrogram: " + algo);
+				this.tree = algo.initTree(this);
+				
+				
+				LogTimer treeTimer = new LogTimer();
+				final double[][] lab_tree = tree.link(); // returns the result of the label(..) function
+				info("completed tree building in " + treeTimer.toString());
+				
+	
+				info("converting tree to labels ("+lab_tree.length+" x "+lab_tree[0].length+")");
+				LogTimer labTimer = new LogTimer();
+				labels = treeToLabels(dataData, lab_tree, min_cluster_size, this);
+				
+				
+				// Wrap up...
+				info("completed cluster labeling in " + labTimer.toString());
+				
+				
+				// Count missing
+				numNoisey = 0;
+				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+				
+				
+				int nextLabel = LabelHSetFactory.build(labels).size() - (numNoisey > 0 ? 1 : 0);
+				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+						" classified noise");
+				
+				// Need to encode labels to maintain order
+				labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+				
+				
+				sayBye(timer);
+				
+				// Clean anything with big overhead..
+				dataData = null;
+				dist_mat = null;
+				tree = null;
+				
 				return this;
-			
-			// First get the dist matrix
-			info("Model fit:");
-			final LogTimer timer = new LogTimer();
-			
-			// Meant to prevent multiple .getData() copy calls
-			dataData = this.data.getData();
-			
-			// Build the tree
-			info("constructing HDBSCAN single linkage dendrogram: " + algo);
-			this.tree = algo.initTree(this);
-			
-			
-			LogTimer treeTimer = new LogTimer();
-			final double[][] lab_tree = tree.link(); // returns the result of the label(..) function
-			info("completed tree building in " + treeTimer.toString());
-			
-
-			info("converting tree to labels ("+lab_tree.length+" x "+lab_tree[0].length+")");
-			LogTimer labTimer = new LogTimer();
-			labels = treeToLabels(dataData, lab_tree, min_cluster_size, this);
-			
-			
-			// Wrap up...
-			info("completed cluster labeling in " + labTimer.toString());
-			
-			
-			// Count missing
-			numNoisey = 0;
-			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-			
-			
-			int nextLabel = LabelHSetFactory.build(labels).size() - (numNoisey > 0 ? 1 : 0);
-			info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
-				" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
-					" classified noise");
-			
-			// Need to encode labels to maintain order
-			labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
-			
-			
-			sayBye(timer);
-			
-			// Clean anything with big overhead..
-			dataData = null;
-			dist_mat = null;
-			tree = null;
-			
-			return this;
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-			throw e;
-		} // end try/catch
+			} catch(OutOfMemoryError | StackOverflowError e) {
+				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
+				throw e;
+			} // end try/catch
+		}
 	}
 
 	

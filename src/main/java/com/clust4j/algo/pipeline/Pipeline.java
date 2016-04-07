@@ -18,10 +18,11 @@ package com.clust4j.algo.pipeline;
 import com.clust4j.Clust4j;
 import com.clust4j.algo.BaseClassifierPlanner;
 import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.utils.SynchronicityLock;
 
 public abstract class Pipeline<T extends BaseClassifierPlanner> extends Clust4j {
 	private static final long serialVersionUID = 3491192139356583621L;
-	final transient Object fitLock = new Object();
+	final Object fitLock = new SynchronicityLock();
 	final PreProcessor[] pipe;
 	final T planner;
 
