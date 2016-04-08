@@ -8,7 +8,6 @@
 	<classpathentry kind="lib" path="depend/commons-math-3-3.2/commons-math3-3.2.jar"/>
 	<classpathentry kind="lib" path="depend/apache-log4j-1.2.17/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="depend/commons-lang3-3.4.jar"/>
-	<!--<classpathentry kind="output" path="bin"/>-->
 	<classpathentry kind="output" path="target/classes"/>
 	<classpathentry kind="output" path="target/test-classes"/>
 </classpath>
