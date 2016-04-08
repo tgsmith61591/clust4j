@@ -72,6 +72,6 @@ public class PolynomialKernel extends ConstantKernel {
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		return FastMath.pow(alpha * VecUtils.innerProductForceSerial(a, b) + getConstant(), degree);
+		return FastMath.pow(alpha * VecUtils.innerProduct(a, b) + getConstant(), degree);
 	}
 }

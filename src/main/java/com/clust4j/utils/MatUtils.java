@@ -561,7 +561,7 @@ public class MatUtils {
 		
 		final ArrayList<double[]> rows = new ArrayList<>();
 		for(int i = 0; i < data.length; i++)
-			if(!VecUtils.containsNaNForceSerial(data[i]))
+			if(!VecUtils.containsNaN(data[i]))
 				rows.add(data[i]);
 		
 		final double[][] out = new double[rows.size()][];
@@ -624,37 +624,8 @@ public class MatUtils {
 	 * @param mat
 	 * @return true if the matrix contains NaN
 	 */
-	@Deprecated
-	public static boolean containsNaNDistributed(final double[][] mat) {
-		checkDimsPermitEmpty(mat);
-		
-		final int m = mat.length;
-		for(int i = 0; i < m; i++)
-			if(VecUtils.containsNaNDistributed(mat[i]))
-				return true;
-		
-		return false;
-	}
-	
-	/**
-	 * Returns true if there are any NaN values in the matrix.
-	 * @throws IllegalArgumentException if there are no rows in the data
-	 * @param mat
-	 * @return true if the matrix contains NaN
-	 */
 	public static boolean containsNaN(final AbstractRealMatrix mat) {
 		return containsNaN(mat.getData());
-	}
-	
-	/**
-	 * Returns true if there are any NaN values in the matrix.
-	 * @throws IllegalArgumentException if there are no rows in the data
-	 * @param mat
-	 * @return true if the matrix contains NaN
-	 */
-	@Deprecated
-	public static boolean containsNaNDistributed(final AbstractRealMatrix mat) {
-		return containsNaNDistributed(mat.getData());
 	}
 	
 	

@@ -904,7 +904,6 @@ public class MatTests {
 		MatUtils.colSums(a);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Test
 	public void testCompleteCases() {
 		final double[][] a = new double[][]{new double[]{}};
@@ -926,11 +925,6 @@ public class MatTests {
 		assertTrue(MatUtils.containsNaN(b));
 		assertTrue(MatUtils.containsNaN(mat));
 		assertFalse(MatUtils.containsNaN(c));
-		assertTrue(MatUtils.containsNaNDistributed(b));
-		assertTrue(MatUtils.containsNaNDistributed(mat));
-		assertFalse(MatUtils.containsNaNDistributed(a));
-		assertFalse(MatUtils.containsNaNDistributed(c));
-		assertFalse(MatUtils.containsNaNDistributed(new Array2DRowRealMatrix(c)));
 		assertTrue(MatUtils.equalsExactly(MatUtils.completeCases(mat), c));
 	}
 	

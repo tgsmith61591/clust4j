@@ -34,8 +34,7 @@ public class DistributedMatrixMultiplication extends DualMatrixMapTaskOperator {
 		for(int i = lo; i < hi; i++)
 			for(int j = 0; j < b_col; j++)
 				matrix_c[i][j] = VecUtils
-					.innerProductForceSerial // Should force serial?
-						(matrix[i], matrix_b[j]);
+					.innerProduct(matrix[i], matrix_b[j]);
 		return matrix_c; // Unnecessary in this context (using mutability) except for erasure
 	}
 

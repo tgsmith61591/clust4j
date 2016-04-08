@@ -60,7 +60,7 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 	// We can't compute a partial similarity for tanh because it will lose ordinality
 	@Override
 	public double getSimilarity(double[] a, double[] b) {
-		return FastMath.tanh(alpha * VecUtils.innerProductForceSerial(a, b) + getConstant());
+		return FastMath.tanh(alpha * VecUtils.innerProduct(a, b) + getConstant());
 	}
 
 	@Override

@@ -29,25 +29,11 @@ import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
 
-/* Deprecated distributed vector operations */
-import com.clust4j.utils.parallel.map.DistributedAbs;
-import com.clust4j.utils.parallel.map.DistributedAdd;
-import com.clust4j.utils.parallel.map.DistributedLog;
-import com.clust4j.utils.parallel.map.DistributedMultiply;
-import com.clust4j.utils.parallel.map.DistributedSubtract;
-import com.clust4j.utils.parallel.reduce.DistributedEqualityTest;
-import com.clust4j.utils.parallel.reduce.DistributedInnerProduct;
-import com.clust4j.utils.parallel.reduce.DistributedNaNCheck;
-import com.clust4j.utils.parallel.reduce.DistributedNaNCount;
-import com.clust4j.utils.parallel.reduce.DistributedProduct;
-import com.clust4j.utils.parallel.reduce.DistributedSum;
-
 import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
 import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
-@SuppressWarnings("deprecation")
 public class VecUtils {
 	final static String VEC_LEN_ERR = "illegal vector length: ";
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
@@ -253,27 +239,6 @@ public class VecUtils {
 	 */
 	public static double[] abs(final double[] a) {
 		checkDimsPermitEmpty(a);
-		return absForceSerial(a);
-	}
-	
-	
-	/**
-	 * Calculates the absolute value of the vector in a distributed fashion
-	 * @param a
-	 * @return absolute value of the vector
-	 */
-	@Deprecated
-	public static double[] absDistributed(final double[] a) {
-		return DistributedAbs.operate(a);
-	}
-	
-	
-	/**
-	 * Calculates the absolute value of the vector in a serial fashion
-	 * @param a
-	 * @return absolute value of the vector
-	 */
-	public static double[] absForceSerial(final double[] a) {
 		final double[] b= new double[a.length];
 		for(int i = 0; i < a.length; i++)
 			b[i] = FastMath.abs(a[i]);
@@ -293,31 +258,6 @@ public class VecUtils {
 	 * @return the result of adding two vectors
 	 */
 	public static double[] add(final double[] a, final double[] b) {
-		return addForceSerial(a, b);
-	}
-	
-	
-	/**
-	 * Add two vectors in a parallel fashion
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if dims do not match
-	 * @return the sum of two vectors
-	 */
-	@Deprecated
-	public static double[] addDistributed(final double[] a, final double[] b) {
-		return DistributedAdd.operate(a, b);
-	}
-	
-	
-	/**
-	 * Add two vectors in a serial fashion
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if dims do not match
-	 * @return the sum of two vectors
-	 */
-	public static double[] addForceSerial(final double[] a, final double[] b) {
 		checkDimsPermitEmpty(a, b);
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -656,29 +596,6 @@ public class VecUtils {
 	 * @return true if vector contains any NaNs
 	 */
 	public static boolean containsNaN(final double[] a) {
-		return containsNaNForceSerial(a);
-	}
-	
-	
-	/**
-	 * Identifies whether a vector contains any missing values
-	 * in a parallel fashion.
-	 * @param a
-	 * @return true if vector contains any NaNs
-	 */
-	@Deprecated
-	public static boolean containsNaNDistributed(final double[] a) {
-		return DistributedNaNCheck.operate(a);
-	}
-	
-	
-	/**
-	 * Identifies whether a vector contains any missing values
-	 * in a serial fashion.
-	 * @param a
-	 * @return true if vector contains any NaNs
-	 */
-	public static boolean containsNaNForceSerial(final double[] a) {
 		for(double b: a)
 			if(Double.isNaN(b))
 				return true;
@@ -877,22 +794,7 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsExactly(final double[] a, final double[] b) {
-		return equalsWithToleranceForceSerial(a, b, 0);
-	}
-	
-	
-	/**
-	 * Returns true if every element in the vector A
-	 * exactly equals the corresponding element in the vector B.
-	 * Operates in a distributed fashion.
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the dims don't match
-	 * @return true if all equal, false otherwise
-	 */
-	@Deprecated
-	public static boolean equalsExactlyDistributed(final double[] a, final double[] b) {
-		return DistributedEqualityTest.operate(a, b, 0);
+		return equalsWithTolerance(a, b, 0);
 	}
 	
 	
@@ -921,36 +823,6 @@ public class VecUtils {
 	 * @return true if all equal, false otherwise
 	 */
 	public static boolean equalsWithTolerance(final double[] a, final double[] b, final double eps) {
-		return equalsWithToleranceForceSerial(a, b, eps);
-	}
-	
-	
-	/**
-	 * Returns true if every element in the vector A
-	 * equals the corresponding element in the vector B within
-	 * a provided tolerance. Operated in a distributed fashion
-	 * @param a
-	 * @param b
-	 * @param eps
-	 * @throws DimensionMismatchException if the dims don't match
-	 * @return true if all equal, false otherwise
-	 */
-	@Deprecated
-	public static boolean equalsWithToleranceDistributed(final double[] a, final double[] b, final double eps) {
-		return DistributedEqualityTest.operate(a, b, eps);
-	}
-	
-	/**
-	 * Returns true if every element in the vector A
-	 * equals the corresponding element in the vector B within
-	 * a provided tolerance. Operates in a strictly serial fashion
-	 * @param a
-	 * @param b
-	 * @param eps
-	 * @throws DimensionMismatchException if the dims don't match
-	 * @return true if all equal, false otherwise
-	 */
-	public static boolean equalsWithToleranceForceSerial(final double[] a, final double[] b, final double eps) {
 		if(null == a && null == b)
 			return true;
 		if(null == a ^ null == b)
@@ -1014,29 +886,6 @@ public class VecUtils {
 	 * @return the inner product between a and b
 	 */
 	public static double innerProduct(final double[] a, final double[] b) {
-		return innerProductForceSerial(a, b);
-	}
-	
-	/**
-	 * Calculate the inner product between a and b in a distributed fashion
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the dims don't match
-	 * @return the inner product between a and b
-	 */
-	@Deprecated
-	public static double innerProductDistributed(final double[] a, final double[] b) {
-		return DistributedInnerProduct.operate(a, b);
-	}
-	
-	/**
-	 * Calculate the inner product between a and b in a serial fashion
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the dims don't match
-	 * @return the inner product between a and b
-	 */
-	public static double innerProductForceSerial(final double[] a, final double[] b) {
 		checkDimsPermitEmpty(a, b);
 		double sum = 0.0;
 		for(int i = 0; i < a.length; i++)
@@ -1104,34 +953,11 @@ public class VecUtils {
 	}
 	
 	/**
-	 * Calculate the log of the vector. If {@link GlobalState} allows
-	 * for auto parallelism and the size of the vectors are greater than the max serial
-	 * value alotted in GlobalState, will automatically schedule a parallel job.
+	 * Calculate the log of the vector.
 	 * @param a
 	 * @return the log of the vector
 	 */
 	public static double[] log(final double[] a) {
-		return logForceSerial(a);
-	}
-	
-	
-	/**
-	 * Calculate the log of the vector in a parallel fashion
-	 * @param a
-	 * @return the log of the vector
-	 */
-	@Deprecated
-	public static double[] logDistributed(final double[] a) {
-		return DistributedLog.operate(a);
-	}
-	
-	
-	/**
-	 * Calculate the log of the vector in a serial fashion
-	 * @param a
-	 * @return the log of the vector
-	 */
-	public static double[] logForceSerial(final double[] a) {
 		checkDimsPermitEmpty(a);
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1245,33 +1071,6 @@ public class VecUtils {
 	 * @return the product of two vectors
 	 */
 	public static double[] multiply(final double[] a, final double[] b) {
-		return multiplyForceSerial(a, b);
-	}
-	
-	
-	/**
-	 * Multiply each respective element from two vectors in a parallel fashion. 
-	 * Yields a vector of equal length.
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the vector dims don't match
-	 * @return the product of two vectors
-	 */
-	@Deprecated
-	public static double[] multiplyDistributed(final double[] a, final double[] b) {
-		return DistributedMultiply.operate(a, b);
-	}
-	
-	
-	/**
-	 * Multiply each respective element from two vectors in a serial fashion. 
-	 * Yields a vector of equal length.
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the vector dims don't match
-	 * @return the product of two vectors
-	 */
-	public static double[] multiplyForceSerial(final double[] a, final double[] b) {
 		checkDimsPermitEmpty(a, b);
 		final double[] ab = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1288,25 +1087,6 @@ public class VecUtils {
 	 * @return the number of nans in the vector
 	 */
 	public static int nanCount(final double[] a) {
-		return nanCountForceSerial(a);
-	}
-	
-	/**
-	 * Count the nans in a vector in a parallel fashion
-	 * @param a
-	 * @return the number of nans in the vector
-	 */
-	@Deprecated
-	public static int nanCountDistributed(final double[] a) {
-		return DistributedNaNCount.operate(a);
-	}
-	
-	/**
-	 * Count the nans in a vector in a serial fashion
-	 * @param a
-	 * @return the number of nans in the vector
-	 */
-	public static int nanCountForceSerial(final double[] a) {
 		int ct = 0;
 		for(double d: a)
 			if(Double.isNaN(d))
@@ -1598,27 +1378,11 @@ public class VecUtils {
 	}
 	
 	public static double prod(final double[] a) {
-		return prodForceSerial(a);
-	}
-	
-	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	public static double prodForceSerial(final double[] a) {
 		checkDims(a);
 		double prod = 1;
 		for(double d: a)
 			prod *= d;
 		return prod;
-	}
-
-	@Deprecated
-	public static double prodDistributed(final double[] a) {
-		return DistributedProduct.operate(a);
 	}
 	
 	public static double[] randomGaussian(final int n) {
@@ -1859,25 +1623,7 @@ public class VecUtils {
 		return FastMath.sqrt(var(a, mean, n_minus_one));
 	}
 	
-	
 	public static double[] subtract(final double[] from, final double[] subtractor) {
-		return subtractForceSerial(from, subtractor);
-	}
-	
-
-	@Deprecated
-	public static double[] subtractDistributed(final double[] from, final double[] subtractor) {
-		return DistributedSubtract.operate(from, subtractor);
-	}
-	
-	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
-	 * @param from
-	 * @param subtractor
-	 * @return
-	 */
-	public static double[] subtractForceSerial(final double[] from, final double[] subtractor) {
 		checkDimsPermitEmpty(from, subtractor);
 		
 		final double[] ab = new double[from.length];
@@ -1888,22 +1634,6 @@ public class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		return sumForceSerial(a);
-	}
-
-	@Deprecated
-	public static double sumDistributed(final double[] a) {
-		return DistributedSum.operate(a);
-	}
-	
-	/**
-	 * If another parallelized operation is calling this one, we should force this
-	 * one to be run serially so as not to inundate the cores with multiple recursive tasks.
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	public static double sumForceSerial(final double[] a) {
 		double sum = 0d;
 		for(double d : a)
 			sum += d;

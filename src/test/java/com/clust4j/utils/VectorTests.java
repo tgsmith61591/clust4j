@@ -30,7 +30,6 @@ import com.clust4j.GlobalState;
 import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.VecUtils.VecDoubleSeries;
 
-@SuppressWarnings("deprecation")
 public class VectorTests {
 	final static double[] empty = new double[]{};
 
@@ -333,13 +332,10 @@ public class VectorTests {
 		final double[] b = empty;
 		
 		VecUtils.add(a, b);
-		VecUtils.addDistributed(a, b);
 
 		VecUtils.multiply(a, b);
-		VecUtils.multiplyDistributed(a, b);
 		
 		VecUtils.subtract(a, b);
-		VecUtils.subtractDistributed(a, b);
 		
 		assertTrue(VecUtils.equalsExactly(a, b));
 	}
@@ -357,35 +353,25 @@ public class VectorTests {
 	public void testAbs() {
 		// test empty
 		assertTrue(VecUtils.equalsExactly(empty, VecUtils.abs(empty)));
-		assertTrue(VecUtils.equalsExactly(empty, VecUtils.absDistributed(empty)));
-		assertTrue(VecUtils.equalsExactly(empty, VecUtils.absForceSerial(empty)));
 
 		// full tests
 		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.abs(new double[]{-1,-2,3})));
-		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.absDistributed(new double[]{-1,-2,3})));
-		assertTrue(VecUtils.equalsExactly(new double[]{1,2,3}, VecUtils.absForceSerial(new double[]{-1,-2,3})));
 	}
 	
 	@Test
 	public void testAdd() {
 		// test empty
 		assertTrue(VecUtils.equalsExactly(empty, VecUtils.add(empty, empty)));
-		assertTrue(VecUtils.equalsExactly(empty, VecUtils.addDistributed(empty,empty)));
-		assertTrue(VecUtils.equalsExactly(empty, VecUtils.addForceSerial(empty,empty)));
 
 		// full tests
 		final double[] add = new double[]{1,2,3};
 		final double[] tgt = new double[]{2,4,6};
 		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.add(add, add)));
-		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.addDistributed(add, add)));
-		assertTrue(VecUtils.equalsExactly(tgt, VecUtils.addForceSerial(add, add)));
 		
 		// Test DMEs
 		boolean p = false;
 		final double[] off = new double[]{1,2};
 		try {p = false; VecUtils.add(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; VecUtils.addDistributed(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; VecUtils.addForceSerial(add, off);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
 	}
 	
 	@Test
@@ -477,16 +463,6 @@ public class VectorTests {
 		assertFalse(VecUtils.containsNaN(empty));
 		assertFalse(VecUtils.containsNaN(none));
 		assertTrue(VecUtils.containsNaN(some));
-		
-		// force parallel
-		assertFalse(VecUtils.containsNaNDistributed(empty));
-		assertFalse(VecUtils.containsNaNDistributed(none));
-		assertTrue(VecUtils.containsNaNDistributed(some));
-		
-		// serial
-		assertFalse(VecUtils.containsNaNForceSerial(empty));
-		assertFalse(VecUtils.containsNaNForceSerial(none));
-		assertTrue(VecUtils.containsNaNForceSerial(some));
 	}
 	
 	@Test
@@ -539,16 +515,12 @@ public class VectorTests {
 	public void testInnerProduct() {
 		// test empties
 		assertTrue(0.0 == VecUtils.innerProduct(empty, empty));
-		assertTrue(0.0 == VecUtils.innerProductForceSerial(empty, empty));
-		assertTrue(0.0 == VecUtils.innerProductDistributed(empty, empty));
 		
 		// test populated
 		double[] a = new double[]{1,2};
 		double[] b = new double[]{1,2,3};
 		final double res = 14;
 		assertTrue(res == VecUtils.innerProduct(b,b));
-		assertTrue(res == VecUtils.innerProductForceSerial(b,b));
-		assertTrue(res == VecUtils.innerProductDistributed(b,b));
 		
 		// test ortho
 		assertFalse(VecUtils.isOrthogonalTo(b, b));
@@ -556,8 +528,6 @@ public class VectorTests {
 		// test DMEs
 		boolean p = false;
 		try {p = false; VecUtils.innerProduct(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; VecUtils.innerProductForceSerial(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
-		try {p = false; VecUtils.innerProductDistributed(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
 		try {p = false; VecUtils.isOrthogonalTo(a,b);}catch(DimensionMismatchException e){p = true;}finally{if(!p)fail();}
 	}
 	
@@ -631,10 +601,6 @@ public class VectorTests {
 		double[] da = new double[]{1,2};
 		double[] db = new double[]{2,2};
 		assertFalse(VecUtils.equalsExactly(da, db));
-		assertFalse(VecUtils.equalsExactlyDistributed(da, db));
-		assertTrue(VecUtils.equalsWithToleranceDistributed(da, db, 1));
-		assertTrue(VecUtils.equalsWithToleranceForceSerial(da, db, 1));
-		assertFalse(VecUtils.equalsWithToleranceForceSerial(da, db, 0));
 	}
 	
 	@Test
@@ -643,11 +609,7 @@ public class VectorTests {
 		final double[] b = new double[]{0, 0.69314718055994529, 1.0986122886681098};
 		final double[] c = new double[]{};
 		assertTrue(VecUtils.equalsExactly(VecUtils.log(a), b));
-		assertTrue(VecUtils.equalsExactly(VecUtils.logForceSerial(a), b));
-		assertTrue(VecUtils.equalsExactly(VecUtils.logDistributed(a), b));
 		assertTrue(VecUtils.equalsExactly(VecUtils.log(c), c));
-		assertTrue(VecUtils.equalsExactly(VecUtils.logForceSerial(c), c));
-		assertTrue(VecUtils.equalsExactly(VecUtils.logDistributed(c), c));
 	}
 	
 	@Test
@@ -686,8 +648,6 @@ public class VectorTests {
 	public void testNaNCountEmpty() {
 		double[] a = new double[]{};
 		assertTrue(VecUtils.nanCount(a) == 0);
-		assertTrue(VecUtils.nanCountForceSerial(a) == 0);
-		assertTrue(VecUtils.nanCountDistributed(a) == 0);
 	}
 	
 	@Test
@@ -714,7 +674,6 @@ public class VectorTests {
 		assertTrue(VecUtils.equalsExactly(b, b));
 		assertTrue(VecUtils.equalsExactly(s, s));
 		assertTrue(VecUtils.equalsExactly(d, d));
-		assertTrue(VecUtils.equalsExactlyDistributed(d, d));
 	}
 	
 	@Test

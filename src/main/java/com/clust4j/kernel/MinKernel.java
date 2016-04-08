@@ -37,7 +37,7 @@ public class MinKernel extends Kernel {
 
 	@Override
 	public double getSimilarity(double[] a, double[] b) {
-		return VecUtils.sumForceSerial(VecUtils.pmin(a, b));
+		return VecUtils.sum(VecUtils.pmin(a, b));
 	}
 
 	@Override
