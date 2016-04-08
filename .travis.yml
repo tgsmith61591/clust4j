@@ -3,8 +3,11 @@ jdk:
   - oraclejdk7
 
 before_script:
-  - "echo $JAVA_OPTS"
-  - "export JAVA_OPTS=-Xmx6g"
+ - "echo $JAVA_OPTS"
+ - "export JAVA_OPTS=-Xmx6g"
+
+after_failure:
+  - cat target/surefire-reports/*.txt
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

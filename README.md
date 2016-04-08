@@ -1,21 +1,13 @@
 ## clust4j
 A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
-____
-### Dependencies (included in `depend/` and in the `.classpath`):
- - [Apache commons math](https://commons.apache.org/proper/commons-math/), for use of the `AbstractRealMatrix` and `FastMath` classes.
- - [Apache log4j](http://logging.apache.org/log4j/2.x/), for use of the Logger class
-  - In any `BaseClustererPlanner` class, invoke `.setVerbose(true)` to enable logging. Default logging location is: `/tmp/clust4j-${USERNAME}/clust4jlogs/`
- - [Apache commons lang](http://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.4), for the use of `NumberUtils` and others.
- - [lombok](https://github.com/rzwitserloot/lombok), for the use of `@Synchronized` annotations
-
-
 ___
 ### Release notes:
-__Clust4j 1.0.0 is now available!__ The dependency-inclusive jar file is located in the root directory. To use it, simply reference the jar in your build path. Alternatively, clone the project and do with it what you please:
+__Clust4j 1.0.0 is now available under releases (jar included)__. To build the bleeding edge, use the gradle wrapper:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
+./gradlew build
 ```
 
 ___
