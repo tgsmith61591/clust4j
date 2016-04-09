@@ -613,8 +613,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		final int n = 10;
 		
 		// Construct a large matrix of two separate gaussian seeds
-		double[][] A = MatUtils.randomGaussian(1000, n);
-		double[][] B = MatUtils.randomGaussian(1000, n, 25.0);
+		double[][] A = MatUtils.randomGaussian(400, n);
+		double[][] B = MatUtils.randomGaussian(400, n, 25.0);
 		double[][] C = MatUtils.rbind(A, B);
 		try {
 			new MeanShift(new Array2DRowRealMatrix(C, false),

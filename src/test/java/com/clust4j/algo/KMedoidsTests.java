@@ -274,7 +274,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	
 	@Test
 	public void KMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5};
 		
@@ -292,7 +292,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 
 	@Test
 	public void KMedoidsLoadTest2FullLogger() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		KMedoids km = new KMedoids(mat, 
 				new KMedoidsPlanner(5)
 					.setScale(true)
@@ -303,7 +303,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	
 	@Test
 	public void KernelKMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		final int[] ks = new int[] {1,3,5,7};
 		Kernel kernel = new LaplacianKernel(0.05);
 		
@@ -321,7 +321,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	
 	@Test
 	public void KernelKMedoidsLoadTest2() {
-		final Array2DRowRealMatrix mat = getRandom(2000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		final int[] ks = new int[] {12};
 		Kernel kernel = new HyperbolicTangentKernel(); //SplineKernel();
 		

@@ -232,7 +232,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void KMeansLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(10000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5,7};
 		
@@ -248,7 +248,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void KMeansLoadTest2FullLogger() {
-		final Array2DRowRealMatrix mat = getRandom(5000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		KMeans km = new KMeans(mat, new KMeans
 				.KMeansPlanner(5)
 					.setScale(true)
@@ -260,7 +260,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void KernelKMeansLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(5000, 10);
+		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		final int[] ks = new int[] {1,3,5,7};
 		Kernel kernel = new GaussianKernel(0.05);
 		

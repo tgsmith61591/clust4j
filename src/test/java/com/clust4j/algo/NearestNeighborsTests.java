@@ -103,7 +103,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 
 	@Test
 	public void NN_KNEAREST_LoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		
 		final int[] ks = new int[]{1, 5, 10};
 		for(int k: ks) {
@@ -115,7 +115,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test
 	public void NN_RADIUS_LoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		
 		final double[] radii = new double[]{0.5, 5.0, 10.0};
 		for(double radius: radii) {
@@ -154,7 +154,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test
 	public void NN_kernel_KNEAREST_LoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		
 		final int[] ks = new int[]{1, 5, 10};
 		for(int k: ks) {
@@ -167,7 +167,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test
 	public void NN_kernel_RADIUS_LoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		
 		final double[] radii = new double[]{0.5, 5.0, 10.0};
 		for(double radius: radii) {
@@ -500,7 +500,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testBigWithParallelQuery() {
 		final int k= 3;
-		final Array2DRowRealMatrix big = TestSuite.getRandom(10000, k);
+		final Array2DRowRealMatrix big = TestSuite.getRandom(750, k); // need to reduce size for travis CI
 		NearestNeighbors nn;
 		try {
 			nn = new NearestNeighbors(big, 

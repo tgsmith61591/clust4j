@@ -133,7 +133,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	
 	@Test
 	public void AffinityPropLoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
 				.setVerbose(true)).fit();
@@ -171,7 +171,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	
 	@Test
 	public void AffinityPropKernelLoadTest() {
-		final Array2DRowRealMatrix mat = getRandom(1000, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new AffinityPropagation(mat, new AffinityPropagation
 			.AffinityPropagationPlanner()
 				.setMetric(new GaussianKernel())

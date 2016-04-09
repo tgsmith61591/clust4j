@@ -357,8 +357,8 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	
 	@Test
 	public void testLoadWithSingleClass() {
-		NearestCentroid n = new NearestCentroid(TestSuite.getRandom(1200, 10), 
-				VecUtils.repInt(1, 1200)).fit();
+		NearestCentroid n = new NearestCentroid(TestSuite.getRandom(400, 10),  // need to reduce size for travis CI
+				VecUtils.repInt(1, 400)).fit();
 		assertTrue(VecUtils.equalsExactly(VecUtils.repInt(1, 5), n.predict(TestSuite.getRandom(5, 10))));
 	}
 	

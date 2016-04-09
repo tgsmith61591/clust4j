@@ -146,7 +146,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Test
 	public void DBSCANLoadTest() {
 		try {
-			final Array2DRowRealMatrix mat = getRandom(5000, 10);
+			final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 			new DBSCAN(mat, new DBSCAN
 				.DBSCANPlanner()
 					.setVerbose(true))
@@ -158,7 +158,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	
 	@Test
 	public void DBSCANKernelTest1() {
-		final Array2DRowRealMatrix mat = getRandom(1500, 10);
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		Kernel kernel = new RadialBasisKernel(0.05);
 		DBSCAN db = new DBSCAN(mat, 
 				new DBSCAN.DBSCANPlanner(0.05)

@@ -21,12 +21,23 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.utils.MatUtils;
 
 public class ParallelTests {
 	
+	/**
+	 * Only peform these tests if the environment will even allow it...
+	 */
 	@Test
-	public void testMult() {
+	public void testAll() {
+		if(GlobalState.ParallelismConf.PARALLELISM_ALLOWED) {
+			testMult();
+			testMultRealBig();
+		}
+	}
+	
+	static void testMult() {
 		try {
 			final double[][] a = MatUtils.randomGaussian(1000, 20);
 			final double[][] b = MatUtils.randomGaussian(20, 6000);
@@ -48,8 +59,7 @@ public class ParallelTests {
 		}
 	}
 
-	@Test
-	public void testMultRealBig() {
+	static void testMultRealBig() {
 		try {
 			final double[][] a = MatUtils.randomGaussian(5000, 20);
 			final double[][] b = MatUtils.randomGaussian(20, 6000);

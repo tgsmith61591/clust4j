@@ -29,12 +29,14 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.data.BufferedMatrixReader.MatrixReaderSetup;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.utils.MatUtils;
 
 
 public class BufferedMatrixReaderTests {
+	final static boolean PARALLEL = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
 	final static String file = new String("tmpbmrtfile.csv");
 	final static Path path = FileSystems.getDefault().getPath(file);
 	final static byte HIVE = (byte)0x1;
@@ -671,7 +673,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = fromDoubleArr(g);
 			
 			writeCSV(o);
-			DataSet d = readCSV(true);
+			DataSet d = readCSV(PARALLEL);
 			
 			assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
 			System.out.println();
@@ -682,12 +684,12 @@ public class BufferedMatrixReaderTests {
 	
 	@Test
 	public void testParallelBig() throws IOException {
-		double[][] g = MatUtils.randomGaussian(5000, 150);
+		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
 		writeCSV(o);
 		
 		try {
-			for(boolean parallel: new boolean[]{false, true}) {
+			for(boolean parallel: new boolean[]{false, PARALLEL}) {
 					System.out.println((parallel?"Parallel":"Serial")+" parsing task");
 					DataSet d = readCSV(parallel);
 					
@@ -703,13 +705,13 @@ public class BufferedMatrixReaderTests {
 	
 	@Test(expected=MatrixParseException.class)
 	public void testParallelBigNFE1() throws IOException {
-		double[][] g = MatUtils.randomGaussian(5000, 150);
+		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
 		o[15] = new Object[]{"asdf"};
 		writeCSV(o);
 		
 		try {
-			readCSV(true);
+			readCSV(PARALLEL);
 			System.out.println();
 
 		} finally {
@@ -719,13 +721,13 @@ public class BufferedMatrixReaderTests {
 	
 	@Test(expected=MatrixParseException.class)
 	public void testParallelBigDME1() throws IOException {
-		double[][] g = MatUtils.randomGaussian(5000, 150);
+		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
 		o[15] = new Integer(1);
 		writeCSV(o);
 		
 		try {
-			readCSV(true);
+			readCSV(PARALLEL);
 			System.out.println();
 
 		} finally {
@@ -749,7 +751,7 @@ public class BufferedMatrixReaderTests {
 		writeCSV(o);
 		
 		try {
-			double[][] gpp = readCSV(true).getDataRef().getDataRef();
+			double[][] gpp = readCSV(PARALLEL).getDataRef().getDataRef();
 			assertTrue(MatUtils.equalsExactly(gp, gpp));
 			System.out.println();
 

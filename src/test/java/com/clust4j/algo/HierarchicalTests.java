@@ -150,7 +150,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	
 	@Test
 	public void loadTest() {
-		Array2DRowRealMatrix mat = getRandom(2500, 10);
+		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerative
 				.HierarchicalPlanner()
@@ -158,27 +158,9 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 					.setVerbose(true)).fit().getLabels();
 	}
 	
-	//@Test // -- takes way too long..
-	public void loadTest2() {
-		Array2DRowRealMatrix mat = getRandom(50000, 10);
-		boolean exception = false;
-		
-		try {
-			new HierarchicalAgglomerative(mat,
-				new HierarchicalAgglomerative
-					.HierarchicalPlanner()
-						.setLinkage(Linkage.AVERAGE)
-						.setVerbose(true)).fit().getLabels();
-		} catch(OutOfMemoryError | StackOverflowError e) {
-			exception = true;
-		}
-		
-		assertTrue(exception);
-	}
-	
 	@Test
 	public void loadTestKernel() {
-		Array2DRowRealMatrix mat = getRandom(2500, 10);
+		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerative
 				.HierarchicalPlanner()
