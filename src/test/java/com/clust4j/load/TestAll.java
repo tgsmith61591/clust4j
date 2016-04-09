@@ -1,7 +1,9 @@
-package com.clust4j;
+package com.clust4j.load;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+
+import com.clust4j.TestSuite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({

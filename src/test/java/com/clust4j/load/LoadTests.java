@@ -1,4 +1,4 @@
-package com.clust4j;
+package com.clust4j.load;
 
 import static org.junit.Assert.*;
 
