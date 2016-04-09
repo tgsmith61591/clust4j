@@ -5,7 +5,7 @@ A Java-based set of __classification__ clustering algorithms. Built and tested u
 
 ___
 ### Installation:
-__Clust4j 1.0.0 is now available under [releases](releases/) (jar included)__. To build the bleeding edge, use the included gradle wrapper:
+__Clust4j 1.0.0 is now available under [releases](https://github.com/tgsmith61591/clust4j/releases) (jar included)__. To build the bleeding edge, use the included gradle wrapper:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
