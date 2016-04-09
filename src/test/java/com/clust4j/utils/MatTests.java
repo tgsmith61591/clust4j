@@ -29,7 +29,6 @@ import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.NonUniformMatrixException;
-import com.clust4j.log.Log;
 import com.clust4j.utils.MatUtils.Axis;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.Series.Inequality;
@@ -1785,28 +1784,10 @@ public class MatTests {
 		
 		assertTrue(MatUtils.equalsExactly(MatUtils.multiply(a, b), product));
 		
-		// Force distributed:
-		assertTrue(MatUtils.equalsExactly(MatUtils.multiplyDistributed(a, b), product));
-		
 		
 		// Force a massively distributed task... can take long time (if works...)!
 		if(GlobalState.ParallelismConf.PARALLELISM_ALLOWED) {
-			final int rows = GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN + 1;
-			final int cols = 2;
-			
-			try {
-				// 2 X 10,000,001
-				Array2DRowRealMatrix A = TestSuite.getRandom(cols, rows);
-				
-				// 10,000,001 X 2
-				Array2DRowRealMatrix B = TestSuite.getRandom(rows, cols);
-				
-				// Yield 2 X 2
-				MatUtils.multiplyDistributed(A.getDataRef(), B.getDataRef());
-			} catch(OutOfMemoryError e) {
-				Log.info("could not complete large distributed multiplication due to heap space");
-			} finally { // don't want to fail tests just because of this...
-			}
+			assertTrue(MatUtils.equalsExactly(MatUtils.multiplyDistributed(a, b), product));
 		}
 	}
 	
