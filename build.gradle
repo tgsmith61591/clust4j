@@ -4,7 +4,7 @@ apply plugin: 'eclipse'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 archivesBaseName = 'clust4j'
-version = '1.0.1-SNAPSHOT'
+version = '1.1.0-SNAPSHOT'
 
 compileJava {
     options.debug = true
