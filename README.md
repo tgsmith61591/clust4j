@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tgsmith61591/clust4j.svg?branch=master)](https://travis-ci.org/tgsmith61591/clust4j)
+
 ## clust4j
 A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
