@@ -15,12 +15,8 @@
  *******************************************************************************/
 package com.clust4j.utils;
 
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
-import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
-
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -1181,22 +1177,28 @@ public class MatUtils {
 	}
 	
 	/**
-	 * Multiply two matrices. Auto schedules 
-	 * parallel job if applicable
+	 * Multiply two matrices, A and B, serially
 	 * @param a
 	 * @param b
+	 * @throws DimensionMismatchException if the number of columns in A does not
+	 * match the number of rows in B
+	 * @throws IllegalArgumentException if the rows of either matrix are empty
 	 * @return the product A*B
 	 */
 	public static double[][] multiply(final double[][] a, final double[][] b) {
-		if(ALLOW_AUTO_PARALLELISM && 
-				(a.length>MAX_SERIAL_VECTOR_LEN 
-			  || b.length>MAX_SERIAL_VECTOR_LEN)) {
-			try {
-				return multiplyDistributed(a, b);
-			} catch(RejectedExecutionException e) { /*Perform normal execution*/ }
+		checkDims(a);
+		checkDims(b);
+		
+		// The following classes implicitly handle the multiplication criteria
+		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
+			final BlockRealMatrix aa = new BlockRealMatrix(a);
+			final BlockRealMatrix bb = new BlockRealMatrix(b);
+			return aa.multiply(bb).getData();
 		}
 		
-		return multiplyForceSerial(a, b);
+		final Array2DRowRealMatrix aa = new Array2DRowRealMatrix(a, false);
+		final Array2DRowRealMatrix bb = new Array2DRowRealMatrix(b, false);
+		return aa.multiply(bb).getDataRef();
 	}
 	
 	/**
@@ -1211,31 +1213,6 @@ public class MatUtils {
 	 */
 	public static double[][] multiplyDistributed(final double[][] a, final double[][] b) {
 		return DistributedMatrixMultiplication.operate(a, b);
-	}
-	
-	/**
-	 * Multiply two matrices, A and B, serially
-	 * @param a
-	 * @param b
-	 * @throws DimensionMismatchException if the number of columns in A does not
-	 * match the number of rows in B
-	 * @throws IllegalArgumentException if the rows of either matrix are empty
-	 * @return the product A*B
-	 */
-	public static double[][] multiplyForceSerial(final double[][] a, final double[][] b) {
-		checkDims(a);
-		checkDims(b);
-		
-		// The following classes implicitly handle the multiplication criteria
-		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
-			final BlockRealMatrix aa = new BlockRealMatrix(a);
-			final BlockRealMatrix bb = new BlockRealMatrix(b);
-			return aa.multiply(bb).getData();
-		}
-		
-		final Array2DRowRealMatrix aa = new Array2DRowRealMatrix(a, false);
-		final Array2DRowRealMatrix bb = new Array2DRowRealMatrix(b, false);
-		return aa.multiply(bb).getDataRef();
 	}
 	
 	

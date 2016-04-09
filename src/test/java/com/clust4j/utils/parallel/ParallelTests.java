@@ -43,7 +43,7 @@ public class ParallelTests {
 			final double[][] b = MatUtils.randomGaussian(20, 6000);
 			
 			long start = System.currentTimeMillis();
-			final double[][] ca = MatUtils.multiplyForceSerial(a, b);
+			final double[][] ca = MatUtils.multiply(a, b);
 			long serialTime = System.currentTimeMillis() - start;
 			
 			start = System.currentTimeMillis();
@@ -65,7 +65,7 @@ public class ParallelTests {
 			final double[][] b = MatUtils.randomGaussian(20, 6000);
 			
 			long start = System.currentTimeMillis();
-			final double[][] ca = MatUtils.multiplyForceSerial(a, b);
+			final double[][] ca = MatUtils.multiply(a, b);
 			long serialTime = System.currentTimeMillis() - start;
 			
 			start = System.currentTimeMillis();

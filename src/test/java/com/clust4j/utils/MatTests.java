@@ -1783,32 +1783,30 @@ public class MatTests {
 			new double[]{0.9703474881065354, 1.5602912426056987}
 		};
 		
-		// both should be run serially...
 		assertTrue(MatUtils.equalsExactly(MatUtils.multiply(a, b), product));
-		assertTrue(MatUtils.equalsExactly(MatUtils.multiplyForceSerial(a, b), product));
 		
 		// Force distributed:
 		assertTrue(MatUtils.equalsExactly(MatUtils.multiplyDistributed(a, b), product));
 		
 		
 		// Force a massively distributed task... can take long time (if works...)!
-		final int rows = GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN + 1;
-		final int cols = 2;
-		GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM = true;
-		try {
-			// 2 X 10,000,001
-			Array2DRowRealMatrix A = TestSuite.getRandom(cols, rows);
+		if(GlobalState.ParallelismConf.PARALLELISM_ALLOWED) {
+			final int rows = GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN + 1;
+			final int cols = 2;
 			
-			// 10,000,001 X 2
-			Array2DRowRealMatrix B = TestSuite.getRandom(rows, cols);
-			
-			// Yield 2 X 2
-			MatUtils.multiply(A.getDataRef(), B.getDataRef());
-		} catch(OutOfMemoryError e) {
-			Log.info("could not complete large distributed multiplication due to heap space");
-		} finally { // don't want to fail tests just because of this...
-			GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM = 
-					GlobalState.ParallelismConf.PARALLELISM_RECOMMENDED;
+			try {
+				// 2 X 10,000,001
+				Array2DRowRealMatrix A = TestSuite.getRandom(cols, rows);
+				
+				// 10,000,001 X 2
+				Array2DRowRealMatrix B = TestSuite.getRandom(rows, cols);
+				
+				// Yield 2 X 2
+				MatUtils.multiplyDistributed(A.getDataRef(), B.getDataRef());
+			} catch(OutOfMemoryError e) {
+				Log.info("could not complete large distributed multiplication due to heap space");
+			} finally { // don't want to fail tests just because of this...
+			}
 		}
 	}
 	
@@ -1842,9 +1840,9 @@ public class MatTests {
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testMultDimExcept3() {
-		MatUtils.multiplyForceSerial(
-			TestSuite.getRandom(10001, 2).getDataRef(),
-			TestSuite.getRandom(10001, 2).getDataRef());
+		MatUtils.multiply(
+			TestSuite.getRandom(10, 2).getDataRef(),
+			TestSuite.getRandom(10, 2).getDataRef());
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -2901,9 +2899,15 @@ public class MatTests {
 	
 	@Test
 	public void testBlockMatMult() {
-		double[][] a = TestSuite.getRandom(5, 1500).getDataRef();
-		double[][] b = TestSuite.getRandom(1500, 2).getDataRef();
-		MatUtils.multiplyForceSerial(a, b); // force block mat
+		/*
+		 * This is not run in parallel, but it's such a big operation
+		 * that we don't want TravisCI's petty machines to try to run it!
+		 */
+		if(GlobalState.ParallelismConf.PARALLELISM_ALLOWED) {
+			double[][] a = TestSuite.getRandom(5, 1500).getDataRef();
+			double[][] b = TestSuite.getRandom(1500, 2).getDataRef();
+			MatUtils.multiply(a, b); // force block mat
+		}
 	}
 	
 	@Test(expected=IllegalArgumentException.class)

@@ -107,7 +107,10 @@ import com.clust4j.utils.parallel.ParallelTests;
 	VectorTests.class
 })
 
-/* Runs all the tests */
+/**
+ * Main test suite for clust4j. Runs all production tests
+ * @author Taylor G Smith
+ */
 public class TestSuite {
 	// Easy access to a global formatter for test classes
 	public static final MatrixFormatter formatter = new MatrixFormatter();
