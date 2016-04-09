@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Random;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
@@ -500,10 +501,16 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testBigWithParallelQuery() {
 		final int k= 3;
 		final Array2DRowRealMatrix big = TestSuite.getRandom(10000, k);
-		NearestNeighbors nn = new NearestNeighbors(big, 
-			new NearestNeighborsPlanner(3)
-				.setVerbose(true)
-				.setForceParallel(true)).fit();
+		NearestNeighbors nn;
+		try {
+			nn = new NearestNeighbors(big, 
+				new NearestNeighborsPlanner(3)
+					.setVerbose(true)
+					.setForceParallel(true)).fit();
+		} catch(OutOfMemoryError | RejectedExecutionException e) {
+			// don't propagate these...
+			return;
+		}
 		
 		// test query now...
 		//final Neighborhood res = nn.tree.query(big.getData(), k, BaseNeighborsModel.DUAL_TREE_SEARCH, BaseNeighborsModel.SORT);

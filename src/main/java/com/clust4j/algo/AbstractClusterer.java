@@ -180,14 +180,13 @@ public abstract class AbstractClusterer
 		this.normalizer = planner.getNormalizer();
 		
 		// Determine whether we should parallelize
-		this.parallel = planner.getParallel()
-			/*
-			// Let's just let the user force this condition if they want it...
-			|| (GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM
-			&& (data.getRowDimension() * data.getColumnDimension()) 
-			> GlobalState.ParallelismConf.MIN_ELEMENTS)
-			*/
-			;
+		this.parallel = planner.getParallel() && GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+		
+		/*
+		 * If user tried to force serial, but we just can't...
+		 */
+		if(!parallel && planner.getParallel())
+			info("min num cores required for parallel: " + GlobalState.ParallelismConf.MIN_CORES_REQUIRED);
 		
 		if(this.dist_metric instanceof Kernel)
 			warn("running " + getName() + " in Kernel mode can be an expensive option");

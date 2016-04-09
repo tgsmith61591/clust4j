@@ -2,9 +2,13 @@ language: java
 jdk:
   - oraclejdk7
 
+branches:
+  only:
+    - master
+
 before_script:
  - "echo $JAVA_OPTS"
- - "export JAVA_OPTS=-Xmx6g"
+ - "export JAVA_OPTS=-Xmx2g"
 
 after_failure:
   - cat target/surefire-reports/*.txt

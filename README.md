@@ -3,11 +3,13 @@ A Java-based set of __classification__ clustering algorithms. Built and tested u
 
 ___
 ### Release notes:
-__Clust4j 1.0.0 is now available under releases (jar included)__. To build the bleeding edge, use the gradle wrapper:
+__Clust4j 1.0.0 is now available under releases (jar included)__. To build the bleeding edge, use the included gradle wrapper:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
+cd clust4j
 ./gradlew build
+## jar is at build/lib/clust4j-x.x.x.jar
 ```
 
 ___

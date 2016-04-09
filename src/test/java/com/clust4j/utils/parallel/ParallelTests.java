@@ -17,6 +17,8 @@ package com.clust4j.utils.parallel;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.RejectedExecutionException;
+
 import org.junit.Test;
 
 import com.clust4j.utils.MatUtils;
@@ -41,6 +43,8 @@ public class ParallelTests {
 			System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
 		} catch(OutOfMemoryError e) {
 			// don't propagate these...
+		} catch(RejectedExecutionException r) {
+			// don't propagate these...
 		}
 	}
 
@@ -61,6 +65,8 @@ public class ParallelTests {
 			assertTrue(MatUtils.equalsWithTolerance(ca, cb, 1e-8));
 			System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
 		} catch(OutOfMemoryError e) {
+			// don't propagate these...
+		} catch(RejectedExecutionException r) {
 			// don't propagate these...
 		}
 	}

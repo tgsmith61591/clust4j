@@ -195,10 +195,16 @@ public class GlobalState {
 		public static final int MIN_ELEMENTS = 15000;
 		
 		/**
-		 * The minimum number of required cores to efficiently
+		 * The minimum number of cores to efficiently
 		 * allow parallel operations.
 		 */
-		public static final int MIN_PARALLEL_CORES_REQUIRED = 8;
+		public static final int MIN_PARALLEL_CORES_RECOMMENDED = 8;
+		
+		/**
+		 * The minimum number of required cores to allow any
+		 * parallelism at all.
+		 */
+		public static final int MIN_CORES_REQUIRED = 4;
 		
 		/**
 		 * The number of available cores on the machine. Used for determining
@@ -206,10 +212,15 @@ public class GlobalState {
 		public static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 		
 		/**
+		 * Whether to allow parallelism at all or quietly force serial jobs where necessary
+		 */
+		public static final boolean PARALLELISM_ALLOWED = NUM_CORES >= MIN_CORES_REQUIRED;
+		
+		/**
 		 * Whether parallelization is recommended for this machine.
 		 * Default value is true if availableProcessors is at least 8.
 		 */
-		public static final boolean PARALLELISM_RECOMMENDED = NUM_CORES >= MIN_PARALLEL_CORES_REQUIRED;
+		public static final boolean PARALLELISM_RECOMMENDED = NUM_CORES >= MIN_PARALLEL_CORES_RECOMMENDED;
 		
 		/** If true and the size of the vector exceeds {@value #MAX_SERIAL_VECTOR_LEN}, 
 		 *  auto schedules parallel job for applicable operations. This can slow
