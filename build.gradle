@@ -18,6 +18,10 @@ repositories {
 jar {
     baseName = 'clust4j'
     version = version
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 test {

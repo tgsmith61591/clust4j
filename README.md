@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tgsmith61591/clust4j.svg?branch=master)](https://travis-ci.org/tgsmith61591/clust4j) ![Supported JVM](https://img.shields.io/badge/java-1.7-blue.svg)
+[![Build Status](https://travis-ci.org/tgsmith61591/clust4j.svg?branch=master)](https://travis-ci.org/tgsmith61591/clust4j) ![Supported JVM](https://img.shields.io/badge/java-1.7-blue.svg) [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ## clust4j
 A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
@@ -11,7 +11,7 @@ __Clust4j 1.0.0 is now available under [releases](https://github.com/tgsmith6159
 git clone https://github.com/tgsmith61591/clust4j.git
 cd clust4j
 ./gradlew build
-## jar is at build/libs/clust4j-x.x.x.jar
+## jar is at build/libs/clust4j-x.x.x.jar and includes dependencies
 ```
 
 ___

@@ -31,6 +31,7 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class SilhouetteScore implements UnsupervisedEvaluationMetric {
+	private static final long serialVersionUID = -4665363614807609749L;
 	private final static SilhouetteScore instance = new SilhouetteScore();
 	private SilhouetteScore() { }
 	
