@@ -13,7 +13,7 @@ __Clust4j 1.0.0 is now available under [releases](https://github.com/tgsmith6159
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
 cd clust4j
-./gradlew build
+./gradlew build ## Go grab some coffee... this takes a minute
 ## jar is at build/libs/clust4j-x.x.x.jar and includes dependencies
 ```
 
