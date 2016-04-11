@@ -1,17 +1,13 @@
 plugins {
     id 'java'
     id 'eclipse'
-
-    // coverage tools
-    id 'net.saliman.cobertura' version '2.3.1'
-    id 'com.github.kt3k.coveralls' version '2.6.3'
 }
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 archivesBaseName = 'clust4j'
 version = '1.1.0-SNAPSHOT'
-cobertura.coverageFormats = ['html', 'xml'] // coveralls plugin depends on xml format report
+
 
 
 compileJava {
@@ -39,12 +35,13 @@ test {
     // Exclude all in load package
     exclude 'com/clust4j/load/**'
 
+    // Need the heap space for some larger tests...
     maxHeapSize = "512m"
     jvmArgs '-XX:MaxPermSize=256m'
 
     beforeTest { descriptor ->
       logger.lifecycle("Running test: " + descriptor)
-   }
+    }
 }
 
 dependencies {
