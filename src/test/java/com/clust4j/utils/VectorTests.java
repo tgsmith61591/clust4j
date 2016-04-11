@@ -29,6 +29,7 @@ import org.junit.Test;
 import com.clust4j.GlobalState;
 import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.VecUtils.VecDoubleSeries;
+import com.clust4j.utils.VecUtils.VecSeries;
 
 public class VectorTests {
 	final static double[] empty = new double[]{};
@@ -717,5 +718,162 @@ public class VectorTests {
 		assertFalse(VecUtils.equalsExactly(da,db));
 		assertTrue(VecUtils.equalsExactly(dc, dc));
 		assertFalse(VecUtils.equalsExactly(dc,db));
+	}
+	
+	@Test
+	public void testSomeMoreVecSeries() {
+		final double[] d = {1.0,0.0,1.0};
+		VecSeries v =new VecDoubleSeries(d, Inequality.EQUAL_TO, 1.0);
+		assertFalse(v.all());
+		
+		v = new VecDoubleSeries(d, Inequality.EQUAL_TO, 2.0);
+		assertFalse(v.any());
+		
+		/*
+		 * Dim mismatch test
+		 */
+		boolean a = false;
+		try {
+			v = new VecUtils.VecIntSeries(new int[]{1,2,3}, Inequality.EQUAL_TO, new int[]{1,2});
+		} catch(DimensionMismatchException dim) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void someVarianceTests() {
+		double[] d = new double[]{1,2,3,4,5};
+		double[] e = new double[]{1,2,3,4,Double.NaN};
+		assertTrue(VecUtils.var(d) == VecUtils.nanVar(d));
+		assertFalse(VecUtils.var(d) == VecUtils.nanVar(e));
+	}
+	
+	@Test
+	public void normalization() {
+		// just for coverage...
+		double[] d = new double[]{1,2,3,4,5};
+		VecUtils.normalize(d);
+	}
+	
+	@Test
+	public void testOOB() {
+		double[] d = new double[]{1,2,3,4,5};
+		boolean a = false;
+		
+		try {
+			VecUtils.partition(d, 100);
+		} catch(IllegalArgumentException i) {
+			a = true;	
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void coverage() {
+		VecUtils.randomGaussian(5, 1.0);
+		
+		/*
+		 * IAE on gaussian
+		 */
+		boolean a = false;
+		try {
+			VecUtils.randomGaussian(0);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * IAE on rep
+		 */
+		a = false;
+		try {
+			VecUtils.rep(0, -1);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * IAE on rep
+		 */
+		a = false;
+		try {
+			VecUtils.repInt(0, -1);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * IAE on rep
+		 */
+		a = false;
+		try {
+			VecUtils.repBool(false, -1);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * reorder
+		 */
+		int[] i = new int[]{1,2,3};
+		double[] d = new double[]{1,2,3};
+		assertTrue(VecUtils.equalsExactly(VecUtils.reorder(i, new int[]{2,0,1}), new int[]{3,1,2}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.reverseSeries(d), new double[]{3,2,1}));
+	
+		/*
+		 * AIOOB on slice
+		 */
+		a = false;
+		try {
+			VecUtils.slice(i, 0, 6);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			VecUtils.slice(i, -1, 2);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			VecUtils.slice(d, 0, 6);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			VecUtils.slice(d, -1, 2);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		assertTrue(VecUtils.equalsExactly(VecUtils.sortAsc(new double[]{}), new double[]{}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.sqrt(new double[]{9,16,25}), new double[]{3,4,5}));
+		assertTrue(VecUtils.unique(new double[]{1,2,1}).size() == 2);
+		
+		assertTrue(VecUtils.vstack(new int[]{1,2}, new int[]{1,2}).length == 2);
 	}
 }

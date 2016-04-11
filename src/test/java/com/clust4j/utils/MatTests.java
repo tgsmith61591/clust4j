@@ -3167,4 +3167,60 @@ public class MatTests {
 			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
 		}
 	}
+	
+	@Test
+	public void testNPE() {
+		boolean a = false;
+		try {MatUtils.checkDimsPermitEmpty(new double[5][], new double[5][]);}
+		catch(IllegalArgumentException i){a = true;} finally {assertTrue(a);}
+		
+		a = false;
+		try {MatUtils.checkDimsPermitEmpty(new int[5][], new int[5][]);}
+		catch(IllegalArgumentException i){a = true;} finally {assertTrue(a);}
+		
+		a = false;
+		try {MatUtils.checkDimsPermitEmpty(new boolean[5][], new boolean[5][]);}
+		catch(IllegalArgumentException i){a = true;} finally {assertTrue(a);}
+	}
+	
+	@Test
+	public void coverage() {
+		String[][] s = null;
+		assertNull(MatUtils.copy(s));
+		
+		assertFalse(MatUtils.equalsWithTolerance(new double[][]{new double[]{1}}, new double[][]{new double[]{1}, new double[]{2}}));
+		assertFalse(MatUtils.equalsExactly(new int[][]{new int[]{1}}, new int[][]{new int[]{1}, new int[]{2}}));
+		assertFalse(MatUtils.equalsExactly(new boolean[][]{new boolean[]{false}}, new boolean[][]{new boolean[]{false}, new boolean[]{true}}));
+	
+		boolean a = false;
+		double[][] d1 = new double[][]{
+			new double[]{1,2,3}
+		};
+		
+		double[][] d2 = new double[][]{
+			new double[]{1,2}
+		};
+		
+		try {
+			MatUtils.rbind(d1, d2);
+		} catch(DimensionMismatchException d) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Test int reshape
+		 */
+		int[][] i = new int[][]{
+			new int[]{1,2,3},
+			new int[]{4,5,6}
+		};
+		
+		assertTrue(MatUtils.equalsExactly(MatUtils.reshape(i, 3, 2), new int[][]{
+			new int[]{1,2},
+			new int[]{3,4},
+			new int[]{5,6}
+		}));
+	}
 }

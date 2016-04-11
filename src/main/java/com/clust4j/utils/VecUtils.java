@@ -29,8 +29,6 @@ import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
 
-import static com.clust4j.GlobalState.ParallelismConf.MAX_SERIAL_VECTOR_LEN;
-import static com.clust4j.GlobalState.ParallelismConf.ALLOW_AUTO_PARALLELISM;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
@@ -213,17 +211,7 @@ public class VecUtils {
 	final static public void checkDimsPermitEmpty(final boolean[] a, final boolean[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
 	final static public void checkDimsPermitEmpty(final int[] a, final int[] b) 		{ dimAssessPermitEmpty(a.length, b.length); }
 	final static public void checkDimsPermitEmpty(final double[] a, final double[] b)	{ dimAssessPermitEmpty(a.length, b.length); }
-	
-	
-	/**
-	 * Should we use parallel?
-	 * @param a
-	 * @return
-	 */
-	static boolean useParallel(final double[] a) {
-		return (ALLOW_AUTO_PARALLELISM && null!=a && a.length > MAX_SERIAL_VECTOR_LEN);
-	}
-	
+
 	
 	
 	
@@ -919,20 +907,6 @@ public class VecUtils {
 	}
 	
 	/**
-	 * Returns the kurtosis of the vector.
-	 * @param a
-	 * @throws IllegalArgumentException if the input vector is empty
-	 * @deprecated due to instability in {@link DescriptiveStatistics} API
-	 * @return the kurtosis
-	 */
-	@Deprecated
-	public static double kurtosis(final double[] a) {
-		checkDims(a);
-		DescriptiveStatistics d = new DescriptiveStatistics(a);
-		return d.getKurtosis();
-	}
-	
-	/**
 	 * Computes the <tt>L<sub>1</sub></tt> norm, or the sum
 	 * of the absolute values in the vector.
 	 * @param a
@@ -1410,10 +1384,6 @@ public class VecUtils {
 		return out;
 	}
 	
-	public static double[] randomGaussianNoiseVector(final int n) {
-		return randomGaussian(n, new Random());
-	}
-	
 	public static double[] randomGaussianNoiseVector(final int n, final Random seed) {
 		return randomGaussian(n,seed,GlobalState.Mathematics.EPS);
 	}
@@ -1735,6 +1705,7 @@ public class VecUtils {
 		return result;
 	}
 	
+	/*
 	public static double[] where(final VecDoubleSeries series, final double x, final double[] y) {
 		return where(series, rep(x, series.get().length), y);
 	}
@@ -1746,4 +1717,5 @@ public class VecUtils {
 	public static double[] where(final VecDoubleSeries series, final double x, final double y) {
 		return where(series, rep(x,series.get().length), rep(y,series.get().length));
 	}
+	*/
 }
