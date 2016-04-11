@@ -669,11 +669,16 @@ public class BufferedMatrixReaderTests {
 	@Test
 	public void testParallel1() throws IOException {
 		try {
-			double[][] g = MatUtils.randomGaussian(50, 5);
+			/*
+			 * Do this small and force parallel because
+			 * we need the coverage and Travis CI can't
+			 * handle it too well.
+			 */
+			double[][] g = MatUtils.randomGaussian(30, 5);
 			Object[] o = fromDoubleArr(g);
 			
 			writeCSV(o);
-			DataSet d = readCSV(PARALLEL);
+			DataSet d = readCSV(true);
 			
 			assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
 			System.out.println();

@@ -28,6 +28,7 @@ import java.util.concurrent.RejectedExecutionException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
@@ -500,7 +501,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testBigWithParallelQuery() {
 		final int k= 3;
-		final Array2DRowRealMatrix big = TestSuite.getRandom(750, k); // need to reduce size for travis CI
+		final Array2DRowRealMatrix big = TestSuite.getRandom(500, k); // need to reduce size for travis CI
 		NearestNeighbors nn;
 		try {
 			nn = new NearestNeighbors(big, 
@@ -608,6 +609,43 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			a = true;
 		} finally {
 			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testSmallParallelJob() {
+		/*
+		 * Travis CI is not too capable of extremely large parallel jobs,
+		 * but we might be able to get away with small ones like this.
+		 */
+		final boolean orig = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+		try {
+			/*
+			 * No matter the specs of the system testing this, we 
+			 * need to ensure it will be able to force parallelism
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = true;
+			Array2DRowRealMatrix a= new Array2DRowRealMatrix(new double[][]{
+				new double[]{1,2,1},
+				new double[]{2,1,2},
+				new double[]{1,1,1},
+				new double[]{2,2,2},
+				new double[]{100,101,102},
+				new double[]{99,100,101},
+				new double[]{98,103,100}
+			}, false);
+			
+			/*
+			 * Should obviously be two clusters here...
+			 */
+			Neighborhood n1 = new NearestNeighbors(a, new NearestNeighborsPlanner(2).setForceParallel(true)).fit().getNeighbors();
+			Neighborhood n2 = new NearestNeighbors(a, new NearestNeighborsPlanner(2).setForceParallel(false)).fit().getNeighbors();
+			assertTrue(n1.equals(n2));
+		} finally {
+			/*
+			 * Reset
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
 		}
 	}
 }

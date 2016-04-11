@@ -694,4 +694,41 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		MeanShift a = new MeanShift(data_).fit();
 		System.out.println("MeanShift prediction affinity: " + a.indexAffinityScore(a.predict(data_)));
 	}
+	
+	@Test
+	public void testVerySmallParallelJob() {
+		/*
+		 * Travis CI is not too capable of extremely large parallel jobs,
+		 * but we might be able to get away with small ones like this.
+		 */
+		final boolean orig = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+		try {
+			/*
+			 * No matter the specs of the system testing this, we 
+			 * need to ensure it will be able to force parallelism
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = true;
+			Array2DRowRealMatrix a= new Array2DRowRealMatrix(new double[][]{
+				new double[]{1,2,1},
+				new double[]{2,1,2},
+				new double[]{1,1,1},
+				new double[]{2,2,2},
+				new double[]{100,101,102},
+				new double[]{99,100,101},
+				new double[]{98,103,100}
+			}, false);
+			
+			/*
+			 * Should obviously be two clusters here...
+			 */
+			int[] ms1 = new MeanShift(a, new MeanShiftPlanner().setForceParallel(true)).fit().getLabels();
+			int[] ms2 = new MeanShift(a, new MeanShiftPlanner().setForceParallel(false)).fit().getLabels();
+			assertTrue(VecUtils.equalsExactly(ms1, ms2));
+		} finally {
+			/*
+			 * Reset
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
+		}
+	}
 }

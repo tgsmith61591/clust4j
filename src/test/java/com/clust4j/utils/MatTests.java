@@ -3141,4 +3141,30 @@ public class MatTests {
 		assertFalse(csn.all());
 		assertFalse(csn.any());
 	}
+	
+	@Test
+	public void testVerySmallParallelJob() {
+		/*
+		 * Travis CI is not too capable of extremely large parallel jobs,
+		 * but we might be able to get away with small ones like this.
+		 */
+		final boolean orig = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+		try {
+			/*
+			 * No matter the specs of the system testing this, we 
+			 * need to ensure it will be able to force parallelism
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = true;
+			final double[][] A = MatUtils.randomGaussian(5,3);
+			final double[][] B = MatUtils.randomGaussian(3,2);
+			
+			final double[][] C = MatUtils.multiply(A, B);
+			assertTrue(MatUtils.equalsExactly(C, MatUtils.multiplyDistributed(A, B)));
+		} finally {
+			/*
+			 * Reset
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
+		}
+	}
 }
