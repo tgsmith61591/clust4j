@@ -612,7 +612,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		}
 	}
 	
-	//@Test //travis can't handle this...
+	@Test //travis may not be able to handle this...
 	public void testSmallParallelJob() {
 		/*
 		 * Travis CI is not too capable of extremely large parallel jobs,

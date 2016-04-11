@@ -439,8 +439,9 @@ public class BufferedMatrixReaderTests {
 	/*
 	 * Test that merely the presence of a ? is not enough to trigger NaN
 	 */
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testEmbeddedNonNaN() throws IOException {
+		boolean a= false;
 		try {
 			Object[] o = new Object[]{
 				"1,2,a?,4,5",
@@ -449,7 +450,10 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
+			assertTrue(a);
 			Files.delete(path);
 		}
 	}
@@ -518,8 +522,9 @@ public class BufferedMatrixReaderTests {
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testParseException1() throws IOException {
+		boolean a = false;
 		/*
 		 * This one will fail in the setup
 		 */
@@ -533,13 +538,17 @@ public class BufferedMatrixReaderTests {
 			readCSV();
 			
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testParseException2() throws IOException {
+		boolean a = false;
 		/*
 		 * This one will fail on read()
 		 */
@@ -559,7 +568,10 @@ public class BufferedMatrixReaderTests {
 			readCSV();
 			
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
+			assertTrue(a);
 			Files.delete(path);
 		}
 	}
@@ -589,8 +601,9 @@ public class BufferedMatrixReaderTests {
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testSingleRowNumericFailure() throws IOException {
+		boolean a = false;
 		// test simple
 		try {
 			Object[] o = new Object[]{ "1,2,a,4,5" };
@@ -598,13 +611,17 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSV();
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
+			assertTrue(a);
 			Files.delete(path);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testSingleRowHeaderFailure() throws IOException {
+		boolean a = false;
 		// test simple
 		try {
 			Object[] o = new Object[]{ "a,b,c,d,e" };
@@ -612,13 +629,17 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSV();
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
+			assertTrue(a);
 			Files.delete(path);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testSingleRowNoSep() throws IOException {
+		boolean a=false;
 		// test simple
 		try {
 			Object[] o = new Object[]{ "abcde" };
@@ -626,13 +647,18 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSV();
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testJagged() throws IOException {
+		boolean a = false;
+		
 		// test simple
 		try {
 			Object[] o = new Object[]{
@@ -644,13 +670,18 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSV();
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testPrettyPrinterInError() throws IOException {
+		boolean a = false;
+		
 		// test simple
 		try {
 			Object[] o = new Object[]{
@@ -660,8 +691,11 @@ public class BufferedMatrixReaderTests {
 			writeCSV(o);
 			readCSV();
 			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
@@ -708,6 +742,52 @@ public class BufferedMatrixReaderTests {
 	}
 	
 	@Test
+	public void testParallel1_6() throws IOException {
+		boolean a = false;
+		try {
+			Object[] o = new Object[]{
+				"1,2,3",
+				"1,2,3",
+				"1,2,3",
+				"1,2,3",
+				"a,b,c"
+			};
+			
+			writeCSV(o);
+			readCSV(true);
+			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
+		} finally {
+			Files.delete(path);
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testParallel1_7() throws IOException {
+		boolean a = false;
+		try {
+			Object[] o = new Object[]{
+				"1,2,3",
+				"1,2,3",
+				"1,2,3",
+				"1,2,3",
+				"1,2"
+			};
+			
+			writeCSV(o);
+			readCSV(true);
+			System.out.println();
+		} catch(MatrixParseException m) {
+			a = true;
+		} finally {
+			Files.delete(path);
+			assertTrue(a);
+		}
+	}
+	
+	@Test
 	public void testParallelBig() throws IOException {
 		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
@@ -728,24 +808,28 @@ public class BufferedMatrixReaderTests {
 		
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testParallelBigNFE1() throws IOException {
 		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
 		o[15] = new Object[]{"asdf"};
 		writeCSV(o);
+		boolean a = false;
 		
 		try {
 			readCSV(PARALLEL);
 			System.out.println();
-
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testParallelBigDME1() throws IOException {
+		boolean a = false;
 		double[][] g = MatUtils.randomGaussian(500, 150); // make smaller for travis CI
 		Object[] o = fromDoubleArr(g);
 		o[15] = new Integer(1);
@@ -754,9 +838,11 @@ public class BufferedMatrixReaderTests {
 		try {
 			readCSV(PARALLEL);
 			System.out.println();
-
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
@@ -867,14 +953,18 @@ public class BufferedMatrixReaderTests {
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testEmptySet() throws IOException {
-		writeCSV(new Object[]{});
+		boolean a = false;
 		
 		try {
+			writeCSV(new Object[]{});
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
@@ -893,16 +983,21 @@ public class BufferedMatrixReaderTests {
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testNoGoodSep() throws IOException {
-		writeCSV(new Object[]{
-			"123 123 123",
-			"123,123,123"
-		});
+		boolean a = false;
 		
 		try {
+			writeCSV(new Object[]{
+				"123 123 123",
+				"123,123,123"
+			});
+			
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
+			assertTrue(a);
 			Files.delete(path);
 		}
 	}
@@ -961,8 +1056,10 @@ public class BufferedMatrixReaderTests {
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testEmpty() throws IOException {
+		boolean a = false;
+		
 		try {
 			Object[] o = new Object[]{
 				""
@@ -970,13 +1067,18 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testOneRowNoConventionalSep() throws IOException {
+		boolean a = false;
+		
 		try {
 			Object[] o = new Object[]{
 				"1*1*1"
@@ -984,13 +1086,18 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testOrphanedHeader() throws IOException {
+		boolean a = false;
+		
 		try {
 			Object[] o = new Object[]{
 				"column_a column_b column_c"
@@ -998,13 +1105,17 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
-		} finally {
+		} catch(MatrixParseException m) { 
+			a = true;
+		}finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testInconsistentSeparator() throws IOException {
+		boolean a = false;
 		try {
 			Object[] o = new Object[]{
 				"1 1 1",
@@ -1014,13 +1125,18 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	
-	@Test(expected=MatrixParseException.class)
+	@Test
 	public void testLurkingAlpha() throws IOException {
+		boolean a = false;
+		
 		try {
 			Object[] o = new Object[]{
 				"1 1 1",
@@ -1030,8 +1146,11 @@ public class BufferedMatrixReaderTests {
 			
 			writeCSV(o);
 			readCSV();
+		} catch(MatrixParseException m) {
+			a = true;
 		} finally {
 			Files.delete(path);
+			assertTrue(a);
 		}
 	}
 	

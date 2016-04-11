@@ -947,13 +947,9 @@ public class BufferedMatrixReader implements Loggable {
 			try {
 				res = ParallelChunkParser.doAll(lines, setup);
 			} catch(NumberFormatException n) {
-				msg = "caught NumberFormatException: " + n.getLocalizedMessage();
-				error(msg);
-				throw new MatrixParseException(msg, n);
+				error(new MatrixParseException("caught NumberFormatException: " + n.getLocalizedMessage()));
 			} catch(DimensionMismatchException d) {
-				msg = "caught row of unexpected dimensions: " + d.getMessage();
-				error(msg);
-				throw new MatrixParseException(msg, d);
+				error(new MatrixParseException("caught row of unexpected dimensions: " + d.getMessage()));
 			} catch(RejectedExecutionException r) {
 				throwing_exception = false;
 				warn("unable to schedule parallel job; falling back to serial parse");
