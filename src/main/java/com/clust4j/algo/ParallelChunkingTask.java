@@ -83,7 +83,7 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 		}
 		
 		public static int getChunkSize(int m, int numChunks) {
-			return m < DEF_CHUNK_SIZE ? m / numChunks : 
+			return m < DEF_CHUNK_SIZE ? m : 
 				m / numChunks;
 		}
 		
