@@ -34,7 +34,6 @@ import com.clust4j.GlobalState;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
@@ -83,8 +82,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	private volatile HDBSCANLinkageTree tree = null;
 	private volatile double[][] dist_mat = null;
 	private volatile int[] labels = null;
-	private volatile int numClusters;
-	private volatile int numNoisey;
+	private volatile int numClusters = -1;
+	private volatile int numNoisey = -1;
 	/** A copy of the data array inside the data matrix */
 	private volatile double[][] dataData = null;
 	
@@ -103,7 +102,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 				final Class<? extends GeometricallySeparable> clz = h.dist_metric.getClass();
 				final int n = h.data.getColumnDimension();
 				
-				// rare situation... only if sim metric or kernel
+				// rare situation... only if oddball dist
 				if(!fast_metrics_.contains(clz)) {
 					return GENERIC.initTree(h);
 				}
@@ -486,46 +485,31 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	
 	
 	
-	
-	/**
-	 * A simple extension of {@link ArrayList} that also provides
-	 * a simple heap/stack interface of methods.
-	 * @author Taylor G Smith
-	 * @param <T>
-	 */
-	protected final static class HList<T> extends ArrayList<T> {
-		private static final long serialVersionUID = 2784009809720305029L;
-		
-		public HList() {
-			super();
-		}
-		
-		public HList(Collection<? extends T> coll) {
-			super(coll);
-		}
-		
-		public HList(T[] t) {
-			super(t.length);
-			for(T tee: t)
-				add(tee);
-		}
-		
-		public T pop() {
-			if(this.isEmpty())
-				return null;
+	@Override
+	public boolean equals(Object o) {
+		if(this == o)
+			return true;
+		if(o instanceof HDBSCAN) {
+			HDBSCAN h = (HDBSCAN)o;
 			
-			final T t = this.get(this.size() - 1);
-			this.remove(this.size() - 1);
-			return t;
+			/*
+			 * Has one been fit and not the other?
+			 */
+			if(null == this.labels ^ null == h.labels)
+				return false;
+			
+			return MatUtils.equalsExactly(this.data.getDataRef(), h.data.getDataRef())
+				&& (null == this.labels ? true : VecUtils.equalsExactly(this.labels, h.labels))
+				&& this.algo.equals(h.algo)
+				&& this.alpha == h.alpha
+				&& this.leafSize == h.leafSize
+				&& this.min_cluster_size == h.min_cluster_size;
 		}
 		
-		public void push(T t) {
-			if(this.isEmpty())
-				add(t);
-			else
-				add(0, t);
-		}
+		return false;
 	}
+	
+	
 	
 	/**
 	 * This class extension is for the sake of testing; it restricts
@@ -571,12 +555,6 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		
 		HSet(int size) {
 			super(size);
-		}
-		
-		HSet(T[] args) {
-			this(args.length);
-			for(T t: args)
-				add(t);
 		}
 		
 		HSet(Collection<? extends T> coll) {
@@ -631,22 +609,22 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		 * @return
 		 */
 		// Tested: passing
-		static HList<Integer> breadthFirstSearch(final double[][] hierarchy, final int root) {
-			HList<Integer> toProcess = new HList<>(), tmp;
+		static ArrayList<Integer> breadthFirstSearch(final double[][] hierarchy, final int root) {
+			ArrayList<Integer> toProcess = new ArrayList<>(), tmp;
 			int dim = hierarchy.length, maxNode = 2*dim, numPoints = maxNode - dim+1;
 			
 			toProcess.add(root);
-			HList<Integer> result = new HList<>();
+			ArrayList<Integer> result = new ArrayList<>();
 			while(!toProcess.isEmpty()) {
 				result.addAll(toProcess);
 				
-				tmp = new HList<>();
+				tmp = new ArrayList<>();
 				for(Integer x: toProcess)
 					if(x >= numPoints)
 						tmp.add(x - numPoints);
 				toProcess = tmp;
 				
-				tmp = new HList<>();
+				tmp = new ArrayList<>();
 				if(!toProcess.isEmpty()) {
 					for(Integer row: toProcess)
 						for(int i = 0; i < 2; i++)
@@ -660,7 +638,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		// Tested: passing
-		static TreeMap<Integer, Double> computeStability(HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed) {
+		static TreeMap<Integer, Double> computeStability(ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> condensed) {
 			double[] resultArr, births, lambdas = new double[condensed.size()];
 			int[] sizes = new int[condensed.size()], parents = new int[condensed.size()];
 			int child, parent, childSize, resultIdx, currentChild = -1, idx = 0, row = 0;
@@ -766,15 +744,15 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		}
 		
 		// Tested: passing
-		static HList<CompQuadTup<Integer, Integer, Double, Integer>> condenseTree(final double[][] hierarchy, final int minSize) {
+		static ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> condenseTree(final double[][] hierarchy, final int minSize) {
 			final int m = hierarchy.length;
 			int root = 2 * m, 
 					numPoints = root/2 + 1 /*Integer division*/, 
 					nextLabel = numPoints+1;
 			
 			// Get node list from BFS
-			HList<Integer> nodeList = breadthFirstSearch(hierarchy, root), tmpList;
-			HList<CompQuadTup<Integer, Integer, Double, Integer>> resultList = new HList<>();
+			ArrayList<Integer> nodeList = breadthFirstSearch(hierarchy, root), tmpList;
+			ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> resultList = new ArrayList<>();
 			
 			// Indices needing relabeling -- cython code assigns this to nodeList.size()
 			// but often times this is way too small and causes out of bounds exceptions...
@@ -1235,11 +1213,13 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		
 		@Override
 		public double[][] mutualReachability() {
+			/*// this shouldn't be able to happen...
 			if(null == dist_mat)
 				throw new IllegalClusterStateException("dist matrix is null; "
 					+ "this only can happen when the model attempts to invoke "
 					+ "mutualReachability on a tree without proper initialization "
 					+ "or after the model has already been fit.");
+			*/
 			
 			return LinkageTreeUtils.mutualReachability(dist_mat, minPts, alpha);
 		}
@@ -1385,7 +1365,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		 * @return
 		 */
 		int[] components() {
-			final HList<Integer> h = new HList<>();
+			final ArrayList<Integer> h = new ArrayList<>();
 			for(int i = 0; i < is_component.length; i++)
 				if(is_component[i])
 					h.add(i);
@@ -1469,8 +1449,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	
 
 
-	protected static int[] doLabeling(HList<CompQuadTup<Integer, Integer, Double, Integer>> tree,
-			HList<Integer> clusters, TreeMap<Integer, Integer> clusterMap) {
+	protected static int[] doLabeling(ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> tree,
+			ArrayList<Integer> clusters, TreeMap<Integer, Integer> clusterMap) {
 		
 		CompQuadTup<Integer, Integer, Double, Integer> quad;
 		int rootCluster, parent, child, n = tree.size(), cluster, i;
@@ -1617,9 +1597,9 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		 * @param stability
 		 * @return
 		 */
-		protected static <T,P> HList<T> descSortedKeySet(TreeMap<T,P> stability) {
+		protected static <T,P> ArrayList<T> descSortedKeySet(TreeMap<T,P> stability) {
 			int ct = 0;
-			HList<T> nodeList = new HList<>();
+			ArrayList<T> nodeList = new ArrayList<>();
 			for(T d: stability.descendingKeySet())
 				if(++ct < stability.size()) // exclude the root...
 					nodeList.add(d);
@@ -1632,8 +1612,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		 * @param tree
 		 * @return
 		 */
-		protected static EntryPair<HList<double[]>, Integer> childSizeGtOneAndMaxChild(HList<CompQuadTup<Integer, Integer, Double, Integer>> tree) {
-			HList<double[]> out = new HList<>();
+		protected static EntryPair<ArrayList<double[]>, Integer> childSizeGtOneAndMaxChild(ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> tree) {
+			ArrayList<double[]> out = new ArrayList<>();
 			int max = Integer.MIN_VALUE;
 			
 			// [parent, child, lambda, size]
@@ -1652,14 +1632,14 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			return new EntryPair<>(out, max + 1);
 		}
 		
-		protected static TreeMap<Integer, Boolean> initNodeMap(HList<Integer> nodes) {
+		protected static TreeMap<Integer, Boolean> initNodeMap(ArrayList<Integer> nodes) {
 			TreeMap<Integer, Boolean> out = new TreeMap<>();
 			for(Integer i: nodes)
 				out.put(i, true);
 			return out;
 		}
 		
-		protected static double subTreeStability(HList<double[]> clusterTree, 
+		protected static double subTreeStability(ArrayList<double[]> clusterTree, 
 				int node, TreeMap<Integer, Double> stability) {
 			double sum = 0;
 			
@@ -1671,11 +1651,11 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			return sum;
 		}
 		
-		protected static HList<Integer> breadthFirstSearchFromClusterTree(HList<double[]> tree, Integer bfsRoot) {
+		protected static ArrayList<Integer> breadthFirstSearchFromClusterTree(ArrayList<double[]> tree, Integer bfsRoot) {
 			int child, parent;
-			HList<Integer> result = new HList<>();
-			HList<Integer> toProcess = new HList<Integer>();
-			HList<Integer> tmp;
+			ArrayList<Integer> result = new ArrayList<>();
+			ArrayList<Integer> toProcess = new ArrayList<Integer>();
+			ArrayList<Integer> tmp;
 			
 			toProcess.add(bfsRoot);
 			
@@ -1687,7 +1667,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 				// to_process = tree['child'][np.in1d(tree['parent'], to_process)]
 				// For all tuples, if the parent is in toProcess, then
 				// add the child to the new list
-				tmp = new HList<Integer>();
+				tmp = new ArrayList<Integer>();
 				for(double[] d: tree) {
 					parent	= (int)d[0];
 					child	= (int)d[1];
@@ -1703,21 +1683,21 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		}
 	}
 	
-	protected static int[] getLabels(HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed,
+	protected static int[] getLabels(ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> condensed,
 									TreeMap<Integer, Double> stability) {
 		
 		double subTreeStability;
-		HList<Integer> clusters = new HList<Integer>();
+		ArrayList<Integer> clusters = new ArrayList<Integer>();
 		HSet<Integer> clusterSet;
 		TreeMap<Integer, Integer> clusterMap = new TreeMap<>(), 
 				reverseClusterMap = new TreeMap<>();
 		
 		// Get descending sorted key set
-		HList<Integer> nodeList = GetLabelUtils.descSortedKeySet(stability);
+		ArrayList<Integer> nodeList = GetLabelUtils.descSortedKeySet(stability);
 		
 		// Get tuples where child size > 1
-		EntryPair<HList<double[]>, Integer> entry = GetLabelUtils.childSizeGtOneAndMaxChild(condensed);
-		HList<double[]> clusterTree = entry.getKey();
+		EntryPair<ArrayList<double[]>, Integer> entry = GetLabelUtils.childSizeGtOneAndMaxChild(condensed);
+		ArrayList<double[]> clusterTree = entry.getKey();
 		
 		// Map of nodes to whether it's a cluster
 		TreeMap<Integer, Boolean> isCluster = GetLabelUtils.initNodeMap(nodeList);
@@ -1800,7 +1780,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	protected static int[] treeToLabels(final double[][] X, 
 			final double[][] single_linkage_tree, final int min_size, Loggable logger) {
 		
-		final HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
+		final ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
 				LinkageTreeUtils.condenseTree(single_linkage_tree, min_size);
 		final TreeMap<Integer, Double> stability = LinkageTreeUtils.computeStability(condensed);
 		return getLabels(condensed, stability);

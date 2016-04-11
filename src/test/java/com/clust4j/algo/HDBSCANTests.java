@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,12 +37,12 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
 import com.clust4j.algo.HDBSCAN.CompQuadTup;
 import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
-import com.clust4j.algo.HDBSCAN.HList;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
 import com.clust4j.data.DataSet;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
@@ -171,7 +172,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			new double[]{3.0, 1.0, 0.6, 3.0}
 		};
 		
-		HList<CompQuadTup<Integer, Integer, Double, Integer>> h = HDBSCAN.LinkageTreeUtils.condenseTree(slt, 5);
+		ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> h = HDBSCAN.LinkageTreeUtils.condenseTree(slt, 5);
 		QuadTup<Integer, Integer, Double, Integer> q = h.get(0);
 		assertTrue(q.getFirst() == 3);
 		assertTrue(q.getSecond() == 0);
@@ -380,7 +381,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			new double[]{3,2,10.05,3}
 		};
 		
-		HList<Integer> result;
+		ArrayList<Integer> result;
 		int root;
 		
 		// Test with root == 0
@@ -438,7 +439,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		stability.put(9, 23.0);
 		stability.put(-5, 89.0);
 			
-		HList<Integer> nodes = HDBSCAN.GetLabelUtils.descSortedKeySet(stability);
+		ArrayList<Integer> nodes = HDBSCAN.GetLabelUtils.descSortedKeySet(stability);
 		assertTrue(nodes.size() == 2);
 		assertTrue(nodes.get(0) == 9);
 		assertTrue(nodes.get(1) == 1);
@@ -447,13 +448,13 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	
 	@Test
 	public void testSizeOverOne() {
-		HList<CompQuadTup<Integer, Integer, Double, Integer>> tup = new HList<>();
+		ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> tup = new ArrayList<>();
 		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,2,1.0,1));
 		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
 		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
 		tup.add(new CompQuadTup<Integer, Integer, Double, Integer>(1,1,1.0,2));
 		
-		EntryPair<HList<double[]>, Integer> entry = 
+		EntryPair<ArrayList<double[]>, Integer> entry = 
 			HDBSCAN.GetLabelUtils.childSizeGtOneAndMaxChild(tup);
 		
 		assertTrue(entry.getKey().size() == 3);
@@ -607,6 +608,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 				.setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
 		
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
+		assertTrue(h.getNumberOfIdentifiedClusters() == 2);
 	}
 	
 	@Test
@@ -1148,7 +1150,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		
 		// expected sorted...
-		HList<CompQuadTup<Integer, Integer, Double, Integer>> expected_hlist = new HList<>();
+		ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> expected_hlist = new ArrayList<>();
 		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(150, 151, 0.6097107608496923, 50));
 		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(150, 152, 0.6097107608496923, 100));
 		expected_hlist.add(new CompQuadTup<Integer, Integer, Double, Integer>(151, 2, 3.7796447300922726, 1));
@@ -1312,7 +1314,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		
 		// test the condense tree label
-		HList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
+		ArrayList<CompQuadTup<Integer, Integer, Double, Integer>> condensed = 
 			HDBSCAN.LinkageTreeUtils.condenseTree(expected_labMat, 5);
 		// Now sort it for the sake of comparing to the sklearn res...
 		Collections.sort(condensed, new Comparator<QuadTup<Integer, Integer, Double, Integer>>(){
@@ -1491,5 +1493,87 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
+	}
+	
+	@Test
+	public void testAutoGeneric() {
+		HDBSCAN h = new HDBSCAN(DATA, new HDBSCANPlanner().setMetric(Distance.YULE)).fit();
+		assertTrue(h.algo.equals(HDBSCAN.HDBSCAN_Algorithm.GENERIC));
+		
+		/*
+		 * ensure unsupported operation exception here
+		 */
+		boolean a = false;
+		try {
+			HDBSCAN.HDBSCAN_Algorithm.AUTO.isValidMetric(null);
+		} catch(UnsupportedOperationException u) {
+			a =true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testBadLeafSize() {
+		boolean a = false;
+		try{
+			new HDBSCAN(DATA, new HDBSCANPlanner().setLeafSize(0));
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testAlpha() {
+		/*
+		 * Ensuring it actually fits it for all algos...
+		 */
+		for(HDBSCAN_Algorithm h: HDBSCAN.HDBSCAN_Algorithm.values())
+			new HDBSCAN(DATA, new HDBSCANPlanner().setAlgo(h).setAlpha(1.5)).fit();
+	}
+	
+	@Test
+	public void testWrapAroundWorks() {
+		boolean b = false;
+		try {
+			HDBSCAN.LinkageTreeUtils.wraparoundIdxGet(4, 6);
+		} catch(ArrayIndexOutOfBoundsException i) {
+			b = true;
+		} finally {
+			assertTrue(b);
+		}
+	}
+	
+	@Test
+	public void testUnionFindToStringNotNull() {
+		assertNotNull(new HDBSCAN.UnionFind(4).toString());
+	}
+	
+	@Test
+	public void testDoubleFit() {
+		HDBSCAN h = new HDBSCAN(DATA);
+		
+		/*
+		 * First catch the MNFE
+		 */
+		boolean a = false;
+		try {
+			h.getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		assertTrue(h.getNumberOfIdentifiedClusters() == -1);
+		assertTrue(h.getNumberOfNoisePoints() == -1);
+		
+		h.fit();
+		assertTrue(h.equals(h.fit()));
+		assertFalse(h.equals(new Object()));
+		assertTrue(h.equals(new HDBSCAN(DATA).fit()));
+		assertFalse(h.equals(new HDBSCAN(DATA)));
 	}
 }

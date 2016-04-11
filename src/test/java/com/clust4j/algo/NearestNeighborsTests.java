@@ -598,4 +598,16 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			assertFalse(model.isValidMetric(new GaussianKernel()));
 		}
 	}
+	
+	@Test
+	public void testUnsupportedOperation() {
+		boolean a = false;
+		try {
+			BaseNeighborsModel.NeighborsAlgorithm.AUTO.isValidMetric(null);
+		} catch(UnsupportedOperationException u) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
 }

@@ -32,6 +32,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
 import com.clust4j.data.DataSet;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
@@ -392,5 +393,103 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	public void testPredict() {
 		AffinityPropagation a = new AffinityPropagation(data).fit();
 		System.out.println("AffinityProp prediction affinity: " + a.indexAffinityScore(a.predict(data)));
+	}
+	
+	@Test
+	public void testDamping() {
+		/*
+		 * Damping must be: 0.5 <= damping < 1
+		 */
+		boolean a = false, b =  false;
+		try {
+			new AffinityPropagation(data, new AffinityPropagationPlanner().setDampingFactor(0.49));
+		} catch(IllegalArgumentException i) {
+			a = true;
+		}
+		
+		try {
+			new AffinityPropagation(data, new AffinityPropagationPlanner().setDampingFactor(1.00));
+		} catch(IllegalArgumentException i) {
+			b = true;
+		}
+		
+		assertTrue(a && b);
+	}
+	
+	@Test
+	public void testMNFE() {
+		boolean a = false;
+		try {
+			new AffinityPropagation(data).getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testNPE1() {
+		boolean a = false;
+		try {
+			new AffinityPropagation(data).getAvailabilityMatrix();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testNPE2() {
+		boolean a = false;
+		try {
+			new AffinityPropagation(data).getResponsibilityMatrix();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testDefaultParamsAndEquals() {
+		AffinityPropagation ap = new AffinityPropagation(data).fit();
+		assertTrue(ap.getMaxIter() == AffinityPropagation.DEF_MAX_ITER);
+		assertTrue(ap.didConverge());
+		assertTrue(ap.getConvergenceTolerance() == AffinityPropagation.DEF_TOL);
+		
+		/*
+		 * test double fit!
+		 */
+		assertTrue(ap.equals(ap.fit()));
+		assertFalse(ap.equals(new AffinityPropagation(data)));
+		assertTrue(ap.equals(ap));
+		assertFalse(ap.equals(new Object()));
+		assertTrue(ap.equals(new AffinityPropagation(data).fit()));
+		assertTrue(new AffinityPropagation(data).equals(new AffinityPropagation(data)));
+	}
+	
+	@Test
+	public void testCentroids() {
+		AffinityPropagation ap = new AffinityPropagation(data);
+		
+		/*
+		 * Test not fit exception
+		 */
+		boolean a = false;
+		try {
+			ap.getCentroids();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * fit
+		 */
+		ap.fit();
+		ap.getCentroids(); // should pass
 	}
 }

@@ -26,14 +26,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 import com.clust4j.algo.KMeans.KMeansPlanner;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
+import com.clust4j.except.NaNException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 //import com.clust4j.kernel.KernelTestCases;
@@ -569,5 +572,98 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	public void testPredict() {
 		KMeans k = new KMeans(data_, 3).fit();
 		System.out.println("KMeans prediction affinity: " + k.indexAffinityScore(k.predict(data_)));
+	}
+	
+	@Test
+	public void testBadKVals() {
+		boolean a = false, b = false;
+		try {
+			new KMeans(data_, 0);
+		} catch(IllegalArgumentException e) {
+			a = true;
+		}
+		
+		try {
+			new KMeans(data_, 1500);
+		} catch(IllegalArgumentException e) {
+			b = true;
+		}
+		
+		assertTrue(a && b);
+	}
+	
+	@Test
+	public void testAutoName() {
+		/*
+		 * Not very necessary... but just shows it's not null for coverage
+		 */
+		assertNotNull(AbstractCentroidClusterer.InitializationStrategy.AUTO.getName());
+	}
+	
+	@Test
+	public void testDMEEucDists() {
+		/*
+		 * Also not very necessary, as it's internal and shouldn't hit
+		 * this snag, but it provides coverage. Yay.
+		 */
+		boolean a = false;
+		try {
+			KMeans.eucDists(
+				new double[][]{new double[]{1,2,3}}, 
+				new double[][]{new double[]{1,2}});
+		} catch(DimensionMismatchException d) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testMNFE() {
+		boolean a = false;
+		try {
+			new KMeans(data_, 3).getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testParallelConflict() {
+		final boolean orig = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+		
+		try {
+			/*
+			 * Set to false and try to force, watch it fail
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = false;
+			KMeans k = new KMeans(data_, new KMeansPlanner(3).setForceParallel(true));
+			assertFalse(k.parallel); // can't be true given global prohibits it.
+			
+		} finally {
+			/*
+			 * Always need to make sure we reset it!
+			 */
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
+		}
+	}
+	
+	@Test
+	public void testNaNInput() {
+		boolean a = false;
+		Array2DRowRealMatrix d = new Array2DRowRealMatrix(new double[][]{
+			new double[]{Double.NaN, 1, 2},
+			new double[]{1, 2 , 3}
+		}, false);
+		
+		try {
+			new KMeans(d, 1);
+		} catch(NaNException n) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
 	}
 }

@@ -214,7 +214,7 @@ public class GlobalState {
 		/**
 		 * Whether to allow parallelism at all or quietly force serial jobs where necessary
 		 */
-		public static final boolean PARALLELISM_ALLOWED = NUM_CORES >= MIN_CORES_REQUIRED;
+		public static boolean PARALLELISM_ALLOWED = NUM_CORES >= MIN_CORES_REQUIRED;
 		
 		/**
 		 * Whether parallelization is recommended for this machine.

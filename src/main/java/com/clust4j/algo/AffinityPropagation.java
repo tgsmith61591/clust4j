@@ -313,6 +313,45 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 
 
+	@Override
+	public boolean equals(Object o) {
+		if(this == o)
+			return true;
+		if(o instanceof AffinityPropagation) {
+			AffinityPropagation a = (AffinityPropagation)o;
+			
+			/*
+			 * This should apply to cachedR as well, so no
+			 * need to check that lest we uselessly impose
+			 * less coverage. This is also a litmus test of
+			 * whether the model has been fit yet.
+			 */
+			if(null == this.cachedA ^ null == a.cachedA)
+				return false;
+			
+			/*
+			 * Models haven't been fit
+			 */
+			if(null == this.cachedA) {
+				return MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
+					&& this.tolerance == a.tolerance
+					&& this.addNoise == a.addNoise
+					&& this.normalized == a.normalized
+					&& this.maxIter == a.maxIter
+					&& this.damping == a.damping;
+			}
+			
+			return MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
+				&& VecUtils.equalsExactly(this.labels, a.labels)
+				&& this.tolerance == a.tolerance
+				&& this.addNoise == a.addNoise
+				&& this.normalized == a.normalized
+				&& this.maxIter == a.maxIter
+				&& this.damping == a.damping;
+		}
+		
+		return false;
+	}
 
 	@Override
 	public int[] getLabels() {
@@ -329,19 +368,15 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	}
 	
 	public double[][] getAvailabilityMatrix() {
-		try {
+		if(null != cachedA)
 			return MatUtils.copy(cachedA);
-		} catch(NullPointerException npe) {
-			throw new ModelNotFitException("model is not fit", npe);
-		}
+		throw new ModelNotFitException("model is not fit");
 	}
 	
 	public double[][] getResponsibilityMatrix() {
-		try {
+		if(null != cachedR)
 			return MatUtils.copy(cachedR);
-		} catch(NullPointerException npe) {
-			throw new ModelNotFitException("model is not fit", npe);
-		}
+		throw new ModelNotFitException("model is not fit");
 	}
 
 	@Override
@@ -861,6 +896,13 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 					for(int i = 0; i < labels.length; i++)
 						labels[i] = centroidIndices.indexOf(labels[i]);
 					
+					/*
+					 * Don't forget to assign the centroids!
+					 */
+					this.centroids = new ArrayList<>();
+					for(Integer idx: centroidIndices) {
+						this.centroids.add(this.data.getRow(idx));
+					}
 				} else {
 					centroids = new ArrayList<>(); // Empty
 					centroidIndices = new ArrayList<>(); // Empty
@@ -902,7 +944,14 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 
 	@Override
 	public ArrayList<double[]> getCentroids() {
-		return centroids;
+		if(null == centroids)
+			error(new ModelNotFitException("model has not yet been fit"));
+		
+		final ArrayList<double[]> cent = new ArrayList<double[]>();
+		for(double[] d : centroids)
+			cent.add(VecUtils.copy(d));
+		
+		return cent;
 	}
 	
 	/** {@inheritDoc} */

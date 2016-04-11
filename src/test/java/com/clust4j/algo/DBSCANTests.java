@@ -32,6 +32,8 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.DBSCAN.DBSCANPlanner;
 import com.clust4j.data.DataSet;
+import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.kernel.RadialBasisKernel;
@@ -271,5 +273,50 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		d = Distance.HAVERSINE.KM;
 		model = new DBSCAN(small, new DBSCANPlanner().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
+	}
+	
+	@Test
+	public void testBadEps() {
+		boolean a = false;
+		try {
+			new DBSCAN(data, new DBSCANPlanner(0.0));
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testForceBadMetric() {
+		DBSCAN d = new DBSCAN(data);
+		assertFalse(d.isValidMetric(new GaussianKernel()));
+	}
+	
+	@Test
+	public void testGetter() {
+		DBSCAN d = new DBSCAN(data, new DBSCANPlanner(1.5));
+		assertTrue(d.getEps() == 1.5);
+		
+		/*
+		 * Test mnfe for labels
+		 */
+		boolean a = false;
+		try {
+			d.getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testEqualsAndMultiFit() {
+		DBSCAN d = new DBSCAN(data).fit();
+		assertTrue(d.equals(d.fit()));
+		assertFalse(d.equals(new DBSCAN(data))); // second has been fit yet
+		assertTrue(d.equals(new DBSCAN(data).fit()));
+		assertFalse(d.equals(new Object()));
 	}
 }

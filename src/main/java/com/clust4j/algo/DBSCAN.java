@@ -29,6 +29,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 
@@ -220,6 +221,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
 		super(data, planner);
 		this.m = data.getRowDimension();
+		this.eps = planner.eps;
 		
 		// Error handle...
 		if(this.eps <= 0.0) 
@@ -247,6 +249,28 @@ final public class DBSCAN extends AbstractDBSCAN {
 	}
 	
 
+	
+	
+	@Override
+	public boolean equals(Object o) {
+		if(this == o)
+			return true;
+		if(o instanceof DBSCAN) {
+			DBSCAN d = (DBSCAN)o;
+			
+			/*
+			 * This is a litmus test of
+			 * whether the model has been fit yet.
+			 */
+			if(null == this.labels ^ null == d.labels)
+				return false;
+			
+			return MatUtils.equalsExactly(this.data.getDataRef(), d.data.getDataRef())
+				&& this.eps == d.eps;
+		}
+		
+		return false;
+	}
 	
 	public double getEps() {
 		return eps;

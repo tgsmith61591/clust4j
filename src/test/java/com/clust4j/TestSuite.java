@@ -25,6 +25,8 @@ import org.junit.runner.JUnitCore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import com.clust4j.TestClust4j;
+import com.clust4j.TestGlobals;
 import com.clust4j.algo.AffinityPropagationTests;
 import com.clust4j.algo.BoruvkaTests;
 import com.clust4j.algo.ClustTests;
@@ -54,7 +56,6 @@ import com.clust4j.metrics.pairwise.PairwiseTests;
 import com.clust4j.metrics.pairwise.TestDistanceEnums;
 import com.clust4j.metrics.scoring.TestMetrics;
 import com.clust4j.sample.BootstrapTest;
-import com.clust4j.utils.BinarySearchTreeTests;
 import com.clust4j.utils.FormatterTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
@@ -68,7 +69,6 @@ import com.clust4j.utils.parallel.ParallelTests;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	AffinityPropagationTests.class,
-	BinarySearchTreeTests.class,
 	BootstrapTest.class,
 	BoruvkaTests.class,
 	BufferedMatrixReaderTests.class,
