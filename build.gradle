@@ -1,7 +1,6 @@
-plugins {
-    id 'java'
-    id 'eclipse'
-}
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'jacoco'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -54,3 +53,17 @@ dependencies {
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2'
 }
+
+
+/*
+ * Settings for jacoco coverage report
+ */
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+// needed for Travis CI
+check.dependsOn jacocoTestReport
