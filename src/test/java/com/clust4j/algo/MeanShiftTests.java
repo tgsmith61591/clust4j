@@ -695,7 +695,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		System.out.println("MeanShift prediction affinity: " + a.indexAffinityScore(a.predict(data_)));
 	}
 	
-	@Test
+	//@Test //can't use this on travis...
 	public void testVerySmallParallelJob() {
 		/*
 		 * Travis CI is not too capable of extremely large parallel jobs,

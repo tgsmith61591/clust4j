@@ -39,6 +39,7 @@ import com.clust4j.algo.MeanShiftTests;
 import com.clust4j.algo.NNHSTests;
 import com.clust4j.algo.NearestCentroidTests;
 import com.clust4j.algo.NearestNeighborsTests;
+import com.clust4j.algo.ParallelTaskTests;
 import com.clust4j.algo.TestLabelEncoder;
 import com.clust4j.algo.RadiusNeighborsTests;
 import com.clust4j.algo.pipeline.PipelineTest;
@@ -89,6 +90,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	NearestNeighborsTests.class,
 	NNHSTests.class,
 	PairwiseTests.class,
+	ParallelTaskTests.class,
 	ParallelTests.class,
 	PipelineTest.class,
 	PreProcessorTests.class,

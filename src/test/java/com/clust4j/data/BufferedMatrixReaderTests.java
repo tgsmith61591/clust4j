@@ -678,7 +678,7 @@ public class BufferedMatrixReaderTests {
 			Object[] o = fromDoubleArr(g);
 			
 			writeCSV(o);
-			DataSet d = readCSV(true);
+			DataSet d = readCSV(PARALLEL);
 			
 			assertTrue(MatUtils.equalsExactly(g, d.getDataRef().getDataRef()));
 			System.out.println();
