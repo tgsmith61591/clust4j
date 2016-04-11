@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.ParallelChunkingTask.Chunk;
 import com.clust4j.algo.ParallelChunkingTask.ChunkingStrategy;
 import com.clust4j.algo.ParallelChunkingTask.SimpleChunkingStrategy;
@@ -18,8 +19,8 @@ public class ParallelTaskTests {
 		double[][] X = MatUtils.randomGaussian(750, 2);
 		ChunkingStrategy strat = new SimpleChunkingStrategy();
 		ArrayList<Chunk> chunks = strat.map(X);
-		assertTrue(chunks.size() == 2);
-		assertTrue(strat.getNumChunks(X) == 2);
+		assertTrue(chunks.size() == GlobalState.ParallelismConf.NUM_CORES);
+		assertTrue(strat.getNumChunks(X) == GlobalState.ParallelismConf.NUM_CORES);
 		assertTrue(ChunkingStrategy.getChunk(X, 500, 1).size() == 250);
 	}
 

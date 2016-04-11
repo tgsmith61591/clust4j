@@ -29,14 +29,13 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.clust4j.GlobalState;
 import com.clust4j.data.BufferedMatrixReader.MatrixReaderSetup;
 import com.clust4j.except.MatrixParseException;
 import com.clust4j.utils.MatUtils;
 
 
 public class BufferedMatrixReaderTests {
-	final static boolean PARALLEL = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+	final static boolean PARALLEL = false; //GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
 	final static String file = new String("tmpbmrtfile.csv");
 	final static Path path = FileSystems.getDefault().getPath(file);
 	final static byte HIVE = (byte)0x1;
