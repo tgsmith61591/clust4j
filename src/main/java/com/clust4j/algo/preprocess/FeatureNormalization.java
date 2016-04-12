@@ -73,8 +73,6 @@ public enum FeatureNormalization implements PreProcessor {
 	 * {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MAX} is set differently, will fit into range [MIN, MAX]
 	 */
 	MIN_MAX_SCALE {
-		int RANGE_MIN = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
-		int RANGE_MAX = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
 		
 		/**
 		 * @throws IllegalStateException if {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MIN} is greater
@@ -82,6 +80,9 @@ public enum FeatureNormalization implements PreProcessor {
 		 */
 		@Override
 		public double[][] operate(double[][] data) {
+			int RANGE_MIN = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
+			int RANGE_MAX = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
+			
 			/*
 			 * This method gets called tons of times, and needs
 			 * to be highly optimized. Thus, we won't use build in

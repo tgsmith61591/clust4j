@@ -45,12 +45,6 @@ public abstract class MatrixImputation extends Clust4j implements Loggable, Name
 	private boolean hasWarnings = false;
 	
 	
-	public static enum CentralTendencyMethod implements java.io.Serializable {
-		MEAN, 
-		MEDIAN
-	}
-	
-	
 	
 	public MatrixImputation(final ImputationPlanner planner) {
 		this.verbose = planner.getVerbose();

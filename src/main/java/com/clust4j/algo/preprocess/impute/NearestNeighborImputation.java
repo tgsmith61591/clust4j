@@ -23,7 +23,6 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel;
 import com.clust4j.algo.NearestNeighbors;
-import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
@@ -50,15 +49,19 @@ public class NearestNeighborImputation extends MatrixImputation {
 		this(new NNImputationPlanner());
 	}
 	
+	public NearestNeighborImputation(int k) {
+		this(new NNImputationPlanner(k));
+	}
+	
 	public NearestNeighborImputation(NNImputationPlanner planner) {
 		super(planner);
 		this.k = planner.k;
 		this.cent = planner.cent;
 		
 		if(null == cent)
-			throw new IllegalClusterStateException("null method of central tendency");
+			throw new IllegalArgumentException("null method of central tendency");
 		if(k < 1)
-			throw new IllegalClusterStateException("k must be greater than 0");
+			throw new IllegalArgumentException("k must be greater than 0");
 	}
 	
 	
@@ -246,10 +249,17 @@ public class NearestNeighborImputation extends MatrixImputation {
 	}
 	
 	
+	public CentralTendencyMethod getCentralTendency() {
+		return cent;
+	}
 
 	@Override
 	public Algo getLoggerTag() {
 		return Algo.IMPUTE;
+	}
+	
+	public int getK() {
+		return k;
 	}
 	
 	@Override

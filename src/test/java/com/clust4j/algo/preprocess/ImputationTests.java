@@ -17,16 +17,19 @@ package com.clust4j.algo.preprocess;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.impute.BootstrapImputation;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
 import com.clust4j.algo.preprocess.impute.NearestNeighborImputation;
 import com.clust4j.algo.preprocess.impute.BootstrapImputation.BootstrapImputationPlanner;
-import com.clust4j.algo.preprocess.impute.MatrixImputation.CentralTendencyMethod;
+import com.clust4j.algo.preprocess.impute.CentralTendencyMethod;
 import com.clust4j.algo.preprocess.impute.MeanImputation.MeanImputationPlanner;
 import com.clust4j.algo.preprocess.impute.MedianImputation.MedianImputationPlanner;
+import com.clust4j.algo.preprocess.impute.NearestNeighborImputation.NNImputationPlanner;
 import com.clust4j.except.NaNException;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.sample.Bootstrapper;
@@ -68,7 +71,7 @@ public class ImputationTests {
 		};
 		
 		final MedianImputation median = new MedianImputation(
-			new MedianImputationPlanner());
+			new MedianImputationPlanner().setSeed(GlobalState.DEFAULT_RANDOM_STATE));
 		
 		final double[][] imputed = median.operate(d);
 		final double[][] res = new double[][]{
@@ -78,6 +81,8 @@ public class ImputationTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(res, imputed));
+		assertTrue(MatUtils.equalsExactly(res, median.copy().operate(d)));
+		assertTrue(MatUtils.equalsExactly(res, median.operate(new Array2DRowRealMatrix(d)).getData() ));
 	}
 	
 	@Test
@@ -134,6 +139,8 @@ public class ImputationTests {
 				BootstrapTest.printMatrix(res);
 			}
 		}
+		
+		new BootstrapImputation().operate(new Array2DRowRealMatrix(d)); // ensure doesn't break;
 	}
 	
 	@Test
@@ -161,16 +168,33 @@ public class ImputationTests {
 		System.out.println();
 	}
 
-	@Test(expected=NaNException.class)
+	@Test
 	public void testFullyNaN() {
-		final double[][] d = new double[][]{
-			new double[]{1,	 	 Double.NaN, 2},
-			new double[]{1, 	 Double.NaN, 3},
-			new double[]{8.5,	 Double.NaN, 6},
-			new double[]{9,		 Double.NaN, Double.NaN}
-		};
+		boolean a = false;
+		MeanImputation m = new MeanImputation();
 		
-		new MeanImputation().operate(d);
+		try {
+			final double[][] d = new double[][]{
+				new double[]{1,	 	 Double.NaN, 2},
+				new double[]{1, 	 Double.NaN, 3},
+				new double[]{8.5,	 Double.NaN, 6},
+				new double[]{9,		 Double.NaN, 7}
+			};
+			
+			m.operate(d);
+		} catch(NaNException n) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Coverage love...
+		 */
+		m.trace("coverage love");
+		m.debug("coverage love");
+		m.warn("blah");
+		assertTrue(m.hasWarnings());
 	}
 	
 	@Test
@@ -206,5 +230,120 @@ public class ImputationTests {
 	@Test
 	public void testBootstrapFromCopyConst() {
 		new BootstrapImputation().copy();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNNWithNullCent() {
+		new NearestNeighborImputation(new NNImputationPlanner().setMethodOfCentralTendency(null));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNNWithBadK() {
+		new NearestNeighborImputation(new NNImputationPlanner(0).setSeed(GlobalState.DEFAULT_RANDOM_STATE));
+	}
+	
+	@Test
+	public void testCopyNN() {
+		NearestNeighborImputation nn = new NearestNeighborImputation(3);
+		NearestNeighborImputation nn2= nn.copy();
+		assertTrue(nn.getK() == nn2.getK());
+		assertTrue(nn.getCentralTendency().equals(nn2.getCentralTendency()));
+		
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 2},
+			new double[]{1, 		 Double.NaN, 3},
+			new double[]{8.5,		 7.9,        6},
+			new double[]{9,			 8,			 Double.NaN},
+			new double[]{3.5,		 2.9,        6.1},
+			new double[]{3, 		 Double.NaN, 1},
+			new double[]{0,	 		 0, 		 0},
+			new double[]{2,	 		 4, 		 9},
+			new double[]{1.4,	 	 5, 		 6},
+		};
+		
+		final Array2DRowRealMatrix a = new Array2DRowRealMatrix(d);
+		assertTrue(MatUtils.equalsExactly(nn.operate(d), nn2.operate(d)));
+		assertTrue(MatUtils.equalsExactly(nn.operate(a).getData(), nn2.operate(a).getData()));
+	}
+	
+	@Test(expected=NaNException.class)
+	public void testNoComplete() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 Double.NaN},
+			new double[]{1, 		 Double.NaN, 3},
+			new double[]{Double.NaN,		 7.9,        6},
+			new double[]{9,			 8,			 Double.NaN},
+			new double[]{Double.NaN,		 2.9,        6.1},
+			new double[]{3, 		 Double.NaN, 1},
+			new double[]{Double.NaN,	 		 0, 		 0},
+			new double[]{2,	 		 4, 		 Double.NaN},
+			new double[]{1.4,	 	 Double.NaN, 		 6},
+		};
+		
+		NearestNeighborImputation nn = new NearestNeighborImputation(3);
+		nn.operate(d); // thrown here
+	}
+	
+	@Test(expected=NaNException.class)
+	public void testCompletelyNaNRow() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 1},
+			new double[]{1, 		 2, 3},
+			new double[]{5,		 7.9,        6},
+			new double[]{9,			 8,			 7},
+			new double[]{4,		 2.9,        6.1},
+			new double[]{Double.NaN, 		 Double.NaN, Double.NaN},
+			new double[]{1,	 		 0, 		 0},
+			new double[]{2,	 		 4, 		 2},
+			new double[]{1.4,	 	 2, 		 6},
+		};
+		
+		NearestNeighborImputation nn = new NearestNeighborImputation(1);
+		nn.operate(d); // thrown here
+	}
+	
+	@Test
+	public void testAdjustK() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 		 1, 		 Double.NaN},
+			new double[]{1, 		 Double.NaN, 3},
+			new double[]{Double.NaN,		 7.9,        6},
+			new double[]{9,			 8,			 Double.NaN},
+			new double[]{Double.NaN,		 2.9,        6.1},
+			new double[]{3, 		 2,    1},
+			new double[]{Double.NaN,	 		 0, 		 0},
+			new double[]{2,	 		 4, 		 Double.NaN},
+			new double[]{1.4,	 	 1, 		 6},
+		};
+		
+		NearestNeighborImputation nn = new NearestNeighborImputation(3);
+		
+		/*
+		 * there are less complete records than k, so k should adjust
+		 */
+		nn.operate(d);
+		assertTrue(nn.getK() < 3);
+		
+		// coverage love
+		assertNotNull(nn.getName());
+	}
+	
+	@Test
+	public void testBootstrapNaN() {
+		final double[][] d = new double[][]{
+			new double[]{1,	 	 Double.NaN, 2},
+			new double[]{1, 	 3, Double.NaN},
+			new double[]{8.5,	 Double.NaN, 6},
+			new double[]{9,		 Double.NaN, 7}
+		};
+		
+		boolean a = false;
+		try {
+			new BootstrapImputation().operate(d);
+		} catch(NaNException n) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
 	}
 }

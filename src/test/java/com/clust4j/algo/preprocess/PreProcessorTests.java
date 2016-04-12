@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.utils.MatUtils;
@@ -107,5 +108,30 @@ public class PreProcessorTests {
 		};
 		
 		FeatureNormalization.STANDARD_SCALE.operate(data);
+	}
+	
+	@Test
+	public void testMinMaxScalerBadMinMax() {
+		boolean a = false;
+		final int orig_min = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
+		final int orig_max = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
+		
+		try {
+			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN = 1;
+			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX = 1;
+			
+			double[][] d = new double[][]{
+				new double[]{1,2,3},
+				new double[]{1,2,3}
+			};
+			
+			FeatureNormalization.MIN_MAX_SCALE.operate(d);
+		} catch(IllegalStateException i) {
+			a = true;
+		} finally {
+			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN = orig_min;
+			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX = orig_max;
+			assertTrue(a);
+		}
 	}
 }

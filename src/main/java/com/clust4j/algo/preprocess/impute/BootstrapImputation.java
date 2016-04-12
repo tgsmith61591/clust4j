@@ -159,11 +159,8 @@ public class BootstrapImputation extends MatrixImputation {
 		final boolean mean = ctm.equals(CentralTendencyMethod.MEAN);
 		final double[][] complete = MatUtils.completeCases(dat);
 		
-		String error;
 		if(complete.length == 0) {
-			error = "(" + getName() + ") no complete records in matrix";
-			error(error);
-			throw new NaNException(error);
+			error(new NaNException("(" + getName() + ") no complete records in matrix"));
 		}
 		
 		
