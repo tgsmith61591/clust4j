@@ -28,7 +28,7 @@ import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
  * classes that are also a {@link BaseClassifier} and a subclass of {@link AbstractClusterer}.
  * @author Taylor G Smith
  */
-class CentroidUtils {
+abstract class CentroidUtils {
 	
 	/**
 	 * Returns a matrix with the centroids.

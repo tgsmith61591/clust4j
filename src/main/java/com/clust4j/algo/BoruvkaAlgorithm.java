@@ -50,13 +50,6 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	
 	BoruvkaAlgorithm(NearestNeighborHeapSearch tree, int min_samples, 
 			DistanceMetric metric, int leafSize, boolean approx_min_span_tree,
-			double alpha) {
-		
-		this(tree, min_samples, metric, leafSize, approx_min_span_tree, alpha, null);
-	}
-	
-	BoruvkaAlgorithm(NearestNeighborHeapSearch tree, int min_samples, 
-			DistanceMetric metric, int leafSize, boolean approx_min_span_tree,
 			double alpha, Loggable logger) {
 		
 		this.outer_tree = tree;
@@ -88,12 +81,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		return FastMath.max(0, (distPt - rad1 - rad2));
 	}
 	
-	static Neighborhood coreDistQuery(NearestNeighborHeapSearch tree, 
-			double[][] X, int min_samples, boolean dualTree, boolean breadthFirst) {
-		return tree.query(X, min_samples, dualTree, true);
-	}
-	
-	/**
+	/*
 	 * Similar to {@link KDTree}<tt>.minRDistDual(...)</tt> but
 	 * uses one node bounds array instead of two instances of
 	 * {@link NearestNeighborHeapSearch}
@@ -103,10 +91,11 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	 * @param nodeBounds
 	 * @param n
 	 * @return
-	 */
+	 *
 	static double kdTreeMinDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
 		return metric.partialDistanceToDistance(kdTreeMinRDistDual(metric, node1, node2, nodeBounds, n));
 	}
+	*/
 	
 	static double kdTreeMinRDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
 		double d, d1, d2, rdist = 0.0;

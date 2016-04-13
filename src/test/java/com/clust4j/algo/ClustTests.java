@@ -18,15 +18,21 @@ package com.clust4j.algo;
 import static org.junit.Assert.*;
 import static com.clust4j.TestSuite.getRandom;
 
+import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
+import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
+import com.clust4j.algo.AbstractClusterer.BaseClustererPlanner;
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeans.KMeansPlanner;
+import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
+import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.MatrixFormatter;
@@ -137,5 +143,52 @@ public class ClustTests {
 	
 	static Array2DRowRealMatrix toMat(double[][] d) {
 		return new Array2DRowRealMatrix(d, true);
+	}
+	
+	@Test
+	public void testAbstractClustererEquals() {
+		BaseClustererPlanner planner = new BaseClustererPlanner(){
+			private static final long serialVersionUID = 1L;
+			@Override public BaseClustererPlanner copy() {return this;}
+			@Override public FeatureNormalization getNormalizer() {return FeatureNormalization.STANDARD_SCALE;}
+			@Override public boolean getParallel() {return false;}
+			@Override public GeometricallySeparable getSep() {return Distance.EUCLIDEAN;}
+			@Override public boolean getScale() {return false; }
+			@Override public Random getSeed() { return GlobalState.DEFAULT_RANDOM_STATE; }
+			@Override public boolean getVerbose() { return false; }
+			@Override public BaseClustererPlanner setNormalizer(FeatureNormalization norm) { return this; }
+			@Override public BaseClustererPlanner setScale(boolean b) { return this; }
+			@Override public BaseClustererPlanner setSeed(Random rand) { return this; }
+			@Override public BaseClustererPlanner setVerbose(boolean b) { return this; }
+			@Override public BaseClustererPlanner setMetric(GeometricallySeparable dist) { return this; }
+			@Override public BaseClustererPlanner setForceParallel(boolean b) { return this; }
+		};
+		
+		AbstractClusterer a = new AbstractClusterer(TestSuite.IRIS_DATASET.getData(), planner){
+			private static final long serialVersionUID = 1L;
+
+			@Override public Algo getLoggerTag() {return Algo.CLUST4J;}
+			@Override public String getName() {return "anonymous";}
+			@Override public boolean isValidMetric(GeometricallySeparable geo) {return true;}
+			@Override public AbstractClusterer fit() { return this;}
+			@Override protected ModelSummary modelSummary() { return null; }
+			@Override protected Object[] getModelFitSummaryHeaders() { return null; }
+		};
+		
+		AbstractClusterer b = new AbstractClusterer(TestSuite.IRIS_DATASET.getData(), planner){
+			private static final long serialVersionUID = 1L;
+
+			@Override public Algo getLoggerTag() {return Algo.CLUST4J;}
+			@Override public String getName() {return "anonymous";}
+			@Override public boolean isValidMetric(GeometricallySeparable geo) {return true;}
+			@Override public AbstractClusterer fit() { return this;}
+			@Override protected ModelSummary modelSummary() { return null; }
+			@Override protected Object[] getModelFitSummaryHeaders() { return null; }
+		};
+		
+		assertTrue(a.equals(a));
+		assertTrue(b.equals(b));
+		assertFalse(a.equals(b));
+		assertFalse(a.equals(new Object()));
 	}
 }

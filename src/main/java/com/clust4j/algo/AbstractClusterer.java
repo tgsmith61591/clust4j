@@ -39,6 +39,7 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.DeepCloneable;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
 
@@ -226,13 +227,14 @@ public abstract class AbstractClusterer
 			for(int j = 0; j < n; j++) {
 				entry = data.getEntry(i, j);
 						
-				if(Double.isNaN(entry))
+				if(Double.isNaN(entry)) {
 					error(new NaNException("NaN in input data. "
 						+ "Select a matrix imputation method for "
 						+ "incomplete records"));
-				
-				ref[i][j] = entry;
-				unique.add(entry);
+				} else {
+					ref[i][j] = entry;
+					unique.add(entry);
+				}
 			}
 		}
 		
@@ -261,7 +263,7 @@ public abstract class AbstractClusterer
 			if(!this.getKey().equals(a.getKey()))
 				return false;
 			
-			return this.data.equals(a.data)
+			return MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
 				&& this.getClass().equals(a.getClass())
 				//&& this.hashCode() == a.hashCode()
 				;

@@ -1,5 +1,7 @@
 package com.clust4j.algo;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 import com.clust4j.algo.ParallelChunkingTask.ChunkingStrategy;
@@ -16,7 +18,18 @@ public class ParallelTaskTests {
 		strat.map(X); // want to make sure it works.
 		
 		strat = new CoreRestrictiveChunkingStrategy(1);
-		strat.map(X);
+		
+		// make sure works, no NPEs
+		assertNotNull(strat.map(X).get(0).toString());
+		assertTrue(ChunkingStrategy.getNumChunks(X.length) > 0);
+		assertTrue(strat.getNumChunks(X) > 0);
+		
+		// there's a format name method for fork join pool tasks..
+		assertNotNull(new ParallelChunkingTask<Integer>(X){
+			private static final long serialVersionUID = 1L;
+			@Override public Integer reduce(com.clust4j.algo.ParallelChunkingTask.Chunk chunk){ return -1; }
+			@Override protected Integer compute() { return -1; }
+		}.formatName("FJ-1-1"));
 	}
 
 }
