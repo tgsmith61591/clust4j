@@ -336,7 +336,7 @@ public abstract class Log {
 	/**
 	 * The main logger...
 	 */
-	private static org.apache.log4j.Logger _logger = null;
+	protected static org.apache.log4j.Logger _logger = null;
 	
 	
 	public static String getLogDir() {
@@ -486,7 +486,7 @@ public abstract class Log {
 	static volatile private ArrayList<LogEvent> startupLogEvents = new ArrayList<LogEvent>();
 	
 	
-	private static void log0(org.apache.log4j.Logger l4j, LogEvent e) {
+	protected static void log0(org.apache.log4j.Logger l4j, LogEvent e) {
 		String s = e.toString();
 		
 		if(e.type == Type.FATAL)
@@ -586,31 +586,13 @@ public abstract class Log {
 		return warn(t, msg, null);
 	}
 	
-	static public void info_no_stdout(Algo t, Object... objects) {
-		LogEvent e = LogEvent.make(t, Type.INFO, null, objects);
-		write(e, false);
-	}
-	
-	static public void info_no_DKV(Algo t, Object... objects) {
-		LogEvent e = LogEvent.make(t, Type.INFO, null, objects);
-		write(e, true);
-	}
-	
 	static public void info(Algo t, Object... obj) {
 		LogEvent e = LogEvent.make(t, Type.INFO, null, obj);
 		write(e, true);
 	}
 	
-	static public void info_no_stdout(Object... objects) {
-		info_no_stdout(Algo.CLUST4J, objects);
-	}
-	
 	static public void info(Object... objects) {
 		info(Algo.CLUST4J, objects);
-	}
-	
-	static public void debug(Object... objects) {
-		debug(Algo.CLUST4J, objects);
 	}
 	
 	static public void debug(Algo t, Object... objects) {
@@ -668,35 +650,9 @@ public abstract class Log {
 	
 	
 	
-	
-	
-	
-	/* (Un)needed methods included for completeness */
-	public static void POST(int n) { POST(n, ""); }
-	public static void POST(int n, String s) { return; }
-	public static void POST(int n, Exception e) {
-		if(e.getMessage() != null)
-			POST(n, e.getMessage()); // Gets swallowed...
-		
-		POST(n, e.toString()); // Gets swallowed...
-		final StackTraceElement[] els = e.getStackTrace();
-		for(StackTraceElement ste: els)
-			POST(n, ste.toString()); // Gets swallowed...
-	}
-	
-	public static PrintStream unwrap(PrintStream stream) {
-		return stream instanceof LogWrapper ? 
-				((LogWrapper)stream).parent : 
-					stream;
-	}
-	
 	public static void unwrap(PrintStream stream, String s) {
 		if(stream instanceof LogWrapper)
 			((LogWrapper)stream).printlnParent(s);
 		else stream.println(s);
-	}
-	
-	public static void wrap() {
-		System.setErr(new LogWrapper(System.err));
 	}
 }

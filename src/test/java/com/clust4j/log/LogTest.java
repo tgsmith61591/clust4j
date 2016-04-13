@@ -28,9 +28,12 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.junit.Test;
 
+import com.clust4j.log.Log.LogEvent;
 import com.clust4j.log.Log.LogWrapper;
+import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter.TimeSlots;
 
 public class LogTest {
@@ -113,5 +116,53 @@ public class LogTest {
 		System.out.println("Start short string: " + timer.startAsShortString());
 		System.out.println("Now as short string: " + timer.nowAsShortString());
 		System.out.println("Now as long string: " + timer.nowAsString());
+	}
+	
+	@Test
+	public void testCoverage() {
+		/*
+		 * Just to get the coverage...
+		 */
+		new LogTimeFormatter();
+		new Log(){};
+		Log.getLogPathFileName();
+		
+		boolean a = false;
+		try {
+			Log.setLogLevel(-1);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Test set levels
+		 */
+		final Level orig = Log._logger.getLevel();
+		for(int i = 1; i < 7; i++) {
+			Log.setLogLevel(i);
+		}
+		
+		// Reset it
+		Log._logger.setLevel(orig);
+		
+		/*
+		 * Get some coverage for fatal...
+		 *
+		LogEvent e = new Log.LogEvent();
+		e.type = Log.Tag.Type.FATAL;
+		Log.log0(Log._logger, e);
+		e.type = null;
+		Log.log0(Log._logger, e);
+		*/
+		
+		/*
+		 * Coverage for flagging
+		 */
+		Log.unsetFlag(Algo.AFFINITY_PROP);
+		Log.debug(Algo.AFFINITY_PROP, new Object());
+		Log.trace(Algo.AFFINITY_PROP, new Object());
+		Log.setFlag(Algo.AFFINITY_PROP);
 	}
 }
