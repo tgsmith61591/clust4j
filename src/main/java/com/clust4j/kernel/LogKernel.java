@@ -30,7 +30,6 @@ public class LogKernel extends PowerKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = -1059869495129543995L;
-
 	public LogKernel() {
 		super();
 	}
@@ -46,8 +45,8 @@ public class LogKernel extends PowerKernel {
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		final double sup = super.getSimilarity(a, b);
-		final double answer = -FastMath.log(-sup + 1);
+		final double sup = -(super.getSimilarity(a, b)); // super returns negative, so reverse it
+		final double answer = -FastMath.log(sup + 1);
 		return Double.isNaN(answer) ? Double.NEGATIVE_INFINITY : answer;
 	}
 }

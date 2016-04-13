@@ -35,7 +35,6 @@ public class PolynomialKernel extends ConstantKernel {
 	public final static double DEFAULT_DEGREE= 1;
 	
 	protected final double alpha;
-	protected final double constant;
 	protected final double degree;
 	
 	public PolynomialKernel() {
@@ -47,9 +46,9 @@ public class PolynomialKernel extends ConstantKernel {
 	}
 	
 	public PolynomialKernel(final double degree, final double alpha, final double constant) {
+		super(constant);
 		this.degree = degree;
 		this.alpha = alpha;
-		this.constant = constant;
 	}
 	
 	public double getAlpha() {
@@ -64,14 +63,9 @@ public class PolynomialKernel extends ConstantKernel {
 	public String getName() {
 		return "PolynomialKernel";
 	}
-
-	@Override
-	public double getConstant() {
-		return constant;
-	}
 	
 	@Override
 	public double getSimilarity(final double[] a, final double[] b) {
-		return FastMath.pow(alpha * VecUtils.innerProduct(a, b) + getConstant(), degree);
+		return FastMath.pow(getAlpha() * VecUtils.innerProduct(a, b) + getConstant(), getDegree());
 	}
 }

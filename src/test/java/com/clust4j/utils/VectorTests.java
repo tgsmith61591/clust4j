@@ -746,7 +746,10 @@ public class VectorTests {
 	public void someVarianceTests() {
 		double[] d = new double[]{1,2,3,4,5};
 		double[] e = new double[]{1,2,3,4,Double.NaN};
+		final double meanD = VecUtils.mean(d);
+		assertTrue(VecUtils.stdDev(d,meanD) == VecUtils.nanStdDev(d,meanD));
 		assertTrue(VecUtils.var(d) == VecUtils.nanVar(d));
+		assertTrue(VecUtils.var(d,meanD) == VecUtils.nanVar(d,meanD));
 		assertFalse(VecUtils.var(d) == VecUtils.nanVar(e));
 	}
 	

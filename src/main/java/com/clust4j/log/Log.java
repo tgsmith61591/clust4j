@@ -50,9 +50,7 @@ public abstract class Log {
 			/** Used for matrix imputations */
 			IMPUTE			{ @Override public String toString(){return "IMPUTE ";} },
 			
-			// No longer any plans to implement divisive (DIANA) clustering
-			/*DIVISIVE		{ @Override public String toString(){return "DIVISVE";} },*/
-			
+			/** More algos... */
 			KMEDOIDS		{ @Override public String toString(){return "KMEDOID";} },
 			KMEANS 			{ @Override public String toString(){return "K-MEANS";} },
 			MEANSHIFT		{ @Override public String toString(){return "MNSHIFT";} },
@@ -74,13 +72,14 @@ public abstract class Log {
 		public static enum Type implements Tag {
 			TRACE, 
 			DEBUG, 
+			
+			// add a space to the four-letter words
 			INFO	{ @Override public String toString(){return "INFO ";} }, 
 			WARN	{ @Override public String toString(){return "WARN ";} }, 
 			ERROR, 
 			FATAL
 		}
 	}
-	
 	
 	
 	final static public Timer theTimer = new LogTimer();
@@ -635,7 +634,7 @@ public abstract class Log {
 		/* Unflag those which are explicitly NOFLAG */
 		for(Algo s : ALGOS) {
 			String str = System.getProperty("log."+s);
-			if (str == null) continue;
+			if (null == str) continue;
 			if (str.equals("false")) unsetFlag(s); else setFlag(s);
 	    }
 	}

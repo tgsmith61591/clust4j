@@ -29,21 +29,15 @@ public class MultiquadricKernel extends ConstantKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = 3023302397706144064L;
-	private final double constant;
 	
 	public MultiquadricKernel() { this(DEFAULT_CONSTANT); }
 	public MultiquadricKernel(final double constant) {
-		this.constant = constant;
+		super(constant);
 	}
 
 	@Override
 	public String getName() {
 		return "MultiquadricKernel";
-	}
-
-	@Override
-	public double getConstant() {
-		return constant;
 	}
 
 	@Override

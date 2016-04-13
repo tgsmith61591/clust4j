@@ -372,4 +372,22 @@ public class PairwiseTests {
 			}
 		}
 	}
+	
+	@Test
+	public void testBadMinkowski() {
+		boolean a = false;
+		try {
+			Distance.MINKOWSKI(0.5);
+		} catch(IllegalArgumentException iae) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testCosinePartial() {
+		final double[] d = new double[]{1,2,3,4,5};
+		assertTrue(Similarity.COSINE.getPartialSimilarity(d, d) == Similarity.COSINE.getSimilarity(d, d));
+	}
 }

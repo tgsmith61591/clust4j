@@ -32,7 +32,6 @@ public class InverseMultiquadricKernel extends MultiquadricKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = -7294670048769421427L;
-
 	public InverseMultiquadricKernel() {
 		super();
 	}

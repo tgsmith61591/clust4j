@@ -36,7 +36,7 @@ public class RadialBasisKernel extends Kernel {
 	 */
 	private static final long serialVersionUID = -3281494130468137896L;
 	public final static double DEFAULT_SIGMA = 1;
-	private double sigma;
+	private final double sigma;
 	
 	public RadialBasisKernel() { this(DEFAULT_SIGMA); }
 	public RadialBasisKernel(final double sigma) {
@@ -70,9 +70,5 @@ public class RadialBasisKernel extends Kernel {
 	@Override
 	public double similarityToPartialSimilarity(double full) {
 		return FastMath.log(full);
-	}
-	
-	public void setSigma(final double sigma) {
-		this.sigma = sigma;
 	}
 }

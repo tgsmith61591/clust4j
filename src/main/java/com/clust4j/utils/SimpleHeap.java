@@ -27,12 +27,18 @@ public class SimpleHeap<T extends Comparable<? super T>> extends ArrayList<T> {
 	private static final long serialVersionUID = -5346944098593268409L;
 	
 	public SimpleHeap(ArrayList<T> h) {
-		this.addAll(h);
+		super(h);
 		heapifyInPlace(this);
 	}
 	
 	public SimpleHeap(T root) {
+		this();
 		this.add(root);
+	}
+	
+	public SimpleHeap() {
+		// default constructor
+		super();
 	}
 	
 	private static <T extends Comparable<? super T>> void heapifyInPlace(final SimpleHeap<T> x) {

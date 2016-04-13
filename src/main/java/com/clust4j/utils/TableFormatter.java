@@ -89,15 +89,14 @@ public class TableFormatter implements java.io.Serializable {
     	this(DEFAULT_NUMBER_FORMAT);
     }
     
+    public TableFormatter(final ColumnAlignment align) {
+    	this();
+    	this.align = align;
+    }
+    
     public TableFormatter(final NumberFormat format) {
     	this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_PREFIX, DEFAULT_ROW_SUFFIX, 
     		DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR, DEFAULT_WHITE_SPACE, format);
-    }
-    
-    public TableFormatter(final String pref, final String suff,
-    				 final String rowPref, final String rowSuff,
-    				 final String rowSep, final String colSep, final int whiteSpace) {
-    	this(pref, suff, rowPref, rowSuff, rowSep, colSep, whiteSpace, DEFAULT_NUMBER_FORMAT);
     }
     
     public TableFormatter(final String pref, final String suff,
@@ -325,17 +324,6 @@ public class TableFormatter implements java.io.Serializable {
     
     public String getColumnSeparator() {
     	return columnSeparator;
-    }
-    
-    /**
-     * Get the string that will separate columns. 
-     * Generated from the whitespace parameter and the column
-     * separating character. Thus, if whitespace is 4, there will be
-     * two spaces on either side of the separating character.
-     * @return colSepStr
-     */
-    public String getGeneratedColumnSeparatorString() {
-    	return colSepStr;
     }
     
     public NumberFormat getFormat() {

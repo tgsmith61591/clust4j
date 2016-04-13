@@ -50,7 +50,7 @@ public class SphericalKernel extends CircularKernel {
 	public double getPartialSimilarity(final double[] a, final double[] b) {
 		final double lp = toHilbertPSpace(a, b);
 		if(lp >= getSigma())
-			return 0d;
+			return 0.0;
 		
 		final double lpOverSig = lp / getSigma();
 		final double front = 1 - 1.5 * lpOverSig;

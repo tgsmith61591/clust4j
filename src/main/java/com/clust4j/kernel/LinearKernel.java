@@ -35,12 +35,10 @@ public class LinearKernel extends ConstantKernel {
 	 */
 	private static final long serialVersionUID = -9140596365379085676L;
 	public static final double DEFAULT_LIN_CONSTANT = 0;
-	private double constant;
 
 	public LinearKernel() { this(DEFAULT_LIN_CONSTANT); }
 	public LinearKernel(final double constant) {
-		super();
-		this.constant = constant;
+		super(constant);
 	}
 	
 	@Override
@@ -51,10 +49,5 @@ public class LinearKernel extends ConstantKernel {
 	@Override
 	public String getName() {
 		return "LinearKernel";
-	}
-
-	@Override
-	public double getConstant() {
-		return constant;
 	}
 }

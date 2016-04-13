@@ -72,4 +72,40 @@ public class TestMetrics {
 	public void testDME() {
 		BinomialClassificationScoring.ACCURACY.evaluate(new int[]{1,2}, new int[]{1,2,3});
 	}
+	
+	@Test
+	public void testIndexAffinityExceptionHandling() {
+		final int[] a = new int[]{0,0,0,1,1};
+		final int[] b = new int[]{0,0,0,1,2};
+		
+		boolean c = false;
+		try {
+			UnsupervisedIndexAffinity.getInstance().evaluate(a, new int[]{0,0});
+		} catch(DimensionMismatchException d) {
+			c = true;
+		} finally {
+			assertTrue(c);
+		}
+		
+		c = false;
+		try {
+			UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{}, new int[]{});
+		} catch(IllegalArgumentException d) {
+			c = true;
+		} finally {
+			assertTrue(c);
+		}
+		
+		c = false;
+		try {
+			UnsupervisedIndexAffinity.getInstance().evaluate(a,b);
+		} catch(IllegalArgumentException d) {
+			c = true;
+		} finally {
+			assertTrue(c);
+		}
+		
+		assertTrue(UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{0}, new int[]{9}) == 1.0);
+		assertTrue(UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{0,1,2}, new int[]{9,5,4}) == 1.0);
+	}
 }

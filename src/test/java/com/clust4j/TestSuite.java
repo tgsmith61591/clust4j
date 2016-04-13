@@ -58,6 +58,7 @@ import com.clust4j.metrics.pairwise.TestDistanceEnums;
 import com.clust4j.metrics.scoring.TestMetrics;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.FormatterTests;
+import com.clust4j.utils.HeapTests;
 import com.clust4j.utils.MatTests;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.QuadTupTests;
@@ -78,11 +79,12 @@ import com.clust4j.utils.parallel.ParallelTests;
 	FormatterTests.class,
 	HaversineTest.class,
 	HDBSCANTests.class,
+	HeapTests.class,
 	HierarchicalTests.class,
 	ImputationTests.class,
+	KernelTestCases.class,
 	KMeansTests.class,
 	KMedoidsTests.class,
-	KernelTestCases.class,
 	LogTest.class,
 	MatTests.class,
 	MeanShiftTests.class,

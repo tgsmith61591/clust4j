@@ -26,16 +26,14 @@ public class MatrixFormatter extends TableFormatter {
 	public MatrixFormatter() {
     	this(DEFAULT_NUMBER_FORMAT);
     }
+	
+	public MatrixFormatter(final ColumnAlignment align) {
+		super(align);
+	}
     
     public MatrixFormatter(final NumberFormat format) {
     	this(DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ROW_PREFIX, DEFAULT_ROW_SUFFIX, 
     		DEFAULT_ROW_SEPARATOR, DEFAULT_COLUMN_SEPARATOR, DEFAULT_WHITE_SPACE, format);
-    }
-    
-    public MatrixFormatter(final String pref, final String suff,
-    				 final String rowPref, final String rowSuff,
-    				 final String rowSep, final String colSep, final int whiteSpace) {
-    	this(pref, suff, rowPref, rowSuff, rowSep, colSep, whiteSpace, DEFAULT_NUMBER_FORMAT);
     }
     
     public MatrixFormatter(final String pref, final String suff,

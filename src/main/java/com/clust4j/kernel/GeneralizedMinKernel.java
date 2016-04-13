@@ -35,8 +35,8 @@ public class GeneralizedMinKernel extends MinKernel {
 	private static final long serialVersionUID = -3798280254415501176L;
 	public static final double DEF_ALPHA = 1.0;
 	public static final double DEF_BETA = 1.0;
-	private double alpha;
-	private double beta;
+	final private double alpha;
+	final private double beta;
 	
 	public GeneralizedMinKernel() {
 		this(DEF_ALPHA, DEF_BETA);
@@ -44,6 +44,8 @@ public class GeneralizedMinKernel extends MinKernel {
 	
 	public GeneralizedMinKernel(final double alpha, final double beta) {
 		super();
+		this.alpha = alpha;
+		this.beta = beta;
 	}
 	
 	public double getAlpha() {
@@ -65,8 +67,8 @@ public class GeneralizedMinKernel extends MinKernel {
 		
 		double sum = 0;
 		for(int i = 0; i < a.length; i++)
-			sum += FastMath.min( FastMath.pow(FastMath.abs(a[i]), alpha), 
-								 FastMath.pow(FastMath.abs(b[i]), beta) );
+			sum += FastMath.min( FastMath.pow(FastMath.abs(a[i]), getAlpha()), 
+								 FastMath.pow(FastMath.abs(b[i]), getBeta()));
 		
 		return sum;
 	}

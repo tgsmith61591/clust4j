@@ -32,7 +32,7 @@ import com.clust4j.GlobalState;
 import static com.clust4j.GlobalState.Mathematics.MAX;
 import static com.clust4j.GlobalState.Mathematics.SIGNED_MIN;
 
-public class VecUtils {
+public abstract class VecUtils {
 	final static String VEC_LEN_ERR = "illegal vector length: ";
 	public final static int MIN_ACCEPTABLE_VEC_LEN = 1;
 	public final static boolean DEF_SUBTRACT_ONE_VAR = true;
@@ -410,7 +410,7 @@ public class VecUtils {
 	 * Class to arg sort double and int arrays
 	 * @author Taylor G Smith
 	 */
-	static class ArgSorter {
+	abstract static class ArgSorter {
 		static int[] argsort(final double[] a) {
 	        return argsort(a, true);
 	    }
@@ -1634,13 +1634,6 @@ public class VecUtils {
 	public static LinkedHashSet<Integer> unique(final int[] arr) {
 		final LinkedHashSet<Integer> out = new LinkedHashSet<>();
 		for(Integer t: arr)
-			out.add(t);
-		return out;
-	}
-	
-	public static <T> LinkedHashSet<T> unique(final T[] arr) {
-		final LinkedHashSet<T> out = new LinkedHashSet<>();
-		for(T t: arr)
 			out.add(t);
 		return out;
 	}

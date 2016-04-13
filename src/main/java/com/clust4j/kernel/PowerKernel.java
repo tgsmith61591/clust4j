@@ -43,7 +43,7 @@ public class PowerKernel extends Kernel {
 
 	@Override
 	public double getSimilarity(double[] a, double[] b) {
-		return -(FastMath.pow(toHilbertPSpace(a, b), degree));
+		return -(FastMath.pow(toHilbertPSpace(a, b), getDegree()));
 	}
 
 	@Override

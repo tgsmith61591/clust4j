@@ -17,7 +17,7 @@ package com.clust4j.metrics.pairwise;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-public class Pairwise {
+public abstract class Pairwise {
 	public static double[][] getDistance(AbstractRealMatrix a,
 			GeometricallySeparable geo,
 			boolean upperTriang, boolean partial) {

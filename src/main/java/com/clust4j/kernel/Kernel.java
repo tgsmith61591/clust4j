@@ -71,7 +71,7 @@ public abstract class Kernel implements SimilarityMetric {
 	
 	
 	
-	protected static double toHilbertPSpace(final double[] a, final double[] b) {
+	final protected static double toHilbertPSpace(final double[] a, final double[] b) {
 		// Originally: 2*VecUtils.innerProductForceSerial(a, b) - VecUtils.innerProduct(a,a) - VecUtils.innerProduct(b,b);
 		// This costs 3N!!
 		VecUtils.checkDims(a,b);

@@ -43,16 +43,13 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 	 */
 	private static final long serialVersionUID = -2362070006438269124L;
 
-	public static final double DEFAULT_ALPHA = 1;
-	
-	private final double constant;
+	public static final double DEFAULT_ALPHA = 1.0;
 	private final double alpha;
 	
 	
 	public HyperbolicTangentKernel() { this(DEFAULT_CONSTANT, DEFAULT_ALPHA); }
 	public HyperbolicTangentKernel(final double constant, final double alpha) {
-		super();
-		this.constant = constant;
+		super(constant);
 		this.alpha = alpha;
 	}
 	
@@ -60,7 +57,7 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 	// We can't compute a partial similarity for tanh because it will lose ordinality
 	@Override
 	public double getSimilarity(double[] a, double[] b) {
-		return FastMath.tanh(alpha * VecUtils.innerProduct(a, b) + getConstant());
+		return FastMath.tanh(getAlpha() * VecUtils.innerProduct(a, b) + getConstant());
 	}
 
 	@Override
@@ -71,10 +68,4 @@ public class HyperbolicTangentKernel extends ConstantKernel {
 	public double getAlpha() {
 		return alpha;
 	}
-
-	@Override
-	public double getConstant() {
-		return constant;
-	}
-
 }

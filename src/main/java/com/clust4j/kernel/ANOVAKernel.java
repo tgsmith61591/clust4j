@@ -65,7 +65,7 @@ public class ANOVAKernel extends RadialBasisKernel {
 		double s = 0, diff;
 		for(int i = 0; i < a.length; i++) {
 			diff = a[i] - b[i];
-			s += FastMath.exp((diff * diff) * -getSigma());
+			s += FastMath.pow(FastMath.exp((diff * diff) * -getSigma()), getDegree());
 		}
 		
 		return s;

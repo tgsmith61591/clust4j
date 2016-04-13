@@ -21,10 +21,14 @@ abstract class ConstantKernel extends Kernel {
 	 */
 	private static final long serialVersionUID = -3376273063247220042L;
 	public static final double DEFAULT_CONSTANT = 1;
+	protected final double constant;
 	
-	public ConstantKernel() {
+	public ConstantKernel(final double constant) {
 		super();
+		this.constant = constant;
 	}
 	
-	abstract public double getConstant();
+	final public double getConstant() {
+		return constant;
+	}
 }

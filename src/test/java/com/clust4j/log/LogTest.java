@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Level;
 import org.junit.Test;
 
-import com.clust4j.log.Log.LogEvent;
 import com.clust4j.log.Log.LogWrapper;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimeFormatter.TimeSlots;
@@ -146,16 +145,6 @@ public class LogTest {
 		
 		// Reset it
 		Log._logger.setLevel(orig);
-		
-		/*
-		 * Get some coverage for fatal...
-		 *
-		LogEvent e = new Log.LogEvent();
-		e.type = Log.Tag.Type.FATAL;
-		Log.log0(Log._logger, e);
-		e.type = null;
-		Log.log0(Log._logger, e);
-		*/
 		
 		/*
 		 * Coverage for flagging

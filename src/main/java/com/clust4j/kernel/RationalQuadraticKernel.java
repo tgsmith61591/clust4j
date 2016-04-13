@@ -30,12 +30,10 @@ public class RationalQuadraticKernel extends ConstantKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = 7063644380491570720L;
-	private final double constant;
 	
 	public RationalQuadraticKernel() { this(DEFAULT_CONSTANT); }
 	public RationalQuadraticKernel(final double constant) {
-		super();
-		this.constant = constant;
+		super(constant);
 	}
 	
 	
@@ -44,11 +42,6 @@ public class RationalQuadraticKernel extends ConstantKernel {
 		final double lp = toHilbertPSpace(a, b);
 		final double sqnm = FastMath.pow(lp, 2);
 		return 1 - (sqnm / (sqnm + getConstant()));
-	}
-
-	@Override
-	public double getConstant() {
-		return constant;
 	}
 
 	@Override

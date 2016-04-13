@@ -3222,5 +3222,26 @@ public class MatTests {
 			new int[]{3,4},
 			new int[]{5,6}
 		}));
+		
+		
+		/*
+		 * Test out of bounds for getColumns
+		 */
+		final int[] cols = new int[]{0,1,20};
+		final double[][] mat = new double[][]{
+			new double[]{1,2,3},
+			new double[]{1,2,3}
+		};
+		
+		a = false;
+		try {
+			MatUtils.getColumns(mat, cols);
+		} catch(IndexOutOfBoundsException ioob) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		assertTrue(new VecUtils.VecIntSeries(new int[]{1,2,3}, Inequality.EQUAL_TO, 1).any());
 	}
 }

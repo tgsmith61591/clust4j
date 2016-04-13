@@ -73,8 +73,8 @@ public class LaplacianKernel extends RadialBasisKernel {
 		
 		
 		double hilbert = toHilbertPSpace(a, b);
-		hilbert = exponential > 1 ? FastMath.pow(hilbert, exponential) : -hilbert;
-		final double sigma_val = sigma_scalar * FastMath.pow(getSigma(), sigma_exp);
+		hilbert = getPower() > 1 ? FastMath.pow(hilbert, getPower()) : -hilbert;
+		final double sigma_val = getSigmaScalar() * FastMath.pow(getSigma(), getSigmaPower());
 		
 		return -sigma_val * FastMath.sqrt(hilbert);
 	}

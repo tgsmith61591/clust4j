@@ -92,4 +92,23 @@ public class TestArrayFormatter {
 		assertNotNull(ArrayFormatter.arrayToString(new short[]{1,2,3,4,5,6}));
 		assertNull(ArrayFormatter.arrayToString(b));
 	}
+	
+	@Test
+	public void testAllNull() {
+		short[] s = null;
+		char[] c = null;
+		int[] i = null;
+		long[] l = null;
+		float[] f = null;
+		double[] d = null;
+		boolean[] b = null;
+		
+		assertNull(ArrayFormatter.arrayToString(s));
+		assertNull(ArrayFormatter.arrayToString(c));
+		assertNull(ArrayFormatter.arrayToString(i));
+		assertNull(ArrayFormatter.arrayToString(l));
+		assertNull(ArrayFormatter.arrayToString(f));
+		assertNull(ArrayFormatter.arrayToString(d));
+		assertNull(ArrayFormatter.arrayToString(b));
+	}
 }

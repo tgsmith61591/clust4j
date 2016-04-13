@@ -288,5 +288,74 @@ public class KernelTestCases {
 		}
 	}
 	
-	
+	@Test
+	public void testOther() {
+		/*
+		 * hilbert space will equal 2*115 - 129 - 174 = -73
+		 */
+		double[] a = new double[]{10,2,3,4}; // ip = 129
+		double[] b = new double[]{5,6,7,8}; // ip = 174
+		assertTrue(Kernel.toHilbertPSpace(a, b) == -73);
+		Kernel c,d,e;
+		
+		/*
+		 * Ensure the sigma param is working for Cauchy
+		 */
+		c = new CauchyKernel();
+		d = new CauchyKernel(5.0);
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+		
+		/*
+		 * Assert circular kernel 0
+		 */
+		c = new CircularKernel(-200.0);
+		assertTrue(c.getSimilarity(a, b) == 0.0); // greater than sigma
+		
+		/*
+		 * Ensure alpha, beta are used in GeneralizedMinKernel
+		 */
+		c = new GeneralizedMinKernel(-2.0, -3.0);
+		d = new GeneralizedMinKernel();
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+		
+		/*
+		 * test constant on inverse multi
+		 */
+		c = new InverseMultiquadricKernel();
+		d = new InverseMultiquadricKernel(5.0);
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+		
+		/*
+		 * Test laplacian cases
+		 */
+		c = new LaplacianKernel(2.0);
+		d = new LaplacianKernel(2.0, 2.0);
+		e = new LaplacianKernel(2.0, 2.0, 2.0);
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+		assertFalse(c.getSimilarity(a, b) == e.getSimilarity(a, b));
+		assertFalse(e.getSimilarity(a, b) == d.getSimilarity(a, b));
+		
+		/*
+		 * Test log cases
+		 */
+		c = new LogKernel();
+		d = new LogKernel(1000);
+		double f = c.getSimilarity(a, b), g = d.getSimilarity(a, b);
+		assertTrue((Double.isInfinite(f) && Double.isInfinite(g)) || (f != g));
+		
+		/*
+		 * Test polynomial cases
+		 */
+		c = new PolynomialKernel();
+		d = new PolynomialKernel(5.0,2.0);
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+		
+		/*
+		 * Test spherical cases
+		 */
+		c = new SphericalKernel(-200.0);
+		assertTrue(c.getSimilarity(a, b) == 0.0); // greater than sigma
+		d = new SphericalKernel(1000.0);
+		assertFalse(c.getSimilarity(a, b) == d.getSimilarity(a, b));
+	}
 }

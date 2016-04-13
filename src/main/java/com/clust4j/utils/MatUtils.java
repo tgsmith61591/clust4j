@@ -35,7 +35,7 @@ import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
  * @see DimensionMismatchException
  * @author Taylor G Smith
  */
-public class MatUtils {
+public abstract class MatUtils {
 	final static String MAT_DIM_ERR_MSG = "illegal mat dim: ";
 	
 	/** Size at which to use BlockRealMatrix for multiplication */

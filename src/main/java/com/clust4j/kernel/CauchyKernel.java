@@ -32,7 +32,6 @@ public class CauchyKernel extends RadialBasisKernel {
 	 * 
 	 */
 	private static final long serialVersionUID = 7099384030117130226L;
-
 	public CauchyKernel() {
 		super();
 	}
@@ -47,18 +46,18 @@ public class CauchyKernel extends RadialBasisKernel {
 	}
 	
 	@Override
-	public double getPartialSimilarity(final double[] a, final double[] b) {
+	final public double getPartialSimilarity(final double[] a, final double[] b) {
 		final double lp2 = FastMath.pow(toHilbertPSpace(a, b), 2);
 		return 1.0 / (1 + lp2/FastMath.pow(getSigma(), 2));
 	}
 	
 	@Override
-	public double partialSimilarityToSimilarity(double partial) {
+	final public double partialSimilarityToSimilarity(double partial) {
 		return partial;
 	}
 	
 	@Override
-	public double similarityToPartialSimilarity(double full) {
+	final public double similarityToPartialSimilarity(double full) {
 		return full;
 	}
 }
