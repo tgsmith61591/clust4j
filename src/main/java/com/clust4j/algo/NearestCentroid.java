@@ -304,82 +304,77 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	public NearestCentroid fit() {
 		synchronized(fitLock) {
 			
-			try {
-				if(null != labels) // already fit
-					return this;
-				
-	
-				final LogTimer timer = new LogTimer();
-				this.centroids = new ArrayList<double[]>(numClasses);
-				final int[] nk = new int[numClasses]; // the count of clusters in each class
-				
-				final boolean isManhattan = getSeparabilityMetric()
-					.equals(Distance.MANHATTAN);
-				
-				boolean[] mask;
-				double[][] masked;
-				double[] centroid;
-				
-				int encoded;
-				info("identifying centroid for each class label");
-				for(int currentClass = 0; currentClass < numClasses; currentClass++) {
-					// Since we've already encoded the labels, we can just use
-					// an iterator like this to keep track of the current one
-					encoded = encoder.reverseEncodeOrNull(currentClass); // shouldn't ever be null
-					
-					mask = new boolean[m];
-					for(int j = 0; j < m; j++)
-						mask[j] = y_encodings[j] == currentClass;
-					nk[currentClass] = VecUtils.sum(mask);
-					
-					
-					masked = new double[nk[currentClass]][];
-					for(int j = 0, k = 0; j < m; j++)
-						if(mask[j])
-							masked[k++] = data.getRow(j);
-					
-					
-					// Update
-					centroid = isManhattan ? MatUtils.medianRecord(masked) : MatUtils.meanRecord(masked);
-					centroids.add(centroid);
-	
-					fitSummary.add(new Object[]{
-						encoded, nk[currentClass], 
-						KMeans.barycentricDistance(masked, centroid), 
-						timer.wallTime()
-					});
-				}
-				
-				
-				if(null != shrinkage) {
-					info("applying smoothing to class centroids");
-					double[][] X = data.getData();
-					centroid = MatUtils.meanRecord(X);
-					
-					// determine deviation
-					double[] em = getMVec(nk, m);
-					double[] variance = variance(X, centroids, y_encodings);
-					double[] s = sqrtMedAdd(variance, m, numClasses);
-					double[][] ms = mmsOuterProd(em, s);
-					double[][] shrunk = getDeviationMinShrink(centroids, centroid, ms, shrinkage);
-					
-					for(int i = 0; i < numClasses; i++)
-						for(int j = 0; j < centroid.length; j++)
-							centroids.get(i)[j] = shrunk[i][j] + centroid[j];
-				}
-				
-				
-				// Now run the predict method on training labels to score model
-				this.labels = predict(data);
-				info("model score ("+DEF_SUPERVISED_METRIC+"): " + score());
-				
-				
-				sayBye(timer);
+			if(null != labels) // already fit
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			} // end try/catch
+			
+
+			final LogTimer timer = new LogTimer();
+			this.centroids = new ArrayList<double[]>(numClasses);
+			final int[] nk = new int[numClasses]; // the count of clusters in each class
+			
+			final boolean isManhattan = getSeparabilityMetric()
+				.equals(Distance.MANHATTAN);
+			
+			boolean[] mask;
+			double[][] masked;
+			double[] centroid;
+			
+			int encoded;
+			info("identifying centroid for each class label");
+			for(int currentClass = 0; currentClass < numClasses; currentClass++) {
+				// Since we've already encoded the labels, we can just use
+				// an iterator like this to keep track of the current one
+				encoded = encoder.reverseEncodeOrNull(currentClass); // shouldn't ever be null
+				
+				mask = new boolean[m];
+				for(int j = 0; j < m; j++)
+					mask[j] = y_encodings[j] == currentClass;
+				nk[currentClass] = VecUtils.sum(mask);
+				
+				
+				masked = new double[nk[currentClass]][];
+				for(int j = 0, k = 0; j < m; j++)
+					if(mask[j])
+						masked[k++] = data.getRow(j);
+				
+				
+				// Update
+				centroid = isManhattan ? MatUtils.medianRecord(masked) : MatUtils.meanRecord(masked);
+				centroids.add(centroid);
+
+				fitSummary.add(new Object[]{
+					encoded, nk[currentClass], 
+					KMeans.barycentricDistance(masked, centroid), 
+					timer.wallTime()
+				});
+			}
+			
+			
+			if(null != shrinkage) {
+				info("applying smoothing to class centroids");
+				double[][] X = data.getData();
+				centroid = MatUtils.meanRecord(X);
+				
+				// determine deviation
+				double[] em = getMVec(nk, m);
+				double[] variance = variance(X, centroids, y_encodings);
+				double[] s = sqrtMedAdd(variance, m, numClasses);
+				double[][] ms = mmsOuterProd(em, s);
+				double[][] shrunk = getDeviationMinShrink(centroids, centroid, ms, shrinkage);
+				
+				for(int i = 0; i < numClasses; i++)
+					for(int j = 0; j < centroid.length; j++)
+						centroids.get(i)[j] = shrunk[i][j] + centroid[j];
+			}
+			
+			
+			// Now run the predict method on training labels to score model
+			this.labels = predict(data);
+			info("model score ("+DEF_SUPERVISED_METRIC+"): " + score());
+			
+			
+			sayBye(timer);
+			return this;
 		}
 	}
 	

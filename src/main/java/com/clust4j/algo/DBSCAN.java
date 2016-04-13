@@ -293,138 +293,133 @@ final public class DBSCAN extends AbstractDBSCAN {
 	@Override
 	final public DBSCAN fit() {
 		synchronized(fitLock) {
+
+			if(null!=labels) // Then we've already fit this...
+				return this;
 			
-			try {
-				if(null!=labels) // Then we've already fit this...
-					return this;
+			
+			// First get the dist matrix
+			final LogTimer timer = new LogTimer();
+			
+			// Do the neighborhood assignments, get sample weights, find core samples..
+			final LogTimer neighbTimer = new LogTimer();
+			labels = new int[m]; // Initialize labels...
+			sampleWeights = new double[m]; // Init sample weights...
+			coreSamples = new boolean[m];
+			
+			
+			// Fit the nearest neighbor model...
+			final LogTimer rnTimer = new LogTimer();
+			final RadiusNeighbors rnModel = new RadiusNeighbors(data,
+				new RadiusNeighborsPlanner(eps)
+					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
+					.setSeed(getSeed())
+					.setMetric(getSeparabilityMetric())
+					.setNormalizer(normer) // Don't really need because not normalizing...
+					.setVerbose(false))
+				.fit();
+			
+			info("fit RadiusNeighbors model in " + rnTimer.toString());
+			int[][] nearest = rnModel.getNeighbors().getIndices();
+			
+			
+			int[] ptNeighbs;
+			ArrayList<int[]> neighborhoods = new ArrayList<>();
+			int numCorePts = 0;
+			for(int i = 0; i < m; i++) {
+				// Each label inits to -1 as noise
+				labels[i] = NOISE_CLASS;
+				ptNeighbs = nearest[i];
 				
+				// Add neighborhood...
+				int pts;
+				neighborhoods.add(ptNeighbs);
+				sampleWeights[i] = pts = ptNeighbs.length;
+				coreSamples[i] = pts >= minPts;
 				
-				// First get the dist matrix
-				final LogTimer timer = new LogTimer();
+				if(coreSamples[i]) 
+					numCorePts++;
+			}
+			
+			
+			// Log checkpoint
+			info("completed density neighborhood calculations in " + neighbTimer.toString());
+			info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
+			
+			
+			// Label the points...
+			int nextLabel = 0, v;
+			final Stack<Integer> stack = new Stack<>();
+			int[] neighb;
+			
+			
+			LogTimer stackTimer = new LogTimer();
+			for(int i = 0; i < m; i++) {
+				stackTimer = new LogTimer();
 				
-				// Do the neighborhood assignments, get sample weights, find core samples..
-				final LogTimer neighbTimer = new LogTimer();
-				labels = new int[m]; // Initialize labels...
-				sampleWeights = new double[m]; // Init sample weights...
-				coreSamples = new boolean[m];
+				// Want to look at unlabeled OR core points...
+				if(labels[i] != NOISE_CLASS || !coreSamples[i])
+					continue;
 				
-				
-				// Fit the nearest neighbor model...
-				final LogTimer rnTimer = new LogTimer();
-				final RadiusNeighbors rnModel = new RadiusNeighbors(data,
-					new RadiusNeighborsPlanner(eps)
-						.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
-						.setSeed(getSeed())
-						.setMetric(getSeparabilityMetric())
-						.setNormalizer(normer) // Don't really need because not normalizing...
-						.setVerbose(false))
-					.fit();
-				
-				info("fit RadiusNeighbors model in " + rnTimer.toString());
-				int[][] nearest = rnModel.getNeighbors().getIndices();
-				
-				
-				int[] ptNeighbs;
-				ArrayList<int[]> neighborhoods = new ArrayList<>();
-				int numCorePts = 0;
-				for(int i = 0; i < m; i++) {
-					// Each label inits to -1 as noise
-					labels[i] = NOISE_CLASS;
-					ptNeighbs = nearest[i];
-					
-					// Add neighborhood...
-					int pts;
-					neighborhoods.add(ptNeighbs);
-					sampleWeights[i] = pts = ptNeighbs.length;
-					coreSamples[i] = pts >= minPts;
-					
-					if(coreSamples[i]) 
-						numCorePts++;
-				}
-				
-				
-				// Log checkpoint
-				info("completed density neighborhood calculations in " + neighbTimer.toString());
-				info(numCorePts + " core point"+(numCorePts!=1?"s":"")+" found");
-				
-				
-				// Label the points...
-				int nextLabel = 0, v;
-				final Stack<Integer> stack = new Stack<>();
-				int[] neighb;
-				
-				
-				LogTimer stackTimer = new LogTimer();
-				for(int i = 0; i < m; i++) {
-					stackTimer = new LogTimer();
-					
-					// Want to look at unlabeled OR core points...
-					if(labels[i] != NOISE_CLASS || !coreSamples[i])
-						continue;
-					
-			        // Depth-first search starting from i, ending at the non-core points.
-			        // This is very similar to the classic algorithm for computing connected
-			        // components, the difference being that we label non-core points as
-			        // part of a cluster (component), but don't expand their neighborhoods.
-					int labelCt = 0;
-					while(true) {
-						if(labels[i] == NOISE_CLASS) {
-							labels[i] = nextLabel;
-							labelCt++;
+		        // Depth-first search starting from i, ending at the non-core points.
+		        // This is very similar to the classic algorithm for computing connected
+		        // components, the difference being that we label non-core points as
+		        // part of a cluster (component), but don't expand their neighborhoods.
+				int labelCt = 0;
+				while(true) {
+					if(labels[i] == NOISE_CLASS) {
+						labels[i] = nextLabel;
+						labelCt++;
+						
+						if(coreSamples[i]) {
+							neighb = neighborhoods.get(i);
 							
-							if(coreSamples[i]) {
-								neighb = neighborhoods.get(i);
-								
-								for(i = 0; i < neighb.length; i++) {
-									v = neighb[i];
-									if(labels[v] == NOISE_CLASS)
-										stack.push(v);
-								}
+							for(i = 0; i < neighb.length; i++) {
+								v = neighb[i];
+								if(labels[v] == NOISE_CLASS)
+									stack.push(v);
 							}
 						}
-						
-	
-						if(stack.size() == 0) {
-							fitSummary.add(new Object[]{
-								nextLabel, labelCt, stackTimer.formatTime(), stackTimer.wallTime()
-							});
-							
-							break;
-						}
-						
-						i = stack.pop();
 					}
 					
-					nextLabel++;
+
+					if(stack.size() == 0) {
+						fitSummary.add(new Object[]{
+							nextLabel, labelCt, stackTimer.formatTime(), stackTimer.wallTime()
+						});
+						
+						break;
+					}
+					
+					i = stack.pop();
 				}
 				
-				
-				// Count missing
-				numNoisey = 0;
-				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				
-				
-				// corner case: numNoisey == m (never gets a fit summary)
-				if(numNoisey == m)
-					fitSummary.add(new Object[]{
-						Double.NaN, 0, stackTimer.formatTime(), stackTimer.wallTime()
-					});
-				
-				
-				
-				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
-					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
-						" classified noise");
-				
-				// Encode to put in order
-				labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
-				
-				sayBye(timer);
-				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			} // end try/catch
+				nextLabel++;
+			}
+			
+			
+			// Count missing
+			numNoisey = 0;
+			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+			
+			
+			// corner case: numNoisey == m (never gets a fit summary)
+			if(numNoisey == m)
+				fitSummary.add(new Object[]{
+					Double.NaN, 0, stackTimer.formatTime(), stackTimer.wallTime()
+				});
+			
+			
+			
+			info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+				" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+					" classified noise");
+			
+			// Encode to put in order
+			labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+			
+			sayBye(timer);
+			return this;
 		}
 		
 	}// End train

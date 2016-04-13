@@ -358,5 +358,21 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(k)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		}
+		
+		model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(Distance.HAVERSINE.KM));
+		assertTrue(model.getLinkage().equals(link));
+		assertTrue(model.getSeparabilityMetric().equals(Distance.EUCLIDEAN));
+	}
+	
+	@Test
+	public void testBadEfficientDistMatTest() {
+		boolean a = false;
+		try {
+			HierarchicalAgglomerative.EfficientDistanceMatrix.getIndexFromFlattenedVec(0, 0, 0);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
 	}
 }

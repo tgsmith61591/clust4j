@@ -258,103 +258,98 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	public NearestNeighbors fit() {
 		synchronized(fitLock) {
 		
-			try {
-				if(null != res)
-					return this;
-				
-				
-				// CORNER! If k == m, we can't do kNeighbors + 1..
-				int nNeighbors = FastMath.min(kNeighbors + 1, m); //kNeighbors + 1;
-				final LogTimer timer = new LogTimer();
-				
-				// We can do parallel here!
-				Neighborhood initRes = null;
-				if(parallel) {
-					try {
-						initRes = ParallelNNSearch.doAll(fit_X, this, nNeighbors);
-					} catch(RejectedExecutionException r) {
-						warn("parallel neighborhood search failed; falling back to serial query");
-					}
-				}
-				
-				// Gets here in serial mode or if parallel failed...
-				if(null == initRes)
-					initRes = new Neighborhood(tree.query(fit_X, nNeighbors, DUAL_TREE_SEARCH, SORT));
-				info("queried "+this.alg+" for nearest neighbors in " + timer.toString());
-	
-				
-				double[][] dists = initRes.getDistances();
-				int[][] indices  = initRes.getIndices();
-				int i, j, ni = indices[0].length;
-				
-				
-				// Set up sample range
-				int[] sampleRange = VecUtils.arange(m);
-				
-				
-				boolean allInRow, bval;
-				boolean[] dupGroups = new boolean[m];
-				boolean[][] sampleMask= new boolean[m][ni];
-				for(i = 0; i < m; i++) {
-					allInRow = true;
-					
-					for(j = 0; j < ni; j++) {
-						bval = indices[i][j] != sampleRange[i];
-						sampleMask[i][j] = bval;
-						allInRow &= bval;
-					}
-					
-					dupGroups[i] = allInRow; // duplicates in row?
-				}
-				
-				
-				// Comment from SKLEARN:
-				// Corner case: When the number of duplicates are more
-		        // than the number of neighbors, the first NN will not
-		        // be the sample, but a duplicate.
-		        // In that case mask the first duplicate.
-				// sample_mask[:, 0][dup_gr_nbrs] = False
-				
-				for(i = 0; i < m; i++)
-					if(dupGroups[i])
-						sampleMask[i][0] = false;
-				
-				
-				// Build output indices
-				int k = 0;
-				int[] indOut = new int[m * (nNeighbors - 1)];
-				double[] distOut = new double[m * (nNeighbors - 1)];
-				for(i = 0; i < m; i++) {
-					double minDist = Double.POSITIVE_INFINITY, maxDist = Double.NEGATIVE_INFINITY;
-					
-					for(j = 0; j < ni; j++) {
-						if(sampleMask[i][j]) {
-							indOut[k] = indices[i][j];
-							distOut[k]= dists[i][j];
-							
-							minDist = FastMath.min(dists[i][j], minDist);
-							maxDist = FastMath.max(dists[i][j], maxDist);
-							
-							k++;
-						}
-					}
-					
-					fitSummary.add(new Object[]{
-						i, minDist, maxDist, timer.wallTime()
-					});
-				}
-				
-				res = new Neighborhood(
-					MatUtils.reshape(distOut, m, nNeighbors - 1),
-					MatUtils.reshape(indOut,  m, nNeighbors - 1));
-				
-				
-				sayBye(timer);
+			if(null != res)
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			} // end try/catch
+			
+			
+			// CORNER! If k == m, we can't do kNeighbors + 1..
+			int nNeighbors = FastMath.min(kNeighbors + 1, m); //kNeighbors + 1;
+			final LogTimer timer = new LogTimer();
+			
+			// We can do parallel here!
+			Neighborhood initRes = null;
+			if(parallel) {
+				try {
+					initRes = ParallelNNSearch.doAll(fit_X, this, nNeighbors);
+				} catch(RejectedExecutionException r) {
+					warn("parallel neighborhood search failed; falling back to serial query");
+				}
+			}
+			
+			// Gets here in serial mode or if parallel failed...
+			if(null == initRes)
+				initRes = new Neighborhood(tree.query(fit_X, nNeighbors, DUAL_TREE_SEARCH, SORT));
+			info("queried "+this.alg+" for nearest neighbors in " + timer.toString());
+
+			
+			double[][] dists = initRes.getDistances();
+			int[][] indices  = initRes.getIndices();
+			int i, j, ni = indices[0].length;
+			
+			
+			// Set up sample range
+			int[] sampleRange = VecUtils.arange(m);
+			
+			
+			boolean allInRow, bval;
+			boolean[] dupGroups = new boolean[m];
+			boolean[][] sampleMask= new boolean[m][ni];
+			for(i = 0; i < m; i++) {
+				allInRow = true;
+				
+				for(j = 0; j < ni; j++) {
+					bval = indices[i][j] != sampleRange[i];
+					sampleMask[i][j] = bval;
+					allInRow &= bval;
+				}
+				
+				dupGroups[i] = allInRow; // duplicates in row?
+			}
+			
+			
+			// Comment from SKLEARN:
+			// Corner case: When the number of duplicates are more
+	        // than the number of neighbors, the first NN will not
+	        // be the sample, but a duplicate.
+	        // In that case mask the first duplicate.
+			// sample_mask[:, 0][dup_gr_nbrs] = False
+			
+			for(i = 0; i < m; i++)
+				if(dupGroups[i])
+					sampleMask[i][0] = false;
+			
+			
+			// Build output indices
+			int k = 0;
+			int[] indOut = new int[m * (nNeighbors - 1)];
+			double[] distOut = new double[m * (nNeighbors - 1)];
+			for(i = 0; i < m; i++) {
+				double minDist = Double.POSITIVE_INFINITY, maxDist = Double.NEGATIVE_INFINITY;
+				
+				for(j = 0; j < ni; j++) {
+					if(sampleMask[i][j]) {
+						indOut[k] = indices[i][j];
+						distOut[k]= dists[i][j];
+						
+						minDist = FastMath.min(dists[i][j], minDist);
+						maxDist = FastMath.max(dists[i][j], maxDist);
+						
+						k++;
+					}
+				}
+				
+				fitSummary.add(new Object[]{
+					i, minDist, maxDist, timer.wallTime()
+				});
+			}
+			
+			res = new Neighborhood(
+				MatUtils.reshape(distOut, m, nNeighbors - 1),
+				MatUtils.reshape(indOut,  m, nNeighbors - 1));
+			
+			
+			sayBye(timer);
+			return this;
 		}
 
 	}

@@ -212,160 +212,155 @@ final public class KMeans extends AbstractCentroidClusterer {
 	@Override
 	final public KMeans fit() {
 		synchronized(fitLock) {
-			try {
-				if(null != labels) // already fit
-					return this;
+
+			if(null != labels) // already fit
+				return this;
+			
+
+			final LogTimer timer = new LogTimer();
+			final double[][] X = data.getData();
+			final int n = data.getColumnDimension();
+			
+			
+			// Corner case: K = 1 or all singular values
+			if(1 == k) {
+				labelFromSingularK(X);
+				fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
+				sayBye(timer);
+				return this;
+			}
+			
+			
+			
+			// Nearest centroid model to predict labels
+			NearestCentroid model = null;
+			EntryPair<int[], double[]> label_dist;
+			
+			
+			// Keep track of TSS (sum of barycentric distances)
+			double maxCost = Double.NEGATIVE_INFINITY;
+			cost = Double.POSITIVE_INFINITY;
+			ArrayList<double[]> new_centroids;
+			
+			for(iter = 0; iter < maxIter; iter++) {
 				
-	
-				final LogTimer timer = new LogTimer();
-				final double[][] X = data.getData();
-				final int n = data.getColumnDimension();
-				
-				
-				// Corner case: K = 1 or all singular values
-				if(1 == k) {
+				// Get labels for nearest centroids
+				try {
+					model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
+						VecUtils.arange(k), new NearestCentroidPlanner()
+							.setScale(false) // already scaled maybe
+							.setSeed(getSeed())
+							.setMetric(getSeparabilityMetric())
+							.setVerbose(false)).fit();
+				} catch(NaNException nan) {
+					/*
+					 * If they metric used produces lots of infs or -infs, it 
+					 * makes it hard if not impossible to effectively segment the
+					 * input space. Thus, the centroid assignment portion below can
+					 * yield a zero count (denominator) for one or more of the centroids
+					 * which makes the entire row NaN. We should tell the user to
+					 * try a different metric, if that's the case.
+					 *
+					error(new IllegalClusterStateException(dist_metric.getName()+" produced an entirely " +
+					  "infinite distance matrix, making it difficult to segment the input space. Try a different " +
+					  "metric."));
+					 */
+					this.k = 1;
+					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
+					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
 				
+				label_dist = model.predict(X);
 				
+				// unpack the EntryPair
+				labels = label_dist.getKey();
 				
-				// Nearest centroid model to predict labels
-				NearestCentroid model = null;
-				EntryPair<int[], double[]> label_dist;
-				
-				
-				// Keep track of TSS (sum of barycentric distances)
-				double maxCost = Double.NEGATIVE_INFINITY;
-				cost = Double.POSITIVE_INFINITY;
-				ArrayList<double[]> new_centroids;
-				
-				for(iter = 0; iter < maxIter; iter++) {
+				// Start by computing TSS using barycentric dist
+				double system_cost = 0.0;
+				double[] centroid, new_centroid;
+				new_centroids = new ArrayList<>(k);
+				for(int i = 0; i < k; i++) {
+					centroid = centroids.get(i);
+					new_centroid = new double[n];
 					
-					// Get labels for nearest centroids
-					try {
-						model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
-							VecUtils.arange(k), new NearestCentroidPlanner()
-								.setScale(false) // already scaled maybe
-								.setSeed(getSeed())
-								.setMetric(getSeparabilityMetric())
-								.setVerbose(false)).fit();
-					} catch(NaNException nan) {
-						/*
-						 * If they metric used produces lots of infs or -infs, it 
-						 * makes it hard if not impossible to effectively segment the
-						 * input space. Thus, the centroid assignment portion below can
-						 * yield a zero count (denominator) for one or more of the centroids
-						 * which makes the entire row NaN. We should tell the user to
-						 * try a different metric, if that's the case.
-						 *
-						error(new IllegalClusterStateException(dist_metric.getName()+" produced an entirely " +
-						  "infinite distance matrix, making it difficult to segment the input space. Try a different " +
-						  "metric."));
-						 */
-						this.k = 1;
-						warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					// Compute the current cost for each cluster,
+					// break if difference in TSS < tol. Otherwise
+					// update the centroids to means of clusters.
+					// We can compute what the new clusters will be
+					// here, but don't assign yet
+					int label, count = 0;
+					double clust_cost = 0;
+					for(int row = 0; row < m; row++) {
+						label = labels[row];
+						double diff;
 						
-						labelFromSingularK(X);
-						fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
-						sayBye(timer);
-						return this;
-					}
-					
-					label_dist = model.predict(X);
-					
-					// unpack the EntryPair
-					labels = label_dist.getKey();
-					
-					// Start by computing TSS using barycentric dist
-					double system_cost = 0.0;
-					double[] centroid, new_centroid;
-					new_centroids = new ArrayList<>(k);
-					for(int i = 0; i < k; i++) {
-						centroid = centroids.get(i);
-						new_centroid = new double[n];
-						
-						// Compute the current cost for each cluster,
-						// break if difference in TSS < tol. Otherwise
-						// update the centroids to means of clusters.
-						// We can compute what the new clusters will be
-						// here, but don't assign yet
-						int label, count = 0;
-						double clust_cost = 0;
-						for(int row = 0; row < m; row++) {
-							label = labels[row];
-							double diff;
-							
-							if(label == i) {
-								for(int j = 0; j < n; j++) {
-									new_centroid[j] += X[row][j];
-									diff = X[row][j] - centroid[j];
-									clust_cost += diff * diff;
-								}
-								
-								// number in cluster
-								count++;
+						if(label == i) {
+							for(int j = 0; j < n; j++) {
+								new_centroid[j] += X[row][j];
+								diff = X[row][j] - centroid[j];
+								clust_cost += diff * diff;
 							}
+							
+							// number in cluster
+							count++;
 						}
-						
-						// Update the new centroid (currently a sum) to be a mean
-						for(int j = 0; j < n; j++)
-							new_centroid[j] /= (double)count;
-						new_centroids.add(new_centroid);
-						
-						// Update system cost
-						system_cost += clust_cost;
-						
-					} // end centroid re-assignment
-					
-					// Add current state to fitSummary
-					fitSummary.add(new Object[]{ iter, converged, maxCost, cost, timer.wallTime() });
-					
-					
-					// Assign new centroids
-					centroids = new_centroids;
-					double diff = cost - system_cost;	// results in Inf on first iteration
-					cost = system_cost;
-					
-					// if diff is Inf, this is the first pass. Max is always first pass
-					if(Double.isInfinite(diff))
-						maxCost = cost; // should always stay the same..
-					
-					
-					
-					
-					// Check for convergence
-					if( FastMath.abs(diff) < tolerance ) {	// Inf always returns false in comparison
-						// Did converge
-						converged = true;
-						iter++; // Going to break and miss this..
-						break;
 					}
 					
-				} // end iterations
-				
-	
-				// last one...
-				fitSummary.add(new Object[]{ iter, 
-					converged, maxCost, cost, timer.wallTime() });
-				
-				if(!converged)
-					warn("algorithm did not converge");
+					// Update the new centroid (currently a sum) to be a mean
+					for(int j = 0; j < n; j++)
+						new_centroid[j] /= (double)count;
+					new_centroids.add(new_centroid);
 					
+					// Update system cost
+					system_cost += clust_cost;
+					
+				} // end centroid re-assignment
 				
-				// wrap things up, create summary..
-				reorderLabelsAndCentroids();
-				sayBye(timer);
+				// Add current state to fitSummary
+				fitSummary.add(new Object[]{ iter, converged, maxCost, cost, timer.wallTime() });
 				
 				
-				return this;
+				// Assign new centroids
+				centroids = new_centroids;
+				double diff = cost - system_cost;	// results in Inf on first iteration
+				cost = system_cost;
 				
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			} // end try/catch
+				// if diff is Inf, this is the first pass. Max is always first pass
+				if(Double.isInfinite(diff))
+					maxCost = cost; // should always stay the same..
+				
+				
+				
+				
+				// Check for convergence
+				if( FastMath.abs(diff) < tolerance ) {	// Inf always returns false in comparison
+					// Did converge
+					converged = true;
+					iter++; // Going to break and miss this..
+					break;
+				}
+				
+			} // end iterations
+			
+
+			// last one...
+			fitSummary.add(new Object[]{ iter, 
+				converged, maxCost, cost, timer.wallTime() });
+			
+			if(!converged)
+				warn("algorithm did not converge");
+				
+			
+			// wrap things up, create summary..
+			reorderLabelsAndCentroids();
+			sayBye(timer);
+			
+			
+			return this;
 		}
 			
 	}

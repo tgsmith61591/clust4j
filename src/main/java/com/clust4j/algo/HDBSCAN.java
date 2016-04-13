@@ -302,16 +302,15 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 */
 	public HDBSCAN(final AbstractRealMatrix data, final HDBSCANPlanner planner) {
 		super(data, planner);
+		
 		this.algo = planner.algo;
 		this.alpha = planner.alpha;
 		this.approxMinSpanTree = planner.approxMinSpanTree;
 		this.min_cluster_size = planner.min_cluster_size;
 		this.leafSize = planner.leafSize;
 		
-		if(alpha <= 0.0)
-			throw new IllegalArgumentException("alpha must be greater than 0");
-		if(leafSize < 1)
-			throw new IllegalArgumentException("leafsize must be greater than 0");
+		if(alpha <= 0.0) throw new IllegalArgumentException("alpha must be greater than 0");
+		if(leafSize < 1) throw new IllegalArgumentException("leafsize must be greater than 0");
 		
 		logModelSummary();
 	}
@@ -600,7 +599,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * Util mst linkage methods
 	 * @author Taylor G Smith
 	 */
-	protected static class LinkageTreeUtils {	
+	protected static abstract class LinkageTreeUtils {	
 		
 		/**
 		 * Perform a breadth first search on a tree
@@ -1077,17 +1076,9 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	abstract class HeapSearchAlgorithm extends HDBSCANLinkageTree {
 		final int leafSize;
 		
-		HeapSearchAlgorithm(int leafSize, Collection<Class<? extends GeometricallySeparable>> clzs) {
+		HeapSearchAlgorithm(int leafSize) {
 			super();
-			
 			this.leafSize = leafSize;
-			Class<? extends GeometricallySeparable> clz = metric.getClass();
-			if( !clzs.contains(clz) ) {
-				warn(clz+" is not a valid distance metric for "+getTreeName()+"Trees. "
-						+ "Valid metrics: " + clzs);
-				warn("falling back to default metric: " + AbstractClusterer.DEF_DIST);
-				model.setSeparabilityMetric(AbstractClusterer.DEF_DIST);
-			}
 		}
 
 		abstract NearestNeighborHeapSearch getTree(double[][] X);
@@ -1153,7 +1144,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 */
 	abstract class KDTreeAlgorithm extends HeapSearchAlgorithm {
 		KDTreeAlgorithm(int leafSize) {
-			super(leafSize, KDTree.VALID_METRICS);
+			super(leafSize);
 		}
 		
 		@Override String getTreeName() { return "KD"; }
@@ -1172,7 +1163,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 */
 	abstract class BallTreeAlgorithm extends HeapSearchAlgorithm {
 		BallTreeAlgorithm(int leafSize) {
-			super(leafSize, BallTree.VALID_METRICS);
+			super(leafSize);
 		}
 		
 		@Override String getTreeName() { return "Ball"; }
@@ -1495,63 +1486,56 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	
 	@Override
 	public HDBSCAN fit() {
-		synchronized(fitLock) {	
-			try {
-				if(null!=labels) // Then we've already fit this...
-					return this;
-				
-				// First get the dist matrix
-				info("Model fit:");
-				final LogTimer timer = new LogTimer();
-				
-				// Meant to prevent multiple .getData() copy calls
-				dataData = this.data.getData();
-				
-				// Build the tree
-				info("constructing HDBSCAN single linkage dendrogram: " + algo);
-				this.tree = algo.initTree(this);
-				
-				
-				LogTimer treeTimer = new LogTimer();
-				final double[][] lab_tree = tree.link(); // returns the result of the label(..) function
-				info("completed tree building in " + treeTimer.toString());
-				
-	
-				info("converting tree to labels ("+lab_tree.length+" x "+lab_tree[0].length+")");
-				LogTimer labTimer = new LogTimer();
-				labels = treeToLabels(dataData, lab_tree, min_cluster_size, this);
-				
-				
-				// Wrap up...
-				info("completed cluster labeling in " + labTimer.toString());
-				
-				
-				// Count missing
-				numNoisey = 0;
-				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				
-				
-				int nextLabel = LabelHSetFactory.build(labels).size() - (numNoisey > 0 ? 1 : 0);
-				info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
-					" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
-						" classified noise");
-				
-				// Need to encode labels to maintain order
-				labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
-				
-				
-				sayBye(timer);
-				
-				// Clean anything with big overhead..
-				dataData = null;
-				dist_mat = null;
-				tree = null;
-				
+		synchronized(fitLock) {
+			if(null!=labels) // Then we've already fit this...
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
-			} // end try/catch
+			
+
+			// Meant to prevent multiple .getData() copy calls
+			final LogTimer timer = new LogTimer();
+			dataData = this.data.getData();
+			
+			// Build the tree
+			info("constructing HDBSCAN single linkage dendrogram: " + algo);
+			this.tree = algo.initTree(this);
+			
+			
+			LogTimer treeTimer = new LogTimer();
+			final double[][] lab_tree = tree.link(); // returns the result of the label(..) function
+			info("completed tree building in " + treeTimer.toString());
+			
+
+			info("converting tree to labels ("+lab_tree.length+" x "+lab_tree[0].length+")");
+			LogTimer labTimer = new LogTimer();
+			labels = treeToLabels(dataData, lab_tree, min_cluster_size, this);
+			
+			
+			// Wrap up...
+			info("completed cluster labeling in " + labTimer.toString());
+			
+			
+			// Count missing
+			numNoisey = 0;
+			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+			
+			
+			int nextLabel = LabelHSetFactory.build(labels).size() - (numNoisey > 0 ? 1 : 0);
+			info((numClusters=nextLabel)+" cluster"+(nextLabel!=1?"s":"")+
+				" identified, "+numNoisey+" record"+(numNoisey!=1?"s":"")+
+					" classified noise");
+			
+			// Need to encode labels to maintain order
+			labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+			
+			
+			sayBye(timer);
+			
+			// Clean anything with big overhead..
+			dataData = null;
+			dist_mat = null;
+			tree = null;
+			
+			return this;
 		}
 	}
 
@@ -1590,7 +1574,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * into numerous smaller ones.
 	 * @author Taylor G Smith
 	 */
-	static class GetLabelUtils {
+	abstract static class GetLabelUtils {
 		/**
 		 * Descendingly sort the keys of the map and return
 		 * them in order, but eliminate the very smallest key
@@ -1767,10 +1751,12 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		return result;
 	}
 	
+	/*
 	protected static double[][] singleLinkage(final double[][] dists) {
 		final double[][] hierarchy = LinkageTreeUtils.minSpanTreeLinkageCore(dists, dists.length);
 		return label(MatUtils.sortAscByCol(hierarchy, 2));
 	}
+	*/
 	
 	protected static int[] treeToLabels(final double[][] X, 
 			final double[][] single_linkage_tree, final int min_size) {

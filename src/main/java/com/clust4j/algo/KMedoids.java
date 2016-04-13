@@ -247,136 +247,131 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	public KMedoids fit() {
 		synchronized(fitLock) {	
 		
-			try {
-				if(null != labels) // already fit
-					return this;
+			if(null != labels) // already fit
+				return this;
+			
+			final LogTimer timer = new LogTimer();
+			final double[][] X = data.getData();
+			
+			// Corner case: K = 1 or all singular
+			if(1 == k) {
+				labelFromSingularK(X);
+				fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+				sayBye(timer);
+				return this;
+			}
+			
+			
+			// We do this in KMedoids and not KMeans, because KMedoids uses
+			// real points as medoids and not means for centroids, thus
+			// the recomputation of distances is unnecessary with the dist mat
+			dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
+			info("distance matrix computed in " + timer.toString());
+			
+			// Initialize labels
+			medoid_indices = init_centroid_indices;
+			
+			
+			ClusterAssignments clusterAssignments;
+			MedoidReassignmentHandler rassn;
+			int[] newMedoids = medoid_indices;
+			
+			// Cost vars
+			cost = Double.POSITIVE_INFINITY;
+			double bestCost = Double.POSITIVE_INFINITY, 
+				   maxCost = Double.NEGATIVE_INFINITY,
+				   avgCost = Double.NaN;
+			
+			
+			// Iterate while the cost decreases:
+			boolean convergedFromCost = false; // from cost or system changes?
+			boolean configurationChanged = true;
+			while( configurationChanged
+				&& iter < maxIter ) {
 				
-				final LogTimer timer = new LogTimer();
-				final double[][] X = data.getData();
+				/*
+				 * 1. In each cluster, make the point that minimizes 
+				 *    the sum of distances within the cluster the medoid
+				 */
+				clusterAssignments = assignClosestMedoid(newMedoids);
 				
-				// Corner case: K = 1 or all singular
-				if(1 == k) {
+				
+				/*
+				 * 1.5 The entries are not 100% equal, so we can (re)assign medoids...
+				 */
+				rassn = new MedoidReassignmentHandler(clusterAssignments);
+				
+				/*
+				 * 1.75 This happens in the case of bad kernels that cause
+				 * infinities to propagate... we can't segment the input
+				 * space and need to just return a single cluster.
+				 */
+				if(rassn.new_clusters.size() == 1) {
+					this.k = 1;
+					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					
 					labelFromSingularK(X);
 					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
+
+				
+				/*
+				 * 2. Reassign each point to the cluster defined by the 
+				 *    closest medoid determined in the previous step.
+				 */
+				newMedoids = rassn.reassignedMedoidIdcs;
+
+				
+				/*
+				 * 2.5 Determine whether configuration changed
+				 */
+				boolean lastIteration = VecUtils.equalsExactly(newMedoids, medoid_indices);
 				
 				
-				// We do this in KMedoids and not KMeans, because KMedoids uses
-				// real points as medoids and not means for centroids, thus
-				// the recomputation of distances is unnecessary with the dist mat
-				dist_mat = Pairwise.getDistance(X, getSeparabilityMetric(), true, false);
-				info("distance matrix computed in " + timer.toString());
+				/*
+				 * 3. Update the fit summary item
+				 */
+				fitSummary.add(new Object[]{ iter, 
+					converged = lastIteration 
+						|| (convergedFromCost = FastMath.abs(cost - bestCost) < tolerance), 
+					maxCost, cost, avgCost, timer.wallTime() });
 				
-				// Initialize labels
-				medoid_indices = init_centroid_indices;
-				
-				
-				ClusterAssignments clusterAssignments;
-				MedoidReassignmentHandler rassn;
-				int[] newMedoids = medoid_indices;
-				
-				// Cost vars
-				cost = Double.POSITIVE_INFINITY;
-				double bestCost = Double.POSITIVE_INFINITY, 
-					   maxCost = Double.NEGATIVE_INFINITY,
-					   avgCost = Double.NaN;
-				
-				
-				// Iterate while the cost decreases:
-				boolean convergedFromCost = false; // from cost or system changes?
-				boolean configurationChanged = true;
-				while( configurationChanged
-					&& iter < maxIter ) {
-					
-					/*
-					 * 1. In each cluster, make the point that minimizes 
-					 *    the sum of distances within the cluster the medoid
-					 */
-					clusterAssignments = assignClosestMedoid(newMedoids);
-					
-					
-					/*
-					 * 1.5 The entries are not 100% equal, so we can (re)assign medoids...
-					 */
-					rassn = new MedoidReassignmentHandler(clusterAssignments);
-					
-					/*
-					 * 1.75 This happens in the case of bad kernels that cause
-					 * infinities to propagate... we can't segment the input
-					 * space and need to just return a single cluster.
-					 */
-					if(rassn.new_clusters.size() == 1) {
-						this.k = 1;
-						warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
-						
-						labelFromSingularK(X);
-						fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
-						sayBye(timer);
-						return this;
-					}
-	
-					
-					/*
-					 * 2. Reassign each point to the cluster defined by the 
-					 *    closest medoid determined in the previous step.
-					 */
-					newMedoids = rassn.reassignedMedoidIdcs;
-	
-					
-					/*
-					 * 2.5 Determine whether configuration changed
-					 */
-					boolean lastIteration = VecUtils.equalsExactly(newMedoids, medoid_indices);
-					
-					
-					/*
-					 * 3. Update the fit summary item
-					 */
-					fitSummary.add(new Object[]{ iter, 
-						converged = lastIteration 
-							|| (convergedFromCost = FastMath.abs(cost - bestCost) < tolerance), 
-						maxCost, cost, avgCost, timer.wallTime() });
-					
-					/*
-					 * 4. Update the costs
-					 */
-					double tmpCost = rassn.new_clusters.total_cst;
-					avgCost = tmpCost / (double)k;
-					if(tmpCost > maxCost)
-						maxCost = tmpCost;
-	
-					if(tmpCost < bestCost) {
-						bestCost = tmpCost;
-						cost = bestCost;
-						labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
-						centroids = rassn.centers;
-						medoid_indices = newMedoids;
-					}
-					
-	
-					iter++;
-					configurationChanged = !converged;
+				/*
+				 * 4. Update the costs
+				 */
+				double tmpCost = rassn.new_clusters.total_cst;
+				avgCost = tmpCost / (double)k;
+				if(tmpCost > maxCost)
+					maxCost = tmpCost;
+
+				if(tmpCost < bestCost) {
+					bestCost = tmpCost;
+					cost = bestCost;
+					labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
+					centroids = rassn.centers;
+					medoid_indices = newMedoids;
 				}
 				
-				if(!converged)
-					warn("algorithm did not converge");
-				else 
-					info("algorithm converged due to " + 
-					(convergedFromCost ? "cost minimization" : "harmonious state"));
-				
-					
-				// wrap things up, create summary..
-				reorderLabelsAndCentroids();
-				sayBye(timer);
-				
-				
-				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
+
+				iter++;
+				configurationChanged = !converged;
 			}
+			
+			if(!converged)
+				warn("algorithm did not converge");
+			else 
+				info("algorithm converged due to " + 
+				(convergedFromCost ? "cost minimization" : "harmonious state"));
+			
+				
+			// wrap things up, create summary..
+			reorderLabelsAndCentroids();
+			sayBye(timer);
+			
+			
+			return this;
 		}
 		
 	} // End train

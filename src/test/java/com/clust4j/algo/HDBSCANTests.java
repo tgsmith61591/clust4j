@@ -1576,4 +1576,16 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		assertTrue(h.equals(new HDBSCAN(DATA).fit()));
 		assertFalse(h.equals(new HDBSCAN(DATA)));
 	}
+	
+	@Test
+	public void testModelNotFit() {
+		boolean a = false;
+		try {
+			new HDBSCAN(DATA).getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
 }

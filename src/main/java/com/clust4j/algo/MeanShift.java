@@ -974,186 +974,181 @@ public class MeanShift
 	public MeanShift fit() {
 		synchronized(fitLock) {
 			
-			try {
-				if(null!=labels) // Already fit this model
-					return this;
-				
-	
-				// Put the results into a Map (hash because tree imposes comparable casting)
-				final LogTimer timer = new LogTimer();
-				centroids = new ArrayList<double[]>();
-				
-				
-				/*
-				 * Get the neighborhoods and center intensity object. Will iterate until
-				 * either the centers are found, or the max try count is exceeded. For each
-				 * iteration, will increase bandwidth.
-				 */
-				RadiusNeighbors nbrs = new RadiusNeighbors(
-					this, bandwidth).fit();
-				
-				
-				// Compute the seeds and center intensity
-				// If parallelism is permitted, try it. 
-				CenterIntensity intensity = null;
-				if(parallel) {
-					try {
-						intensity = new ParallelCenterIntensity(nbrs);
-					} catch(RejectedExecutionException e) {
-						// Shouldn't happen...
-						warn("parallel search failed; falling back to serial");
-					}
-				}
-				
-				// Gets here if serial or if parallel failed...
-				if(null == intensity)
-					intensity = new SerialCenterIntensity(nbrs);
-				
-				
-				// Check for points all too far from seeds
-				if(intensity.isEmpty()) {
-					error(new IllegalClusterStateException("No point "
-						+ "was within bandwidth="+bandwidth
-						+" of any seed; try increasing bandwidth"));
-				} else {
-					converged = true;
-					itersElapsed = intensity.getIters(); // max iters elapsed
-				}
-				
-				
-				
-				
-				// Extract the centroids
-				int idx = 0, m_prime = intensity.size();
-				final Array2DRowRealMatrix sorted_centers = new Array2DRowRealMatrix(m_prime,n);
-				
-				for(MeanShiftSeed entry: intensity)
-					sorted_centers.setRow(idx++, entry.getPair().getKey());
-				
-				// Fit the new neighbors model
-				nbrs = new RadiusNeighbors(sorted_centers,
-					new RadiusNeighborsPlanner(bandwidth)
-						.setSeed(this.random_state)
-						.setMetric(this.dist_metric)
-						.setForceParallel(parallel), true).fit();
-				
-				
-	
-				
-				// Post-processing. Remove near duplicate seeds
-				// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
-				// Create a boolean mask, init true
-				final boolean[] unique = new boolean[m_prime];
-				for(int i = 0; i < unique.length; i++) unique[i] = true;
-	
-				
-				// Pre-filtered summaries...
-				ArrayList<SummaryLite> allSummary = intensity.getSummaries();
-				
-				
-				// Iterate over sorted centers and query radii
-				int redundant_ct = 0;
-				int[] indcs;
-				double[] center;
-				for(int i = 0; i < m_prime; i++) {
-					if(unique[i]) {
-						center = sorted_centers.getRow(i);
-						indcs = nbrs.getNeighbors(
-							new double[][]{center}, 
-							bandwidth, false)
-								.getIndices()[0];
-						
-						for(int id: indcs)
-							unique[id] = false;
-						
-						unique[i] = true; // Keep this as true
-					}
-				}
-				
-				
-				// Now assign the centroids...
-				SummaryLite summ;
-				for(int i = 0; i < unique.length; i++) {
-					summ = allSummary.get(i);
-					
-					if(unique[i]) {
-						summ.retained = true;
-						centroids.add(sorted_centers.getRow(i));
-					}
-					
-					fitSummary.add(summ.toArray());
-				}
-				
-				
-				// calc redundant ct
-				redundant_ct = unique.length - centroids.size();
-				
-				
-				// also put the centroids into a matrix. We have to
-				// wait to perform this op, because we have to know
-				// the size of centroids first...
-				Array2DRowRealMatrix centers = new Array2DRowRealMatrix(centroids.size(),n);
-				for(int i = 0; i < centroids.size(); i++)
-					centers.setRow(i, centroids.get(i));
-				
-				
-				// Build yet another neighbors model...
-				NearestNeighbors nn = new NearestNeighbors(centers,
-					new NearestNeighborsPlanner(1)
-						.setSeed(this.random_state)
-						.setMetric(this.dist_metric)
-						.setForceParallel(false), true).fit();
-				
-				
-				
-				info((numClusters=centroids.size())+" optimal kernel"+(numClusters!=1?"s":"")+" identified");
-				info(redundant_ct+" nearly-identical kernel"+(redundant_ct!=1?"s":"") + " removed");
-				
-				
-				// Get the nearest...
-				final LogTimer clustTimer = new LogTimer();
-				Neighborhood knrst = nn.getNeighbors(data.getDataRef());
-				labels = MatUtils.flatten(knrst.getIndices());
-				
-				
-				
-				
-				// order the labels..
-				/* 
-				 * Reduce labels to a sorted, gapless, list
-				 * sklearn line: cluster_centers_indices = np.unique(labels)
-				 */
-				ArrayList<Integer> centroidIndices = new ArrayList<Integer>(numClusters);
-				for(Integer i: labels) // force autobox
-					if(!centroidIndices.contains(i)) // Not race condition because synchronized
-						centroidIndices.add(i);
-				
-				/*
-				 * final label assignment...
-				 * sklearn line: labels = np.searchsorted(cluster_centers_indices, labels)
-				 */
-				for(int i = 0; i < labels.length; i++)
-					labels[i] = centroidIndices.indexOf(labels[i]);
-				
-				
-				
-				
-				// Wrap up...
-				// Count missing
-				numNoisey = 0;
-				for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
-				info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
-				
-				
-				info("completed cluster labeling in " + clustTimer.toString());
-				
-				
-				sayBye(timer);
+			if(null!=labels) // Already fit this model
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
+			
+
+			// Put the results into a Map (hash because tree imposes comparable casting)
+			final LogTimer timer = new LogTimer();
+			centroids = new ArrayList<double[]>();
+			
+			
+			/*
+			 * Get the neighborhoods and center intensity object. Will iterate until
+			 * either the centers are found, or the max try count is exceeded. For each
+			 * iteration, will increase bandwidth.
+			 */
+			RadiusNeighbors nbrs = new RadiusNeighbors(
+				this, bandwidth).fit();
+			
+			
+			// Compute the seeds and center intensity
+			// If parallelism is permitted, try it. 
+			CenterIntensity intensity = null;
+			if(parallel) {
+				try {
+					intensity = new ParallelCenterIntensity(nbrs);
+				} catch(RejectedExecutionException e) {
+					// Shouldn't happen...
+					warn("parallel search failed; falling back to serial");
+				}
 			}
+			
+			// Gets here if serial or if parallel failed...
+			if(null == intensity)
+				intensity = new SerialCenterIntensity(nbrs);
+			
+			
+			// Check for points all too far from seeds
+			if(intensity.isEmpty()) {
+				error(new IllegalClusterStateException("No point "
+					+ "was within bandwidth="+bandwidth
+					+" of any seed; try increasing bandwidth"));
+			} else {
+				converged = true;
+				itersElapsed = intensity.getIters(); // max iters elapsed
+			}
+			
+			
+			
+			
+			// Extract the centroids
+			int idx = 0, m_prime = intensity.size();
+			final Array2DRowRealMatrix sorted_centers = new Array2DRowRealMatrix(m_prime,n);
+			
+			for(MeanShiftSeed entry: intensity)
+				sorted_centers.setRow(idx++, entry.getPair().getKey());
+			
+			// Fit the new neighbors model
+			nbrs = new RadiusNeighbors(sorted_centers,
+				new RadiusNeighborsPlanner(bandwidth)
+					.setSeed(this.random_state)
+					.setMetric(this.dist_metric)
+					.setForceParallel(parallel), true).fit();
+			
+			
+
+			
+			// Post-processing. Remove near duplicate seeds
+			// If dist btwn two kernels is less than bandwidth, remove one w fewer pts
+			// Create a boolean mask, init true
+			final boolean[] unique = new boolean[m_prime];
+			for(int i = 0; i < unique.length; i++) unique[i] = true;
+
+			
+			// Pre-filtered summaries...
+			ArrayList<SummaryLite> allSummary = intensity.getSummaries();
+			
+			
+			// Iterate over sorted centers and query radii
+			int redundant_ct = 0;
+			int[] indcs;
+			double[] center;
+			for(int i = 0; i < m_prime; i++) {
+				if(unique[i]) {
+					center = sorted_centers.getRow(i);
+					indcs = nbrs.getNeighbors(
+						new double[][]{center}, 
+						bandwidth, false)
+							.getIndices()[0];
+					
+					for(int id: indcs)
+						unique[id] = false;
+					
+					unique[i] = true; // Keep this as true
+				}
+			}
+			
+			
+			// Now assign the centroids...
+			SummaryLite summ;
+			for(int i = 0; i < unique.length; i++) {
+				summ = allSummary.get(i);
+				
+				if(unique[i]) {
+					summ.retained = true;
+					centroids.add(sorted_centers.getRow(i));
+				}
+				
+				fitSummary.add(summ.toArray());
+			}
+			
+			
+			// calc redundant ct
+			redundant_ct = unique.length - centroids.size();
+			
+			
+			// also put the centroids into a matrix. We have to
+			// wait to perform this op, because we have to know
+			// the size of centroids first...
+			Array2DRowRealMatrix centers = new Array2DRowRealMatrix(centroids.size(),n);
+			for(int i = 0; i < centroids.size(); i++)
+				centers.setRow(i, centroids.get(i));
+			
+			
+			// Build yet another neighbors model...
+			NearestNeighbors nn = new NearestNeighbors(centers,
+				new NearestNeighborsPlanner(1)
+					.setSeed(this.random_state)
+					.setMetric(this.dist_metric)
+					.setForceParallel(false), true).fit();
+			
+			
+			
+			info((numClusters=centroids.size())+" optimal kernel"+(numClusters!=1?"s":"")+" identified");
+			info(redundant_ct+" nearly-identical kernel"+(redundant_ct!=1?"s":"") + " removed");
+			
+			
+			// Get the nearest...
+			final LogTimer clustTimer = new LogTimer();
+			Neighborhood knrst = nn.getNeighbors(data.getDataRef());
+			labels = MatUtils.flatten(knrst.getIndices());
+			
+			
+			
+			
+			// order the labels..
+			/* 
+			 * Reduce labels to a sorted, gapless, list
+			 * sklearn line: cluster_centers_indices = np.unique(labels)
+			 */
+			ArrayList<Integer> centroidIndices = new ArrayList<Integer>(numClusters);
+			for(Integer i: labels) // force autobox
+				if(!centroidIndices.contains(i)) // Not race condition because synchronized
+					centroidIndices.add(i);
+			
+			/*
+			 * final label assignment...
+			 * sklearn line: labels = np.searchsorted(cluster_centers_indices, labels)
+			 */
+			for(int i = 0; i < labels.length; i++)
+				labels[i] = centroidIndices.indexOf(labels[i]);
+			
+			
+			
+			
+			// Wrap up...
+			// Count missing
+			numNoisey = 0;
+			for(int lab: labels) if(lab==NOISE_CLASS) numNoisey++;
+			info(numNoisey+" record"+(numNoisey!=1?"s":"")+ " classified noise");
+			
+			
+			info("completed cluster labeling in " + clustTimer.toString());
+			
+			
+			sayBye(timer);
+			return this;
 		}
 		
 	} // End train

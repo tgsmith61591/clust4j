@@ -33,7 +33,6 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
-import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.SimpleHeap;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -317,7 +316,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	 * however traversing it requires intermittent calculations using {@link #navigate(int, int, int)}
 	 * @author Taylor G Smith
 	 */
-	static class EfficientDistanceMatrix implements java.io.Serializable, DeepCloneable {
+	protected static class EfficientDistanceMatrix implements java.io.Serializable {
 		private static final long serialVersionUID = -7329893729526766664L;
 		final protected double[] dists;
 		
@@ -328,9 +327,11 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 		/**
 		 * Copy constructor
 		 */
+		/*// not needed right now...
 		private EfficientDistanceMatrix(EfficientDistanceMatrix other) {
 			this.dists = VecUtils.copy(other.dists);
 		}
+		*/
 		
 		/**
 		 * Computes a flattened upper triangular distance matrix in a much more space efficient manner,
@@ -390,10 +391,6 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 			throw new IllegalArgumentException(i+", "+j+"; i should not equal j");
 		}
 		
-		double[] getDistRef() {
-			return dists;
-		}
-		
 		/**
 		 * For a flattened upper triangular matrix...
 		 * 
@@ -425,11 +422,6 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 		 */
 		double navigate(final int m, final int i, final int j) {
 			return dists[getIndexFromFlattenedVec(m,i,j)];
-		}
-
-		@Override
-		public EfficientDistanceMatrix copy() {
-			return new EfficientDistanceMatrix(this);
 		}
 	}
 	
@@ -613,55 +605,50 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	@Override
 	public HierarchicalAgglomerative fit() {
 		synchronized(fitLock) {
-			try {
-				if(null != labels) // already fit
-					return this;
-				
-				final LogTimer timer = new LogTimer();
-				labels = new int[m];
-				
-				/*
-				 * Corner case: k = 1 (due to singularity?)
-				 */
-				if(1 == k) {
-					this.fitSummary.add(new Object[]{
-						0,0,Double.NaN,timer.formatTime(),timer.formatTime(),timer.wallMsg()
-					});
-					
-					warn("converged immediately due to " + (this.singular_value ? 
-							"singular nature of input matrix" : "k = 1"));
-					sayBye(timer);
-					return this;
-				}
-				
-				dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
-				
-				// Log info...
-				info("computed distance matrix in " + timer.toString());
-				
-				
-				// Get the tree class for logging...
-				LogTimer treeTimer = new LogTimer();
-				this.tree = this.linkage.buildTree(this);
-				
-				// Tree build
-				info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
-				double[][] children = tree.linkage();
-				
-				
-				
-				// Cut the tree
-				labels = hcCut(num_clusters, children, m);
-				labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
-				
-				
-				sayBye(timer);
-				dist_vec = null;
+			if(null != labels) // already fit
 				return this;
-			} catch(OutOfMemoryError | StackOverflowError e) {
-				error(e.getLocalizedMessage() + " - ran out of memory during model fitting");
-				throw e;
+			
+			final LogTimer timer = new LogTimer();
+			labels = new int[m];
+			
+			/*
+			 * Corner case: k = 1 (due to singularity?)
+			 */
+			if(1 == k) {
+				this.fitSummary.add(new Object[]{
+					0,0,Double.NaN,timer.formatTime(),timer.formatTime(),timer.wallMsg()
+				});
+				
+				warn("converged immediately due to " + (this.singular_value ? 
+						"singular nature of input matrix" : "k = 1"));
+				sayBye(timer);
+				return this;
 			}
+			
+			dist_vec = new EfficientDistanceMatrix(data, getSeparabilityMetric(), true);
+			
+			// Log info...
+			info("computed distance matrix in " + timer.toString());
+			
+			
+			// Get the tree class for logging...
+			LogTimer treeTimer = new LogTimer();
+			this.tree = this.linkage.buildTree(this);
+			
+			// Tree build
+			info("constructed " + tree.getName() + " HierarchicalDendrogram in " + treeTimer.toString());
+			double[][] children = tree.linkage();
+			
+			
+			
+			// Cut the tree
+			labels = hcCut(num_clusters, children, m);
+			labels = new SafeLabelEncoder(labels).fit().getEncodedLabels();
+			
+			
+			sayBye(timer);
+			dist_vec = null;
+			return this;
 		}
 		
 	} // End train

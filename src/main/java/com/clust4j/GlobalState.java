@@ -28,7 +28,7 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
  * 
  * @author Taylor G Smith
  */
-public class GlobalState {
+public abstract class GlobalState {
 	/** The default random state */
 	public final static Random DEFAULT_RANDOM_STATE = new Random(999);
 	public final static int MAX_ARRAY_SIZE = 25_000_000;
@@ -39,7 +39,7 @@ public class GlobalState {
 	 * Holds static mathematical values
 	 * @author Taylor G Smith
 	 */
-	public static final class Mathematics {
+	public static abstract class Mathematics {
 		/** Double.MIN_VALUE is not negative; this is */
 		public final static double SIGNED_MIN = Double.NEGATIVE_INFINITY;
 		public final static double MAX = Double.POSITIVE_INFINITY;
@@ -186,7 +186,7 @@ public class GlobalState {
 	 * A class to hold configurations for parallelism
 	 * @author Taylor G Smith
 	 */
-	public final static class ParallelismConf {
+	public abstract static class ParallelismConf {
 		/**
 		 * Matrices with number of elements exceeding this number
 		 * will automatically trigger parallel events as supported
@@ -250,7 +250,7 @@ public class GlobalState {
 	 * A class to hold configurations for FeatureNormalization
 	 * @author Taylor G Smith
 	 */
-	public final static class FeatureNormalizationConf {
+	public abstract static class FeatureNormalizationConf {
 		/** The lower bound for the {@link FeatureNormalization#MIN_MAX_SCALE} scaling range. */
 		public static int MIN_MAX_SCALER_RANGE_MIN = 0;
 		/** The upper bound for the {@link FeatureNormalization#MIN_MAX_SCALE} scaling range. */
