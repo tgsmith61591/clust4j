@@ -16,7 +16,6 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -542,7 +541,7 @@ public class MeanShift
 	 * method. Implements comparable to be sorted by the value in the entry pair.
 	 * @author Taylor G Smith
 	 */
-	static class MeanShiftSeed implements Comparable<MeanShiftSeed> {
+	protected static class MeanShiftSeed implements Comparable<MeanShiftSeed> {
 		final double[] dists;
 		/** The number of points in the bandwidth */
 		final Integer count;
@@ -554,6 +553,11 @@ public class MeanShift
 			this.iterations = iterations;
 		}
 		
+		/*
+		 * we don't need these methods in the actual algo, and they just
+		 * create more need for testing to get good coverage, so we can
+		 * just omit them
+		 * 
 		@Override
 		public boolean equals(Object o) {
 			if(this == o)
@@ -568,20 +572,21 @@ public class MeanShift
 		}
 		
 		@Override
+		public String toString() {
+			return "{" + Arrays.toString(dists) + " : " + count + "}";
+		}
+		
+		@Override
 		public int hashCode() {
 			int h = 31;
 			for(double d: dists)
 				h ^= (int)d;
 			return h ^ count;
 		}
+		*/
 		
 		EntryPair<double[],Integer> getPair() {
 			return new EntryPair<>(dists, count);
-		}
-		
-		@Override
-		public String toString() {
-			return "{" + Arrays.toString(dists) + " : " + count + "}";
 		}
 
 		@Override
@@ -1162,19 +1167,20 @@ public class MeanShift
 				cent.add(VecUtils.copy(d));
 			
 			return cent;
+		} else {
+			error(new ModelNotFitException("model has not yet been fit"));
+			return null; // can't happen
 		}
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen
 	}
 
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
+		if(null != labels) {
 			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen
+		} else {
+			error(new ModelNotFitException("model has not yet been fit"));
+			return null; // can't happen
+		}
 	}
 	
 	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {

@@ -533,7 +533,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	}
 	
 	/**
-	 * Asser that when all of the matrix entries are exactly the same,
+	 * Assert that when all of the matrix entries are exactly the same,
 	 * the algorithm will still converge, yet produce one label: 0
 	 */
 	@Override

@@ -39,6 +39,7 @@ import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
 import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.metrics.pairwise.Distance;
@@ -137,18 +138,32 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		assertTrue(null != ms.getCentroids());
 	}
 	
-	@Test(expected=ModelNotFitException.class)
+	@Test
 	public void testMeanShiftMFE1() {
-		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(MatUtils.randomGaussian(50, 2));
-		MeanShift ms = new MeanShift(mat, new MeanShiftPlanner());
-		ms.getLabels();
-	}
-	
-	@Test(expected=ModelNotFitException.class)
-	public void testMeanShiftMFE2() {
+		boolean a = false;
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(MatUtils.randomGaussian(50, 2));
 		MeanShift ms = new MeanShift(mat, 0.5);
-		ms.getCentroids();
+		try {
+			ms.getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testMeanShiftMFE2() {
+		boolean a = false;
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(MatUtils.randomGaussian(50, 2));
+		MeanShift ms = new MeanShift(mat, 0.5);
+		try {
+			ms.getCentroids();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -729,6 +744,60 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			 * Reset
 			 */
 			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
+		}
+	}
+	
+	@Test
+	public void testExceptions() {
+		boolean a = false;
+		
+		/*
+		 * This should cause the planner.bandwidth <= 0.0 flag to be thrown
+		 */
+		try { new MeanShiftPlanner(0.0).buildNewModelInstance(data_); } 
+		catch(IllegalArgumentException i){ a= true; } 
+		finally{ assertTrue(a); a = false; }
+		
+		/*
+		 * This should cause the empty seeds flag to be thrown
+		 */
+		try { new MeanShiftPlanner().setSeeds(new double[][]{}).buildNewModelInstance(data_); } 
+		catch(IllegalArgumentException i){ a= true; } 
+		finally{ assertTrue(a); a = false; }
+		
+		
+		/*
+		 * Bigger seed test
+		 */
+		try { 
+			new MeanShiftPlanner().setSeeds(new double[][]{
+				new double[]{0.0,0.01},
+				new double[]{60.0,12.1}
+			}).buildNewModelInstance(data_);
+		} 
+		catch(DimensionMismatchException i){ a= true; } 
+		finally{ assertTrue(a); a = false; }
+		
+		/* Try seeds that exceed iris in length */
+		try { new MeanShiftPlanner().setSeeds(MatUtils.randomGaussian(160, 4)).buildNewModelInstance(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
+		/* Try a bad quantile */
+		try { new MeanShiftPlanner().setAutoBandwidthEstimationQuantile(1.5).buildNewModelInstance(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
+	
+		/*
+		 * This is a hard test to replicate... that all points are too far from provided seeds
+		 */
+		try {
+			new MeanShiftPlanner(1.5)
+				.setScale(true)
+				.setSeeds(new double[][]{
+					new double[]{1500,1250,1300,1557},
+					new double[]{150,175,250,189}
+				}).buildNewModelInstance(data_).fit();
+		} catch(IllegalClusterStateException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+			a = false;
 		}
 	}
 }

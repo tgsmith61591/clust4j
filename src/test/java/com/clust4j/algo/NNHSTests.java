@@ -1907,4 +1907,29 @@ public class NNHSTests {
 		
 		assertFalse(VecUtils.equalsExactly(bref, bcop));
 	}
+	
+	@Test
+	public void testTooHighKQuery() {
+		KDTree k = new KDTree(IRIS);
+		boolean a = false;
+		
+		try {
+			k.query(IRIS.getData(), 1500, true, true);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testQueryRadiusManyArgs() {
+		KDTree k = new KDTree(IRIS);
+		
+		// make sure returns same neighborhood...
+		assertEquals(
+			k.queryRadius(IRIS, VecUtils.rep(1.5, IRIS.getRowDimension()), true),
+			k.queryRadius(IRIS.getData(), 1.5, true)
+		);
+	}
 }

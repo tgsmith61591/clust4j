@@ -1159,9 +1159,11 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		
 		if(2 * i_node + 1 >= this.n_nodes) {
 			node_data[i_node].is_leaf = true;
-			if(idx_end - idx_start > 2 * leaf_size)
+			
+			if(idx_end - idx_start > 2 * leaf_size) {
 				if(null != logger)
 					logger.warn(MEM_ERR);
+			} else {/*really should only hit this block*/}
 			
 		} else if(idx_end - idx_start < 2) {
 			if(null != logger)
@@ -1437,12 +1439,14 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		// All points within radius
 		else if(dist_UB.value <= r) {
 			for(i = nodeInfo.idx_start; i < nodeInfo.idx_end; i++) {
+				/*// can't really happen?
 				if(count < 0 || count >= N_SAMPLES) {
 					String err = "count is too big; this should not happen";
 					if(null != logger)
 						logger.error(err);
 					throw new IllegalStateException(err);
 				}
+				*/
 				
 				indices[count] = idx_array[i];
 				if(returnDists)
@@ -1460,12 +1464,14 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 				dist_pt = this.rDist(pt, data[idx_array[i]]);
 				
 				if(dist_pt <= reduced_r) {
+					/*// can't really happen?
 					if(count < 0 || count >= N_SAMPLES) {
 						String err = "count is too big; this should not happen";
 						if(null != logger)
 							logger.error(err);
 						throw new IllegalStateException(err);
 					}
+					*/
 					
 					indices[count] = idx_array[i];
 					if(returnDists)

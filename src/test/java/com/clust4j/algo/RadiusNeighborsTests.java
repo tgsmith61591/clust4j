@@ -346,4 +346,16 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
 	}
+	
+	@Test
+	public void testRNParallel() {
+		/*
+		 * Travis CI only has 1 core, so we have to ensure this
+		 * will work even on single core machines...
+		 */
+		RadiusNeighborsPlanner planner = new RadiusNeighborsPlanner(0.5).setScale(true).setForceParallel(true);
+		RadiusNeighbors model = planner.buildNewModelInstance(iris).fit();
+		model.getNeighbors(iris.getData(), true);
+		model.getNeighbors(iris.getData());
+	}
 }
