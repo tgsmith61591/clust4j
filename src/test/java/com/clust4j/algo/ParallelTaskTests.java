@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import com.clust4j.algo.ParallelChunkingTask.ChunkingStrategy;
 import com.clust4j.algo.ParallelChunkingTask.SimpleChunkingStrategy;
-import com.clust4j.algo.ParallelChunkingTask.CoreRestrictiveChunkingStrategy;
 import com.clust4j.utils.MatUtils;
 
 public class ParallelTaskTests {
@@ -17,11 +16,8 @@ public class ParallelTaskTests {
 		ChunkingStrategy strat = new SimpleChunkingStrategy();
 		strat.map(X); // want to make sure it works.
 		
-		strat = new CoreRestrictiveChunkingStrategy(1);
-		
 		// make sure works, no NPEs
 		assertNotNull(strat.map(X).get(0).toString());
-		assertTrue(ChunkingStrategy.getNumChunks(X.length) > 0);
 		assertTrue(strat.getNumChunks(X) > 0);
 		
 		// there's a format name method for fork join pool tasks..

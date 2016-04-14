@@ -4,11 +4,11 @@
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ## clust4j
-A Java-based set of __classification__ clustering algorithms. Built and tested under JDK 1.7.0_79. *This project is currently in ongoing development for the time being and should not be used in production environments*
+A Java-based set of __classification__ clustering algorithms. Built under JDK 1.7. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
 ___
 ### Installation:
-__Clust4j 1.0.0 is now available under [releases](https://github.com/tgsmith61591/clust4j/releases) (jar included)__. To build the bleeding edge, use the included gradle wrapper:
+__Clust4j 1.0.0 prerelease is now available under [releases](https://github.com/tgsmith61591/clust4j/releases) (jar included)__. To build the bleeding edge, use the included gradle wrapper:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git

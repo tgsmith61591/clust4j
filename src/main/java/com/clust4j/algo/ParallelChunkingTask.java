@@ -13,6 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  *******************************************************************************/
+
 package com.clust4j.algo;
 
 import java.util.ArrayList;
@@ -60,8 +61,15 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 	abstract public static class ChunkingStrategy {
 		public final static int AVAILABLE_CORES = GlobalState.ParallelismConf.NUM_CORES;
 		public final static int DEF_CHUNK_SIZE = 500;
+		final int chunkSize;
 		
-		public ChunkingStrategy() {}
+		public ChunkingStrategy() {
+			this(DEF_CHUNK_SIZE);
+		}
+		
+		public ChunkingStrategy(int chunkSize){
+			this.chunkSize = chunkSize;
+		}
 		
 		protected static Chunk getChunk(double[][] X, int chunkSize, int chunkNum) {
 			double[][] chunk;
@@ -78,17 +86,22 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 			return new Chunk(chunk, startingPt);
 		}
 		
-		public static int getChunkSize(int m) {
-			return getChunkSize(m, AVAILABLE_CORES);
+		public int getChunkSize() {
+			return chunkSize;
 		}
 		
-		public static int getChunkSize(int m, int numChunks) {
-			return m < DEF_CHUNK_SIZE ? m : 
-				m / numChunks;
+		public static int getChunkSize(final int numRows) {
+			return AVAILABLE_CORES == 1 ? numRows :
+				FastMath.min(numRows, DEF_CHUNK_SIZE);
 		}
 		
-		public static int getNumChunks(final int m) {
-			return getNumChunks(getChunkSize(m), m);
+		public int getNumChunks(final double[][] X) {
+			if(1 == AVAILABLE_CORES)
+				return 1;
+			else {
+				final int m = X.length;
+				return getNumChunks(getChunkSize(), m);
+			}
 		}
 		
 		public static int getNumChunks(final int chunkSize, final int m) {
@@ -96,7 +109,6 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 		}
 		
 		
-		public abstract int getNumChunks(double[][] X);
 		protected abstract ArrayList<Chunk> map(double[][] X);
 	}
 	
@@ -112,63 +124,12 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 		@Override
 		protected ArrayList<Chunk> map(double[][] X) {
 			final ArrayList<Chunk> out = new ArrayList<>();
-			final int chunkSize = getChunkSize(X.length);
-			final int numChunks = getNumChunks(chunkSize, X.length);
+			final int numChunks = getNumChunks(X);
 			
 			for(int i = 0; i < numChunks; i++)
 				out.add(getChunk(X, chunkSize, i));
 			
 			return out;
-		}
-		
-		@Override
-		public int getNumChunks(double[][] X) {
-			final int chunkSize = getChunkSize(X.length);
-			return getNumChunks(chunkSize, X.length);
-		}
-	}
-	
-	/**
-	 * Chunking strategy class that allows the user to specify the number of chunks
-	 * no matter how large or small.
-	 * @author Taylor G Smith
-	 */
-	static public class ChunkCountChunkingStrategy extends ChunkingStrategy {
-		final int numChunks;
-		
-		public ChunkCountChunkingStrategy(int numChunks) {
-			this.numChunks = numChunks;
-		}
-		
-		@Override
-		protected ArrayList<Chunk> map(double[][] X) {
-			final ArrayList<Chunk> out = new ArrayList<>();
-			final int nc = FastMath.min(X.length, numChunks); // if there are 5 rows and 6 chunks...
-			final int chunkSize = getChunkSize(X.length, nc);
-
-			for(int i = 0; i < nc; i++) {
-				out.add(getChunk(X, chunkSize, i));
-			}
-			
-			return out;
-		}
-		
-		@Override
-		public int getNumChunks(double[][] X) { // X doesn't matter...
-			return numChunks;
-		}
-	}
-	
-	/**
-	 * Chunking class that allows the user to specify the number of chunks
-	 * to be distributed across the machine cores. If the number exceeds the number
-	 * of available cores, will select the maximum number of cores available.
-	 * @author Taylor G Smith
-	 */
-	static public class CoreRestrictiveChunkingStrategy extends ChunkCountChunkingStrategy {
-		
-		public CoreRestrictiveChunkingStrategy(final int numChunks) { 
-			super(FastMath.min(numChunks, AVAILABLE_CORES));
 		}
 	}
  	

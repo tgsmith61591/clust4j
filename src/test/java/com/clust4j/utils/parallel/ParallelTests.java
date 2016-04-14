@@ -39,8 +39,8 @@ public class ParallelTests {
 	
 	static void testMult() {
 		try {
-			final double[][] a = MatUtils.randomGaussian(1000, 20);
-			final double[][] b = MatUtils.randomGaussian(20, 6000);
+			final double[][] a = MatUtils.randomGaussian(500, 20);
+			final double[][] b = MatUtils.randomGaussian(20, 200);
 			
 			long start = System.currentTimeMillis();
 			final double[][] ca = MatUtils.multiply(a, b);
