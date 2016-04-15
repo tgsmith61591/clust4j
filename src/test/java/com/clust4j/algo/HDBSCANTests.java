@@ -1386,7 +1386,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		// test the treeToLabels method...
 		final int[] labs = HDBSCAN.treeToLabels(iris.getData(), labMat, 5);
-		assertTrue(VecUtils.equalsExactly(labs, expected_iris_labs));
+		assertTrue(VecUtils.equalsExactly(labs, new LabelEncoder(expected_iris_labs).fit().getEncodedLabels()));
 	}
 	
 	/**
