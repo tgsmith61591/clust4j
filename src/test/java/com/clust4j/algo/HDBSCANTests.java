@@ -69,7 +69,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		new double[]{7,8,9}
 	};
 	
-	final int[] expected_iris_labs  = new int[]{
+	final int[] expected_iris_labs  = new LabelEncoder(new int[]{
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -77,7 +77,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
+	}).fit().getEncodedLabels();
 
 	
 	@Test
@@ -1385,8 +1385,8 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		
 		// test the treeToLabels method...
-		final int[] labs = HDBSCAN.treeToLabels(iris.getData(), labMat, 5);
-		assertTrue(VecUtils.equalsExactly(labs, new LabelEncoder(expected_iris_labs).fit().getEncodedLabels()));
+		final int[] labs = new NoiseyLabelEncoder(HDBSCAN.treeToLabels(iris.getData(), labMat, 5)).fit().getEncodedLabels();
+		assertTrue(VecUtils.equalsExactly(labs, expected_iris_labs));
 	}
 	
 	/**
