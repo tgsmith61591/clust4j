@@ -34,9 +34,14 @@ import com.clust4j.algo.KMedoids;
 import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.algo.NearestCentroid;
 import com.clust4j.algo.NearestCentroidParameters;
+import com.clust4j.algo.Neighborhood;
+import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
+import com.clust4j.algo.preprocess.impute.MedianImputation;
+import com.clust4j.utils.MatUtils;
 
 public class PipelineTest implements BaseModelTest {
 
@@ -193,5 +198,32 @@ public class PipelineTest implements BaseModelTest {
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		assertTrue(true); // This gets tested above^^
+	}
+	
+	@Test
+	public void testNeighborsPipe() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		NearestNeighborsParameters planner = new NearestNeighborsParameters(1).setVerbose(true);
+		
+		PreProcessor[] pipe = new PreProcessor[]{
+			new MedianImputation(),
+			FeatureNormalization.STANDARD_SCALE
+		};
+		
+		NeighborsPipeline<NearestNeighbors> pipeline = new NeighborsPipeline<NearestNeighbors>(planner, pipe);
+		Neighborhood hood = pipeline.fit(mat).getNeighbors();
+		
+		int[][] neighbors = hood.getIndices();
+		assertTrue(MatUtils.equalsExactly(neighbors, new int[][]{
+			new int[]{2},
+			new int[]{2},
+			new int[]{1}
+		}));
 	}
 }

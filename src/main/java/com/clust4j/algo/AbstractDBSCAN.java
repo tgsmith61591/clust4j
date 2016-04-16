@@ -43,9 +43,12 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 			extends BaseClustererParameters 
 			implements UnsupervisedClassifierParameters<T> {
 		private static final long serialVersionUID = 765572960123009344L;
+		protected int minPts = DEF_MIN_PTS;
 		
 		abstract public AbstractDBSCANPlanner<T> setMinPts(final int minPts);
-		abstract public int getMinPts();
+		final public int getMinPts() { 
+			return minPts; 
+		}
 	}
 	
 	public int getMinPts() {

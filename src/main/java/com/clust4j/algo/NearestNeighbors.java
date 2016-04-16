@@ -20,7 +20,7 @@ import java.util.concurrent.RejectedExecutionException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;

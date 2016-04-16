@@ -13,6 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  *******************************************************************************/
+
 package com.clust4j.algo;
 
 import java.text.NumberFormat;
@@ -124,7 +125,7 @@ public abstract class AbstractClusterer
 	 * @param planner
 	 */
 	protected AbstractClusterer(AbstractClusterer caller, BaseClustererParameters planner) {
-		this.dist_metric= null == planner ? caller.dist_metric : planner.getSep();
+		this.dist_metric= null == planner ? caller.dist_metric : planner.getMetric();
 		this.verbose 	= null == planner ? false : planner.getVerbose(); // if another caller, default to false
 		this.modelKey 	= UUID.randomUUID();
 		this.random_state 		= null == planner ? caller.random_state : planner.getSeed();
@@ -138,7 +139,7 @@ public abstract class AbstractClusterer
 	
 	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner, boolean as_is) {
 		
-		this.dist_metric = planner.getSep();
+		this.dist_metric = planner.getMetric();
 		this.verbose = planner.getVerbose();
 		this.modelKey = UUID.randomUUID();
 		this.random_state = planner.getSeed();

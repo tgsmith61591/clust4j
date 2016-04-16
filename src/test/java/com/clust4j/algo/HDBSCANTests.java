@@ -40,7 +40,7 @@ import com.clust4j.algo.HDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;

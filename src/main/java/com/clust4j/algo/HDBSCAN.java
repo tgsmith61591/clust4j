@@ -31,7 +31,7 @@ import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.GlobalState;
 import com.clust4j.utils.QuadTup;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;

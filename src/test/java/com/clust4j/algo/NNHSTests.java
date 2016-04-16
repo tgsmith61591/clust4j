@@ -37,7 +37,7 @@ import com.clust4j.algo.NearestNeighborHeapSearch.NeighborsHeap;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeHeap;
 import com.clust4j.algo.NearestNeighborHeapSearch.PartialKernelDensity;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.log.Loggable;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;

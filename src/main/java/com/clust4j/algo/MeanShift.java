@@ -30,7 +30,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestNeighborsParameters;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;

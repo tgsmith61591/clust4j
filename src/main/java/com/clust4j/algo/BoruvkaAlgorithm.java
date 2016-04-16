@@ -18,7 +18,7 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.NearestNeighborHeapSearch.NodeData;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;

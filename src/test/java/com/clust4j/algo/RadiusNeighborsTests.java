@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;

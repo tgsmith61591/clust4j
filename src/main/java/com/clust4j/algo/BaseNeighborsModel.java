@@ -18,7 +18,7 @@ package com.clust4j.algo;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.GlobalState;
-import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
+import com.clust4j.algo.Neighborhood;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
