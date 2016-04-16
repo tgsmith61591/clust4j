@@ -99,7 +99,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	}
 	
 	@Override
-	public KMedoids fit() {
+	protected KMedoids fit() {
 		synchronized(fitLock) {	
 		
 			if(null != labels) // already fit

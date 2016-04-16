@@ -41,7 +41,7 @@ import com.clust4j.utils.VecUtils;
  * instances where the labels are of a single class.
  * @author Taylor G Smith
  */
-public class NearestCentroid extends AbstractClusterer implements SupervisedClassifier, CentroidLearner {
+final public class NearestCentroid extends AbstractClusterer implements SupervisedClassifier, CentroidLearner {
 	private static final long serialVersionUID = 8136673281643080951L;
 	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
 	
@@ -195,7 +195,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	}
 
 	@Override
-	public NearestCentroid fit() {
+	protected NearestCentroid fit() {
 		synchronized(fitLock) {
 			
 			if(null != labels) // already fit

@@ -27,7 +27,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class NearestNeighbors extends BaseNeighborsModel {
+final public class NearestNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 8306843374522289973L;
 
 	
@@ -114,7 +114,7 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	}
 
 	@Override
-	public NearestNeighbors fit() {
+	protected NearestNeighbors fit() {
 		synchronized(fitLock) {
 		
 			if(null != res)

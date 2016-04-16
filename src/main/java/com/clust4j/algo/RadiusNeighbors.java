@@ -26,7 +26,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.utils.MatUtils;
 
-public class RadiusNeighbors extends BaseNeighborsModel {
+final public class RadiusNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 3620377771231699918L;
 	
 	
@@ -117,7 +117,7 @@ public class RadiusNeighbors extends BaseNeighborsModel {
 	}
 
 	@Override
-	public RadiusNeighbors fit() {
+	protected RadiusNeighbors fit() {
 		synchronized(fitLock) {
 			if(null != res)
 				return this;

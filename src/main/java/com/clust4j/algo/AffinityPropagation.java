@@ -43,7 +43,7 @@ import com.clust4j.utils.MatUtils.Axis;
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from sklearn Python implementation
  *
  */
-public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, CentroidLearner {
+final public class AffinityPropagation extends AbstractAutonomousClusterer implements Convergeable, CentroidLearner {
 	private static final long serialVersionUID = 1986169131867013043L;
 	
 	/** The number of stagnant iterations after which the algorithm will declare convergence */
@@ -529,7 +529,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	
 	@Override
-	public AffinityPropagation fit() {
+	protected AffinityPropagation fit() {
 		synchronized(fitLock) {
 			if(null != labels)
 				return this;

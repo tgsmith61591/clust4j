@@ -123,46 +123,46 @@ public class TestDataSet
 			AffinityPropagation ap = new AffinityPropagationParameters()
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(ap, b);
 			
 			
 			DBSCAN db = new DBSCANParameters()
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(db, b);
 			
 			HDBSCAN hdb = new HDBSCANParameters()
 					.setScale(b)
 					//.setAlgo(com.clust4j.algo.HDBSCAN.Algorithm.PRIMS_KDTREE)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(hdb, b);
 			
 			HierarchicalAgglomerative ha = new HierarchicalAgglomerativeParameters()
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(ha, b);
 			
 			
 			KMeans kmn = new KMeansParameters(k)
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(kmn, b, labels);
 			
 			KMedoids kmd = new KMedoidsParameters(k)
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(kmd, b, labels);
 			
 			MeanShift ms = new MeanShiftParameters()
 					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data).fit();
+					.fitNewModel(data);
 			stdout(ms, b);
 			
 			
@@ -722,5 +722,47 @@ public class TestDataSet
 		}finally{
 			Files.delete(ppath);
 		}
+	}
+	
+	@Test
+	public void testGetSet() {
+		DataSet irisCopy = TestSuite.IRIS_DATASET.copy();
+		assertTrue(irisCopy.getEntry(0, 0) == 5.1);
+		assertTrue(irisCopy.setEntry(0, 0, 6.5) == 5.1);
+		assertTrue(irisCopy.getEntry(0, 0) == 6.5);
+		assertTrue(TestSuite.IRIS_DATASET.getEntry(0, 0) == 5.1);
+	}
+	
+	@Test
+	public void testConstructorOneAndTwoAndNullData() {
+		DataSet d = new DataSet(new double[][]{
+			new double[]{0,1},
+			new double[]{2,3}
+		});
+		
+		assertNotNull(d.getHeaders());
+		assertNull(d.getLabels());
+		
+		d = new DataSet(
+			new Array2DRowRealMatrix(new double[][]{
+				new double[]{0,1},
+				new double[]{2,3}
+		}));
+		
+		assertNotNull(d.getHeaders());
+		assertNull(d.getLabels());
+		
+		boolean a = false;
+		try {
+			new DataSet(null, null, null, null, true);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		// test log in log4j
+		KMeans k = new KMeansParameters(3).setVerbose(true).fitNewModel(TestSuite.IRIS_DATASET.getData());
+		d.log(k);
 	}
 }

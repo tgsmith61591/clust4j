@@ -67,7 +67,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 	}
 	
 	@Override
-	final public KMeans fit() {
+	protected KMeans fit() {
 		synchronized(fitLock) {
 
 			if(null != labels) // already fit

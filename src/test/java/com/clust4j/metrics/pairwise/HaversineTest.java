@@ -49,7 +49,7 @@ public class HaversineTest {
 				.setMetric(Distance.HAVERSINE.MI)
 				.setVerbose(true)
 				.setScale(true);
-		km = planner.fitNewModel(mat).fit();
+		km = planner.fitNewModel(mat);
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);
@@ -68,7 +68,7 @@ public class HaversineTest {
 			.setMetric(Distance.HAVERSINE.MI)
 			.setVerbose(true)
 			.setScale(false);
-		km = planner.fitNewModel(mat).fit();
+		km = planner.fitNewModel(mat);
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);

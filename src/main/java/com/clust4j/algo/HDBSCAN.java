@@ -1330,7 +1330,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	public HDBSCAN fit() {
+	protected HDBSCAN fit() {
 		synchronized(fitLock) {
 			if(null!=labels) // Then we've already fit this...
 				return this;

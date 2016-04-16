@@ -480,7 +480,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	}
 
 	@Override
-	public HierarchicalAgglomerative fit() {
+	protected HierarchicalAgglomerative fit() {
 		synchronized(fitLock) {
 			if(null != labels) // already fit
 				return this;

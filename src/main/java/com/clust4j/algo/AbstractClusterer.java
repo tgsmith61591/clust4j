@@ -421,7 +421,7 @@ public abstract class AbstractClusterer
 	/** 
 	 * Fits the model
 	 */
-	@Override abstract public AbstractClusterer fit();
+	@Override abstract protected AbstractClusterer fit();
 	protected abstract ModelSummary modelSummary();
 	protected abstract Object[] getModelFitSummaryHeaders();
 }

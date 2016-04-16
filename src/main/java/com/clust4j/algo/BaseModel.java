@@ -25,5 +25,5 @@ abstract public class BaseModel extends Clust4j implements java.io.Serializable 
 	final Object fitLock = new SynchronicityLock();
 
 	/** This should be synchronized and thread-safe */
-	public abstract BaseModel fit();
+	protected abstract BaseModel fit();
 }

@@ -495,6 +495,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return clust_cost;
 	}
 
-	@Override public abstract AbstractCentroidClusterer fit();
+	@Override protected abstract AbstractCentroidClusterer fit();
 	protected GeometricallySeparable defMetric() { return AbstractClusterer.DEF_DIST; }
 }

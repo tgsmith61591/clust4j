@@ -338,6 +338,16 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	}
 	
 	/**
+	 * Get the entry at the given row/col indices
+	 * @param row
+	 * @param col
+	 * @return
+	 */
+	public double getEntry(int row, int col) {
+		return this.data.getEntry(row, col);
+	}
+	
+	/**
 	 * Return a copy of the headers
 	 * @return
 	 */
@@ -379,7 +389,7 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	
 	private ArrayList<Object[]> buildHead(int length) {
 		if(length < 0)
-			throw new IllegalArgumentException("numRows cannot be less than 0");
+			throw new IllegalArgumentException("length cannot be less than 0");
 		
 		int n = data.getColumnDimension();
 		ArrayList<Object[]> o = new ArrayList<Object[]>();
@@ -435,6 +445,20 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 			throw new IllegalArgumentException("illegal column index: "+idx);
 		
 		data.setColumn(idx, col);
+	}
+	
+	/**
+	 * Set the indices of row/col to the new value and
+	 * return the old value
+	 * @param row
+	 * @param col
+	 * @param newValue
+	 * @return
+	 */
+	public double setEntry(int row, int col, double newValue) {
+		double d = getEntry(row, col);
+		this.data.setEntry(row, col, newValue);
+		return d;
 	}
 	
 	public void setLabels(final int[] labels) {

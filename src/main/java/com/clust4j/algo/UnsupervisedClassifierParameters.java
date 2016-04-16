@@ -20,5 +20,11 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 public interface UnsupervisedClassifierParameters<T extends AbstractClusterer & UnsupervisedClassifier> 
 		extends BaseClassifierParameters {
+	
+	/**
+	 * Fit a new model from the given hyperparameters
+	 * @param data
+	 * @return
+	 */
 	public T fitNewModel(AbstractRealMatrix data);
 }

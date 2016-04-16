@@ -166,7 +166,7 @@ public class KernelTestCases {
 		new KMeansParameters(2)
 			.setMetric(kernel)
 			.setVerbose(true)
-			.fitNewModel(train).fit();
+			.fitNewModel(train);
 		System.out.println();
 	}
 	

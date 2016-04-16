@@ -56,7 +56,7 @@ import com.clust4j.utils.VecUtils;
  * @see <a href="https://en.wikipedia.org/wiki/Mean_shift">Mean shift on Wikipedia</a>
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;, adapted from <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/cluster/mean_shift_.py">sklearn implementation</a>
  */
-public class MeanShift 
+final public class MeanShift 
 		extends AbstractDensityClusterer 
 		implements CentroidLearner, Convergeable, NoiseyClusterer {
 	/**
@@ -827,7 +827,7 @@ public class MeanShift
 	
 
 	@Override
-	public MeanShift fit() {
+	protected MeanShift fit() {
 		synchronized(fitLock) {
 			
 			if(null!=labels) // Already fit this model

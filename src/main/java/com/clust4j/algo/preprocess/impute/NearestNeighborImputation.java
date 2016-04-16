@@ -202,7 +202,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 					.setVerbose(false)
 					.setSeed(getSeed())
 					.setMetric(this.sep)
-					.fitNewModel(new Array2DRowRealMatrix(completeCols, false)).fit();
+					.fitNewModel(new Array2DRowRealMatrix(completeCols, false)); // fits
 			
 			nearest = nbrs.getNeighbors(
 				new Array2DRowRealMatrix(new double[][]{completeRecord}, 

@@ -171,7 +171,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	final public DBSCAN fit() {
+	protected DBSCAN fit() {
 		synchronized(fitLock) {
 
 			if(null!=labels) // Then we've already fit this...

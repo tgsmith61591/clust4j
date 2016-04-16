@@ -19,5 +19,12 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 public interface SupervisedClassifierParameters<T extends AbstractClusterer & SupervisedClassifier> 
 		extends BaseClassifierParameters {
+	
+	/**
+	 * Fit a new model from the given hyperparameters
+	 * @param data
+	 * @param y
+	 * @return
+	 */
 	public T fitNewModel(AbstractRealMatrix data, int[] y);
 }
