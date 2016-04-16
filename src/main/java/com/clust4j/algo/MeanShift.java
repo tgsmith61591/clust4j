@@ -29,10 +29,9 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.RadialBasisKernel;
@@ -125,8 +124,8 @@ public class MeanShift
 	 * @param data
 	 * @param bandwidth
 	 */
-	public MeanShift(AbstractRealMatrix data, final double bandwidth) {
-		this(data, new MeanShiftPlanner(bandwidth));
+	protected MeanShift(AbstractRealMatrix data, final double bandwidth) {
+		this(data, new MeanShiftParameters(bandwidth));
 	}
 	
 	/**
@@ -134,8 +133,8 @@ public class MeanShift
 	 * @param data
 	 * @param bandwidth
 	 */
-	public MeanShift(AbstractRealMatrix data) {
-		this(data, new MeanShiftPlanner());
+	protected MeanShift(AbstractRealMatrix data) {
+		this(data, new MeanShiftParameters());
 	}
 	
 	/**
@@ -143,36 +142,36 @@ public class MeanShift
 	 * @param data
 	 * @param planner
 	 */
-	public MeanShift(AbstractRealMatrix data, MeanShiftPlanner planner) {
+	protected MeanShift(AbstractRealMatrix data, MeanShiftParameters planner) {
 		super(data, planner);
 		
 		
 		// Check bandwidth...
-		if(planner.bandwidth <= 0.0)
+		if(planner.getBandwidth() <= 0.0)
 			error(new IllegalArgumentException("bandwidth "
 				+ "must be greater than 0.0"));
 		
 		
 		// Check seeds dimension
-		if(null != planner.seeds) {
-			if(planner.seeds.length == 0)
+		if(null != planner.getSeeds()) {
+			if(planner.getSeeds().length == 0)
 				error(new IllegalArgumentException("seeds "
 					+ "length must be greater than 0"));
 			
 			// Throws NonUniformMatrixException if non uniform...
-			MatUtils.checkDimsForUniformity(planner.seeds);
+			MatUtils.checkDimsForUniformity(planner.getSeeds());
 			
-			if(planner.seeds[0].length != (n=this.data.getColumnDimension()))
-				error(new DimensionMismatchException(planner.seeds[0].length, n));
+			if(planner.getSeeds()[0].length != (n=this.data.getColumnDimension()))
+				error(new DimensionMismatchException(planner.getSeeds()[0].length, n));
 			
-			if(planner.seeds.length > this.data.getRowDimension())
+			if(planner.getSeeds().length > this.data.getRowDimension())
 				error(new IllegalArgumentException("seeds "
 					+ "length cannot exceed number of datapoints"));
 			
 			info("initializing kernels from given seeds");
 			
 			// Handle the copying in the planner
-			seeds = planner.seeds;
+			seeds = planner.getSeeds();
 		} else { // Default = all*/
 			info("no seeds provided; defaulting to all datapoints");
 			seeds = this.data.getData(); // use THIS as it's already scaled...
@@ -189,11 +188,11 @@ public class MeanShift
 		}
 		
 		
-		this.maxIter = planner.maxIter;
-		this.tolerance = planner.minChange;
+		this.maxIter = planner.getMaxIter();
+		this.tolerance = planner.getConvergenceTolerance();
 		
 
-		this.autoEstimate = planner.autoEstimateBW;
+		this.autoEstimate = planner.getAutoEstimate();
 		final LogTimer aeTimer = new LogTimer();
 		
 		
@@ -205,8 +204,8 @@ public class MeanShift
 			this.singular_value ? 0.5 :
 			/* Otherwise if we're auto-estimating, estimate it */
 			autoEstimate ? 
-				autoEstimateBW(this, planner.autoEstimateBWQuantile) : 
-					planner.bandwidth;
+				autoEstimateBW(this, planner.getAutoEstimationQuantile()) : 
+					planner.getBandwidth();
 			
 		/*
 		 * Give auto-estimation timer update	
@@ -245,7 +244,7 @@ public class MeanShift
 			double quantile, GeometricallySeparable sep, Random seed, boolean parallel) {
 		
 		return autoEstimateBW(new NearestNeighbors(data,
-			new NearestNeighborsPlanner((int)(data.getRowDimension() * quantile))
+			new NearestNeighborsParameters((int)(data.getRowDimension() * quantile))
 				.setSeed(seed)
 				.setForceParallel(parallel)).fit(), 
 			data.getDataRef(), 
@@ -264,7 +263,7 @@ public class MeanShift
 	final protected static double autoEstimateBW(MeanShift caller, double quantile) {
 		LogTimer timer = new LogTimer();
 		NearestNeighbors nn = new NearestNeighbors(caller, 
-				new NearestNeighborsPlanner((int)(caller.data.getRowDimension() * quantile))
+				new NearestNeighborsParameters((int)(caller.data.getRowDimension() * quantile))
 					.setForceParallel(caller.parallel)).fit();
 		caller.info("fit nearest neighbors model for auto-bandwidth automation in " + timer.toString());
 		
@@ -387,154 +386,6 @@ public class MeanShift
 	
 	
 	
-	
-	/**
-	 * A builder class to provide an easier constructing
-	 * interface to set custom parameters for DBSCAN
-	 * @author Taylor G Smith
-	 */
-	final public static class MeanShiftPlanner 
-			extends AbstractClusterer.BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
-
-		private static final long serialVersionUID = -2276248235151049820L;
-		
-		private boolean autoEstimateBW = false;
-		private double autoEstimateBWQuantile = 0.3;
-		private double bandwidth = DEF_BANDWIDTH;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_TOL;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private double[][] seeds = null;
-		private GeometricallySeparable dist	= DEF_DIST;
-		private boolean verbose	= DEF_VERBOSE;
-		private boolean parallel = false;
-		
-		public MeanShiftPlanner() {
-			this.autoEstimateBW = true;
-		}
-		
-		public MeanShiftPlanner(final double bandwidth) {
-			this.bandwidth = bandwidth;
-		}
-		
-
-		
-		@Override
-		public MeanShift buildNewModelInstance(AbstractRealMatrix data) {
-			return new MeanShift(data, this.copy());
-		}
-		
-		@Override
-		public MeanShiftPlanner copy() {
-			return new MeanShiftPlanner(bandwidth)
-				.setAutoBandwidthEstimation(autoEstimateBW)
-				.setAutoBandwidthEstimationQuantile(autoEstimateBWQuantile)
-				.setMaxIter(maxIter)
-				.setMinChange(minChange)
-				.setScale(scale)
-				.setSeed(seed)
-				.setSeeds(seeds)
-				.setMetric(dist)
-				.setVerbose(verbose)
-				.setNormalizer(norm)
-				.setForceParallel(parallel);
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		public MeanShiftPlanner setAutoBandwidthEstimation(boolean b) {
-			this.autoEstimateBW = b;
-			return this;
-		}
-		
-		public MeanShiftPlanner setAutoBandwidthEstimationQuantile(double d) {
-			this.autoEstimateBWQuantile = d;
-			return this;
-		}
-		
-		public MeanShiftPlanner setMaxIter(final int max) {
-			this.maxIter = max;
-			return this;
-		}
-		
-		public MeanShiftPlanner setMinChange(final double min) {
-			this.minChange = min;
-			return this;
-		}
-		
-		@Override
-		public MeanShiftPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-		
-		@Override
-		public MeanShiftPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		public MeanShiftPlanner setSeeds(final double[][] seeds) {
-			if(null != seeds)
-				this.seeds = MatUtils.copy(seeds);
-			return this;
-		}
-		
-		@Override
-		public MeanShiftPlanner setMetric(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		@Override
-		public MeanShiftPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-
-		@Override
-		public MeanShiftPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-		
-		@Override
-		public MeanShiftPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-	}
 
 	/**
 	 * Handles the output for the {@link #singleSeed(double[], RadiusNeighbors, double[][], int)}
@@ -1036,7 +887,7 @@ public class MeanShift
 			
 			// Fit the new neighbors model
 			nbrs = new RadiusNeighbors(sorted_centers,
-				new RadiusNeighborsPlanner(bandwidth)
+				new RadiusNeighborsParameters(bandwidth)
 					.setSeed(this.random_state)
 					.setMetric(this.dist_metric)
 					.setForceParallel(parallel), true).fit();
@@ -1103,7 +954,7 @@ public class MeanShift
 			
 			// Build yet another neighbors model...
 			NearestNeighbors nn = new NearestNeighbors(centers,
-				new NearestNeighborsPlanner(1)
+				new NearestNeighborsParameters(1)
 					.setSeed(this.random_state)
 					.setMetric(this.dist_metric)
 					.setForceParallel(false), true).fit();

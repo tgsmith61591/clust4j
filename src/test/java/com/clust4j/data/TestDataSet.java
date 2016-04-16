@@ -31,12 +31,19 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.AffinityPropagation;
+import com.clust4j.algo.AffinityPropagationParameters;
 import com.clust4j.algo.DBSCAN;
+import com.clust4j.algo.DBSCANParameters;
 import com.clust4j.algo.HDBSCAN;
+import com.clust4j.algo.HDBSCANParameters;
 import com.clust4j.algo.HierarchicalAgglomerative;
+import com.clust4j.algo.HierarchicalAgglomerativeParameters;
 import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMeansParameters;
 import com.clust4j.algo.KMedoids;
+import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.algo.MeanShift;
+import com.clust4j.algo.MeanShiftParameters;
 import com.clust4j.algo.UnsupervisedClassifier;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
@@ -113,49 +120,49 @@ public class TestDataSet
 		for(boolean b: scale) {
 			
 			// Go down the line alpha...
-			AffinityPropagation ap = new AffinityPropagation(data, 
-				new AffinityPropagation.AffinityPropagationPlanner()
+			AffinityPropagation ap = new AffinityPropagationParameters()
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(ap, b);
 			
 			
-			DBSCAN db = new DBSCAN(data, 
-				new DBSCAN.DBSCANPlanner()
+			DBSCAN db = new DBSCANParameters()
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(db, b);
 			
-			HDBSCAN hdb = new HDBSCAN(data, 
-				new HDBSCAN.HDBSCANPlanner()
+			HDBSCAN hdb = new HDBSCANParameters()
 					.setScale(b)
 					//.setAlgo(com.clust4j.algo.HDBSCAN.Algorithm.PRIMS_KDTREE)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(hdb, b);
 			
-			HierarchicalAgglomerative ha = new HierarchicalAgglomerative(data, 
-				new HierarchicalAgglomerative.HierarchicalPlanner()
+			HierarchicalAgglomerative ha = new HierarchicalAgglomerativeParameters()
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(ha, b);
 			
 			
-			KMeans kmn = new KMeans(data, 
-				new KMeans.KMeansPlanner(k)
+			KMeans kmn = new KMeansParameters(k)
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(kmn, b, labels);
 			
-			KMedoids kmd = new KMedoids(data, 
-				new KMedoids.KMedoidsPlanner(k)
+			KMedoids kmd = new KMedoidsParameters(k)
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(kmd, b, labels);
 			
-			MeanShift ms = new MeanShift(data, 
-				new MeanShift.MeanShiftPlanner()
+			MeanShift ms = new MeanShiftParameters()
 					.setScale(b)
-					.setVerbose(verbose)).fit();
+					.setVerbose(verbose)
+					.fitNewModel(data).fit();
 			stdout(ms, b);
 			
 			

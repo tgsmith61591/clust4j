@@ -21,7 +21,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
+import com.clust4j.algo.NearestCentroidParameters;
 
 /**
  * A standalone mixin class to handle predictions from {@link CentroidLearner}
@@ -62,11 +62,10 @@ abstract class CentroidUtils {
 		/*
 		 * Now fit the NearestCentroids model, and predict
 		 */
-		return new NearestCentroidPlanner()
+		return new NearestCentroidParameters()
 				.setMetric(model.dist_metric) // if it fails, falls back to default Euclidean...
 				.setVerbose(false) // just to be sure in case default ever changes...
-				.buildNewModelInstance(model.getData(), labels)
-			.fit()
+				.fitNewModel(model.getData(), labels).fit()
 			.predict(newData);
 	}
 }

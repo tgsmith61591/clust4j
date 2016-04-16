@@ -26,7 +26,7 @@ public abstract class AbstractAutonomousClusterer extends AbstractClusterer impl
 	 */
 	private static final long serialVersionUID = -4704891508225126315L;
 
-	public AbstractAutonomousClusterer(AbstractRealMatrix data, AbstractClusterer.BaseClustererPlanner planner) {
+	public AbstractAutonomousClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
 		super(data, planner);
 	}
 	

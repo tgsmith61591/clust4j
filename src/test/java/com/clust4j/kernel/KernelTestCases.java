@@ -25,7 +25,7 @@ import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMeansParameters;
 import com.clust4j.metrics.pairwise.Pairwise;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
@@ -163,12 +163,10 @@ public class KernelTestCases {
 		
 		
 		// Test with KMEANS
-		KMeans km = new KMeans(train, 
-				new KMeans.KMeansPlanner(2)
-					.setMetric(kernel)
-					.setVerbose(true)
-				);
-		km.fit();
+		new KMeansParameters(2)
+			.setMetric(kernel)
+			.setVerbose(true)
+			.fitNewModel(train).fit();
 		System.out.println();
 	}
 	

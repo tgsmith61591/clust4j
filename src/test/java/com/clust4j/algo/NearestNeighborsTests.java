@@ -32,7 +32,7 @@ import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
+import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -61,7 +61,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new NearestNeighbors(data, new NearestNeighborsPlanner());
+		new NearestNeighbors(data, new NearestNeighborsParameters());
 	}
 
 	@Test
@@ -70,22 +70,22 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		new NearestNeighbors(data).fit();
 		new NearestNeighbors(data).fit().fit(); // test the extra fit for any exceptions
 		new NearestNeighbors(data, 3).fit();
-		new NearestNeighbors(data, new NearestNeighborsPlanner()).fit();
-		new NearestNeighbors(data, new NearestNeighborsPlanner(5)).fit();
+		new NearestNeighbors(data, new NearestNeighborsParameters()).fit();
+		new NearestNeighbors(data, new NearestNeighborsParameters(5)).fit();
 	}
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new NearestNeighborsPlanner().buildNewModelInstance(data);
-		new NearestNeighborsPlanner(4).buildNewModelInstance(data);
+		new NearestNeighborsParameters().fitNewModel(data);
+		new NearestNeighborsParameters(4).fitNewModel(data);
 	}
 	
 	@Test
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		NearestNeighbors nn = new NearestNeighbors(data, 
-			new NearestNeighbors.NearestNeighborsPlanner(5)
+			new NearestNeighborsParameters(5)
 				.setVerbose(true)
 				.setScale(true)).fit();
 		
@@ -109,7 +109,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final int[] ks = new int[]{1, 5, 10};
 		for(int k: ks) {
 			new NearestNeighbors(mat, 
-				new NearestNeighbors.NearestNeighborsPlanner(k)
+				new NearestNeighborsParameters(k)
 					.setVerbose(true)).fit();
 		}
 	}
@@ -121,7 +121,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final double[] radii = new double[]{0.5, 5.0, 10.0};
 		for(double radius: radii) {
 			new RadiusNeighbors(mat, 
-				new RadiusNeighbors.RadiusNeighborsPlanner(radius)
+				new RadiusNeighborsParameters(radius)
 					.setVerbose(true)).fit();
 			System.out.println();
 		}
@@ -138,7 +138,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		
 		NearestNeighbors nn = new NearestNeighbors(mat, 
-			new NearestNeighbors.NearestNeighborsPlanner(1)
+			new NearestNeighborsParameters(1)
 				.setVerbose(true)
 				.setMetric(new GaussianKernel())).fit();
 		
@@ -148,7 +148,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		System.out.println();
 		
 		new RadiusNeighbors(mat, 
-			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
+			new RadiusNeighborsParameters(3.0)
 				.setVerbose(true)
 				.setMetric(new GaussianKernel()) ).fit();
 	}
@@ -160,7 +160,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final int[] ks = new int[]{1, 5, 10};
 		for(int k: ks) {
 			new NearestNeighbors(mat, 
-				new NearestNeighbors.NearestNeighborsPlanner(k)
+				new NearestNeighborsParameters(k)
 					.setVerbose(true)
 					.setMetric(new GaussianKernel()) ).fit();
 		}
@@ -173,7 +173,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final double[] radii = new double[]{0.5, 5.0, 10.0};
 		for(double radius: radii) {
 			new RadiusNeighbors(mat, 
-				new RadiusNeighbors.RadiusNeighborsPlanner(radius)
+				new RadiusNeighborsParameters(radius)
 					.setVerbose(true)
 					.setMetric(new GaussianKernel()) ).fit();
 			System.out.println();
@@ -192,17 +192,17 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testIAE3() {
-		new NearestNeighbors(data, new NearestNeighborsPlanner(0));
+		new NearestNeighbors(data, new NearestNeighborsParameters(0));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testIAE4() {
-		new NearestNeighbors(data, new NearestNeighborsPlanner(151));
+		new NearestNeighbors(data, new NearestNeighborsParameters(151));
 	}
 	
 	@Test
 	public void testMiscellany() {
-		assertTrue(new NearestNeighborsPlanner().getNormalizer().equals(AbstractClusterer.DEF_NORMALIZER));
+		assertTrue(new NearestNeighborsParameters().getNormalizer().equals(AbstractClusterer.DEF_NORMALIZER));
 	}
 	
 	@Test
@@ -255,7 +255,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		
 		for(NeighborsAlgorithm alg: algs) {
 			new NearestNeighbors(DATA, 
-				new NearestNeighbors.NearestNeighborsPlanner(1)
+				new NearestNeighborsParameters(1)
 					.setVerbose(true)
 					.setAlgorithm(alg)
 					.setLeafSize(3)
@@ -268,7 +268,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testWarning() {
 		BaseNeighborsModel n = new NearestNeighbors(DATA, 
-			new NearestNeighbors.NearestNeighborsPlanner(1)
+			new NearestNeighborsParameters(1)
 				.setMetric(new GaussianKernel()));
 		assertTrue(n.hasWarnings());
 	}
@@ -336,7 +336,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			Array2DRowRealMatrix x = new Array2DRowRealMatrix(expected);
 			
 			int k= 2;
-			NearestNeighbors nn = new NearestNeighbors(x, new NearestNeighbors.NearestNeighborsPlanner(k).setAlgorithm(algo)).fit();
+			NearestNeighbors nn = new NearestNeighbors(x, new NearestNeighborsParameters(k).setAlgorithm(algo)).fit();
 			
 			assertTrue(MatUtils.equalsExactly(expected, nn.fit_X));
 			
@@ -408,14 +408,14 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test
 	public void testFromPlanner2() {
-		NearestNeighbors nn = new NearestNeighbors.NearestNeighborsPlanner(1)
+		NearestNeighbors nn = new NearestNeighborsParameters(1)
 			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
 			.setScale(true)
 			.setNormalizer(FeatureNormalization.MEAN_CENTER)
 			.setSeed(new Random())
 			.setMetric(new GaussianKernel())
-			.setVerbose(false).copy().buildNewModelInstance(data);
+			.setVerbose(false).copy().fitNewModel(data);
 		
 		assertTrue(nn.hasWarnings()); // Sep method
 		assertTrue(nn.getK() == 1);
@@ -438,12 +438,12 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testIAEConstructor4() {
-		new NearestNeighbors(DATA, new NearestNeighbors.NearestNeighborsPlanner(2).setLeafSize(-1));
+		new NearestNeighbors(DATA, new NearestNeighborsParameters(2).setLeafSize(-1));
 	}
 	
 	@Test(expected=NullPointerException.class)
 	public void testNPEConstructor1() {
-		new NearestNeighbors(DATA, new NearestNeighbors.NearestNeighborsPlanner(2).setAlgorithm(null));
+		new NearestNeighbors(DATA, new NearestNeighborsParameters(2).setAlgorithm(null));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -477,7 +477,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		
 		BaseNeighborsModel nn = new NearestNeighbors(mat, 
-			new NearestNeighbors.NearestNeighborsPlanner(1)
+			new NearestNeighborsParameters(1)
 				.setVerbose(false)).fit();
 		
 		int[][] ne = nn.getNeighbors().getIndices();
@@ -489,7 +489,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		System.out.println();
 		
 		nn = new RadiusNeighbors(mat, 
-			new RadiusNeighbors.RadiusNeighborsPlanner(3.0)
+			new RadiusNeighborsParameters(3.0)
 				.setVerbose(false)).fit();
 		
 		ne = nn.getNeighbors().getIndices();
@@ -505,7 +505,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		NearestNeighbors nn;
 		try {
 			nn = new NearestNeighbors(big, 
-				new NearestNeighborsPlanner(3)
+				new NearestNeighborsParameters(3)
 					.setVerbose(true)
 					.setForceParallel(true)).fit();
 		} catch(OutOfMemoryError | RejectedExecutionException e) {
@@ -524,7 +524,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testSorted() {
 		final Array2DRowRealMatrix big = TestSuite.getRandom(50, 3);
-		Neighborhood n = new NearestNeighbors(big, new NearestNeighborsPlanner(3)
+		Neighborhood n = new NearestNeighbors(big, new NearestNeighborsParameters(3)
 			.setVerbose(true)).fit().getNeighbors();
 		
 		for(double[] d : n.getDistances()) {
@@ -542,21 +542,21 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		final double[][] x = MatUtils.rep(-1, 6, 6);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		Neighborhood neighb = new NearestNeighbors(X, new NearestNeighborsPlanner(3).setVerbose(true)).fit().getNeighbors();
+		Neighborhood neighb = new NearestNeighbors(X, new NearestNeighborsParameters(3).setVerbose(true)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
 		/*
 		 * Test def constructor
 		 */
-		neighb = new NearestNeighbors(X, new NearestNeighborsPlanner().setVerbose(true)).fit().getNeighbors();
+		neighb = new NearestNeighbors(X, new NearestNeighborsParameters().setVerbose(true)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
 		/*
 		 * Test BallTree
 		 */
-		neighb = new NearestNeighbors(X, new NearestNeighborsPlanner().setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
+		neighb = new NearestNeighbors(X, new NearestNeighborsParameters().setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
@@ -565,7 +565,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testValidMetrics() {
 		NearestNeighbors model;
 		final int nn = 3;
-		final NearestNeighborsPlanner planner = new NearestNeighborsPlanner(nn).setScale(true);
+		final NearestNeighborsParameters planner = new NearestNeighborsParameters(nn).setScale(true);
 		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
 		
 		/*
@@ -576,25 +576,25 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			
 			for(Distance d: Distance.values()) {
 				planner.setMetric(d);
-				model = planner.buildNewModelInstance(data).fit();
+				model = planner.fitNewModel(data).fit();
 				assertTrue(BallTree.VALID_METRICS.contains(model.dist_metric.getClass()));
 			}
 			
 			// minkowski
 			planner.setMetric(new MinkowskiDistance(1.5));
-			model = planner.buildNewModelInstance(data).fit();
+			model = planner.fitNewModel(data).fit();
 			assertFalse(model.hasWarnings());
 			
 			// haversine
 			planner.setMetric(Distance.HAVERSINE.MI);
-			model = planner.buildNewModelInstance(small).fit();
+			model = planner.fitNewModel(small).fit();
 			
 			if(na.equals(NeighborsAlgorithm.BALL_TREE)) // else it WILL
 				assertFalse(model.hasWarnings());
 			
 			// try a sim metric...
 			planner.setMetric(Similarity.COSINE);
-			model = planner.buildNewModelInstance(small).fit();
+			model = planner.fitNewModel(small).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 			assertFalse(model.isValidMetric(new GaussianKernel()));
 		}
@@ -638,8 +638,8 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			/*
 			 * Should obviously be two clusters here...
 			 */
-			Neighborhood n1 = new NearestNeighbors(a, new NearestNeighborsPlanner(2).setForceParallel(true)).fit().getNeighbors();
-			Neighborhood n2 = new NearestNeighbors(a, new NearestNeighborsPlanner(2).setForceParallel(false)).fit().getNeighbors();
+			Neighborhood n1 = new NearestNeighbors(a, new NearestNeighborsParameters(2).setForceParallel(true)).fit().getNeighbors();
+			Neighborhood n2 = new NearestNeighbors(a, new NearestNeighborsParameters(2).setForceParallel(false)).fit().getNeighbors();
 			assertTrue(n1.equals(n2));
 		} finally {
 			/*

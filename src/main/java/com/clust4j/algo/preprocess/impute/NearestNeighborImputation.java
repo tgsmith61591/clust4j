@@ -23,6 +23,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel;
 import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
@@ -196,12 +197,12 @@ public class NearestNeighborImputation extends MatrixImputation {
 			completeRecord = exclude(incomplete, impute_indices);
 			completeCols = excludeCols(complete, impute_indices);
 			
-			nbrs = new NearestNeighbors(new Array2DRowRealMatrix(completeCols, false), 
-				new NearestNeighbors.NearestNeighborsPlanner(k)
+			nbrs = new NearestNeighborsParameters(k)
 					.setScale(false)
 					.setVerbose(false)
 					.setSeed(getSeed())
-					.setMetric(this.sep)).fit();
+					.setMetric(this.sep)
+					.fitNewModel(new Array2DRowRealMatrix(completeCols, false)).fit();
 			
 			nearest = nbrs.getNeighbors(
 				new Array2DRowRealMatrix(new double[][]{completeRecord}, 

@@ -34,10 +34,10 @@ import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.MeanShift.MeanShiftPlanner;
+import com.clust4j.algo.MeanShiftParameters;
 import com.clust4j.algo.MeanShift.MeanShiftSeed;
-import com.clust4j.algo.NearestNeighbors.NearestNeighborsPlanner;
-import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
+import com.clust4j.algo.NearestNeighborsParameters;
+import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
@@ -66,8 +66,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		
-		MeanShift ms = new MeanShift(mat, new MeanShift
-			.MeanShiftPlanner(0.5)
+		MeanShift ms = new MeanShift(mat, new MeanShiftParameters(0.5)
 				.setVerbose(true)).fit();
 		System.out.println();
 		
@@ -88,8 +87,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
 		
-		MeanShift ms = new MeanShift(mat, new MeanShift
-			.MeanShiftPlanner(0.5)
+		MeanShift ms = new MeanShift(mat, new MeanShiftParameters(0.5)
 				.setMaxIter(100)
 				.setMinChange(0.0005)
 				.setSeed(new Random(100))
@@ -99,8 +97,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		System.out.println();
 		
 		
-		ms = new MeanShift(mat, new MeanShift
-			.MeanShiftPlanner(0.05)
+		ms = new MeanShift(mat, new MeanShiftParameters(0.05)
 				.setVerbose(true)).fit();
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
 		assertTrue(ms.hasWarnings()); // will because not normalizing
@@ -123,8 +120,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 4);
 		assertTrue(ms.getLabels()[2] == ms.getLabels()[3]);
 		
-		MeanShiftPlanner msp = new MeanShiftPlanner(0.5);
-		MeanShift ms1 = msp.buildNewModelInstance(mat).fit();
+		MeanShiftParameters msp = new MeanShiftParameters(0.5);
+		MeanShift ms1 = msp.fitNewModel(mat).fit();
 		
 		assertTrue(ms1.getBandwidth() == 0.5);
 		assertTrue(ms1.didConverge());
@@ -194,7 +191,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	public void testMeanShiftAutoBwEstimate2() {
 		final double[][] x = TestSuite.bigMatrix;
 		MeanShift ms = new MeanShift(new Array2DRowRealMatrix(x), 
-			new MeanShiftPlanner().setVerbose(true)).fit();
+			new MeanShiftParameters().setVerbose(true)).fit();
 		System.out.println();
 		assertTrue(ms.itersElapsed() >= 1);
 		
@@ -213,7 +210,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	public void testMeanShiftAutoBwEstimateException1() {
 		final double[][] x = TestSuite.bigMatrix;
 		new MeanShift(new Array2DRowRealMatrix(x), 
-			new MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setAutoBandwidthEstimationQuantile(1.1));
 	}
 	
@@ -221,7 +218,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	public void testMeanShiftAutoBwEstimateException2() {
 		final double[][] x = TestSuite.bigMatrix;
 		new MeanShift(new Array2DRowRealMatrix(x), 
-			new MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setAutoBandwidthEstimationQuantile(0.0));
 	}
 
@@ -240,49 +237,49 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new MeanShift(data_, new MeanShiftPlanner(0.05));
+		new MeanShift(data_, new MeanShiftParameters(0.05));
 	}
 
 	@Test
 	@Override
 	public void testFit() {
 		new MeanShift(data_,
-			new MeanShiftPlanner()).fit();
+			new MeanShiftParameters()).fit();
 	}
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new MeanShiftPlanner()
-			.buildNewModelInstance(data_);
+		new MeanShiftParameters()
+			.fitNewModel(data_);
 	}
 
 	@Test
 	@Override
 	public void testItersElapsed() {
 		assertTrue(new MeanShift(data_, 
-				new MeanShiftPlanner()).fit().itersElapsed() > 0);
+				new MeanShiftParameters()).fit().itersElapsed() > 0);
 	}
 
 	@Test
 	@Override
 	public void testConverged() {
 		assertTrue(new MeanShift(data_, 
-				new MeanShiftPlanner()).fit().didConverge());
+				new MeanShiftParameters()).fit().didConverge());
 	}
 
 	@Test
 	@Override
 	public void testScoring() {
 		new MeanShift(data_,
-			new MeanShiftPlanner()).fit().silhouetteScore();
+			new MeanShiftParameters()).fit().silhouetteScore();
 	}
 
 	@Test
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		MeanShift ms = new MeanShift(data_,
-			new MeanShiftPlanner(0.5)
+			new MeanShiftParameters(0.5)
 				.setVerbose(true)).fit();
 		System.out.println();
 		
@@ -308,7 +305,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		// Asserting fit works without breaking things...
 		RadiusNeighbors r = new RadiusNeighbors(iris,
-			new RadiusNeighborsPlanner(bandwidth)).fit();
+			new RadiusNeighborsParameters(bandwidth)).fit();
 		
 		TreeSet<MeanShiftSeed> centers = new TreeSet<>();
 		for(double[] seed: X)
@@ -348,7 +345,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		MeanShift ms = new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setScale(true)).fit();
 		
 		// sklearn output
@@ -374,7 +371,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		MeanShift ms =
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftPlanner()
 				.setScale(true)
 				.setSeeds(iris.getData())).fit();
 		System.out.println(Arrays.toString(ms.getLabels()));
@@ -386,7 +383,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setSeeds(new double[][]{
 					new double[]{1,2,3,4},
 					new double[]{0}
@@ -398,7 +395,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setSeeds(new double[][]{
 					new double[]{1,2,3},
 					new double[]{1,2,3}
@@ -410,7 +407,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setSeeds(new double[][]{
 				}));
 	}
@@ -420,7 +417,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setSeeds(MatUtils.randomGaussian(iris.getRowDimension() + 1, 
 					iris.getColumnDimension())));
 	}
@@ -430,7 +427,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		Array2DRowRealMatrix iris = data_;
 		
 		new MeanShift(iris, 
-			new MeanShift.MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setVerbose(true)
 				.setSeeds(new double[][]{
 					iris.getRow(3),
@@ -463,7 +460,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		// Asserting fit works without breaking things...
 		RadiusNeighbors r = new RadiusNeighbors(iris,
-			new RadiusNeighborsPlanner(bandwidth)).fit();
+			new RadiusNeighborsParameters(bandwidth)).fit();
 				
 		TreeSet<MeanShiftSeed> centers = new TreeSet<>();
 		for(double[] seed: X)
@@ -513,7 +510,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		// Fit the new neighbors model
 		RadiusNeighbors nbrs = new RadiusNeighbors(sorted_centers,
-			new RadiusNeighborsPlanner(bandwidth)
+			new RadiusNeighborsParameters(bandwidth)
 				.setVerbose(false)).fit();
 		
 		
@@ -566,32 +563,32 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		// The final nearest neighbors model -- if this works, we are in the clear...
 		new NearestNeighbors(clust_centers,
-			new NearestNeighborsPlanner(1)).fit();
+			new NearestNeighborsParameters(1)).fit();
 	}
 	
 	@Test
 	public void testOnWineDataNonScaled() {
 		new MeanShift(wine,
-			new MeanShiftPlanner()
+			new MeanShiftParameters()
 			.setVerbose(true)).fit();
 	}
 	
 	@Test
 	public void testOnWineDataScaled() {
 		new MeanShift(wine,
-			new MeanShiftPlanner()
+			new MeanShiftParameters()
 				.setScale(true)
 				.setVerbose(true)).fit();
 	}
 	
 	@Test
 	public void testParallelSmall() {
-		MeanShift iris_serial = new MeanShift(data_, new MeanShiftPlanner().setVerbose(true)).fit();
+		MeanShift iris_serial = new MeanShift(data_, new MeanShiftParameters().setVerbose(true)).fit();
 		System.out.println();
 		
 		MeanShift iris_paral = null;
 		try {
-			iris_paral = new MeanShift(data_, new MeanShiftPlanner().setForceParallel(true).setVerbose(true)).fit();
+			iris_paral = new MeanShift(data_, new MeanShiftParameters().setForceParallel(true).setVerbose(true)).fit();
 		} catch(OutOfMemoryError | RejectedExecutionException e) {
 			// don't propagate these...
 			return;
@@ -605,13 +602,13 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testParallelLarger() {
 		MeanShift wine_serial = new MeanShift(wine, 
-			new MeanShiftPlanner().setVerbose(true)).fit();
+			new MeanShiftParameters().setVerbose(true)).fit();
 		System.out.println();
 		
 		MeanShift wine_paral = null; 
 		try {
 			wine_paral = new MeanShift(wine, 
-					new MeanShiftPlanner().setVerbose(true).setForceParallel(true)).fit();
+					new MeanShiftParameters().setVerbose(true).setForceParallel(true)).fit();
 		} catch(OutOfMemoryError | RejectedExecutionException e) {
 			// don't propagate these...
 			return;
@@ -633,7 +630,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		double[][] C = MatUtils.rbind(A, B);
 		try {
 			new MeanShift(new Array2DRowRealMatrix(C, false),
-				new MeanShiftPlanner()
+				new MeanShiftParameters()
 					//.setScale(true)
 					.setVerbose(true)
 					.setForceParallel(true)).fit();
@@ -655,17 +652,17 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new MeanShift(X, new MeanShiftPlanner().setVerbose(true)).fit().getLabels();
+		int[] labels = new MeanShift(X, new MeanShiftParameters().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
-		labels = new MeanShift(X, new MeanShiftPlanner(0.5).setVerbose(true)).fit().getLabels();
+		labels = new MeanShift(X, new MeanShiftParameters(0.5).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 	
 	@Test
 	public void testValidMetrics() {
 		MeanShift model;
-		MeanShiftPlanner planner;
+		MeanShiftParameters planner;
 		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
 		double bandwidth = 1.5;
 		
@@ -674,32 +671,32 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		 */
 		for(boolean b: new boolean[]{true, false}) {
 			for(Distance d: Distance.values()) {
-				planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+				planner = b ? new MeanShiftParameters() : new MeanShiftParameters(bandwidth);
 				planner = planner.setMetric(d);
-				model = planner.buildNewModelInstance(data_).fit();
+				model = planner.fitNewModel(data_).fit();
 				assertTrue(model.dist_metric.equals(d)); // assert didn't change
 			}
 			
 			// minkowski?
 			DistanceMetric d = new MinkowskiDistance(1.5);
-			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = b ? new MeanShiftParameters() : new MeanShiftParameters(bandwidth);
 			planner = planner.setMetric(d);
-			model = planner.buildNewModelInstance(data_).fit();
+			model = planner.fitNewModel(data_).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change
 			
 			// haversine?
 			d = Distance.HAVERSINE.MI;
-			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = b ? new MeanShiftParameters() : new MeanShiftParameters(bandwidth);
 			planner = planner.setMetric(d);
-			model = planner.buildNewModelInstance(small).fit();
+			model = planner.fitNewModel(small).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change
 			
 			// prove that similarity gets rejected
 			d = Distance.EUCLIDEAN;
 			SimilarityMetric sim = Similarity.COSINE;
-			planner = b ? new MeanShiftPlanner() : new MeanShiftPlanner(bandwidth);
+			planner = b ? new MeanShiftParameters() : new MeanShiftParameters(bandwidth);
 			planner = planner.setMetric(sim);
-			model = planner.buildNewModelInstance(data_).fit();
+			model = planner.fitNewModel(data_).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert DID change
 		}
 	}
@@ -736,8 +733,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 			/*
 			 * Should obviously be two clusters here...
 			 */
-			int[] ms1 = new MeanShift(a, new MeanShiftPlanner().setForceParallel(true)).fit().getLabels();
-			int[] ms2 = new MeanShift(a, new MeanShiftPlanner().setForceParallel(false)).fit().getLabels();
+			int[] ms1 = new MeanShift(a, new MeanShiftParameters().setForceParallel(true)).fit().getLabels();
+			int[] ms2 = new MeanShift(a, new MeanShiftParameters().setForceParallel(false)).fit().getLabels();
 			assertTrue(VecUtils.equalsExactly(ms1, ms2));
 		} finally {
 			/*
@@ -754,14 +751,14 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		/*
 		 * This should cause the planner.bandwidth <= 0.0 flag to be thrown
 		 */
-		try { new MeanShiftPlanner(0.0).buildNewModelInstance(data_); } 
+		try { new MeanShiftParameters(0.0).fitNewModel(data_); } 
 		catch(IllegalArgumentException i){ a= true; } 
 		finally{ assertTrue(a); a = false; }
 		
 		/*
 		 * This should cause the empty seeds flag to be thrown
 		 */
-		try { new MeanShiftPlanner().setSeeds(new double[][]{}).buildNewModelInstance(data_); } 
+		try { new MeanShiftParameters().setSeeds(new double[][]{}).fitNewModel(data_); } 
 		catch(IllegalArgumentException i){ a= true; } 
 		finally{ assertTrue(a); a = false; }
 		
@@ -770,29 +767,29 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		 * Bigger seed test
 		 */
 		try { 
-			new MeanShiftPlanner().setSeeds(new double[][]{
+			new MeanShiftParameters().setSeeds(new double[][]{
 				new double[]{0.0,0.01},
 				new double[]{60.0,12.1}
-			}).buildNewModelInstance(data_);
+			}).fitNewModel(data_);
 		} 
 		catch(DimensionMismatchException i){ a= true; } 
 		finally{ assertTrue(a); a = false; }
 		
 		/* Try seeds that exceed iris in length */
-		try { new MeanShiftPlanner().setSeeds(MatUtils.randomGaussian(160, 4)).buildNewModelInstance(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
+		try { new MeanShiftParameters().setSeeds(MatUtils.randomGaussian(160, 4)).fitNewModel(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
 		/* Try a bad quantile */
-		try { new MeanShiftPlanner().setAutoBandwidthEstimationQuantile(1.5).buildNewModelInstance(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
+		try { new MeanShiftParameters().setAutoBandwidthEstimationQuantile(1.5).fitNewModel(data_); } catch(IllegalArgumentException i){ a= true; } finally{ assertTrue(a); a = false; }
 	
 		/*
 		 * This is a hard test to replicate... that all points are too far from provided seeds
 		 */
 		try {
-			new MeanShiftPlanner(1.5)
+			new MeanShiftParameters(1.5)
 				.setScale(true)
 				.setSeeds(new double[][]{
 					new double[]{1500,1250,1300,1557},
 					new double[]{150,175,250,189}
-				}).buildNewModelInstance(data_).fit();
+				}).fitNewModel(data_).fit();
 		} catch(IllegalClusterStateException i) {
 			a = true;
 		} finally {

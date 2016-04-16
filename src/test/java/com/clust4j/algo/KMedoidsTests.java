@@ -30,7 +30,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.data.DataSet;
 import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
@@ -117,24 +117,24 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new KMedoids(irisdata, new KMedoidsPlanner());
-		new KMedoids(irisdata, new KMedoidsPlanner(3));
+		new KMedoids(irisdata, new KMedoidsParameters());
+		new KMedoids(irisdata, new KMedoidsParameters(3));
 	}
 
 
 	@Test
 	@Override
 	public void testFit() {
-		new KMedoids(irisdata, new KMedoidsPlanner()).fit();
-		new KMedoids(irisdata, new KMedoidsPlanner(3)).fit();
+		new KMedoids(irisdata, new KMedoidsParameters()).fit();
+		new KMedoids(irisdata, new KMedoidsParameters(3)).fit();
 	}
 
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new KMedoidsPlanner().buildNewModelInstance(irisdata);
-		new KMedoidsPlanner(3).buildNewModelInstance(irisdata);
+		new KMedoidsParameters().fitNewModel(irisdata);
+		new KMedoidsParameters(3).fitNewModel(irisdata);
 	}
 
 	/** Scale = false */
@@ -170,7 +170,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 
-				new KMedoidsPlanner(2)
+				new KMedoidsParameters(2)
 					.setScale(true)
 					.setVerbose(true));
 		km.fit();
@@ -197,7 +197,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 
-				new KMedoidsPlanner(3)
+				new KMedoidsParameters(3)
 					.setScale(false)
 					.setVerbose(true));
 		km.fit();
@@ -219,7 +219,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(true));
+		KMedoids km = new KMedoids(mat, new KMedoidsParameters(3).setScale(true));
 		km.fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -238,7 +238,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoidsPlanner(3).setScale(false));
+		KMedoids km = new KMedoids(mat, new KMedoidsParameters(3).setScale(false));
 		km.fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -266,7 +266,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		KMedoids km = null;
 		for(boolean b : scale) {
 			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMedoids(mat, new KMedoidsPlanner(1).setScale(b));
+			km = new KMedoids(mat, new KMedoidsParameters(1).setScale(b));
 			km.fit();
 			assertTrue(km.didConverge());
 		}
@@ -282,7 +282,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		for(boolean b : scale) {
 			for(int k : ks) {
 				km = new KMedoids(mat, 
-						new KMedoidsPlanner(k)
+						new KMedoidsParameters(k)
 							.setScale(b)
 							.setVerbose(true));
 				km.fit();
@@ -294,7 +294,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	public void KMedoidsLoadTest2FullLogger() {
 		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		KMedoids km = new KMedoids(mat, 
-				new KMedoidsPlanner(5)
+				new KMedoidsParameters(5)
 					.setScale(true)
 					.setVerbose(true)
 				);
@@ -310,7 +310,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		KMedoids km = null;
 		for(int k : ks) {
 			km = new KMedoids(mat, 
-					new KMedoids.KMedoidsPlanner(k)
+					new KMedoidsParameters(k)
 						.setMetric(kernel)
 						.setVerbose(true)
 						.setScale(false));
@@ -327,7 +327,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		for(int k : ks) {
 			new KMedoids(mat, 
-				new KMedoids.KMedoidsPlanner(k)
+				new KMedoidsParameters(k)
 					.setMetric(kernel)
 					.setVerbose(true)
 					.setScale(false)).fit();
@@ -339,7 +339,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		KMedoids km = new KMedoids(irisdata,
-			new KMedoids.KMedoidsPlanner(3)
+			new KMedoidsParameters(3)
 				.setScale(true)
 				.setVerbose(true)).fit();
 		
@@ -366,10 +366,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			if(KMedoids.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMedoidsPlanner km = new KMedoidsPlanner(3).setMetric(dist);
+			KMedoidsParameters km = new KMedoidsParameters(3).setMetric(dist);
 			double i = -1;
 			
-			i = km.buildNewModelInstance(d).fit().indexAffinityScore(actual);
+			i = km.fitNewModel(d).fit().indexAffinityScore(actual);
 			
 			System.out.println(dist.getName() + ", " + i);
 			if(i > ia) {
@@ -398,10 +398,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 				continue;
 			
 			System.out.println(dist);
-			KMedoidsPlanner km = new KMedoidsPlanner(3).setScale(true).setMetric(dist);
+			KMedoidsParameters km = new KMedoidsParameters(3).setScale(true).setMetric(dist);
 			double i = -1;
 			
-			model = km.buildNewModelInstance(d).fit();
+			model = km.fitNewModel(d).fit();
 			if(model.getK() != 3) // gets modified if totally equal
 				continue;
 			
@@ -429,7 +429,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new KMedoids(X, new KMedoidsPlanner(3).setVerbose(true)).fit().getLabels();
+		int[] labels = new KMedoids(X, new KMedoidsParameters(3).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 }

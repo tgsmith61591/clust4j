@@ -16,13 +16,11 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.NearestCentroidParameters;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
@@ -48,160 +46,19 @@ final public class KMeans extends AbstractCentroidClusterer {
 	
 	
 	
-	public KMeans(final AbstractRealMatrix data) {
+	protected KMeans(final AbstractRealMatrix data) {
 		this(data, DEF_K);
 	}
 	
-	public KMeans(final AbstractRealMatrix data, final int k) {
-		this(data, new KMeansPlanner(k));
+	protected KMeans(final AbstractRealMatrix data, final int k) {
+		this(data, new KMeansParameters(k));
 	}
 	
-	public KMeans(final AbstractRealMatrix data, final KMeansPlanner planner) {
+	protected KMeans(final AbstractRealMatrix data, final KMeansParameters planner) {
 		super(data, planner);
 	}
 	
 	
-	public static class KMeansPlanner extends CentroidClustererPlanner {
-		private static final long serialVersionUID = -813106538623499760L;
-		
-		private InitializationStrategy strat = DEF_INIT;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_CONVERGENCE_TOLERANCE;
-		private GeometricallySeparable dist = DEF_DIST;
-		private boolean verbose = DEF_VERBOSE;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private int k = DEF_K;
-		private boolean parallel = false;
-		
-		public KMeansPlanner() { }
-		public KMeansPlanner(int k) {
-			this.k = k;
-		}
-		
-		@Override
-		public KMeans buildNewModelInstance(final AbstractRealMatrix data) {
-			return new KMeans(data, this.copy());
-		}
-		
-		@Override
-		public KMeansPlanner copy() {
-			return new KMeansPlanner(k)
-				.setMaxIter(maxIter)
-				.setConvergenceCriteria(minChange)
-				.setScale(scale)
-				.setMetric(dist)
-				.setVerbose(verbose)
-				.setSeed(seed)
-				.setNormalizer(norm)
-				.setInitializationStrategy(strat)
-				.setForceParallel(parallel);
-		}
-		
-		@Override
-		public int getK() {
-			return k;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public InitializationStrategy getInitializationStrategy() {
-			return strat;
-		}
-		
-		@Override
-		public int getMaxIter() {
-			return maxIter;
-		}
-		
-		@Override
-		public double getConvergenceTolerance() {
-			return minChange;
-		}
-		
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		@Override
-		public KMeansPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setMetric(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		public KMeansPlanner setMaxIter(final int max) {
-			this.maxIter = max;
-			return this;
-		}
-
-		@Override
-		public KMeansPlanner setConvergenceCriteria(final double min) {
-			this.minChange = min;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setInitializationStrategy(InitializationStrategy init) {
-			this.strat = init;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		@Override
-		public KMeansPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-
-		@Override
-		public KMeansPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-	}
 	
 	
 	@Override
@@ -247,7 +104,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 				// Get labels for nearest centroids
 				try {
 					model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
-						VecUtils.arange(k), new NearestCentroidPlanner()
+						VecUtils.arange(k), new NearestCentroidParameters()
 							.setScale(false) // already scaled maybe
 							.setSeed(getSeed())
 							.setMetric(getSeparabilityMetric())

@@ -18,17 +18,20 @@ package com.clust4j.algo.pipeline;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
-import com.clust4j.algo.SupervisedClassifierPlanner;
+import com.clust4j.algo.SupervisedClassifier;
+import com.clust4j.algo.SupervisedClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
 
-public class SupervisedPipeline extends Pipeline<SupervisedClassifierPlanner> {
+public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifier> 
+		extends Pipeline<SupervisedClassifierParameters<M>> {
+	
 	private static final long serialVersionUID = 8790601917700667359L;
 
-	public SupervisedPipeline(final SupervisedClassifierPlanner planner, final PreProcessor... pipe) {
+	public SupervisedPipeline(final SupervisedClassifierParameters<M> planner, final PreProcessor... pipe) {
 		super(planner, pipe);
 	}
 
-	public AbstractClusterer fit(final AbstractRealMatrix data, int[] y) {
+	public M fit(final AbstractRealMatrix data, int[] y) {
 		synchronized(fitLock) {
 			AbstractRealMatrix copy = data; // no need to copy, as handled in each processor...
 			
@@ -37,10 +40,10 @@ public class SupervisedPipeline extends Pipeline<SupervisedClassifierPlanner> {
 				copy = pre.operate(copy);
 	
 			// Build the model -- the model should handle the dim check internally
-			final AbstractClusterer model = planner.buildNewModelInstance(copy, y);
+			final M model = planner.fitNewModel(copy, y);
 			
-			// Fit the model
-			return model.fit();
+			// The model was fit internally
+			return model;
 		}
 	}
 }

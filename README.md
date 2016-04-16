@@ -5,7 +5,7 @@
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ## clust4j
-A Java-based set of __classification__ clustering algorithms. Built under JDK 1.7. *This project is currently in ongoing development for the time being and should not be used in production environments*
+A Java-based set of __classification__ clustering algorithms. Built under JDK 1.7 and tested up to JDK 1.8. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
 ___
 ### Installation:
@@ -54,21 +54,21 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
         ```java
-        KMeans km = new KMeans(mat, new KMeansPlanner(k)).fit();
+        KMeans km = new KMeansParameters(k).fitNewModel(mat);
         final int[] results = km.getLabels();
         ```
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
         ```java
-        KMedoids km = new KMedoids(mat, new KMedoidsPlanner(k)).fit();
+        KMedoids km = new KMedoidsParameters(k).fitNewModel(mat);
         final int[] results = km.getLabels();
         ```
 
   - [Affinity Propagation](https://en.wikipedia.org/wiki/Affinity_propagation), a clustering algorithm based on the concept of "message passing" between data points.Like `KMedoids`, Affinity Propagation finds "exemplars", members of the input set that are representative of clusters.
 
         ```java
-        AffinityPropagation ap = new AffinityPropagation(mat, new AffinityPropagationPlanner()).fit();
+        AffinityPropagation ap = new AffinityPropagationParameters().fitNewModel(mat);
         final int[] results = ap.getLabels();
         ```
 
@@ -77,7 +77,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - [HierarchicalAgglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](http://nlp.stanford.edu/IR-book/html/htmledition/divisive-clustering-1.html).
 
         ```java
-        HierarchicalAgglomerative a = new HierarchicalAgglomerative(mat, new HierarchicalPlanner()).fit();
+        HierarchicalAgglomerative a = new HierarchicalAgglomerativeParameters().fitNewModel(mat);
         final int[] results = a.getLabels();
         ```
 
@@ -85,21 +85,21 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 
         ```java
-        DBSCAN db = new DBSCAN(mat, new DBSCANPlanner(0.75)).fit();
+        DBSCAN db = new DBSCANParameters(0.75).fitNewModel(mat);
         final int[] results = db.getLabels();
         ```
 
   - [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14), a density-based clustering algorithm: performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon. This implementation includes five algorithms: PrimsKD, PrimsBall, BoruvkaKD and BoruvkaBall.
 
         ```java
-        HDBSCAN hdb = new HDBSCAN(mat, new HDBSCANPlanner()).fit();
+        HDBSCAN hdb = new HDBSCANParameters().fitNewModel(mat);
         final int[] results = hdb.getLabels();
         ```
 
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
 
         ```java
-        MeanShift ms = new MeanShift(mat, new MeanShiftPlanner(0.5)).fit();
+        MeanShift ms = new MeanShiftParameters(0.5).fitNewModel(mat);
         final int[] results = ms.getLabels();
         ```
 
@@ -107,7 +107,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - `NearestNeighbors`, a neighbor clusterer that will fit the *k*-nearest points for each record in a matrix.
 
         ```java
-        Neighbors nn = new NearestNeighbors(mat).fit();
+        NearestNeighbors nn = new NearestNeighborsParameters(k).fitNewModel(mat);
         Neighborhood neighborhood = nn.getNeighbors();
         int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
         double[][] distances = neighborhood.getDistances(); // The corresponding distances
@@ -116,8 +116,8 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - `RadiusNeighbors`, a neighbor clusterer that will fit the nearest points within a given radius.
 
         ```java
-        Neighbors rn = new RadiusNeighbors(mat).fit();
-        RadiusNeighbors = rn.getNeighbors();
+        RadiusNeighbors rn = new RadiusNeighborsParameters(1.5).fitNewModel(mat);
+        Neighborhood neighborhood = rn.getNeighbors();
         int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
         double[][] distances = neighborhood.getDistances(); // The corresponding distances
         ```
@@ -126,7 +126,7 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
   - `NearestCentroid`, a supervised algorithm that fits centroids based on a set of observed labels.
 
         ```java
-        NearestCentroid nc = new NearestCentroid(mat, new int[]{0,1,1}).fit();
+        NearestCentroid nc = new NearestCentroidParameters().fitNewModel(mat, new int[]{0,1,1});
         // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data
         ```
 
@@ -302,16 +302,16 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
         
         ```java
         // Unsupervised:
-        final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
+        final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
         // Use of varargs for the PreProcessors is supported
-        final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, Normalize.CENTER_SCALE /*, ... */);
+        final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, Normalize.CENTER_SCALE /*, ... */);
         // Push data through preprocessing pipeline and fit model
-        KMedoids km = (KMedoids) pipe.fit(mat);
+        KMedoids km = pipe.fit(mat);
         
         // Supervised:
-        final NearestCentroidPlanner s_planner = new NearestCentroidPlanner().setVerbose(true);
-        final SupervisedPipeline sup_pip = new SupervisedPipeline(s_planner, Normalize.CENTER_SCALE);
-        NearestCentroid model = (NearestCentroid) sup_pip.fit();
+        final NearestCentroidParameters s_planner = new NearestCentroidParameters().setVerbose(true);
+        final SupervisedPipeline<NearestCentroid> sup_pip = new SupervisedPipeline<NearestCentroid>(s_planner, Normalize.CENTER_SCALE);
+        NearestCentroid model = sup_pip.fit(mat, new int[]{0,1,1});
         ```
 
 
@@ -319,14 +319,14 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 ----
 
 ### Things to note:
- - The default `AbstractClusterer.BaseClustererPlanner.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
+ - The default `BaseClustererParameters.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
 
     ```java
-    // For normalization, simply add `.setScale(true)` on any `BaseClustererPlanner` class
-    new KMeans(mat, new KMeansPlanner(k).setScale(true));
+    // For normalization, simply add `.setScale(true)` on any `BaseClustererParameters` class
+    new KMeansParameters(k).setScale(true);
     ```
 
- - By default, logging is disabled. This can be enabled by instance in any `BaseClustererPlanner` class by invoking `.setVerbose(true)`.
+ - By default, logging is disabled. This can be enabled by instance in any `BaseClustererParameters` class by invoking `.setVerbose(true)`.
  - Note that both of the above settings may be set globally:
 
     ```java

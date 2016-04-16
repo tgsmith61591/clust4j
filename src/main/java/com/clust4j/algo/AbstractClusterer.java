@@ -25,7 +25,6 @@ import java.util.UUID;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
-import com.clust4j.Clust4j;
 import com.clust4j.GlobalState;
 import com.clust4j.NamedEntity;
 import com.clust4j.algo.preprocess.FeatureNormalization;
@@ -38,7 +37,6 @@ import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
-import com.clust4j.utils.DeepCloneable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
@@ -101,37 +99,6 @@ public abstract class AbstractClusterer
 	final private ArrayList<String> warnings = new ArrayList<>();
 	final ModelSummary fitSummary;
 	
-
-	
-	
-	/**
-	 * Base planner class many clustering algorithms
-	 * will extend with static inner classes. Some clustering
-	 * algorithms will require more parameters and must provide
-	 * the interface for the getting/setting of such parameters.
-	 * 
-	 * @author Taylor G Smith
-	 */
-	abstract public static class BaseClustererPlanner 
-			extends Clust4j // So all are serializable
-			implements DeepCloneable, BaseClassifierPlanner {
-		private static final long serialVersionUID = -5830795881133834268L;
-		
-		@Override abstract public BaseClustererPlanner copy();
-		abstract public FeatureNormalization getNormalizer();
-		abstract public boolean getParallel();
-		abstract public GeometricallySeparable getSep();
-		abstract public boolean getScale();
-		abstract public Random getSeed();
-		abstract public boolean getVerbose();
-		abstract public BaseClustererPlanner setNormalizer(final FeatureNormalization norm);
-		abstract public BaseClustererPlanner setScale(final boolean b);
-		abstract public BaseClustererPlanner setSeed(final Random rand);
-		abstract public BaseClustererPlanner setVerbose(final boolean b);
-		abstract public BaseClustererPlanner setMetric(final GeometricallySeparable dist);
-		abstract public BaseClustererPlanner setForceParallel(final boolean b);
-	}
-	
 	
 	
 	// Initializers
@@ -156,7 +123,7 @@ public abstract class AbstractClusterer
 	 * @param caller
 	 * @param planner
 	 */
-	protected AbstractClusterer(AbstractClusterer caller, BaseClustererPlanner planner) {
+	protected AbstractClusterer(AbstractClusterer caller, BaseClustererParameters planner) {
 		this.dist_metric= null == planner ? caller.dist_metric : planner.getSep();
 		this.verbose 	= null == planner ? false : planner.getVerbose(); // if another caller, default to false
 		this.modelKey 	= UUID.randomUUID();
@@ -169,7 +136,7 @@ public abstract class AbstractClusterer
 		this.singular_value = caller.singular_value;
 	}
 	
-	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner, boolean as_is) {
+	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner, boolean as_is) {
 		
 		this.dist_metric = planner.getSep();
 		this.verbose = planner.getVerbose();
@@ -208,7 +175,7 @@ public abstract class AbstractClusterer
 	 * @param data
 	 * @param planner
 	 */
-	public AbstractClusterer(AbstractRealMatrix data, BaseClustererPlanner planner) {
+	public AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
 		this(data, planner, false);
 	}
 	

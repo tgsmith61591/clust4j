@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.NearestNeighbors;
+import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.except.NonUniformMatrixException;
@@ -310,8 +311,7 @@ public class MatTests {
 		};
 		
 		final double[] record = new double[]{0,0,0};
-		NearestNeighbors nn = new NearestNeighbors(new Array2DRowRealMatrix(mat, false), 
-			new NearestNeighbors.NearestNeighborsPlanner(1)).fit();
+		NearestNeighbors nn = new NearestNeighborsParameters(1).fitNewModel(new Array2DRowRealMatrix(mat, false));
 		assertTrue( nn.getNeighbors(new Array2DRowRealMatrix(new double[][]{record},
 			false)).getIndices()[0][0] == 0 );
 	}

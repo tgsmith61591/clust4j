@@ -13,10 +13,12 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  *******************************************************************************/
+
 package com.clust4j.algo;
 
-import com.clust4j.utils.DeepCloneable;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-public interface BaseClassifierPlanner extends DeepCloneable {
-	@Override public BaseClassifierPlanner copy();
+public interface UnsupervisedClassifierParameters<T extends AbstractClusterer & UnsupervisedClassifier> 
+		extends BaseClassifierParameters {
+	public T fitNewModel(AbstractRealMatrix data);
 }

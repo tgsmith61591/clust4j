@@ -36,7 +36,7 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
 import com.clust4j.algo.HDBSCAN.CompQuadTup;
-import com.clust4j.algo.HDBSCAN.HDBSCANPlanner;
+import com.clust4j.algo.HDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
@@ -266,7 +266,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		};
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
-				new HDBSCANPlanner(1)
+				new HDBSCANParameters(1)
 				.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
 		assertTrue(VecUtils.equalsExactly(labels, new int[]{-1,-1,-1}));
@@ -330,7 +330,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		};
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
-				new HDBSCANPlanner(1)
+				new HDBSCANParameters(1)
 					.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)
 					.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
@@ -424,7 +424,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		};
 		
 		HDBSCAN model = new HDBSCAN(new Array2DRowRealMatrix(x), 
-				new HDBSCANPlanner(1)
+				new HDBSCANParameters(1)
 					.setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)
 					.setVerbose(true)).fit();
 		int[] labels = model.getLabels();
@@ -464,7 +464,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testDataSet() { // See if the iris dataset works...
 		new HDBSCAN(iris, 
-				new HDBSCANPlanner(1)
+				new HDBSCANParameters(1)
 					.setVerbose(true)
 					.setScale(true)).fit();
 		
@@ -491,7 +491,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new HDBSCAN(DATA, new HDBSCANPlanner());
+		new HDBSCAN(DATA, new HDBSCANParameters());
 	}
 
 	@Test
@@ -503,15 +503,15 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new HDBSCANPlanner().buildNewModelInstance(DATA);
-		new HDBSCANPlanner(3).buildNewModelInstance(DATA);
+		new HDBSCANParameters().fitNewModel(DATA);
+		new HDBSCANParameters(3).fitNewModel(DATA);
 	}
 
 	@Test
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		HDBSCAN hd = new HDBSCAN(DATA, 
-			new HDBSCAN.HDBSCANPlanner(1)
+			new HDBSCANParameters(1)
 				.setVerbose(true)
 				.setScale(true)).fit();
 		System.out.println();
@@ -528,13 +528,13 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testAlphaIAE() {
-		new HDBSCAN(TestSuite.getRandom(5, 5), new HDBSCANPlanner().setAlpha(0.0));
+		new HDBSCAN(TestSuite.getRandom(5, 5), new HDBSCANParameters().setAlpha(0.0));
 	}
 	
 	@Test
 	public void testSepWarn() {
 		HDBSCAN h = new HDBSCAN(TestSuite.getRandom(5, 5), 
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)
 				.setMetric(new GaussianKernel()));
 		assertTrue(h.hasWarnings());
@@ -554,14 +554,14 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		HDBSCAN h = new HDBSCAN(X).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANParameters().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANParameters().setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)).fit();
 		assertTrue(VecUtils.equalsExactly(h.getLabels(), VecUtils.repInt(-1, 5)));
 		
 		// Test on IRIS
-		h = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
+		h = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
 		
 		int[] expectedLabels = new NoiseyLabelEncoder(expected_iris_labs)
 			.fit().getEncodedLabels();
@@ -569,7 +569,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		assertTrue(VecUtils.equalsExactly(expectedLabels, h.getLabels()));
 		
 		// TODO fix KD & BALL trees
-		h = new HDBSCAN(X, new HDBSCANPlanner().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
+		h = new HDBSCAN(X, new HDBSCANParameters().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 		System.out.println(Arrays.toString(h.getLabels()));
 	}
 	
@@ -604,7 +604,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testGenericAlgo() {
 		HDBSCAN h = new HDBSCAN(iris,
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.GENERIC)).fit();
 		
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
@@ -614,7 +614,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testPrimsKD() {
 		HDBSCAN h = new HDBSCAN(iris,
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
@@ -623,7 +623,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testPrimsBall() {
 		HDBSCAN h = new HDBSCAN(iris,
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.PRIMS_BALLTREE)).fit();
 
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
@@ -632,7 +632,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testBoruvkaKDTree() {
 		HDBSCAN h = new HDBSCAN(iris,
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.BORUVKA_KDTREE)).fit();
 		
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
@@ -641,7 +641,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	@Test
 	public void testBoruvkaBallTree() {
 		HDBSCAN h = new HDBSCAN(iris,
-			new HDBSCANPlanner()
+			new HDBSCANParameters()
 				.setAlgo(HDBSCAN_Algorithm.BORUVKA_BALLTREE)).fit();
 		
 		assertTrue(Precision.equals(h.indexAffinityScore(expected_iris_labs), 1.0, 0.05));
@@ -1399,10 +1399,10 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new HDBSCAN(X, new HDBSCANPlanner(1).setVerbose(true)).fit().getLabels();
+		int[] labels = new HDBSCAN(X, new HDBSCANParameters(1).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
 		
-		labels = new HDBSCAN(X, new HDBSCANPlanner().setVerbose(true)).fit().getLabels();
+		labels = new HDBSCAN(X, new HDBSCANParameters().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
 	}
 	
@@ -1416,7 +1416,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		 */
 		algo = HDBSCAN_Algorithm.GENERIC;
 		for(DistanceMetric d: Distance.values()) {
-			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
 			
 			if(!model.isValidMetric(d)) {
 				assertTrue(model.hasWarnings());
@@ -1425,7 +1425,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		}
 		
 		for(Kernel k: KernelTestCases.all_kernels) {
-			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(k)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(k)).fit();
 			
 			if(!model.isValidMetric(k)) {
 				assertTrue(model.hasWarnings());
@@ -1443,7 +1443,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			boolean warnings_thrown = false;
 			for(DistanceMetric d: new DistanceMetric[]{Distance.EUCLIDEAN, 
 					Distance.MANHATTAN, Distance.CHEBYSHEV, new MinkowskiDistance(2.0)}) {
-				model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
 				
 				if(model.hasWarnings()) {
 					warnings_thrown= true;
@@ -1452,12 +1452,12 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			}
 			
 			assertFalse(warnings_thrown);
-			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Distance.CANBERRA)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Distance.CANBERRA)).fit();
 			assertTrue(model.hasWarnings());
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 			
 			// try a few sim metrics to assert the same
-			model = new HDBSCAN(iris, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
 			assertTrue(model.hasWarnings());
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
@@ -1476,7 +1476,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			final Array2DRowRealMatrix small = irisSmall.getData();
 			
 			for(Distance d: Distance.values()) {
-				model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
 				
 				if(model.hasWarnings()) {
 					assertTrue(!model.isValidMetric(d));
@@ -1484,20 +1484,20 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			}
 			
 			// Try minkowski and haversine...
-			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(new MinkowskiDistance(1.5))).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(new MinkowskiDistance(1.5))).fit();
 			assertFalse(model.hasWarnings());
-			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Distance.HAVERSINE.MI)).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Distance.HAVERSINE.MI)).fit();
 			assertFalse(model.hasWarnings());
 			
 			// assert sim doesn't fly for ball tree...
-			model = new HDBSCAN(small, new HDBSCANPlanner().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
 	}
 	
 	@Test
 	public void testAutoGeneric() {
-		HDBSCAN h = new HDBSCAN(DATA, new HDBSCANPlanner().setMetric(Distance.YULE)).fit();
+		HDBSCAN h = new HDBSCAN(DATA, new HDBSCANParameters().setMetric(Distance.YULE)).fit();
 		assertTrue(h.algo.equals(HDBSCAN.HDBSCAN_Algorithm.GENERIC));
 		
 		/*
@@ -1517,7 +1517,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	public void testBadLeafSize() {
 		boolean a = false;
 		try{
-			new HDBSCAN(DATA, new HDBSCANPlanner().setLeafSize(0));
+			new HDBSCAN(DATA, new HDBSCANParameters().setLeafSize(0));
 		} catch(IllegalArgumentException i) {
 			a = true;
 		} finally {
@@ -1531,7 +1531,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		 * Ensuring it actually fits it for all algos...
 		 */
 		for(HDBSCAN_Algorithm h: HDBSCAN.HDBSCAN_Algorithm.values())
-			new HDBSCAN(DATA, new HDBSCANPlanner().setAlgo(h).setAlpha(1.5)).fit();
+			new HDBSCAN(DATA, new HDBSCANParameters().setAlgo(h).setAlpha(1.5)).fit();
 	}
 	
 	@Test

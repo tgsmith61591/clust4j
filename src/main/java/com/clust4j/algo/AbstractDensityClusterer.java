@@ -25,7 +25,7 @@ public abstract class AbstractDensityClusterer extends AbstractAutonomousCluster
 	 */
 	private static final long serialVersionUID = 5645721633522621894L;
 
-	public AbstractDensityClusterer(AbstractRealMatrix data, AbstractClusterer.BaseClustererPlanner planner) {
+	public AbstractDensityClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
 		super(data, planner);
 		
 		checkState(this);

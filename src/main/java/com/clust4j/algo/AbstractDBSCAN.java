@@ -29,7 +29,7 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 	protected double eps = DEF_EPS;
 	final protected FeatureNormalization normer;
 
-	public AbstractDBSCAN(AbstractRealMatrix data, AbstractDBSCANPlanner planner) {
+	public AbstractDBSCAN(AbstractRealMatrix data, AbstractDBSCANPlanner<? extends AbstractDBSCAN> planner) {
 		super(data, planner);
 		
 		this.minPts = planner.getMinPts();
@@ -39,12 +39,12 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 			throw new IllegalArgumentException("minPts must be greater than 0");
 	}
 	
-	abstract public static class AbstractDBSCANPlanner 
-			extends AbstractClusterer.BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
+	abstract public static class AbstractDBSCANPlanner<T extends AbstractDBSCAN> 
+			extends BaseClustererParameters 
+			implements UnsupervisedClassifierParameters<T> {
 		private static final long serialVersionUID = 765572960123009344L;
 		
-		abstract public AbstractDBSCANPlanner setMinPts(final int minPts);
+		abstract public AbstractDBSCANPlanner<T> setMinPts(final int minPts);
 		abstract public int getMinPts();
 	}
 	

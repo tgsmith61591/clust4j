@@ -15,8 +15,8 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import com.clust4j.utils.DeepCloneable;
 
-public interface SupervisedClassifierPlanner extends BaseClassifierPlanner {
-	public AbstractClusterer buildNewModelInstance(AbstractRealMatrix data, int[] y);
+public interface BaseClassifierParameters extends DeepCloneable {
+	@Override public BaseClassifierParameters copy();
 }

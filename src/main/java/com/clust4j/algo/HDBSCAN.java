@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -33,7 +32,6 @@ import org.apache.commons.math3.util.Precision;
 import com.clust4j.GlobalState;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
@@ -281,7 +279,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * Constructs an instance of HDBSCAN from the default values
 	 * @param data
 	 */
-	public HDBSCAN(final AbstractRealMatrix data) {
+	protected HDBSCAN(final AbstractRealMatrix data) {
 		this(data, DEF_MIN_PTS);
 	}
 	
@@ -290,8 +288,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * @param eps
 	 * @param data
 	 */
-	public HDBSCAN(final AbstractRealMatrix data, final int minPts) {
-		this(data, new HDBSCANPlanner(minPts));
+	protected HDBSCAN(final AbstractRealMatrix data, final int minPts) {
+		this(data, new HDBSCANParameters(minPts));
 	}
 	
 	/**
@@ -300,14 +298,14 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * @param builder
 	 * @param data
 	 */
-	public HDBSCAN(final AbstractRealMatrix data, final HDBSCANPlanner planner) {
+	protected HDBSCAN(final AbstractRealMatrix data, final HDBSCANParameters planner) {
 		super(data, planner);
 		
-		this.algo = planner.algo;
-		this.alpha = planner.alpha;
-		this.approxMinSpanTree = planner.approxMinSpanTree;
-		this.min_cluster_size = planner.min_cluster_size;
-		this.leafSize = planner.leafSize;
+		this.algo = planner.getAlgo();
+		this.alpha = planner.getAlpha();
+		this.approxMinSpanTree = planner.getApprox();
+		this.min_cluster_size = planner.getMinClusterSize();
+		this.leafSize = planner.getLeafSize();
 		
 		if(alpha <= 0.0) throw new IllegalArgumentException("alpha must be greater than 0");
 		if(leafSize < 1) throw new IllegalArgumentException("leafsize must be greater than 0");
@@ -327,159 +325,6 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			});
 	}
 	
-	
-	
-	/**
-	 * A builder class to provide an easier constructing
-	 * interface to set custom parameters for HDBSCAN
-	 * @author Taylor G Smith
-	 */
-	final public static class HDBSCANPlanner extends AbstractDBSCANPlanner {
-		private static final long serialVersionUID = 7197585563308908685L;
-		
-		private int minPts = DEF_MIN_PTS;
-		private boolean scale = DEF_SCALE;
-		private GeometricallySeparable dist	= DEF_DIST;
-		private boolean verbose	= DEF_VERBOSE;
-		private Random seed = DEF_SEED;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private HDBSCAN_Algorithm algo = DEF_ALGO;
-		private double alpha = DEF_ALPHA;
-		private boolean approxMinSpanTree = DEF_APPROX_MIN_SPAN;
-		private int min_cluster_size = DEF_MIN_CLUST_SIZE;
-		private int leafSize = DEF_LEAF_SIZE;
-		private boolean parallel;
-		
-		
-		public HDBSCANPlanner() { this(DEF_MIN_PTS); }
-		public HDBSCANPlanner(final int minPts) {
-			this.minPts = minPts;
-		}
-
-		
-		@Override
-		public HDBSCAN buildNewModelInstance(AbstractRealMatrix data) {
-			return new HDBSCAN(data, this.copy());
-		}
-		
-		@Override
-		public HDBSCANPlanner copy() {
-			return new HDBSCANPlanner(minPts)
-				.setAlgo(algo)
-				.setAlpha(alpha)
-				.setApprox(approxMinSpanTree)
-				.setLeafSize(leafSize)
-				.setMinClustSize(min_cluster_size)
-				.setMinPts(minPts)
-				.setScale(scale)
-				.setMetric(dist)
-				.setSeed(seed)
-				.setVerbose(verbose)
-				.setNormalizer(norm)
-				.setForceParallel(parallel);
-		}
-
-		@Override
-		public int getMinPts() {
-			return minPts;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		public HDBSCANPlanner setAlgo(final HDBSCAN_Algorithm algo) {
-			this.algo = algo;
-			return this;
-		}
-		
-		public HDBSCANPlanner setAlpha(final double a) {
-			this.alpha = a;
-			return this;
-		}
-		
-		public HDBSCANPlanner setApprox(final boolean b) {
-			this.approxMinSpanTree = b;
-			return this;
-		}
-		
-		public HDBSCANPlanner setLeafSize(final int leafSize) {
-			this.leafSize = leafSize;
-			return this;
-		}
-		
-		public HDBSCANPlanner setMinClustSize(final int min) {
-			this.min_cluster_size = min;
-			return this;
-		}
-		
-		@Override
-		public HDBSCANPlanner setMinPts(final int minPts) {
-			this.minPts = minPts;
-			return this;
-		}
-		
-		@Override
-		public HDBSCANPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-		
-		@Override
-		public HDBSCANPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-		
-		@Override
-		public HDBSCANPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		@Override
-		public HDBSCANPlanner setMetric(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		public HDBSCANPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-		
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		
-		@Override
-		public HDBSCANPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-	}
 	
 	
 	

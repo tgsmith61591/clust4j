@@ -292,7 +292,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	
 	public AbstractCentroidClusterer(AbstractRealMatrix data,
-			CentroidClustererPlanner planner) {
+			CentroidClustererParameters<? extends AbstractCentroidClusterer> planner) {
 		super(data, planner, planner.getK());
 		
 		/*
@@ -346,19 +346,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 
 	
-	
-	public static abstract class CentroidClustererPlanner 
-			extends BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner, ConvergeablePlanner {
-		private static final long serialVersionUID = -1984508955251863189L;
-		
-		abstract public int getK();
-		@Override abstract public int getMaxIter();
-		@Override abstract public double getConvergenceTolerance();
-		abstract public InitializationStrategy getInitializationStrategy();
-		abstract public CentroidClustererPlanner setConvergenceCriteria(final double min);
-		abstract public CentroidClustererPlanner setInitializationStrategy(final InitializationStrategy strat);
-	}
 	
 
 	
@@ -508,5 +495,6 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return clust_cost;
 	}
 
+	@Override public abstract AbstractCentroidClusterer fit();
 	protected GeometricallySeparable defMetric() { return AbstractClusterer.DEF_DIST; }
 }

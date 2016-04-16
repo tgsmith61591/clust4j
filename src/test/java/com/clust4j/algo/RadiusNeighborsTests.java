@@ -30,7 +30,7 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
+import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -57,8 +57,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		
 		for(NeighborsAlgorithm alg: algs) {
 			new RadiusNeighbors(data, 
-				new RadiusNeighbors
-					.RadiusNeighborsPlanner(1.0)
+				new RadiusNeighborsParameters(1.0)
 						.setVerbose(true)
 						.setAlgorithm(alg)
 						.setLeafSize(3)
@@ -89,7 +88,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	public void testWarning() {
 		BaseNeighborsModel n = new RadiusNeighbors(data, 
-			new RadiusNeighbors.RadiusNeighborsPlanner(1)
+			new RadiusNeighborsParameters(1)
 				.setMetric(new GaussianKernel()));
 		assertTrue(n.hasWarnings());
 	}
@@ -109,7 +108,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 			
 			double radius = 1.0;
 			RadiusNeighbors nn = new RadiusNeighbors(x, 
-				new RadiusNeighbors.RadiusNeighborsPlanner(radius)
+				new RadiusNeighborsParameters(radius)
 					.setAlgorithm(algo)).fit();
 			
 			assertTrue(MatUtils.equalsExactly(expected, nn.fit_X));
@@ -184,14 +183,14 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	@Override
 	public void testFromPlanner() {
-		RadiusNeighbors nn = new RadiusNeighbors.RadiusNeighborsPlanner(1.0)
+		RadiusNeighbors nn = new RadiusNeighborsParameters(1.0)
 			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
 			.setScale(true)
 			.setNormalizer(FeatureNormalization.MEAN_CENTER)
 			.setSeed(new Random())
 			.setMetric(new GaussianKernel())
-			.setVerbose(false).copy().buildNewModelInstance(data);
+			.setVerbose(false).copy().fitNewModel(data);
 		
 		assertTrue(nn.hasWarnings()); // Sep method
 		assertTrue(nn.getRadius() == 1.0);
@@ -211,16 +210,14 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test(expected=IllegalArgumentException.class)
 	public void testIAEConstructor3() {
 		new RadiusNeighbors(data, 
-			new RadiusNeighbors
-				.RadiusNeighborsPlanner(2.0)
+			new RadiusNeighborsParameters(2.0)
 				.setLeafSize(-1));
 	}
 	
 	@Test(expected=NullPointerException.class)
 	public void testNPEConstructor1() {
 		new RadiusNeighbors(data, 
-			new RadiusNeighbors
-				.RadiusNeighborsPlanner(2)
+			new RadiusNeighborsParameters(2)
 				.setAlgorithm(null));
 	}
 	
@@ -245,8 +242,8 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new RadiusNeighbors(iris, new RadiusNeighborsPlanner());
-		new RadiusNeighbors(iris, new RadiusNeighborsPlanner(6.0));
+		new RadiusNeighbors(iris, new RadiusNeighborsParameters());
+		new RadiusNeighbors(iris, new RadiusNeighborsParameters(6.0));
 	}
 
 	@Test
@@ -255,15 +252,15 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		new RadiusNeighbors(iris).fit();
 		new RadiusNeighbors(iris).fit().fit(); // test for any other exceptions
 		new RadiusNeighbors(iris, 2.0).fit();
-		new RadiusNeighbors(iris, new RadiusNeighborsPlanner()).fit();
-		new RadiusNeighbors(iris, new RadiusNeighborsPlanner(6.0)).fit();
+		new RadiusNeighbors(iris, new RadiusNeighborsParameters()).fit();
+		new RadiusNeighbors(iris, new RadiusNeighborsParameters(6.0)).fit();
 	}
 
 	@Test
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		RadiusNeighbors nn = new RadiusNeighbors(iris, 
-			new RadiusNeighbors.RadiusNeighborsPlanner(5.0)
+			new RadiusNeighborsParameters(5.0)
 				.setVerbose(true)
 				.setScale(true)).fit();
 		
@@ -290,21 +287,21 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		Neighborhood neighb = new RadiusNeighbors(X, new RadiusNeighborsPlanner(3.0).setVerbose(true)).fit().getNeighbors();
+		Neighborhood neighb = new RadiusNeighbors(X, new RadiusNeighborsParameters(3.0).setVerbose(true)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
 		/*
 		 * Test default constructor
 		 */
-		neighb = new RadiusNeighbors(X, new RadiusNeighborsPlanner().setVerbose(true)).fit().getNeighbors();
+		neighb = new RadiusNeighbors(X, new RadiusNeighborsParameters().setVerbose(true)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
 		/*
 		 * Test BallTree
 		 */
-		neighb = new RadiusNeighbors(X, new RadiusNeighborsPlanner(3.0).setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
+		neighb = new RadiusNeighbors(X, new RadiusNeighborsParameters(3.0).setVerbose(true).setAlgorithm(NeighborsAlgorithm.BALL_TREE)).fit().getNeighbors();
 		assertTrue(new MatUtils.MatSeries(neighb.getDistances(), Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
@@ -313,7 +310,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testValidMetrics() {
 		RadiusNeighbors model;
 		final double rad = 3.0;
-		final RadiusNeighborsPlanner planner = new RadiusNeighborsPlanner(rad).setScale(true);
+		final RadiusNeighborsParameters planner = new RadiusNeighborsParameters(rad).setScale(true);
 		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
 		
 		/*
@@ -324,25 +321,25 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 			
 			for(Distance d: Distance.values()) {
 				planner.setMetric(d);
-				model = planner.buildNewModelInstance(data).fit();
+				model = planner.fitNewModel(data).fit();
 				assertTrue(BallTree.VALID_METRICS.contains(model.dist_metric.getClass()));
 			}
 			
 			// minkowski
 			planner.setMetric(new MinkowskiDistance(1.5));
-			model = planner.buildNewModelInstance(data).fit();
+			model = planner.fitNewModel(data).fit();
 			assertFalse(model.hasWarnings());
 			
 			// haversine
 			planner.setMetric(Distance.HAVERSINE.MI);
-			model = planner.buildNewModelInstance(small).fit();
+			model = planner.fitNewModel(small).fit();
 			
 			if(na.equals(NeighborsAlgorithm.BALL_TREE)) // else it WILL
 				assertFalse(model.hasWarnings());
 			
 			// try a sim metric...
 			planner.setMetric(Similarity.COSINE);
-			model = planner.buildNewModelInstance(small).fit();
+			model = planner.fitNewModel(small).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
 	}
@@ -353,8 +350,8 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		 * Travis CI only has 1 core, so we have to ensure this
 		 * will work even on single core machines...
 		 */
-		RadiusNeighborsPlanner planner = new RadiusNeighborsPlanner(0.5).setScale(true).setForceParallel(true);
-		RadiusNeighbors model = planner.buildNewModelInstance(iris).fit();
+		RadiusNeighborsParameters planner = new RadiusNeighborsParameters(0.5).setScale(true).setForceParallel(true);
+		RadiusNeighbors model = planner.fitNewModel(iris).fit();
 		model.getNeighbors(iris.getData(), true);
 		model.getNeighbors(iris.getData());
 	}

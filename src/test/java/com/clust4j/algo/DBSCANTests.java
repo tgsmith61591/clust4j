@@ -30,7 +30,7 @@ import static com.clust4j.TestSuite.getRandom;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.DBSCAN.DBSCANPlanner;
+import com.clust4j.algo.DBSCANParameters;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -70,26 +70,26 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new DBSCAN(data, new DBSCANPlanner(0.5));
+		new DBSCAN(data, new DBSCANParameters(0.5));
 	}
 
 	@Test
 	@Override
 	public void testFit() {
-		new DBSCAN.DBSCANPlanner().buildNewModelInstance(data).fit();
+		new DBSCANParameters().fitNewModel(data).fit();
 	}
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new DBSCAN.DBSCANPlanner().buildNewModelInstance(data);
+		new DBSCANParameters().fitNewModel(data);
 		
 	}
 
 	@Test
 	public void DBSCANTest1() {
 		final Array2DRowRealMatrix mat = getRandom(1500, 10);
-		new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.05)
+		new DBSCAN(mat, new DBSCANParameters(0.05)
 			.setScale(true)
 			.setVerbose(true)).fit();
 		System.out.println();
@@ -107,7 +107,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 			
 			
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
-		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.75)
+		DBSCAN db = new DBSCAN(mat, new DBSCANParameters(0.75)
 			.setScale(true)
 			.setMinPts(1)
 			.setVerbose(true))
@@ -131,7 +131,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 			
 			
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
-		DBSCAN db = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(0.75)
+		DBSCAN db = new DBSCAN(mat, new DBSCANParameters(0.75)
 			.setScale(true)
 			.setMinPts(1)
 			.setVerbose(true))
@@ -149,8 +149,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	public void DBSCANLoadTest() {
 		try {
 			final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
-			new DBSCAN(mat, new DBSCAN
-				.DBSCANPlanner()
+			new DBSCAN(mat, new DBSCANParameters()
 					.setVerbose(true))
 				.fit();
 			System.out.println();
@@ -163,7 +162,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		Kernel kernel = new RadialBasisKernel(0.05);
 		DBSCAN db = new DBSCAN(mat, 
-				new DBSCAN.DBSCANPlanner(0.05)
+				new DBSCANParameters(0.05)
 					.setMetric(kernel)
 					.setScale(true)
 					.setVerbose(true)).fit();
@@ -178,7 +177,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		DBSCAN db = new DBSCAN(data, 
-			new DBSCAN.DBSCANPlanner(0.75)
+			new DBSCANParameters(0.75)
 				.setScale(true)
 				.setMinPts(1)
 				.setVerbose(true)).fit();
@@ -197,7 +196,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Test(expected=IllegalArgumentException.class)
 	public void testMinPtsIAE() {
 		new DBSCAN(data, 
-			new DBSCANPlanner().setMinPts(0));
+			new DBSCANParameters().setMinPts(0));
 	}
 	
 	@Test
@@ -230,10 +229,10 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new DBSCAN(X, new DBSCANPlanner(1).setVerbose(true)).fit().getLabels();
+		int[] labels = new DBSCAN(X, new DBSCANParameters(1).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // these might be noise in DBSCAN
 		
-		labels = new DBSCAN(X, new DBSCANPlanner().setVerbose(true)).fit().getLabels();
+		labels = new DBSCAN(X, new DBSCANParameters().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all());
 	}
 	
@@ -241,7 +240,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	public void testNoSimilaritiesAllowed() {
 		DBSCAN model;
 		for(Kernel k: KernelTestCases.all_kernels) {
-			model = new DBSCAN(data, new DBSCANPlanner().setMetric(k)).fit();
+			model = new DBSCAN(data, new DBSCANParameters().setMetric(k)).fit();
 			assertTrue(model.hasWarnings());
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
@@ -252,12 +251,12 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		DBSCAN model;
 		
 		for(Distance d: Distance.values()) {
-			model = new DBSCAN(data, new DBSCANPlanner().setMetric(d)).fit();
+			model = new DBSCAN(data, new DBSCANParameters().setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 		}
 		
 		DistanceMetric d= new MinkowskiDistance(1.5);
-		model = new DBSCAN(data, new DBSCANPlanner().setMetric(d)).fit();
+		model = new DBSCAN(data, new DBSCANParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 		
 		/*
@@ -266,12 +265,12 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		final Array2DRowRealMatrix small = TestSuite.IRIS_SMALL.getData();
 		
 		d = Distance.HAVERSINE.MI;
-		model = new DBSCAN(small, new DBSCANPlanner().setMetric(d)).fit();
+		model = new DBSCAN(small, new DBSCANParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 		
 
 		d = Distance.HAVERSINE.KM;
-		model = new DBSCAN(small, new DBSCANPlanner().setMetric(d)).fit();
+		model = new DBSCAN(small, new DBSCANParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert not internally changed.
 	}
 	
@@ -279,7 +278,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	public void testBadEps() {
 		boolean a = false;
 		try {
-			new DBSCAN(data, new DBSCANPlanner(0.0));
+			new DBSCAN(data, new DBSCANParameters(0.0));
 		} catch(IllegalArgumentException i) {
 			a = true;
 		} finally {
@@ -295,7 +294,7 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	
 	@Test
 	public void testGetter() {
-		DBSCAN d = new DBSCAN(data, new DBSCANPlanner(1.5));
+		DBSCAN d = new DBSCAN(data, new DBSCANParameters(1.5));
 		assertTrue(d.getEps() == 1.5);
 		
 		/*

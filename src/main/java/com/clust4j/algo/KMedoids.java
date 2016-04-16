@@ -17,13 +17,11 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
@@ -80,161 +78,18 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	
-	public KMedoids(final AbstractRealMatrix data) {
+	protected KMedoids(final AbstractRealMatrix data) {
 		this(data, DEF_K);
 	}
 	
-	public KMedoids(final AbstractRealMatrix data, final int k) {
-		this(data, new KMedoidsPlanner(k).setMetric(Distance.MANHATTAN));
+	protected KMedoids(final AbstractRealMatrix data, final int k) {
+		this(data, new KMedoidsParameters(k).setMetric(Distance.MANHATTAN));
 	}
 	
-	public KMedoids(final AbstractRealMatrix data, final KMedoidsPlanner planner) {
+	protected KMedoids(final AbstractRealMatrix data, final KMedoidsParameters planner) {
 		super(data, planner);
 	}
 	
-	
-	
-	public static class KMedoidsPlanner extends CentroidClustererPlanner {
-		private static final long serialVersionUID = -3288579217568576647L;
-		
-		private InitializationStrategy strat = DEF_INIT;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_CONVERGENCE_TOLERANCE;
-		private GeometricallySeparable dist = DEF_DIST;
-		private boolean verbose = DEF_VERBOSE;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private int k = DEF_K;
-		private boolean parallel = false;
-		
-		public KMedoidsPlanner() { }
-		public KMedoidsPlanner(int k) {
-			this.k = k;
-		}
-		
-		@Override
-		public KMedoids buildNewModelInstance(final AbstractRealMatrix data) {
-			return new KMedoids(data, this.copy());
-		}
-		
-		@Override
-		public KMedoidsPlanner copy() {
-			return new KMedoidsPlanner(k)
-				.setMaxIter(maxIter)
-				.setConvergenceCriteria(minChange)
-				.setScale(scale)
-				.setMetric(dist)
-				.setVerbose(verbose)
-				.setSeed(seed)
-				.setNormalizer(norm)
-				.setInitializationStrategy(strat)
-				.setForceParallel(parallel);
-		}
-		
-		@Override
-		public InitializationStrategy getInitializationStrategy() {
-			return strat;
-		}
-		
-		@Override
-		public int getK() {
-			return k;
-		}
-		
-		@Override
-		public int getMaxIter() {
-			return maxIter;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public double getConvergenceTolerance() {
-			return minChange;
-		}
-		
-		@Override
-		public KMedoidsPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-		
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		@Override
-		public KMedoidsPlanner setMetric(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		public KMedoidsPlanner setMaxIter(final int max) {
-			this.maxIter = max;
-			return this;
-		}
-
-		@Override
-		public KMedoidsPlanner setConvergenceCriteria(final double min) {
-			this.minChange = min;
-			return this;
-		}
-		
-		@Override
-		public KMedoidsPlanner setInitializationStrategy(InitializationStrategy init) {
-			this.strat = init;
-			return this;
-		}
-		
-		@Override
-		public KMedoidsPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-		
-		@Override
-		public KMedoidsPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		@Override
-		public KMedoidsPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-
-		@Override
-		public KMedoidsPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-	}
 	
 	
 	

@@ -29,10 +29,11 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseModelTest;
 import com.clust4j.algo.KMeans;
+import com.clust4j.algo.KMeansParameters;
 import com.clust4j.algo.KMedoids;
-import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.algo.NearestCentroid;
-import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
+import com.clust4j.algo.NearestCentroidParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
@@ -48,15 +49,16 @@ public class PipelineTest implements BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		final KMeans.KMeansPlanner planner = new KMeans.KMeansPlanner(2).setVerbose(true);
+		final KMeansParameters planner = new KMeansParameters(2).setVerbose(true);
 		
 		// Build the pipeline
-		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, 
+		final UnsupervisedPipeline<KMeans> pipe = new UnsupervisedPipeline<KMeans>(planner, 
 			new PreProcessor[]{
 				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
-		final KMeans km = (KMeans) pipe.fit(mat);
+		
+		final KMeans km = pipe.fit(mat);
 		
 		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -66,10 +68,11 @@ public class PipelineTest implements BaseModelTest {
 		pipe.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		UnsupervisedPipeline pipe2 = (UnsupervisedPipeline)UnsupervisedPipeline
+		@SuppressWarnings("unchecked")
+		UnsupervisedPipeline<KMeans> pipe2 = (UnsupervisedPipeline<KMeans>)UnsupervisedPipeline
 			.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		
-		final KMeans km2 = (KMeans) pipe2.fit(mat);
+		final KMeans km2 = pipe2.fit(mat);
 		
 		assertTrue(km2.getLabels()[0] == 0 && km2.getLabels()[1] == 1);
 		assertTrue(km2.getLabels()[1] == km2.getLabels()[2]);
@@ -87,17 +90,17 @@ public class PipelineTest implements BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		final KMedoids.KMedoidsPlanner planner = new KMedoids.KMedoidsPlanner(2).setVerbose(true);
+		final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
 		
 		// Build the pipeline
-		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, 
+		final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, 
 			new PreProcessor[]{
 				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
 		@SuppressWarnings("unused")
-		KMedoids km = (KMedoids)pipe.fit(mat); 
+		KMedoids km = pipe.fit(mat); 
 		System.out.println();
 	}
 	
@@ -110,13 +113,13 @@ public class PipelineTest implements BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		final KMedoidsPlanner planner = new KMedoidsPlanner(2).setVerbose(true);
+		final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
 		
 		// Build the pipeline
-		final UnsupervisedPipeline pipe = new UnsupervisedPipeline(planner, FeatureNormalization.STANDARD_SCALE);
+		final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, FeatureNormalization.STANDARD_SCALE);
 		
 		@SuppressWarnings("unused")
-		KMedoids km = (KMedoids)pipe.fit(mat);
+		KMedoids km = pipe.fit(mat);
 		System.out.println();
 	}
 	
@@ -133,15 +136,15 @@ public class PipelineTest implements BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		final NearestCentroidPlanner planner = new NearestCentroidPlanner().setVerbose(true);
+		final NearestCentroidParameters planner = new NearestCentroidParameters().setVerbose(true);
 		
 		// Build the pipeline
-		final SupervisedPipeline pipe = new SupervisedPipeline(planner, 
+		final SupervisedPipeline<NearestCentroid> pipe = new SupervisedPipeline<NearestCentroid>(planner, 
 			new PreProcessor[]{
 				FeatureNormalization.STANDARD_SCALE, 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
-		final NearestCentroid nc = (NearestCentroid) pipe.fit(mat, new int[]{0,1,1});
+		final NearestCentroid nc = pipe.fit(mat, new int[]{0,1,1});
 		
 		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
 		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
@@ -159,12 +162,12 @@ public class PipelineTest implements BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		final NearestCentroidPlanner planner = new NearestCentroidPlanner().setVerbose(true);
+		final NearestCentroidParameters planner = new NearestCentroidParameters().setVerbose(true);
 		
 		// Build the pipeline
-		final SupervisedPipeline pipe = new SupervisedPipeline(planner, 
+		final SupervisedPipeline<NearestCentroid> pipe = new SupervisedPipeline<NearestCentroid>(planner, 
 			FeatureNormalization.STANDARD_SCALE);
-		final NearestCentroid nc = (NearestCentroid) pipe.fit(mat, new int[]{0,1,1});
+		final NearestCentroid nc = pipe.fit(mat, new int[]{0,1,1});
 		
 		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
 		assertTrue(nc.getLabels()[1] == nc.getLabels()[2]);
@@ -174,7 +177,8 @@ public class PipelineTest implements BaseModelTest {
 		pipe.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
-		SupervisedPipeline pipe2 = (SupervisedPipeline)SupervisedPipeline
+		@SuppressWarnings("unchecked")
+		SupervisedPipeline<NearestCentroid> pipe2 = (SupervisedPipeline<NearestCentroid>)SupervisedPipeline
 			.loadObject(new FileInputStream(TestSuite.tmpSerPath));
 		
 		final NearestCentroid nc2 = (NearestCentroid) pipe2.fit(mat, new int[]{0,1,1});

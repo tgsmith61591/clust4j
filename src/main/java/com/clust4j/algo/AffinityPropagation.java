@@ -23,7 +23,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
@@ -52,7 +51,7 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	final public static int DEF_MAX_ITER = 200;
 	final public static double DEF_DAMPING = 0.5;
 	/** By default uses minute Gaussian smoothing. It is recommended this remain
-	 *  true, but the {@link AffinityPropagationPlanner#useGaussianSmoothing(boolean)}
+	 *  true, but the {@link AffinityPropagationParameters#useGaussianSmoothing(boolean)}
 	 *  method can disable this option */
 	final public static boolean DEF_ADD_GAUSSIAN_NOISE = true;
 	final public static HashSet<Class<? extends GeometricallySeparable>> UNSUPPORTED_METRICS;
@@ -126,12 +125,20 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 	
 	
 	
-	
-	public AffinityPropagation(final AbstractRealMatrix data) {
-		this(data, new AffinityPropagationPlanner());
+	/**
+	 * Initializes a new AffinityPropagationModel with default parameters
+	 * @param data
+	 */
+	protected AffinityPropagation(final AbstractRealMatrix data) {
+		this(data, new AffinityPropagationParameters());
 	}
 	
-	public AffinityPropagation(final AbstractRealMatrix data, final AffinityPropagationPlanner planner) {
+	/**
+	 * Initializes a new AffinityPropagationModel with parameters
+	 * @param data
+	 * @param planner
+	 */
+	public AffinityPropagation(final AbstractRealMatrix data, final AffinityPropagationParameters planner) {
 		super(data, planner);
 		
 		
@@ -176,142 +183,6 @@ public class AffinityPropagation extends AbstractAutonomousClusterer implements 
 				parallel,
 				maxIter, tolerance, addNoise
 			});
-	}
-	
-	
-	
-	
-	public static class AffinityPropagationPlanner 
-			extends AbstractClusterer.BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
-		private static final long serialVersionUID = -6096855634412545959L;
-		
-		private int maxIter = DEF_MAX_ITER;
-		private double minChange = DEF_TOL;
-		private int iterBreak = DEF_ITER_BREAK;
-		
-		private double damping = DEF_DAMPING;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private GeometricallySeparable dist	= DEF_DIST;
-		private boolean verbose	= DEF_VERBOSE;
-		private boolean addNoise = DEF_ADD_GAUSSIAN_NOISE;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private boolean parallel = false;
-
-		public AffinityPropagationPlanner() { /* Default constructor */ }
-		
-		public AffinityPropagationPlanner useGaussianSmoothing(boolean b) {
-			this.addNoise = b;
-			return this;
-		}
-
-		@Override
-		public AffinityPropagation buildNewModelInstance(AbstractRealMatrix data) {
-			return new AffinityPropagation(data, this.copy());
-		}
-		
-		@Override
-		public AffinityPropagationPlanner copy() {
-			return new AffinityPropagationPlanner()
-				.setDampingFactor(damping)
-				.setIterBreak(iterBreak)
-				.setMaxIter(maxIter)
-				.setMinChange(minChange)
-				.setScale(scale)
-				.setSeed(seed)
-				.setMetric(dist)
-				.setVerbose(verbose)
-				.useGaussianSmoothing(addNoise)
-				.setNormalizer(norm)
-				.setForceParallel(parallel);
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		public AffinityPropagationPlanner setDampingFactor(final double damp) {
-			this.damping = damp;
-			return this;
-		}
-		
-		public AffinityPropagationPlanner setIterBreak(final int iters) {
-			this.iterBreak = iters;
-			return this;
-		}
-		
-		public AffinityPropagationPlanner setMaxIter(final int max) {
-			this.maxIter = max;
-			return this;
-		}
-		
-		public AffinityPropagationPlanner setMinChange(final double min) {
-			this.minChange = min;
-			return this;
-		}
-
-		@Override
-		public AffinityPropagationPlanner setScale(boolean b) {
-			scale = b;
-			return this;
-		}
-
-		@Override
-		public AffinityPropagationPlanner setSeed(Random rand) {
-			seed = rand;
-			return this;
-		}
-		
-		@Override
-		public AffinityPropagationPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-
-		@Override
-		public AffinityPropagationPlanner setVerbose(boolean b) {
-			verbose = b;
-			return this;
-		}
-
-		@Override
-		public AffinityPropagationPlanner setMetric(GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-
-		@Override
-		public AffinityPropagationPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
 	}
 
 

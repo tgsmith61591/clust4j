@@ -1,0 +1,44 @@
+package com.clust4j.algo;
+
+import java.util.Random;
+
+import com.clust4j.Clust4j;
+import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.metrics.pairwise.GeometricallySeparable;
+import com.clust4j.utils.DeepCloneable;
+
+/**
+ * Base planner class many clustering algorithms
+ * will extend with static inner classes. Some clustering
+ * algorithms will require more parameters and must provide
+ * the interface for the getting/setting of such parameters.
+ * 
+ * @author Taylor G Smith
+ */
+abstract public class BaseClustererParameters 
+		extends Clust4j // So all are serializable
+		implements DeepCloneable, BaseClassifierParameters {
+	private static final long serialVersionUID = -5830795881133834268L;
+	
+	protected boolean parallel, 
+		verbose = AbstractClusterer.DEF_VERBOSE, 
+		scale = AbstractClusterer.DEF_SCALE;
+	protected Random seed = AbstractClusterer.DEF_SEED;
+	protected GeometricallySeparable metric = AbstractClusterer.DEF_DIST;
+	protected FeatureNormalization norm = AbstractClusterer.DEF_NORMALIZER;
+	
+	@Override abstract public BaseClustererParameters copy();
+	abstract public BaseClustererParameters setNormalizer(final FeatureNormalization norm);
+	abstract public BaseClustererParameters setScale(final boolean b);
+	abstract public BaseClustererParameters setSeed(final Random rand);
+	abstract public BaseClustererParameters setVerbose(final boolean b);
+	abstract public BaseClustererParameters setMetric(final GeometricallySeparable dist);
+	abstract public BaseClustererParameters setForceParallel(final boolean b);
+
+	final public FeatureNormalization getNormalizer() { return norm; }
+	final public GeometricallySeparable getSep() 	{ return metric; }
+	final public boolean getParallel() 				{ return parallel; }
+	final public boolean getScale()					{ return scale; }
+	final public Random getSeed() 					{ return seed; }
+	final public boolean getVerbose() 				{ return verbose; }
+}

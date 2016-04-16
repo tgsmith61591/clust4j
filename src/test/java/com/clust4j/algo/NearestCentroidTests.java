@@ -29,7 +29,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
-import com.clust4j.algo.NearestCentroid.NearestCentroidPlanner;
+import com.clust4j.algo.NearestCentroidParameters;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.kernel.KernelTestCases;
@@ -62,7 +62,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner());
+		new NearestCentroid(data_, target_, new NearestCentroidParameters());
 	}
 
 	@Test
@@ -70,23 +70,23 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	public void testFit() {
 		new NearestCentroid(data_, target_).fit();
 		new NearestCentroid(data_, target_).fit().fit(); // Test fit again... ensure no exceptions
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner()).fit();
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner().setShrinkage(0.5)).fit();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters()).fit();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters().setShrinkage(0.5)).fit();
 	}
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new NearestCentroid.NearestCentroidPlanner().buildNewModelInstance(data_, target_);
+		new NearestCentroidParameters().fitNewModel(data_, target_);
 	}
 
 	@Test
 	@Override
 	public void testScoring() {
-		new NearestCentroid(data_, target_, new NearestCentroidPlanner().setVerbose(true)).fit().score();
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner()).fit().score();
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner().setVerbose(true)).fit().score();
-		new NearestCentroid(data_, target_, new NearestCentroid.NearestCentroidPlanner().setShrinkage(0.5)).fit().score();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters().setVerbose(true)).fit().score();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters()).fit().score();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters().setVerbose(true)).fit().score();
+		new NearestCentroid(data_, target_, new NearestCentroidParameters().setShrinkage(0.5)).fit().score();
 	}
 
 	@Test(expected=DimensionMismatchException.class)
@@ -99,7 +99,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		/*// We need to allow this behavior now that NC used in KMeans
 		NearestCentroid nn =
 			new NearestCentroid(data_, target_, 
-				new NearestCentroid.NearestCentroidPlanner()
+				new NearestCentroidPlanner()
 					.setSep(new GaussianKernel()));
 		assertTrue(nn.hasWarnings());
 		*/
@@ -107,7 +107,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	
 	@Test
 	public void testMiscellany() {
-		assertTrue(new NearestCentroid.NearestCentroidPlanner()
+		assertTrue(new NearestCentroidParameters()
 			.getNormalizer().equals(AbstractClusterer.DEF_NORMALIZER));
 	}
 	
@@ -145,7 +145,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		NearestCentroid nn = new NearestCentroid(data_, target_,
-			new NearestCentroid.NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setVerbose(true)
 				.setScale(true)).fit();
 		
@@ -169,7 +169,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(X, false);
 		NearestCentroid nn = new NearestCentroid(mat, new int[]{0,1,2},
-			new NearestCentroid.NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setVerbose(true)
 				.setScale(false)).fit();
 		
@@ -290,7 +290,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test(expected=NullPointerException.class)
 	public void testNPE() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{0,1,1}, 
-			new NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setNormalizer(null)
 				.setSeed(new Random())
 				.setScale(true)
@@ -302,7 +302,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	public void testBasicFit() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{0,1,1}, 
-			new NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setShrinkage(null)).fit();
 		final ArrayList<double[]> cents = n.getCentroids();
 		
@@ -315,7 +315,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	public void testShrinkageFit() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{0,1,1}, 
-			new NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setShrinkage(0.5)
 				.setVerbose(true)).fit();
 		final ArrayList<double[]> cents = n.getCentroids();
@@ -329,14 +329,14 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	public void testOddLabels() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{212,56,56}, 
-			new NearestCentroidPlanner()).fit();
+			new NearestCentroidParameters()).fit();
 		assertTrue(VecUtils.equalsExactly(n.predict(data), new int[]{212,56,56}));
 	}
 	
 	@Test
 	public void testOddLabelsFromNewInstance() {
-		NearestCentroid n = new NearestCentroidPlanner()
-			.buildNewModelInstance(data, new int[]{-6,0,0})
+		NearestCentroid n = new NearestCentroidParameters()
+			.fitNewModel(data, new int[]{-6,0,0})
 			.fit();
 		
 		// Test fitting it again, ensure it returns immediately
@@ -348,7 +348,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	@Test
 	public void testOddLabelsManhattan() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{212,56,56}, 
-			new NearestCentroidPlanner()
+			new NearestCentroidParameters()
 				.setMetric(Distance.MANHATTAN)
 				.setVerbose(true)).fit();
 		
@@ -372,49 +372,49 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidPlanner().setVerbose(true)).fit().getLabels();
+		int[] labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidParameters().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
-		labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidPlanner().setVerbose(true)).fit().predict(X);
+		labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidParameters().setVerbose(true)).fit().predict(X);
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
 	
 	@Test
 	public void testValidMetrics() {
-		final NearestCentroidPlanner planner = new NearestCentroidPlanner().setScale(true);
+		final NearestCentroidParameters planner = new NearestCentroidParameters().setScale(true);
 		NearestCentroid model;
 		final Array2DRowRealMatrix small = TestSuite.IRIS_SMALL.getData();
 		
 		for(Distance d: Distance.values()) {
 			planner.setMetric(d);
-			model = planner.buildNewModelInstance(data_, target_).fit();
+			model = planner.fitNewModel(data_, target_).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert no change
 			System.out.println(d + ", " + model.score());
 		}
 		
 		DistanceMetric d = new MinkowskiDistance(1.5);
 		planner.setMetric(d);
-		model = planner.buildNewModelInstance(data_, target_).fit();
+		model = planner.fitNewModel(data_, target_).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert no change
 		System.out.println(d + ", " + model.score());
 		
 		d = Distance.HAVERSINE.MI;
 		planner.setMetric(d);
-		model = planner.buildNewModelInstance(small, target_).fit();
+		model = planner.fitNewModel(small, target_).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert no change
 		System.out.println(d + ", " + model.score());
 		
 		// do similarity metrics work??
 		planner.setMetric(Similarity.COSINE);
-		model = planner.buildNewModelInstance(data_, target_).fit();
+		model = planner.fitNewModel(data_, target_).fit();
 		System.out.println(model.dist_metric + ", " + model.score());
 		
 		// how bout kernels?
 		for(Kernel k: KernelTestCases.all_kernels) {
 			planner.setMetric(k);
-			model = planner.buildNewModelInstance(data_, target_).fit();
+			model = planner.fitNewModel(data_, target_).fit();
 			System.out.println(model.dist_metric + ", " + model.score());
 		}
 	}

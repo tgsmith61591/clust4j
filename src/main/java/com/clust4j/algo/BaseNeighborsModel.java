@@ -120,22 +120,22 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	}
 	
 	
-	protected BaseNeighborsModel(AbstractClusterer caller, BaseNeighborsPlanner planner) {
+	protected BaseNeighborsModel(AbstractClusterer caller, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
 		super(caller, planner);
 		init(planner);
 	}
 	
-	protected BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner planner, boolean as_is) {
+	protected BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner, boolean as_is) {
 		super(data, planner, as_is);
 		init(planner);
 	}
 	
-	public BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner planner) {
+	public BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
 		super(data, planner);
 		init(planner);
 	}
 	
-	final private void init(BaseNeighborsPlanner planner) {
+	final private void init(BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
 		this.kNeighbors = planner.getK();
 		this.radius = planner.getRadius();
 		this.leafSize = planner.getLeafSize();
@@ -163,16 +163,21 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		this.m = fit_X.length;
 	}
 
-	abstract public static class BaseNeighborsPlanner 
-			extends BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
+	abstract public static class BaseNeighborsPlanner<T extends BaseNeighborsModel> 
+			extends BaseClustererParameters 
+			implements NeighborsClassifierParameters<T> {
 		private static final long serialVersionUID = 8356804193088162871L;
 		
-		abstract public BaseNeighborsPlanner setAlgorithm(NeighborsAlgorithm algo);
-		abstract public NeighborsAlgorithm getAlgorithm();
+		protected int leafSize = DEF_LEAF_SIZE;
+		protected NeighborsAlgorithm algo = DEF_ALGO;
+		
+		@Override abstract public T fitNewModel(AbstractRealMatrix d);
+		abstract public BaseNeighborsPlanner<T> setAlgorithm(NeighborsAlgorithm algo);
 		abstract public Integer getK();
-		abstract public int getLeafSize();
 		abstract public Double getRadius();
+		
+		final public int getLeafSize() { return leafSize; }
+		final public NeighborsAlgorithm getAlgorithm() { return algo; }
 	}
 	
 	public Neighborhood getNeighbors() {

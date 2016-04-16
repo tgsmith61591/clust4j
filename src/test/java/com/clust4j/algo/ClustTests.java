@@ -24,15 +24,13 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
-import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.AbstractClusterer.BaseClustererPlanner;
+import com.clust4j.algo.BaseClustererParameters;
 import com.clust4j.algo.DBSCAN;
-import com.clust4j.algo.KMeans.KMeansPlanner;
+import com.clust4j.algo.KMeansParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.Similarity;
 import com.clust4j.utils.MatrixFormatter;
@@ -62,7 +60,7 @@ public class ClustTests {
 		final double val11 = mat.getEntry(0, 0);
 		
 		DBSCAN db1 = new DBSCAN(mat, eps); // No scaling
-		DBSCAN db2 = new DBSCAN(mat, new DBSCAN.DBSCANPlanner(eps).setScale(true));
+		DBSCAN db2 = new DBSCAN(mat, new DBSCANParameters(eps).setScale(true));
 		
 		// Testing mutability of scaling
 		assertTrue(db1.getData().getEntry(0, 0) == val11);
@@ -127,7 +125,7 @@ public class ClustTests {
 		};
 		
 		KMeans k1 = new KMeans(toMat(a), 1);
-		KMeans k2 = new KMeans(toMat(b), new KMeansPlanner(1).setMetric(Similarity.COSINE));
+		KMeans k2 = new KMeans(toMat(b), new KMeansParameters(1).setMetric(Similarity.COSINE));
 		
 		assertFalse(k1.hashCode() == k2.hashCode());
 		assertFalse(k1.getVerbose());
@@ -147,21 +145,15 @@ public class ClustTests {
 	
 	@Test
 	public void testAbstractClustererEquals() {
-		BaseClustererPlanner planner = new BaseClustererPlanner(){
+		BaseClustererParameters planner = new BaseClustererParameters(){
 			private static final long serialVersionUID = 1L;
-			@Override public BaseClustererPlanner copy() {return this;}
-			@Override public FeatureNormalization getNormalizer() {return FeatureNormalization.STANDARD_SCALE;}
-			@Override public boolean getParallel() {return false;}
-			@Override public GeometricallySeparable getSep() {return Distance.EUCLIDEAN;}
-			@Override public boolean getScale() {return false; }
-			@Override public Random getSeed() { return GlobalState.DEFAULT_RANDOM_STATE; }
-			@Override public boolean getVerbose() { return false; }
-			@Override public BaseClustererPlanner setNormalizer(FeatureNormalization norm) { return this; }
-			@Override public BaseClustererPlanner setScale(boolean b) { return this; }
-			@Override public BaseClustererPlanner setSeed(Random rand) { return this; }
-			@Override public BaseClustererPlanner setVerbose(boolean b) { return this; }
-			@Override public BaseClustererPlanner setMetric(GeometricallySeparable dist) { return this; }
-			@Override public BaseClustererPlanner setForceParallel(boolean b) { return this; }
+			@Override public BaseClustererParameters copy() {return this;}
+			@Override public BaseClustererParameters setNormalizer(FeatureNormalization norm) { return this; }
+			@Override public BaseClustererParameters setScale(boolean b) { return this; }
+			@Override public BaseClustererParameters setSeed(Random rand) { return this; }
+			@Override public BaseClustererParameters setVerbose(boolean b) { return this; }
+			@Override public BaseClustererParameters setMetric(GeometricallySeparable dist) { return this; }
+			@Override public BaseClustererParameters setForceParallel(boolean b) { return this; }
 		};
 		
 		AbstractClusterer a = new AbstractClusterer(TestSuite.IRIS_DATASET.getData(), planner){

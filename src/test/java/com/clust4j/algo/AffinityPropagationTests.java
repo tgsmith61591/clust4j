@@ -30,7 +30,7 @@ import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.AffinityPropagation.AffinityPropagationPlanner;
+import com.clust4j.algo.AffinityPropagationParameters;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -83,7 +83,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new AffinityPropagation(data, new AffinityPropagationPlanner());
+		new AffinityPropagation(data, new AffinityPropagationParameters());
 	}
 
 	@Test
@@ -95,7 +95,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new AffinityPropagationPlanner().buildNewModelInstance(data);
+		new AffinityPropagationParameters().fitNewModel(data);
 	}
 
 	@Test
@@ -114,8 +114,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		
 		for(boolean bool: b) {
 			AffinityPropagation a = 
-					new AffinityPropagation(mat, new AffinityPropagation
-						.AffinityPropagationPlanner()
+					new AffinityPropagation(mat, new AffinityPropagationParameters()
 							.useGaussianSmoothing(bool)
 							.setVerbose(true)
 							.setSeed(seed)).fit();
@@ -135,8 +134,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	@Test
 	public void AffinityPropLoadTest() {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
-		new AffinityPropagation(mat, new AffinityPropagation
-			.AffinityPropagationPlanner()
+		new AffinityPropagation(mat, new AffinityPropagationParameters()
 				.setVerbose(true)).fit();
 	}
 	
@@ -156,8 +154,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		
 		for(boolean bool: b) {
 			AffinityPropagation a = 
-					new AffinityPropagation(mat, new AffinityPropagation
-						.AffinityPropagationPlanner()
+					new AffinityPropagation(mat, new AffinityPropagationParameters()
 							.useGaussianSmoothing(bool)
 							.setVerbose(true)
 							.setMetric(new GaussianKernel())
@@ -173,8 +170,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	@Test
 	public void AffinityPropKernelLoadTest() {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
-		new AffinityPropagation(mat, new AffinityPropagation
-			.AffinityPropagationPlanner()
+		new AffinityPropagation(mat, new AffinityPropagationParameters()
 				.setMetric(new GaussianKernel())
 				.setVerbose(true)).fit();
 	}
@@ -183,8 +179,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	@Override
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		AffinityPropagation ap = new AffinityPropagation(data, 
-			new AffinityPropagation
-				.AffinityPropagationPlanner()
+			new AffinityPropagationParameters()
 					.setVerbose(true)).fit();
 		
 		double[][] a = ap.getAvailabilityMatrix();
@@ -201,8 +196,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 	public void testOnIris() {
 		Array2DRowRealMatrix iris = data;
 		AffinityPropagation ap = new AffinityPropagation(iris, 
-			new AffinityPropagation
-				.AffinityPropagationPlanner()
+			new AffinityPropagationParameters()
 					.setVerbose(true)).fit();
 		
 		final int[] expected = new LabelEncoder(new int[]{
@@ -348,7 +342,7 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new AffinityPropagation(X, new AffinityPropagationPlanner().setVerbose(true)).fit().getLabels();
+		int[] labels = new AffinityPropagation(X, new AffinityPropagationParameters().setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
@@ -358,34 +352,34 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		AffinityPropagation model;
 		
 		for(Distance d: Distance.values()) {
-			model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(d)).fit();
+			model = new AffinityPropagation(data, new AffinityPropagationParameters().setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		}
 		
 		// what about minkowski?
 		DistanceMetric d = new MinkowskiDistance(1.5);
-		model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(d)).fit();
+		model = new AffinityPropagation(data, new AffinityPropagationParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		
 		// Haversine?
 		d = Distance.HAVERSINE.KM;
-		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationPlanner().setMetric(d)).fit();
+		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		
 		d = Distance.HAVERSINE.MI;
-		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationPlanner().setMetric(d)).fit();
+		model = new AffinityPropagation(TestSuite.IRIS_SMALL.getData(), new AffinityPropagationParameters().setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(d)); // assert didn't change
 		
 		
 		// Affinity should be able to support basically anything you throw at it, including similarity metrics:
 		for(Kernel k: KernelTestCases.all_kernels) {
-			model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(k)).fit();
+			model = new AffinityPropagation(data, new AffinityPropagationParameters().setMetric(k)).fit();
 			assertTrue(model.dist_metric.equals(k));
 		}
 		
 		// What about cosine similarity?
 		SimilarityMetric sim = Similarity.COSINE;
-		model = new AffinityPropagation(data, new AffinityPropagationPlanner().setMetric(sim)).fit();
+		model = new AffinityPropagation(data, new AffinityPropagationParameters().setMetric(sim)).fit();
 		assertTrue(model.dist_metric.equals(sim));
 	}
 	
@@ -402,13 +396,13 @@ public class AffinityPropagationTests implements ClusterTest, ClassifierTest, Co
 		 */
 		boolean a = false, b =  false;
 		try {
-			new AffinityPropagation(data, new AffinityPropagationPlanner().setDampingFactor(0.49));
+			new AffinityPropagation(data, new AffinityPropagationParameters().setDampingFactor(0.49));
 		} catch(IllegalArgumentException i) {
 			a = true;
 		}
 		
 		try {
-			new AffinityPropagation(data, new AffinityPropagationPlanner().setDampingFactor(1.00));
+			new AffinityPropagation(data, new AffinityPropagationParameters().setDampingFactor(1.00));
 		} catch(IllegalArgumentException i) {
 			b = true;
 		}

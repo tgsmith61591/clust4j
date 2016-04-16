@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.utils.SimpleHeap;
-import com.clust4j.algo.HierarchicalAgglomerative.HierarchicalPlanner;
+import com.clust4j.algo.HierarchicalAgglomerativeParameters;
 import com.clust4j.algo.HierarchicalAgglomerative.EfficientDistanceMatrix;
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
 import com.clust4j.except.ModelNotFitException;
@@ -72,8 +72,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	public void testRandom() {
 		HierarchicalAgglomerative hac = 
 			new HierarchicalAgglomerative(matrix,
-				new HierarchicalAgglomerative
-					.HierarchicalPlanner().setVerbose(false));
+				new HierarchicalAgglomerativeParameters().setVerbose(false));
 		hac.fit();
 	}
 
@@ -90,8 +89,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		for(Linkage linkage: HierarchicalAgglomerative.Linkage.values()) {
 			HierarchicalAgglomerative hac = 
 				new HierarchicalAgglomerative(mat,
-					new HierarchicalAgglomerative
-						.HierarchicalPlanner()
+					new HierarchicalAgglomerativeParameters()
 							.setLinkage(linkage)
 							.setVerbose(false)).fit();
 			
@@ -113,8 +111,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		for(Linkage linkage: HierarchicalAgglomerative.Linkage.values()) {
 			HierarchicalAgglomerative hac = 
 				new HierarchicalAgglomerative(mat,
-					new HierarchicalAgglomerative
-						.HierarchicalPlanner()
+					new HierarchicalAgglomerativeParameters()
 							.setLinkage(linkage)
 							.setMetric(new GaussianKernel())
 							.setVerbose(false)).fit();
@@ -135,8 +132,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		HierarchicalAgglomerative hac = 
 			new HierarchicalAgglomerative(mat,
-				new HierarchicalAgglomerative
-					.HierarchicalPlanner()
+				new HierarchicalAgglomerativeParameters()
 						.setLinkage(Linkage.AVERAGE)
 						.setVerbose(false));
 		
@@ -152,8 +148,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	public void loadTest() {
 		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
-			new HierarchicalAgglomerative
-				.HierarchicalPlanner()
+			new HierarchicalAgglomerativeParameters()
 					.setLinkage(Linkage.AVERAGE)
 					.setVerbose(true)).fit().getLabels();
 	}
@@ -162,8 +157,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	public void loadTestKernel() {
 		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
-			new HierarchicalAgglomerative
-				.HierarchicalPlanner()
+			new HierarchicalAgglomerativeParameters()
 					.setLinkage(Linkage.AVERAGE)
 					.setMetric(new GaussianKernel())
 					.setVerbose(true)).fit().getLabels();
@@ -191,33 +185,33 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	@Test
 	@Override
 	public void testPlannerConst() {
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner());
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.AVERAGE));
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.COMPLETE));
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.WARD));
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters());
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.AVERAGE));
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.COMPLETE));
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.WARD));
 	}
 
 	@Test
 	@Override
 	public void testFit() {
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner()).fit();
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.AVERAGE)).fit();
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.COMPLETE)).fit();
-		new HierarchicalAgglomerative(data_, new HierarchicalPlanner(Linkage.WARD)).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters()).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.AVERAGE)).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.COMPLETE)).fit();
+		new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters(Linkage.WARD)).fit();
 	}
 
 	@Test
 	@Override
 	public void testFromPlanner() {
-		new HierarchicalPlanner().buildNewModelInstance(data_);
-		new HierarchicalPlanner(Linkage.AVERAGE).buildNewModelInstance(data_);
-		new HierarchicalPlanner(Linkage.COMPLETE).buildNewModelInstance(data_);
-		new HierarchicalPlanner(Linkage.WARD).buildNewModelInstance(data_);
+		new HierarchicalAgglomerativeParameters().fitNewModel(data_);
+		new HierarchicalAgglomerativeParameters(Linkage.AVERAGE).fitNewModel(data_);
+		new HierarchicalAgglomerativeParameters(Linkage.COMPLETE).fitNewModel(data_);
+		new HierarchicalAgglomerativeParameters(Linkage.WARD).fitNewModel(data_);
 	}
 	
 	@Test(expected=ModelNotFitException.class)
 	public void testNotFit1() {
-		new HierarchicalPlanner().buildNewModelInstance(data_).getLabels();
+		new HierarchicalAgglomerative(data_).getLabels();
 	}
 
 	@Test
@@ -225,7 +219,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		HierarchicalAgglomerative agglom = 
 			new HierarchicalAgglomerative(matrix, 
-				new HierarchicalAgglomerative.HierarchicalPlanner()
+				new HierarchicalAgglomerativeParameters()
 					.setScale(true)
 					.setVerbose(true)).fit();
 		
@@ -289,13 +283,13 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		final double[][] x = MatUtils.rep(-1, 3, 3);
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
-		int[] labels = new HierarchicalAgglomerative(X, new HierarchicalPlanner(Linkage.AVERAGE).setVerbose(true)).fit().getLabels();
+		int[] labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.AVERAGE).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
-		labels = new HierarchicalAgglomerative(X, new HierarchicalPlanner(Linkage.COMPLETE).setVerbose(true)).fit().getLabels();
+		labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.COMPLETE).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
-		labels = new HierarchicalAgglomerative(X, new HierarchicalPlanner(Linkage.WARD).setVerbose(true)).fit().getLabels();
+		labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.WARD).setVerbose(true)).fit().getLabels();
 		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 	
@@ -313,23 +307,23 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		for(Linkage l: new Linkage[]{Linkage.COMPLETE, Linkage.AVERAGE}) {
 			link = l;
 			for(Distance d: Distance.values()) {
-				model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+				model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 				assertTrue(model.dist_metric.equals(d)); // assert didn't change...
 			}
 			
 			// minkowski
 			DistanceMetric d = new MinkowskiDistance(1.5);
-			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
 			
 			// haversine
 			d = Distance.HAVERSINE.MI;
-			model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			model = new HierarchicalAgglomerative(small, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(d)); // assert didn't change...
 			
 			// similarity?
 			for(Kernel k: KernelTestCases.all_kernels) {
-				model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(k)).fit();
+				model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(k)).fit();
 			}
 		}
 		
@@ -339,27 +333,27 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		 */
 		link = Linkage.WARD;
 		for(Distance d: Distance.values()) {
-			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+			model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		}
 		
 		// minkowski
 		DistanceMetric d = new MinkowskiDistance(1.5);
-		model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+		model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		
 		// haversine
 		d = Distance.HAVERSINE.MI;
-		model = new HierarchicalAgglomerative(small, new HierarchicalPlanner().setLinkage(link).setMetric(d)).fit();
+		model = new HierarchicalAgglomerative(small, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(d)).fit();
 		assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		
 		// similarity?
 		for(Kernel k: KernelTestCases.all_kernels) {
-			model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(k)).fit();
+			model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(k)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN)); // assert didn't change...
 		}
 		
-		model = new HierarchicalAgglomerative(data_, new HierarchicalPlanner().setLinkage(link).setMetric(Distance.HAVERSINE.KM));
+		model = new HierarchicalAgglomerative(data_, new HierarchicalAgglomerativeParameters().setLinkage(link).setMetric(Distance.HAVERSINE.KM));
 		assertTrue(model.getLinkage().equals(link));
 		assertTrue(model.getSeparabilityMetric().equals(Distance.EUCLIDEAN));
 	}

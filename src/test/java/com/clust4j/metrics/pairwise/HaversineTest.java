@@ -23,10 +23,9 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.algo.AbstractCentroidClusterer;
-import com.clust4j.algo.KMeans;
-import com.clust4j.algo.KMedoids;
-import com.clust4j.algo.KMeans.KMeansPlanner;
-import com.clust4j.algo.KMedoids.KMedoidsPlanner;
+import com.clust4j.algo.CentroidClustererParameters;
+import com.clust4j.algo.KMeansParameters;
+import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.utils.VecUtils;
 
 public class HaversineTest {
@@ -42,12 +41,15 @@ public class HaversineTest {
 	public void test1() {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
-		AbstractCentroidClusterer km = new KMeans(mat, 
-						new KMeansPlanner(2)
-								.setVerbose(true)
-								.setMetric(Distance.HAVERSINE.MI)
-								.setVerbose(true)
-								.setScale(true)).fit();
+		AbstractCentroidClusterer km;
+		CentroidClustererParameters<? extends AbstractCentroidClusterer> planner;
+		
+		planner = new KMeansParameters(2)
+				.setVerbose(true)
+				.setMetric(Distance.HAVERSINE.MI)
+				.setVerbose(true)
+				.setScale(true);
+		km = planner.fitNewModel(mat).fit();
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);
@@ -58,11 +60,15 @@ public class HaversineTest {
 	public void test2() {
 
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
-		AbstractCentroidClusterer km = new KMedoids(mat, new KMedoidsPlanner(2)
-								.setVerbose(true)
-								.setMetric(Distance.HAVERSINE.MI)
-								.setVerbose(true)
-								.setScale(false)).fit();
+		AbstractCentroidClusterer km;
+		CentroidClustererParameters<? extends AbstractCentroidClusterer> planner;
+		
+		planner = new KMedoidsParameters(2)
+			.setVerbose(true)
+			.setMetric(Distance.HAVERSINE.MI)
+			.setVerbose(true)
+			.setScale(false);
+		km = planner.fitNewModel(mat).fit();
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);

@@ -17,13 +17,11 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Stack;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.RadiusNeighbors.RadiusNeighborsPlanner;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
@@ -76,130 +74,12 @@ final public class DBSCAN extends AbstractDBSCAN {
 	private volatile int numNoisey;
 	
 	
-	/**
-	 * A builder class to provide an easier constructing
-	 * interface to set custom parameters for DBSCAN
-	 * @author Taylor G Smith
-	 */
-	final public static class DBSCANPlanner extends AbstractDBSCANPlanner {
-		private static final long serialVersionUID = -5285244186285768512L;
-		
-		private double eps = DEF_EPS;
-		private int minPts = DEF_MIN_PTS;
-		private boolean scale = DEF_SCALE;
-		private GeometricallySeparable dist	= DEF_DIST;
-		private boolean verbose	= DEF_VERBOSE;
-		private Random seed = DEF_SEED;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private boolean parallel;
-		
-		
-		public DBSCANPlanner() { }
-		public DBSCANPlanner(final double eps) {
-			this.eps = eps;
-		}
-
-		
-		@Override
-		public DBSCAN buildNewModelInstance(AbstractRealMatrix data) {
-			return new DBSCAN(data, this.copy());
-		}
-		
-		@Override
-		public DBSCANPlanner copy() {
-			return new DBSCANPlanner(eps)
-				.setMinPts(minPts)
-				.setScale(scale)
-				.setMetric(dist)
-				.setSeed(seed)
-				.setVerbose(verbose)
-				.setNormalizer(norm)
-				.setForceParallel(parallel);
-		}
-
-		@Override
-		public int getMinPts() {
-			return minPts;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-		
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-		
-		@Override
-		public DBSCANPlanner setMinPts(final int minPts) {
-			this.minPts = minPts;
-			return this;
-		}
-		
-		@Override
-		public DBSCANPlanner setScale(final boolean scale) {
-			this.scale = scale;
-			return this;
-		}
-		
-		@Override
-		public DBSCANPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		@Override
-		public DBSCANPlanner setMetric(final GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		
-		public DBSCANPlanner setVerbose(final boolean v) {
-			this.verbose = v;
-			return this;
-		}
-		
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		
-		@Override
-		public DBSCANPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-		
-		@Override
-		public DBSCANPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-	}
-	
 	
 	/**
 	 * Constructs an instance of DBSCAN from the default epsilon
 	 * @param data
 	 */
-	public DBSCAN(final AbstractRealMatrix data) {
+	protected DBSCAN(final AbstractRealMatrix data) {
 		this(data, DEF_EPS);
 	}
 	
@@ -209,8 +89,8 @@ final public class DBSCAN extends AbstractDBSCAN {
 	 * @param eps
 	 * @param data
 	 */
-	public DBSCAN(final AbstractRealMatrix data, final double eps) {
-		this(data, new DBSCANPlanner(eps));
+	protected DBSCAN(final AbstractRealMatrix data, final double eps) {
+		this(data, new DBSCANParameters(eps));
 	}
 	
 	/**
@@ -218,10 +98,10 @@ final public class DBSCAN extends AbstractDBSCAN {
 	 * @param builder
 	 * @param data
 	 */
-	public DBSCAN(final AbstractRealMatrix data, final DBSCANPlanner planner) {
+	protected DBSCAN(final AbstractRealMatrix data, final DBSCANParameters planner) {
 		super(data, planner);
 		this.m = data.getRowDimension();
-		this.eps = planner.eps;
+		this.eps = planner.getEps();
 		
 		// Error handle...
 		if(this.eps <= 0.0) 
@@ -311,7 +191,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 			// Fit the nearest neighbor model...
 			final LogTimer rnTimer = new LogTimer();
 			final RadiusNeighbors rnModel = new RadiusNeighbors(data,
-				new RadiusNeighborsPlanner(eps)
+				new RadiusNeighborsParameters(eps)
 					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 					.setSeed(getSeed())
 					.setMetric(getSeparabilityMetric())

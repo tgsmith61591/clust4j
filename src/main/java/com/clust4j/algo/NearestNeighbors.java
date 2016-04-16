@@ -15,28 +15,23 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestNeighborHeapSearch.Neighborhood;
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
-import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 public class NearestNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 8306843374522289973L;
+
 	
-	
-	
-	
-	public NearestNeighbors(AbstractRealMatrix data) {
+	protected NearestNeighbors(AbstractRealMatrix data) {
 		this(data, DEF_K);
 	}
 	
@@ -44,25 +39,25 @@ public class NearestNeighbors extends BaseNeighborsModel {
 		this(caller, DEF_K);
 	}
 
-	public NearestNeighbors(AbstractRealMatrix data, int k) {
-		this(data, new NearestNeighborsPlanner(k));
+	protected NearestNeighbors(AbstractRealMatrix data, int k) {
+		this(data, new NearestNeighborsParameters(k));
 	}
 	
 	protected NearestNeighbors(AbstractClusterer caller, int k) {
-		this(caller, new NearestNeighborsPlanner(k));
+		this(caller, new NearestNeighborsParameters(k));
 	}
 
-	public NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner) {
+	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsParameters planner) {
 		this(data, planner, false);
 	}
 	
-	protected NearestNeighbors(AbstractClusterer caller, NearestNeighborsPlanner planner) {
+	protected NearestNeighbors(AbstractClusterer caller, NearestNeighborsParameters planner) {
 		super(caller, planner);
 		validateK(kNeighbors, m);
 		logModelSummary();
 	}
 	
-	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsPlanner planner, boolean as_is) {
+	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsParameters planner, boolean as_is) {
 		super(data, planner, as_is);
 		validateK(kNeighbors, m);
 		logModelSummary();
@@ -89,142 +84,6 @@ public class NearestNeighbors extends BaseNeighborsModel {
 	
 	
 	
-	
-	public static class NearestNeighborsPlanner extends BaseNeighborsPlanner {
-		private static final long serialVersionUID = -4848896423352149405L;
-		
-		private NeighborsAlgorithm algo = DEF_ALGO;
-		private GeometricallySeparable dist= NearestNeighborHeapSearch.DEF_DIST;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private boolean verbose = DEF_VERBOSE;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private final int k;
-		private int leafSize = DEF_LEAF_SIZE;
-		private boolean parallel = false;
-		
-		
-		public NearestNeighborsPlanner() { this(DEF_K); }
-		public NearestNeighborsPlanner(int k) {
-			this.k = k;
-		}
-		
-
-		
-		@Override
-		public NearestNeighbors buildNewModelInstance(AbstractRealMatrix data) {
-			return new NearestNeighbors(data, this.copy());
-		}
-
-		@Override
-		public NearestNeighborsPlanner setAlgorithm(NeighborsAlgorithm algo) {
-			this.algo = algo;
-			return this;
-		}
-
-		@Override
-		public NeighborsAlgorithm getAlgorithm() {
-			return algo;
-		}
-
-		@Override
-		public NearestNeighborsPlanner copy() {
-			return new NearestNeighborsPlanner(k)
-				.setAlgorithm(algo)
-				.setNormalizer(norm)
-				.setScale(scale)
-				.setSeed(seed)
-				.setMetric(dist)
-				.setVerbose(verbose)
-				.setLeafSize(leafSize)
-				.setForceParallel(parallel);
-		}
-		
-		@Override
-		public int getLeafSize() {
-			return leafSize;
-		}
-		
-		@Override
-		final public Integer getK() {
-			return k;
-		}
-
-		@Override
-		final public Double getRadius() {
-			return null;
-		}
-		
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-
-		public NearestNeighborsPlanner setLeafSize(int leafSize) {
-			this.leafSize = leafSize;
-			return this;
-		}
-		
-		@Override
-		public NearestNeighborsPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-
-		@Override
-		public NearestNeighborsPlanner setScale(boolean b) {
-			this.scale = b;
-			return this;
-		}
-
-		@Override
-		public NearestNeighborsPlanner setSeed(Random rand) {
-			this.seed= rand;
-			return this;
-		}
-
-		@Override
-		public NearestNeighborsPlanner setVerbose(boolean b) {
-			this.verbose = b;
-			return this;
-		}
-
-		@Override
-		public NearestNeighborsPlanner setMetric(GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		@Override
-		public NearestNeighborsPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-	}
 	
 	@Override
 	public boolean equals(Object o) {

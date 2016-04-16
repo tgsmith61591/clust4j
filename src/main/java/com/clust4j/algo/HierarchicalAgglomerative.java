@@ -17,13 +17,11 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.CircularKernel;
 import com.clust4j.kernel.LogKernel;
@@ -151,13 +149,13 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	
 	
 	
-	public HierarchicalAgglomerative(AbstractRealMatrix data) {
-		this(data, new HierarchicalPlanner());
+	protected HierarchicalAgglomerative(AbstractRealMatrix data) {
+		this(data, new HierarchicalAgglomerativeParameters());
 	}
 
-	public HierarchicalAgglomerative(AbstractRealMatrix data, 
-			HierarchicalPlanner planner) {
-		super(data, planner, planner.num_clusters);
+	protected HierarchicalAgglomerative(AbstractRealMatrix data, 
+			HierarchicalAgglomerativeParameters planner) {
+		super(data, planner, planner.getNumClusters());
 		this.linkage = planner.getLinkage();
 		
 		if(!isValidMetric(this.dist_metric)) {
@@ -167,7 +165,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 		}
 		
 		this.m = data.getRowDimension();
-		this.num_clusters = planner.num_clusters;
+		this.num_clusters = super.k;
 		
 		logModelSummary();
 	}
@@ -184,127 +182,6 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 			});
 	}
 	
-	
-	
-	
-	public static class HierarchicalPlanner 
-			extends BaseClustererPlanner 
-			implements UnsupervisedClassifierPlanner {
-		
-		private static final long serialVersionUID = -1333222392991867085L;
-		
-		private GeometricallySeparable dist = DEF_DIST;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private Linkage linkage = DEF_LINKAGE;
-		private boolean verbose = DEF_VERBOSE;
-		private int num_clusters = 2;
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private boolean parallel = false;
-		
-		
-		public HierarchicalPlanner(){}
-		public HierarchicalPlanner(Linkage linkage) {
-			this();
-			this.linkage = linkage;
-		}
-		
-
-		@Override
-		public HierarchicalAgglomerative buildNewModelInstance(AbstractRealMatrix data) {
-			return new HierarchicalAgglomerative(data, this.copy());
-		}
-		
-		@Override
-		public HierarchicalPlanner copy() {
-			return new HierarchicalPlanner(linkage)
-				.setMetric(dist)
-				.setScale(scale)
-				.setSeed(seed)
-				.setVerbose(verbose)
-				.setNumClusters(num_clusters)
-				.setNormalizer(norm)
-				.setForceParallel(parallel);
-		}
-		
-		public Linkage getLinkage() {
-			return linkage;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-
-		@Override
-		public GeometricallySeparable getSep() {
-			return dist;
-		}
-		
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-		
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-		
-		public HierarchicalPlanner setLinkage(Linkage l) {
-			this.linkage = l;
-			return this;
-		}
-		
-		public HierarchicalPlanner setNumClusters(final int d) {
-			this.num_clusters = d;
-			return this;
-		}
-
-		@Override
-		public HierarchicalPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-		
-		@Override
-		public HierarchicalPlanner setScale(boolean b) {
-			this.scale = b;
-			return this;
-		}
-		
-		@Override
-		public HierarchicalPlanner setSeed(final Random seed) {
-			this.seed = seed;
-			return this;
-		}
-		
-		@Override
-		public HierarchicalPlanner setVerbose(boolean b) {
-			this.verbose = b;
-			return this;
-		}
-
-		@Override
-		public HierarchicalPlanner setMetric(GeometricallySeparable dist) {
-			this.dist = dist;
-			return this;
-		}
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		@Override
-		public HierarchicalPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-	}
 	
 	
 	

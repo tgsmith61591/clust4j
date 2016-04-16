@@ -18,17 +18,19 @@ package com.clust4j.algo.pipeline;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
-import com.clust4j.algo.UnsupervisedClassifierPlanner;
+import com.clust4j.algo.UnsupervisedClassifier;
+import com.clust4j.algo.UnsupervisedClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
 
-public class UnsupervisedPipeline extends Pipeline<UnsupervisedClassifierPlanner> {
+public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClassifier> 
+		extends Pipeline<UnsupervisedClassifierParameters<M>> {
 	private static final long serialVersionUID = 8790601917700667359L;
 
-	public UnsupervisedPipeline(final UnsupervisedClassifierPlanner planner, final PreProcessor... pipe) {
+	public UnsupervisedPipeline(final UnsupervisedClassifierParameters<M> planner, final PreProcessor... pipe) {
 		super(planner, pipe);
 	}
 
-	public AbstractClusterer fit(final AbstractRealMatrix data) {
+	public M fit(final AbstractRealMatrix data) {
 		synchronized(fitLock) {
 			AbstractRealMatrix copy = data;
 			
@@ -37,10 +39,10 @@ public class UnsupervisedPipeline extends Pipeline<UnsupervisedClassifierPlanner
 				copy = pre.operate(copy);
 	
 			// Build the model
-			final AbstractClusterer model = planner.buildNewModelInstance(copy);
+			final M model = planner.fitNewModel(copy);
 			
-			// Fit the model
-			return model.fit();
+			// The model was fit internally above
+			return model;
 		}
 	}
 }

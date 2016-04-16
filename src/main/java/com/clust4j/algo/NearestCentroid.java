@@ -17,13 +17,11 @@ package com.clust4j.algo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.CircularKernel;
 import com.clust4j.kernel.LogKernel;
@@ -77,26 +75,26 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	
 	/**
 	 * Default constructor. Builds an instance of {@link NearestCentroid}
-	 * with the default {@link NearestCentroidPlanner}
+	 * with the default {@link NearestCentroidParameters}
 	 * @param data
 	 * @param y
 	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
 	 * @throws IllegalArgumentException if there is only one unique class in y
 	 */
-	public NearestCentroid(AbstractRealMatrix data, int[] y) {
-		this(data, y, new NearestCentroidPlanner());
+	protected NearestCentroid(AbstractRealMatrix data, int[] y) {
+		this(data, y, new NearestCentroidParameters());
 	}
 	
 	/**
 	 * Builds an instance of {@link NearestCentroid}
-	 * with an existing instance of {@link NearestCentroidPlanner}
+	 * with an existing instance of {@link NearestCentroidParameters}
 	 * @param data
 	 * @param y
 	 * @param planner
 	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
 	 * @throws IllegalArgumentException if there is only one unique class in y
 	 */
-	public NearestCentroid(AbstractRealMatrix data, int[] y, NearestCentroidPlanner planner) {
+	protected NearestCentroid(AbstractRealMatrix data, int[] y, NearestCentroidParameters planner) {
 		super(data, planner);
 
 		VecUtils.checkDims(y);
@@ -130,7 +128,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 			setSeparabilityMetric(DEF_DIST);
 		}
 		
-		this.shrinkage = planner.shrinkage;
+		this.shrinkage = planner.getShrinkage();
 		logModelSummary();
 	}
 	
@@ -147,111 +145,7 @@ public class NearestCentroid extends AbstractClusterer implements SupervisedClas
 	}
 	
 	
-	public static class NearestCentroidPlanner 
-			extends BaseClustererPlanner 
-			implements SupervisedClassifierPlanner {
-		private static final long serialVersionUID = -2064678309873097219L;
-		
-		private FeatureNormalization norm = DEF_NORMALIZER;
-		private GeometricallySeparable met= DEF_DIST;
-		private Double shrinkage = null;
-		private boolean verbose = DEF_VERBOSE;
-		private boolean scale = DEF_SCALE;
-		private Random seed = DEF_SEED;
-		private boolean parallel = false;
-		
-		
-		public NearestCentroidPlanner() { }
-
-		@Override
-		public NearestCentroid buildNewModelInstance(AbstractRealMatrix data, int[] y) {
-			return new NearestCentroid(data, y, copy());
-		}
-
-		@Override
-		public NearestCentroidPlanner copy() {
-			return new NearestCentroidPlanner()
-				.setNormalizer(norm)
-				.setScale(scale)
-				.setSeed(seed)
-				.setMetric(met)
-				.setShrinkage(shrinkage)
-				.setVerbose(verbose)
-				.setForceParallel(parallel);
-		}
-
-		@Override
-		public FeatureNormalization getNormalizer() {
-			return norm;
-		}
-		
-		@Override
-		public boolean getParallel() {
-			return parallel;
-		}
-
-		@Override
-		public GeometricallySeparable getSep() {
-			return met;
-		}
-
-		@Override
-		public boolean getScale() {
-			return scale;
-		}
-
-		@Override
-		public Random getSeed() {
-			return seed;
-		}
-
-		@Override
-		public boolean getVerbose() {
-			return verbose;
-		}
-
-		@Override
-		public NearestCentroidPlanner setNormalizer(FeatureNormalization norm) {
-			this.norm = norm;
-			return this;
-		}
-		
-		@Override
-		public NearestCentroidPlanner setForceParallel(boolean b) {
-			this.parallel = b;
-			return this;
-		}
-
-		@Override
-		public NearestCentroidPlanner setScale(boolean b) {
-			this.scale = b;
-			return this;
-		}
-
-		@Override
-		public NearestCentroidPlanner setSeed(Random rand) {
-			this.seed = rand;
-			return this;
-		}
-		
-		public NearestCentroidPlanner setShrinkage(final Double d) {
-			this.shrinkage = d;
-			return this;
-		}
-
-		@Override
-		public NearestCentroidPlanner setVerbose(boolean b) {
-			this.verbose = b;
-			return this;
-		}
-
-		@Override
-		public NearestCentroidPlanner setMetric(GeometricallySeparable dist) {
-			this.met = dist;
-			return this;
-		}
-		
-	}
+	
 
 
 	@Override
