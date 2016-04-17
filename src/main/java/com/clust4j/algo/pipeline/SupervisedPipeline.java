@@ -26,6 +26,7 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 		extends Pipeline<SupervisedClassifierParameters<M>> {
 	
 	private static final long serialVersionUID = 8790601917700667359L;
+	protected M fit_model = null; // TODO: use this for predict
 
 	public SupervisedPipeline(final SupervisedClassifierParameters<M> planner, final PreProcessor... pipe) {
 		super(planner, pipe);
@@ -33,17 +34,10 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 
 	public M fit(final AbstractRealMatrix data, int[] y) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = data; // no need to copy, as handled in each processor...
-			
-			// Push through pipeline...
-			for(PreProcessor pre: pipe)
-				copy = pre.operate(copy);
+			AbstractRealMatrix copy = pipelineTransform(data);
 	
-			// Build the model -- the model should handle the dim check internally
-			final M model = planner.fitNewModel(copy, y);
-			
-			// The model was fit internally
-			return model;
+			// Build/fit the model -- the model should handle the dim check internally
+			return fit_model = planner.fitNewModel(copy, y);
 		}
 	}
 }

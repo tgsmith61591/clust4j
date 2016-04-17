@@ -32,7 +32,6 @@ import org.apache.commons.math3.util.Precision;
 import com.clust4j.GlobalState;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.algo.Neighborhood;
-import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Loggable;
 import com.clust4j.log.Log.Tag.Algo;
@@ -342,7 +341,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			if(null == this.labels ^ null == h.labels)
 				return false;
 			
-			return MatUtils.equalsExactly(this.data.getDataRef(), h.data.getDataRef())
+			return super.equals(o) // UUID test
+				&& MatUtils.equalsExactly(this.data.getDataRef(), h.data.getDataRef())
 				&& (null == this.labels ? true : VecUtils.equalsExactly(this.labels, h.labels))
 				&& this.algo.equals(h.algo)
 				&& this.alpha == h.alpha
@@ -1387,11 +1387,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
-			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen...
+		return super.handleLabelCopy(labels);
 	}
 
 	@Override

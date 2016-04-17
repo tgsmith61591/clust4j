@@ -42,7 +42,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	protected NeighborsAlgorithm alg;
 	
 	/** Resultant neighborhood from fit method */
-	volatile Neighborhood res;
+	protected volatile Neighborhood res;
 
 	interface TreeBuilder extends MetricValidator {
 		public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data, 
@@ -130,7 +130,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		init(planner);
 	}
 	
-	public BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
+	protected BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
 		super(data, planner);
 		init(planner);
 	}
@@ -268,4 +268,5 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	
 	
 	abstract Neighborhood getNeighbors(AbstractRealMatrix matrix);
+	@Override abstract protected BaseNeighborsModel fit();
 }

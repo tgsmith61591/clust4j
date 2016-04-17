@@ -22,7 +22,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
-import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.CircularKernel;
 import com.clust4j.kernel.LogKernel;
 import com.clust4j.log.LogTimer;
@@ -592,11 +591,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
-			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen...
+		return super.handleLabelCopy(labels);
 	}
 	
 

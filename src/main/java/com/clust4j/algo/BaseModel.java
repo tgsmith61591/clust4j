@@ -22,7 +22,7 @@ abstract public class BaseModel extends Clust4j implements java.io.Serializable 
 	private static final long serialVersionUID = 4707757741169405063L;
 	
 	/** The lock to synchronize on for fits */
-	final Object fitLock = new SynchronicityLock();
+	protected final Object fitLock = new SynchronicityLock();
 
 	/** This should be synchronized and thread-safe */
 	protected abstract BaseModel fit();

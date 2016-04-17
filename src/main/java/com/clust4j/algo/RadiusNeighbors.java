@@ -105,8 +105,8 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 			RadiusNeighbors other = (RadiusNeighbors)o;
 			
 			
-			return 
-				((null == other.radius || null == this.radius) ?
+			return super.equals(o)
+				&& ((null == other.radius || null == this.radius) ?
 					other.radius == this.radius : 
 						other.radius.intValue() == this.radius)
 				&& other.leafSize == this.leafSize

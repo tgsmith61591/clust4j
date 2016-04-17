@@ -648,4 +648,11 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = orig;
 		}
 	}
+	
+	@Test
+	public void testCallerConstructors() {
+		KMeans km = new KMeansParameters(3).fitNewModel(data);
+		new NearestNeighbors(km).fit();
+		new NearestNeighbors(km, new NearestNeighborsParameters(2)).fit();
+	}
 }

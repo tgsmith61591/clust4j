@@ -203,19 +203,8 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 			if(null == this.cachedA ^ null == a.cachedA)
 				return false;
 			
-			/*
-			 * Models haven't been fit
-			 */
-			if(null == this.cachedA) {
-				return MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
-					&& this.tolerance == a.tolerance
-					&& this.addNoise == a.addNoise
-					&& this.normalized == a.normalized
-					&& this.maxIter == a.maxIter
-					&& this.damping == a.damping;
-			}
-			
-			return MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
+			return super.equals(o) // check on UUID and class
+				&& MatUtils.equalsExactly(this.data.getDataRef(), a.data.getDataRef())
 				&& VecUtils.equalsExactly(this.labels, a.labels)
 				&& this.tolerance == a.tolerance
 				&& this.addNoise == a.addNoise
@@ -229,11 +218,7 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
-			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen...
+		return super.handleLabelCopy(labels);
 	}
 
 	@Override

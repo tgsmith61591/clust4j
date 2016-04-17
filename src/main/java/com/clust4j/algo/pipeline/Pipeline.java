@@ -16,6 +16,8 @@
 
 package com.clust4j.algo.pipeline;
 
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+
 import com.clust4j.Clust4j;
 import com.clust4j.algo.BaseClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
@@ -38,7 +40,7 @@ public abstract class Pipeline<T extends BaseClassifierParameters> extends Clust
 	 * @param pipe
 	 * @return
 	 */
-	final static PreProcessor[] copyPipe(final PreProcessor... pipe) {
+	protected final static PreProcessor[] copyPipe(final PreProcessor... pipe) {
 		final PreProcessor[] out = new PreProcessor[pipe.length];
 		
 		int idx = 0;
@@ -47,4 +49,21 @@ public abstract class Pipeline<T extends BaseClassifierParameters> extends Clust
 		
 		return out;
 	}
+	
+	/**
+	 * Apply the pipeline to input data
+	 * @param data
+	 * @return
+	 */
+	public final AbstractRealMatrix pipelineTransform(AbstractRealMatrix data) {
+		AbstractRealMatrix operated = data;
+		
+		// Push through pipeline...
+		for(PreProcessor pre: pipe)
+			operated = pre.operate(operated);
+		
+		return operated;
+	}
+	
+	// TODO: predict on new data!!
 }

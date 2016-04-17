@@ -38,7 +38,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	private static final long serialVersionUID = 3935595821188876442L;
 
 	// the initialization reorganizes the trees
-	final Boruvka alg;
+	final protected Boruvka alg;
 	
 	private final NearestNeighborHeapSearch outer_tree;
 	private final int minSamples;
@@ -48,7 +48,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	private final Loggable logger;
 	private final double alpha;
 	
-	BoruvkaAlgorithm(NearestNeighborHeapSearch tree, int min_samples, 
+	protected BoruvkaAlgorithm(NearestNeighborHeapSearch tree, int min_samples, 
 			DistanceMetric metric, int leafSize, boolean approx_min_span_tree,
 			double alpha, Loggable logger) {
 		
@@ -69,14 +69,14 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	}
 	
 	
-	static class BoruvkaUnionFind extends HDBSCAN.TreeUnionFind {
+	protected static class BoruvkaUnionFind extends HDBSCAN.TreeUnionFind {
 		BoruvkaUnionFind(int N) {
 			super(N);
 		}
 	}
 	
 
-	static double ballTreeMinDistDual(double rad1, double rad2, int node1, int node2, double[][] centroidDist) {
+	protected static double ballTreeMinDistDual(double rad1, double rad2, int node1, int node2, double[][] centroidDist) {
 		double distPt = centroidDist[node1][node2];
 		return FastMath.max(0, (distPt - rad1 - rad2));
 	}
@@ -97,7 +97,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	}
 	*/
 	
-	static double kdTreeMinRDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
+	protected static double kdTreeMinRDistDual(DistanceMetric metric, int node1, int node2, double[][][] nodeBounds, int n) {
 		double d, d1, d2, rdist = 0.0;
 		boolean inf = metric.getP() == Double.POSITIVE_INFINITY;
 		int j;
@@ -121,7 +121,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 	 * tree traversal algorithm
 	 * @author Taylor G Smith
 	 */
-	abstract class Boruvka {
+	protected abstract class Boruvka {
 		final static int INIT_VAL = -1;
 		
 		final NearestNeighborHeapSearch coreDistTree = outer_tree;
@@ -319,7 +319,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		abstract int dualTreeTraversal(int node1, int node2);
 	}
 	
-	class KDTreeBoruvAlg extends Boruvka {
+	protected class KDTreeBoruvAlg extends Boruvka {
 		KDTreeBoruvAlg() {
 			super(true, new KDTree(
 				new Array2DRowRealMatrix(outer_tree.getDataRef(), false), 
@@ -533,7 +533,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		}
 	}
 	
-	class BallTreeBoruvAlg extends Boruvka {
+	protected class BallTreeBoruvAlg extends Boruvka {
 		final double[][] centroidDistances;
 		
 		BallTreeBoruvAlg() {
@@ -763,7 +763,7 @@ class BoruvkaAlgorithm implements java.io.Serializable {
 		}
 	}
 	
-	final double[][] spanningTree() {
+	protected final double[][] spanningTree() {
 		return alg.spanningTree();
 	}
 }

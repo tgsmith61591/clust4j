@@ -54,4 +54,6 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 	public int getMinPts() {
 		return minPts;
 	}
+	
+	@Override protected abstract AbstractDBSCAN fit();
 }

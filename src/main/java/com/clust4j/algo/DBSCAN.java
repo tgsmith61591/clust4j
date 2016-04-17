@@ -22,13 +22,11 @@ import java.util.Stack;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.RadiusNeighborsParameters;
-import com.clust4j.except.ModelNotFitException;
 import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.VecUtils;
 
 
 /**
@@ -145,7 +143,8 @@ final public class DBSCAN extends AbstractDBSCAN {
 			if(null == this.labels ^ null == d.labels)
 				return false;
 			
-			return MatUtils.equalsExactly(this.data.getDataRef(), d.data.getDataRef())
+			return super.equals(o) // tests for UUID
+				&& MatUtils.equalsExactly(this.data.getDataRef(), d.data.getDataRef())
 				&& this.eps == d.eps;
 		}
 		
@@ -158,11 +157,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
-			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen...
+		return super.handleLabelCopy(labels);
 	}
 	
 	@Override

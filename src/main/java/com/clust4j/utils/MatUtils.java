@@ -16,6 +16,7 @@
 package com.clust4j.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
@@ -1339,6 +1340,10 @@ public abstract class MatUtils {
 			out[i] = VecUtils.randomGaussian(n, seed, scalar);
 		
 		return out;
+	}
+	
+	public static double[][] reorder(final double[][] data, final Collection<Integer> order) {
+		return reorder(data, VecUtils.ArgSorter.asArray(order));
 	}
 	
 	/**

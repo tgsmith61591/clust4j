@@ -92,9 +92,8 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 		if(o instanceof NearestNeighbors) {
 			NearestNeighbors other = (NearestNeighbors)o;
 			
-			
-			return 
-				((null == other.kNeighbors || null == this.kNeighbors) ?
+			return super.equals(o) // UUID check
+				&& ((null == other.kNeighbors || null == this.kNeighbors) ?
 					other.kNeighbors == this.kNeighbors : 
 						other.kNeighbors.intValue() == this.kNeighbors)
 				&& other.leafSize == this.leafSize

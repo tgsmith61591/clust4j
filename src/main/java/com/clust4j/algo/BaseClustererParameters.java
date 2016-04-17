@@ -38,7 +38,7 @@ abstract public class BaseClustererParameters
 	
 	protected boolean parallel, 
 		verbose = AbstractClusterer.DEF_VERBOSE, 
-		scale = AbstractClusterer.DEF_SCALE;
+		scale 	= AbstractClusterer.DEF_SCALE;
 	protected Random seed = AbstractClusterer.DEF_SEED;
 	protected GeometricallySeparable metric = AbstractClusterer.DEF_DIST;
 	protected FeatureNormalization norm = AbstractClusterer.DEF_NORMALIZER;

@@ -29,6 +29,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import com.clust4j.GlobalState;
 import com.clust4j.NamedEntity;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NaNException;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.Log;
@@ -41,6 +42,7 @@ import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
+import com.clust4j.utils.VecUtils;
 
 /**
  * 
@@ -57,7 +59,7 @@ public abstract class AbstractClusterer
 		implements Loggable, NamedEntity, java.io.Serializable, MetricValidator {
 	
 	private static final long serialVersionUID = -3623527903903305017L;
-	final static TableFormatter formatter;
+	protected final static TableFormatter formatter;
 	
 	/** The default {@link FeatureNormalization} enum to use. 
 	 *  The default is {@link FeatureNormalization#STANDARD_SCALE} */
@@ -70,9 +72,10 @@ public abstract class AbstractClusterer
 	public static boolean DEF_SCALE = false;
 	
 	/** By default, uses the {@link GlobalState#DEFAULT_RANDOM_STATE} */
-	final static protected Random DEF_SEED = GlobalState.DEFAULT_RANDOM_STATE;
+	protected final static Random DEF_SEED = GlobalState.DEFAULT_RANDOM_STATE;
 	final public static GeometricallySeparable DEF_DIST = Distance.EUCLIDEAN;
-	final private UUID modelKey;
+	/** The model id */
+	final private String modelKey;
 	
 	
 	
@@ -85,11 +88,11 @@ public abstract class AbstractClusterer
 	/** Verbose for heavily logging */
 	final private boolean verbose;
 	/** Whether we scale or not */
-	final boolean normalized;
+	protected final boolean normalized;
 	/** Whether to use parallelism */
-	final boolean parallel;
+	protected final boolean parallel;
 	/** The normalizer */
-	final FeatureNormalization normalizer;
+	protected final FeatureNormalization normalizer;
 	/** Whether the entire matrix is comprised of only one unique value */
 	protected boolean singular_value;
 	
@@ -98,7 +101,7 @@ public abstract class AbstractClusterer
 	/** Have any warnings occurred -- volatile because can change */
 	volatile private boolean hasWarnings = false;
 	final private ArrayList<String> warnings = new ArrayList<>();
-	final ModelSummary fitSummary;
+	protected final ModelSummary fitSummary;
 	
 	
 	
@@ -125,15 +128,15 @@ public abstract class AbstractClusterer
 	 * @param planner
 	 */
 	protected AbstractClusterer(AbstractClusterer caller, BaseClustererParameters planner) {
-		this.dist_metric= null == planner ? caller.dist_metric : planner.getMetric();
-		this.verbose 	= null == planner ? false : planner.getVerbose(); // if another caller, default to false
-		this.modelKey 	= UUID.randomUUID();
-		this.random_state 		= null == planner ? caller.random_state : planner.getSeed();
-		this.data 		= caller.data; // Use the reference
-		this.normalized	= caller.normalized;
-		this.parallel 	= caller.parallel;
-		this.fitSummary = new ModelSummary(getModelFitSummaryHeaders());
-		this.normalizer = null == planner ? caller.normalizer : planner.getNormalizer();
+		this.dist_metric	= null == planner ? caller.dist_metric : planner.getMetric();
+		this.verbose 		= null == planner ? false : planner.getVerbose(); // if another caller, default to false
+		this.modelKey 		= getName() + "_" + UUID.randomUUID();
+		this.random_state 	= null == planner ? caller.random_state : planner.getSeed();
+		this.data 			= caller.data; // Use the reference
+		this.normalized		= caller.normalized;
+		this.parallel 		= caller.parallel;
+		this.fitSummary 	= new ModelSummary(getModelFitSummaryHeaders());
+		this.normalizer 	= null == planner ? caller.normalizer : planner.getNormalizer();
 		this.singular_value = caller.singular_value;
 	}
 	
@@ -141,9 +144,9 @@ public abstract class AbstractClusterer
 		
 		this.dist_metric = planner.getMetric();
 		this.verbose = planner.getVerbose();
-		this.modelKey = UUID.randomUUID();
+		this.modelKey = getName() + "_" + UUID.randomUUID();
 		this.random_state = planner.getSeed();
-
+		
 		// Scale if needed
 		this.normalized = planner.getScale();
 		this.normalizer = planner.getNormalizer();
@@ -176,7 +179,7 @@ public abstract class AbstractClusterer
 	 * @param data
 	 * @param planner
 	 */
-	public AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
+	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
 		this(data, planner, false);
 	}
 	
@@ -220,7 +223,10 @@ public abstract class AbstractClusterer
 	
 	/**
 	 * A model must have the same key, data and class name
-	 * in order to equal another model
+	 * in order to equal another model. It is extremely unlikely
+	 * that a model will share a UUID with another. In fact, the probability 
+	 * of one duplicate would be about 50% if every person on 
+	 * Earth owned 600 million UUIDs.
 	 */
 	@Override
 	public boolean equals(Object o) {
@@ -240,7 +246,22 @@ public abstract class AbstractClusterer
 		return false;
 	}
 	
-
+	/**
+	 * In the case where we have shuffled data, we have to reorder
+	 * the labels to return to the client. <b>This should be called within
+	 * <tt>getLabels()</tt> operations</b>
+	 * @param data
+	 * @param shuffleOrder
+	 * @return
+	 */
+	protected int[] handleLabelCopy(int[] labels) {
+		if(null == labels) {
+			error(new ModelNotFitException("model has not been fit yet"));
+			return null;
+		} else {
+			return VecUtils.copy(labels);
+		}
+	}
 	
 	/**
 	 * Copies the underlying AbstractRealMatrix datastructure
@@ -297,7 +318,7 @@ public abstract class AbstractClusterer
 	 * Get the model key, the model's unique UUID
 	 * @return the model's unique UUID
 	 */
-	public UUID getKey() {
+	public String getKey() {
 		return modelKey;
 	}
 	
@@ -398,7 +419,7 @@ public abstract class AbstractClusterer
 	/**
 	 * Used for logging the initialization summary
 	 */
-	final void logModelSummary() {
+	protected final void logModelSummary() {
 		info("--");
 		info("Model Init Summary:");
 		final String sep = System.getProperty("line.separator");

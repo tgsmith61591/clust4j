@@ -315,7 +315,11 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		DBSCAN d = new DBSCAN(data).fit();
 		assertTrue(d.equals(d.fit()));
 		assertFalse(d.equals(new DBSCAN(data))); // second has been fit yet
-		assertTrue(d.equals(new DBSCAN(data).fit()));
+		
+		DBSCAN e = new DBSCAN(data).fit();
+		
+		// if the key is equal, pass, otherwise full equals compare
+		assertTrue(d.getKey().equals(e.getKey()) || !d.equals(e));
 		assertFalse(d.equals(new Object()));
 	}
 }

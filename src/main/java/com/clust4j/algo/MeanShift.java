@@ -1026,12 +1026,7 @@ final public class MeanShift
 
 	@Override
 	public int[] getLabels() {
-		if(null != labels) {
-			return VecUtils.copy(labels);
-		} else {
-			error(new ModelNotFitException("model has not yet been fit"));
-			return null; // can't happen
-		}
+		return super.handleLabelCopy(labels);
 	}
 	
 	static MeanShiftSeed singleSeed(double[] seed, RadiusNeighbors rn, double[][] X, int maxIter) {

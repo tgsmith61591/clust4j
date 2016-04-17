@@ -24,7 +24,9 @@ import com.clust4j.algo.preprocess.PreProcessor;
 
 public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClassifier> 
 		extends Pipeline<UnsupervisedClassifierParameters<M>> {
+	
 	private static final long serialVersionUID = 8790601917700667359L;
+	protected M fit_model = null; // TODO: use this for predict
 
 	public UnsupervisedPipeline(final UnsupervisedClassifierParameters<M> planner, final PreProcessor... pipe) {
 		super(planner, pipe);
@@ -32,17 +34,10 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 
 	public M fit(final AbstractRealMatrix data) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = data;
-			
-			// Push through pipeline...
-			for(PreProcessor pre: pipe)
-				copy = pre.operate(copy);
+			AbstractRealMatrix copy = pipelineTransform(data);
 	
-			// Build the model
-			final M model = planner.fitNewModel(copy);
-			
-			// The model was fit internally above
-			return model;
+			// Build/fit the model
+			return fit_model = planner.fitNewModel(copy);
 		}
 	}
 }

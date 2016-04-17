@@ -91,7 +91,7 @@ public class NearestNeighborsParameters extends BaseNeighborsPlanner<NearestNeig
 		this.seed= rand;
 		return this;
 	}
-
+	
 	@Override
 	public NearestNeighborsParameters setVerbose(boolean b) {
 		this.verbose = b;

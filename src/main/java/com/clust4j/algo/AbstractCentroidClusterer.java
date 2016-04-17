@@ -25,7 +25,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
-import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.Kernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
@@ -368,11 +367,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 */
 	@Override
 	public int[] getLabels() {
-		if(null != labels)
-			return VecUtils.copy(labels);
-		
-		error(new ModelNotFitException("model has not yet been fit"));
-		return null; // can't happen...
+		return super.handleLabelCopy(labels);
 	}
 	
 	@Override
@@ -389,7 +384,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * In the corner case that k = 1, the {@link LabelEncoder}
 	 * won't work, so we need to label everything as 0 and immediately return
 	 */
-	final void labelFromSingularK(final double[][] X) {
+	protected final void labelFromSingularK(final double[][] X) {
 		labels = VecUtils.repInt(0, m);
 		double[] center_record = MatUtils.meanRecord(X);
 		
@@ -447,7 +442,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * {@link LabelEncoder}. Also reorder the centroids to correspond
 	 * with new label order
 	 */
-	void reorderLabelsAndCentroids() {
+	protected void reorderLabelsAndCentroids() {
 		/* internal method, so shouldn't happen...
 		if(null == labels)
 			throw new ModelNotFitException("model not yet fit");
@@ -476,7 +471,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 * @param centroid
 	 * @return
 	 */
-	static double barycentricDistance(double[][] instances, double[] centroid) {
+	protected static double barycentricDistance(double[][] instances, double[] centroid) {
 		double clust_cost = 0.0, diff;
 		final int n = centroid.length;
 		

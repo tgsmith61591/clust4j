@@ -59,7 +59,7 @@ public class BallTree extends NearestNeighborHeapSearch {
 	}
 	
 	
-	@Override boolean checkValidDistMet(GeometricallySeparable dist) {
+	@Override protected boolean checkValidDistMet(GeometricallySeparable dist) {
 		return VALID_METRICS.contains(dist.getClass());
 	}
 	
