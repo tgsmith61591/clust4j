@@ -765,4 +765,16 @@ public class TestDataSet
 		KMeans k = new KMeansParameters(3).setVerbose(true).fitNewModel(TestSuite.IRIS_DATASET.getData());
 		d.log(k);
 	}
+	
+	@Test
+	public void testBadHead() {
+		boolean a = false;
+		try {
+			TestSuite.IRIS_DATASET.head(0);
+		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
 }

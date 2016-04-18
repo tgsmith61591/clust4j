@@ -29,7 +29,7 @@ import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.ArrayFormatter;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
@@ -356,7 +356,7 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	}
 	
 	@Override
-	public double score(SupervisedEvaluationMetric metric) {
+	public double score(SupervisedMetric metric) {
 		final int[] predicted = getLabels(); // Propagates a model not fit exception if not fit...
 		return metric.evaluate(y_truth, predicted);
 	}

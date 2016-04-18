@@ -45,11 +45,11 @@ import com.clust4j.data.DataSet;
 import com.clust4j.data.TrainTestSplit;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-import static com.clust4j.metrics.scoring.BinomialClassificationScoring.ACCURACY;
+import static com.clust4j.metrics.scoring.SupervisedMetric.BINOMIAL_ACCURACY;
 
 public class PipelineTest implements BaseModelTest {
 
@@ -281,7 +281,7 @@ public class PipelineTest implements BaseModelTest {
 		int[] predicted_labels = pipeline.predict(holdout);
 		
 		// let's examine the affinity of the fit, and the predicted:
-		double affinity = UnsupervisedIndexAffinity.getInstance().evaluate(fit_labels, predicted_labels);
+		double affinity = SupervisedMetric.INDEX_AFFINITY.evaluate(fit_labels, predicted_labels);
 		System.out.println("Predicted affinity: " + affinity);
 	}
 	
@@ -321,7 +321,7 @@ public class PipelineTest implements BaseModelTest {
 		 */
 		pipeline.fit(training, data.getLabels());
 		System.out.println("Default score: " + pipeline.score());
-		System.out.println("Metric score:  " + pipeline.score(ACCURACY));
+		System.out.println("Metric score:  " + pipeline.score(BINOMIAL_ACCURACY));
 		assertNotNull(pipeline.getTrainingLabels());
 		assertNotNull(pipeline.getLabels());
 		
@@ -330,7 +330,7 @@ public class PipelineTest implements BaseModelTest {
 		int[] predicted_labels = pipeline.predict(holdout);
 		
 		// let's examine the accuracy of the fit, and the predicted:
-		System.out.println("Predicted accuracy: " + ACCURACY.evaluate(fit_labels, predicted_labels));
+		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(fit_labels, predicted_labels));
 	}
 	
 	@Test
@@ -361,6 +361,6 @@ public class PipelineTest implements BaseModelTest {
 		int[] predicted_labels = pipeline.predict(holdout.getData());
 		
 		// let's examine the accuracy of the holdout, and the predicted:
-		System.out.println("Predicted accuracy: " + ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
+		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
 	}
 }

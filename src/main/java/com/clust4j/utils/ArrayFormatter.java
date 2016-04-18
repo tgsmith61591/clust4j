@@ -17,7 +17,7 @@ package com.clust4j.utils;
 
 import java.util.Arrays;
 
-public class ArrayFormatter {
+public abstract class ArrayFormatter {
 	public static String arrayToString(byte[] d) {
 		if(null == d)
 			return null;

@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.data;
 
-class IrisLoader {
+abstract class IrisLoader {
 	final static DataSet load() {
 		return new DataSet(
 			getData(),

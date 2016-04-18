@@ -15,7 +15,7 @@
  *******************************************************************************/
  package com.clust4j.data;
 
-class BreastCancerLoader {
+abstract class BreastCancerLoader {
 	final static DataSet load() {
 		return new DataSet(
 			getData(),

@@ -23,16 +23,17 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.data.DataSet;
-import com.clust4j.metrics.scoring.BinomialClassificationScoring;
-import com.clust4j.metrics.scoring.SilhouetteScore;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.VecUtils;
+
+import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
 
 public class TestMetrics {
 	final static DataSet IRIS = TestSuite.IRIS_DATASET.copy();
 	
 	@Test
 	public void testAcc() {
-		assertTrue(BinomialClassificationScoring.ACCURACY.evaluate(
+		assertTrue(SupervisedMetric.BINOMIAL_ACCURACY.evaluate(
 				new int[]{1,1,1,0}, 
 				new int[]{1,1,1,1}) == 0.75);
 	}
@@ -42,8 +43,7 @@ public class TestMetrics {
 		Array2DRowRealMatrix X = IRIS.getData();
 		final int[] labels = IRIS.getLabels();
 		
-		double silhouette = SilhouetteScore
-			.getInstance()
+		double silhouette = SILHOUETTE
 			.evaluate(X, labels);
 		assertTrue(silhouette == 0.5032506980665507);
 	}
@@ -53,9 +53,7 @@ public class TestMetrics {
 		Array2DRowRealMatrix X = IRIS.getData();
 		final int[] labels = new int[]{1,2,3};
 		
-		SilhouetteScore
-			.getInstance()
-			.evaluate(X, labels);
+		SILHOUETTE.evaluate(X, labels);
 	}
 	
 	@Test
@@ -63,14 +61,13 @@ public class TestMetrics {
 		Array2DRowRealMatrix X = IRIS.getData();
 		final int[] labels = VecUtils.repInt(1, X.getRowDimension());
 		
-		assertTrue(Double.isNaN(SilhouetteScore
-			.getInstance()
+		assertTrue(Double.isNaN(SILHOUETTE
 			.evaluate(X, labels)));
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
 	public void testDME() {
-		BinomialClassificationScoring.ACCURACY.evaluate(new int[]{1,2}, new int[]{1,2,3});
+		SupervisedMetric.BINOMIAL_ACCURACY.evaluate(new int[]{1,2}, new int[]{1,2,3});
 	}
 	
 	@Test
@@ -80,7 +77,7 @@ public class TestMetrics {
 		
 		boolean c = false;
 		try {
-			UnsupervisedIndexAffinity.getInstance().evaluate(a, new int[]{0,0});
+			SupervisedMetric.INDEX_AFFINITY.evaluate(a, new int[]{0,0});
 		} catch(DimensionMismatchException d) {
 			c = true;
 		} finally {
@@ -89,7 +86,7 @@ public class TestMetrics {
 		
 		c = false;
 		try {
-			UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{}, new int[]{});
+			SupervisedMetric.INDEX_AFFINITY.evaluate(new int[]{}, new int[]{});
 		} catch(IllegalArgumentException d) {
 			c = true;
 		} finally {
@@ -98,14 +95,14 @@ public class TestMetrics {
 		
 		c = false;
 		try {
-			UnsupervisedIndexAffinity.getInstance().evaluate(a,b);
+			SupervisedMetric.INDEX_AFFINITY.evaluate(a,b);
 		} catch(IllegalArgumentException d) {
 			c = true;
 		} finally {
 			assertTrue(c);
 		}
 		
-		assertTrue(UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{0}, new int[]{9}) == 1.0);
-		assertTrue(UnsupervisedIndexAffinity.getInstance().evaluate(new int[]{0,1,2}, new int[]{9,5,4}) == 1.0);
+		assertTrue(SupervisedMetric.INDEX_AFFINITY.evaluate(new int[]{0}, new int[]{9}) == 1.0);
+		assertTrue(SupervisedMetric.INDEX_AFFINITY.evaluate(new int[]{0,1,2}, new int[]{9,5,4}) == 1.0);
 	}
 }

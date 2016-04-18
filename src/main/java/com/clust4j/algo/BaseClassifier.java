@@ -17,18 +17,18 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.scoring.BinomialClassificationScoring;
-import com.clust4j.metrics.scoring.SilhouetteScore;
-import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
-import com.clust4j.metrics.scoring.UnsupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.SupervisedMetric;
+import com.clust4j.metrics.scoring.UnsupervisedMetric;
+
+import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
 
 /**
  * An interface for classifiers, both supervised and unsupervised.
  * @author Taylor G Smith
  */
 public interface BaseClassifier extends java.io.Serializable {
-	public final static SupervisedEvaluationMetric DEF_SUPERVISED_METRIC = BinomialClassificationScoring.ACCURACY;
-	public final static UnsupervisedEvaluationMetric DEF_UNSUPERVISED_METRIC = SilhouetteScore.getInstance();
+	public final static SupervisedMetric DEF_SUPERVISED_METRIC = SupervisedMetric.BINOMIAL_ACCURACY;
+	public final static UnsupervisedMetric DEF_UNSUPERVISED_METRIC = SILHOUETTE;
 	
 	/**
 	 * Returns a copy of the assigned class labels in

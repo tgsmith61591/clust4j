@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 
 public interface SupervisedClassifier extends BaseClassifier {
 	public int[] getTrainingLabels();
@@ -34,5 +34,5 @@ public interface SupervisedClassifier extends BaseClassifier {
 	 * @param actualLabels
 	 * @return
 	 */
-	public double score(final SupervisedEvaluationMetric metric);
+	public double score(final SupervisedMetric metric);
 }

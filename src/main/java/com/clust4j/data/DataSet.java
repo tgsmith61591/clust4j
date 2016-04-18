@@ -388,8 +388,8 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	}
 	
 	private ArrayList<Object[]> buildHead(int length) {
-		if(length < 0)
-			throw new IllegalArgumentException("length cannot be less than 0");
+		if(length < 1)
+			throw new IllegalArgumentException("length cannot be less than 1");
 		
 		int n = data.getColumnDimension();
 		ArrayList<Object[]> o = new ArrayList<Object[]>();

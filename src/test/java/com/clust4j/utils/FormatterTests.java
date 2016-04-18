@@ -85,5 +85,6 @@ public class FormatterTests {
 		assertTrue(left_align.getRowSeparator().equals(System.getProperty("line.separator")));
 		assertTrue(left_align.getWhitespace() == 4);
 		assertNotNull(left_align.getFormat());
+		
 	}
 }

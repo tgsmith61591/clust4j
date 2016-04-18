@@ -140,7 +140,7 @@ All clustering algorithms that implement `Classifier` can also be scored. Superv
 double accuracy = nc.score();
 ```
 
-Conversely, if we'd like to score an unsupervised algorithm, we have a few options. Every `UnsupervisedClassifier` implements a [`silhouetteScore`](https://en.wikipedia.org/wiki/Silhouette_%28clustering%29) method, but also implements a home-grown scoring algorithm called `UnsupervisedIndexAffinity`. This operates based on the following complication:
+Conversely, if we'd like to score an unsupervised algorithm, we have a few options. Every `UnsupervisedClassifier` implements a [`silhouetteScore`](https://en.wikipedia.org/wiki/Silhouette_%28clustering%29) method, but also implements a home-grown scoring algorithm called `INDEX_AFFINITY`. This operates based on the following complication:
 
 ```java
 // our k-means model predicts labels like this:
@@ -176,6 +176,23 @@ int[] predicted_labels = model.predict(newData); // returns {0, 1}
 
 __Note__ that `HDBSCAN` does not currently implement a functional `predict` method, and will throw an `UnsupportedOperationException`.
 
+
+
+### Putting it all together with the `TrainTestSplit`
+clust4j includes a [`TrainTestSplit`](src/main/java/com/clust4j/data/TestTestSplit.java) class that will shuffle and split a [`DataSet`](src/main/java/com/clust4j/data/DataSet.java) given a training ratio. This can be useful for both `SupervisedClassifier`s as well as `UnsupervisedClassifier`s (especially when leveraging clust4j's own proprietary [`INDEX_AFFINITY`](src/main/java/com/clust4j/metrics/scoring/SupervisedMetric.java) as a scoring metric). Here's an example of how this can be used with `KMeans`:
+
+```java
+// Load data, get splits
+TrainTestSplit split = new TrainTestSplit(ExampleDataSets.loadIris(), 0.70);
+DataSet train = split.getTrain(), test = split.getTest();
+
+// Fit a model and get predictions
+KMeans model = new KMeansParameters(3).fitNewModel(train.getData());
+int[] predicted_labels = model.predict(test.getData());
+
+// Get the "affinity" score using the Index Affinity algorithm:
+double affinity = ClassificationScoring.INDEX_AFFINITY.evaluate(test.getLabels(), predicted_labels)
+```
 
 ----
 ### Separability metrics

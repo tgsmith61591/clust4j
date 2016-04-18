@@ -15,13 +15,13 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import com.clust4j.metrics.scoring.SilhouetteScore;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
+import com.clust4j.metrics.scoring.UnsupervisedMetric;
 
 public interface UnsupervisedClassifier extends BaseClassifier {
 	/**
 	 * Evaluate how the model performed against a truth set. This method
-	 * utilizes the {@link UnsupervisedIndexAffinity} class
+	 * utilizes the {@link SupervisedMetric#INDEX_AFFINITY} class
 	 * @param actualLabels
 	 * @return
 	 */
@@ -29,7 +29,7 @@ public interface UnsupervisedClassifier extends BaseClassifier {
 	
 	
 	/**
-	 * Evaluate how the model performed via the {@link SilhouetteScore} metric
+	 * Evaluate how the model performed via the {@link UnsupervisedMetric#SILHOUETTE} metric
 	 * @return
 	 */
 	public double silhouetteScore();

@@ -29,10 +29,11 @@ import com.clust4j.kernel.Kernel;
 import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.metrics.scoring.SilhouetteScore;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+
+import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
 
 public abstract class AbstractCentroidClusterer extends AbstractPartitionalClusterer 
 		implements CentroidLearner, Convergeable, UnsupervisedClassifier {
@@ -412,7 +413,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	public double indexAffinityScore(int[] labels) {
 		// Propagates ModelNotFitException
-		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
+		return SupervisedMetric.INDEX_AFFINITY.evaluate(labels, getLabels());
 	}
 	
 	/** {@inheritDoc} */
@@ -425,7 +426,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	public double silhouetteScore() {
 		// Propagates ModelNotFitException
-		return SilhouetteScore.getInstance().evaluate(this, getLabels());
+		return SILHOUETTE.evaluate(this, getLabels());
 	}
 	
 	/**

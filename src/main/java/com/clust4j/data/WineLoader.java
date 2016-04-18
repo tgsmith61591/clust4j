@@ -15,7 +15,7 @@
  *******************************************************************************/
  package com.clust4j.data;
 
-class WineLoader {
+abstract class WineLoader {
 	final static DataSet load() {
 		return new DataSet(
 			getData(),

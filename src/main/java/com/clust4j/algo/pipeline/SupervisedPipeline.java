@@ -22,7 +22,7 @@ import com.clust4j.algo.SupervisedClassifier;
 import com.clust4j.algo.SupervisedClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 
 public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifier> 
 		extends Pipeline<SupervisedClassifierParameters<M>>
@@ -71,7 +71,7 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 	}
 
 	@Override
-	public double score(SupervisedEvaluationMetric metric) {
+	public double score(SupervisedMetric metric) {
 		ensureModelFit();
 		return fit_model.score(metric);
 	}

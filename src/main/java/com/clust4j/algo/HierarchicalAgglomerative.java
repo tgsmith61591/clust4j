@@ -29,11 +29,12 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
-import com.clust4j.metrics.scoring.SilhouetteScore;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.SimpleHeap;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
+
+import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
 
 /**
  * Agglomerative clustering is a hierarchical clustering process in
@@ -612,14 +613,14 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	@Override
 	public double indexAffinityScore(int[] labels) {
 		// Propagates ModelNotFitException
-		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
+		return SupervisedMetric.INDEX_AFFINITY.evaluate(labels, getLabels());
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public double silhouetteScore() {
 		// Propagates ModelNotFitException
-		return SilhouetteScore.getInstance().evaluate(this, getLabels());
+		return SILHOUETTE.evaluate(this, getLabels());
 	}
 	
 	/** {@inheritDoc} */

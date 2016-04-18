@@ -8,7 +8,7 @@ import org.junit.Test;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.KMeans;
 import com.clust4j.algo.KMeansParameters;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
 
 public class TrainTestSplitTests {
 
@@ -146,6 +146,6 @@ public class TrainTestSplitTests {
 		int[] predictions = model.predict(test.getData());
 		
 		// examine affinity:
-		System.out.println("Affinity: " + UnsupervisedIndexAffinity.getInstance().evaluate(test.getLabels(), predictions));
+		System.out.println("Affinity: " + SupervisedMetric.INDEX_AFFINITY.evaluate(test.getLabels(), predictions));
 	}
 }

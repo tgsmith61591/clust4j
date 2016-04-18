@@ -17,8 +17,8 @@ package com.clust4j.algo;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.metrics.scoring.SilhouetteScore;
-import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
+import com.clust4j.metrics.scoring.SupervisedMetric;
+import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
 
 public abstract class AbstractAutonomousClusterer extends AbstractClusterer implements UnsupervisedClassifier {
 	/**
@@ -41,13 +41,13 @@ public abstract class AbstractAutonomousClusterer extends AbstractClusterer impl
 	@Override
 	public double indexAffinityScore(int[] labels) {
 		// Propagates ModelNotFitException
-		return UnsupervisedIndexAffinity.getInstance().evaluate(labels, getLabels());
+		return SupervisedMetric.INDEX_AFFINITY.evaluate(labels, getLabels());
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public double silhouetteScore() {
 		// Propagates ModelNotFitException
-		return SilhouetteScore.getInstance().evaluate(this, getLabels());
+		return SILHOUETTE.evaluate(this, getLabels());
 	}
 }
