@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Stack;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.RadiusNeighborsParameters;
@@ -319,5 +320,61 @@ final public class DBSCAN extends AbstractDBSCAN {
 	@Override
 	public int getNumberOfNoisePoints() {
 		return numNoisey;
+	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		final int[] fit_labels = getLabels(); // propagates errors
+		final int n = newData.getColumnDimension();
+		
+		// Make sure matches dimensionally
+		if(n != this.data.getColumnDimension())
+			throw new DimensionMismatchException(n, data.getColumnDimension());
+		
+		// Fit a radius model
+		RadiusNeighbors radiusModel = 
+			new RadiusNeighborsParameters(eps) // no scale necessary; may already have been done
+				.setMetric(dist_metric)
+				.setSeed(getSeed())
+				.fitNewModel(data);
+		
+		final int[] newLabels = new int[newData.getRowDimension()];
+		Neighborhood theHood = radiusModel.getNeighbors(newData);
+		
+		int[][] indices = theHood.getIndices();
+		
+		int[] idx_row;
+		for(int i = 0; i < indices.length; i++) {
+			idx_row = indices[i];
+			
+			int current_class = NOISE_CLASS;
+			if(idx_row.length == 0) { 
+				/* 
+				 * If there are no indices in this point's radius,
+				 * we can just avoid the next step and exit early
+				 */
+			} else { // otherwise, we know there is something in the radius--noise or other
+				for(int j = 0; j < n; j++) {
+					current_class = fit_labels[idx_row[j]];
+					
+					/*
+					 * The indices are ordered ascendingly by dist.
+					 * Even if the closest point is a noise point, it
+					 * could be within a border point's radius, so we
+					 * need to keep going.
+					 */
+					if(NOISE_CLASS == current_class) {
+						continue;
+					} else {
+						break;
+					}
+				}
+			}
+			
+			newLabels[i] = current_class;
+		}
+		
+		return newLabels;
 	}
 }

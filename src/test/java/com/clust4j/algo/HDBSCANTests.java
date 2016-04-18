@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -1585,6 +1586,41 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		try {
 			new HDBSCAN(DATA).getLabels();
 		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testPredict() {
+		HDBSCAN d = new HDBSCANParameters().fitNewModel(iris);
+		
+		/*
+		 * Test for dim mismatch
+		 */
+		Array2DRowRealMatrix newData = new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150,150}
+		}, false);
+		boolean a = false;
+		try {
+			d.predict(newData);
+		} catch(DimensionMismatchException dim) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Ensure unsupportedOperation
+		 */
+		newData = new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150}
+		}, false);
+		a = false;
+		try {
+			d.predict(newData);
+		} catch(UnsupportedOperationException u) {
 			a = true;
 		} finally {
 			assertTrue(a);

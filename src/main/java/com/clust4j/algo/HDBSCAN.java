@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -1619,5 +1620,18 @@ final public class HDBSCAN extends AbstractDBSCAN {
 		return new Object[]{
 			"TODO:"
 		};
+	}
+	
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		@SuppressWarnings("unused")
+		final int[] fit_labels = getLabels(); // throws the exception if not fit
+		final int n = newData.getColumnDimension();
+		
+		if(n != this.data.getColumnDimension())
+			throw new DimensionMismatchException(n, newData.getColumnDimension());
+		
+		// TODO: how to predict these???
+		throw new UnsupportedOperationException();
 	}
 }

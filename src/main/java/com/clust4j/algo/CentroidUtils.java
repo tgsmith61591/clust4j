@@ -65,7 +65,7 @@ abstract class CentroidUtils {
 		return new NearestCentroidParameters()
 				.setMetric(model.dist_metric) // if it fails, falls back to default Euclidean...
 				.setVerbose(false) // just to be sure in case default ever changes...
-				.fitNewModel(model.getData(), labels).fit()
+				.fitNewModel(model.getData(), labels)
 			.predict(newData);
 	}
 }

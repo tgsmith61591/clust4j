@@ -29,12 +29,12 @@ final public class HierarchicalAgglomerativeParameters
 		implements UnsupervisedClassifierParameters<HierarchicalAgglomerative> {
 
 	private static final long serialVersionUID = -1333222392991867085L;
+	private static int DEF_K = 2;
 	private Linkage linkage = HierarchicalAgglomerative.DEF_LINKAGE;
-	private int num_clusters = 2;
+	private int num_clusters = DEF_K;
 
-	public HierarchicalAgglomerativeParameters() {
-	}
-
+	public HierarchicalAgglomerativeParameters() { this(DEF_K); }
+	public HierarchicalAgglomerativeParameters(int k) { this.num_clusters = k; }
 	public HierarchicalAgglomerativeParameters(Linkage linkage) {
 		this();
 		this.linkage = linkage;

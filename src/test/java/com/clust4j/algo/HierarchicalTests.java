@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import static com.clust4j.TestSuite.getRandom;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
@@ -364,6 +365,60 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		try {
 			HierarchicalAgglomerative.EfficientDistanceMatrix.getIndexFromFlattenedVec(0, 0, 0);
 		} catch(IllegalArgumentException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testPredict() {
+		HierarchicalAgglomerative h = new HierarchicalAgglomerativeParameters(3).fitNewModel(data_);
+		
+		/*
+		 * Test on actual rows
+		 */
+		int[] predicted = h.predict(new Array2DRowRealMatrix(new double[][]{
+			h.data.getRow(0),
+			h.data.getRow(148),
+			h.data.getRow(149)
+		}, false));
+		
+		assertTrue(VecUtils.equalsExactly(predicted, new int[]{0,2,1}));
+		
+		
+		/*
+		 * Test on random rows...
+		 */
+		predicted = h.predict(new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150}
+		}, false));
+		
+		assertTrue(VecUtils.equalsExactly(predicted, new int[]{2}));
+		
+		
+		/*
+		 * Test on k = 1
+		 */
+		h = new HierarchicalAgglomerativeParameters(1).fitNewModel(data_);
+		predicted = h.predict(new Array2DRowRealMatrix(new double[][]{
+			h.data.getRow(0),
+			h.data.getRow(148),
+			h.data.getRow(149),
+			new double[]{150,150,150,150}
+		}, false));
+		assertTrue(VecUtils.equalsExactly(predicted, new int[]{0,0,0,0}));
+		
+		/*
+		 * Test for dim mismatch
+		 */
+		Array2DRowRealMatrix newData = new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150,150}
+		}, false);
+		boolean a = false;
+		try {
+			h.predict(newData);
+		} catch(DimensionMismatchException dim) {
 			a = true;
 		} finally {
 			assertTrue(a);

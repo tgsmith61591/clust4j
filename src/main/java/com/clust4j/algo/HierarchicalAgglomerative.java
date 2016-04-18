@@ -18,6 +18,7 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -619,5 +620,34 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	public double silhouetteScore() {
 		// Propagates ModelNotFitException
 		return SilhouetteScore.getInstance().evaluate(this, getLabels());
+	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		final int[] fit_labels = getLabels(); // throws the MNF exception if not fit
+		final int numSamples = newData.getRowDimension(), n = newData.getColumnDimension();
+		
+		// Make sure matches dimensionally
+		if(n != this.data.getColumnDimension())
+			throw new DimensionMismatchException(n, data.getColumnDimension());
+		
+		/*
+		 * There's no great way to predict on a hierarchical
+		 * algorithm, so we'll treat this like a CentroidLearner,
+		 * create centroids from the k clusters formed, then
+		 * predict via the CentroidUtils. This works because
+		 * Hierarchical is not a NoiseyClusterer
+		 */
+		
+		// CORNER CASE: num_clusters == 1, return only label (0)
+		if(1 == num_clusters)
+			return VecUtils.repInt(fit_labels[0], numSamples);
+		
+		return new NearestCentroidParameters()
+			.setMetric(this.dist_metric) // if it fails, falls back to default Euclidean...
+			.setVerbose(false) // just to be sure in case default ever changes...
+			.fitNewModel(this.getData(), fit_labels)
+		.predict(newData);
 	}
 }

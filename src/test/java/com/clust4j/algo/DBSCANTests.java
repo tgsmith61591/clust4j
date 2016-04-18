@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 
@@ -321,5 +322,53 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		// if the key is equal, pass, otherwise full equals compare
 		assertTrue(d.getKey().equals(e.getKey()) || !d.equals(e));
 		assertFalse(d.equals(new Object()));
+	}
+	
+	@Test
+	public void testPredict() {
+		DBSCAN d = new DBSCANParameters(1.5).fitNewModel(data);
+		
+		/*
+		 * Test on exact records and one noisey
+		 */
+		Array2DRowRealMatrix newData = new Array2DRowRealMatrix(new double[][]{
+			d.data.getRow(0),
+			d.data.getRow(149),
+			new double[]{150,150,150,150}
+		}, false);
+		
+		int[] predicted = d.predict(newData);
+		assertTrue(VecUtils.equalsExactly(predicted, new int[]{0, 1,-1}));
+		
+		
+		/*
+		 * Test on all noisey
+		 */
+		newData = new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150},
+			new double[]{ 0, 0, 0, 0},
+			new double[]{ 3, 3, 3, 3},
+			new double[]{ 3, 1, 2, 2},
+			new double[]{ 5, 5, 5, 5},
+			new double[]{-5,-5,-5,-5}
+		}, false);
+		
+		predicted = d.predict(newData);
+		assertTrue(VecUtils.equalsExactly(predicted, new int[]{-1,-1,-1,-1,-1,-1}));
+		
+		/*
+		 * Test for dim mismatch
+		 */
+		newData = new Array2DRowRealMatrix(new double[][]{
+			new double[]{150,150,150,150,150}
+		}, false);
+		boolean a = false;
+		try {
+			d.predict(newData);
+		} catch(DimensionMismatchException dim) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
 	}
 }
