@@ -3242,6 +3242,55 @@ public class MatTests {
 			assertTrue(a);
 		}
 		
-		assertTrue(new VecUtils.VecIntSeries(new int[]{1,2,3}, Inequality.EQUAL_TO, 1).any());
+		assertTrue(new VecUtils.IntSeries(new int[]{1,2,3}, Inequality.EQUAL_TO, 1).any());
+	}
+	
+	@Test
+	public void testSliceMatrix() {
+		double[][] d = MatUtils.randomGaussian(5, 5);
+		
+		assertTrue(MatUtils.slice(d, 0, 3).length == 3);
+		boolean a;
+		
+		/*
+		 * Catch AIOOB
+		 */
+		a = false;
+		try {
+			MatUtils.slice(d, 0, 50);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			MatUtils.slice(d, -1, 3);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			MatUtils.slice(d, 6, 7);
+		} catch(ArrayIndexOutOfBoundsException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			MatUtils.slice(d, 4, 2);
+		} catch(IllegalArgumentException ai) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		assertTrue(MatUtils.slice(d, 0, 0).length == 0);
 	}
 }

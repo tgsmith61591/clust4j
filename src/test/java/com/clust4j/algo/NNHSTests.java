@@ -45,8 +45,8 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.QuadTup;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.Series.Inequality;
-import com.clust4j.utils.VecUtils.VecDoubleSeries;
-import com.clust4j.utils.VecUtils.VecIntSeries;
+import com.clust4j.utils.VecUtils.DoubleSeries;
+import com.clust4j.utils.VecUtils.IntSeries;
 
 public class NNHSTests {
 	final public static Array2DRowRealMatrix IRIS = TestSuite.IRIS_DATASET.getData();
@@ -563,7 +563,7 @@ public class NNHSTests {
 		
 		assertTrue(VecUtils.equalsWithTolerance(exp, expected_exp, 1e-8));
 		assertTrue(VecUtils.equalsWithTolerance(log, expected_log, 1e-8));
-		assertTrue(new VecDoubleSeries(log, Inequality.NOT_EQUAL_TO, Double.NaN).all());
+		assertTrue(new DoubleSeries(log, Inequality.NOT_EQUAL_TO, Double.NaN).all());
 		
 		/*
 		 * COSINE
@@ -572,8 +572,8 @@ public class NNHSTests {
 		log = k.kernelDensity(IRIS.getData(), h, PartialKernelDensity.LOG_COSINE, at, rt, true);
 		
 		// all should be nan...
-		assertTrue(new VecDoubleSeries(exp, Inequality.EQUAL_TO, Double.NaN).all());
-		assertTrue(new VecDoubleSeries(log, Inequality.EQUAL_TO, Double.NaN).all());
+		assertTrue(new DoubleSeries(exp, Inequality.EQUAL_TO, Double.NaN).all());
+		assertTrue(new DoubleSeries(log, Inequality.EQUAL_TO, Double.NaN).all());
 	}
 	
 	
@@ -1886,18 +1886,18 @@ public class NNHSTests {
 		int[] vis1, vis2;
 		int[] tpc = vis1 = k.twoPointCorrelation(IRIS.getDataRef(), radius);
 		assertTrue(tpc.length == IRIS.getRowDimension());
-		assertTrue(new VecIntSeries(tpc, Inequality.EQUAL_TO, 158).all());
+		assertTrue(new IntSeries(tpc, Inequality.EQUAL_TO, 158).all());
 		// Just so any() gets some coverage love...
-		assertFalse(new VecIntSeries(tpc, Inequality.EQUAL_TO, 0).any());
+		assertFalse(new IntSeries(tpc, Inequality.EQUAL_TO, 0).any());
 		
 		tpc = vis2 = b.twoPointCorrelation(IRIS.getDataRef(), radius);
 		assertTrue(tpc.length == IRIS.getRowDimension());
-		assertTrue(new VecIntSeries(tpc, Inequality.EQUAL_TO, 158).all());
+		assertTrue(new IntSeries(tpc, Inequality.EQUAL_TO, 158).all());
 		
 		/*
 		 * Assert vis1, vis2 are the same
 		 */
-		VecIntSeries vis = new VecIntSeries(vis1, Inequality.EQUAL_TO, vis2);
+		IntSeries vis = new IntSeries(vis1, Inequality.EQUAL_TO, vis2);
 		assertTrue(vis.all());
 		
 		// Coverage love, test refs...

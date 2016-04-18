@@ -430,6 +430,6 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new KMedoids(X, new KMedoidsParameters(3).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 }

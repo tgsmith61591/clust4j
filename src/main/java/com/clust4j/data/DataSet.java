@@ -480,12 +480,13 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 	}
 	
 	/**
-	 * Shuffle the rows (and corresponding labels)
+	 * Shuffle the rows (and corresponding labels, if they exist)
 	 * and return the new dataset
 	 * in place
 	 */
 	public DataSet shuffle() {
 		final int m = numRows();
+		boolean has_labels = null != labels; // if the labels are null, there are no labels to shuffle...
 		
 		/*
 		 * Generate range of indices...
@@ -498,7 +499,7 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 		 * Shuffle indices in place...
 		 */
 		Collections.shuffle(indices);
-		final int[] newLabels = new int[m];
+		final int[] newLabels = has_labels ? new int[m] : null;
 		final double[][] newData = new double[m][];
 		
 		/*
@@ -506,7 +507,10 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 		 */
 		int j = 0;
 		for(Integer idx: indices) {
-			newLabels[j] = this.labels[idx];
+			if(has_labels) {
+				newLabels[j] = this.labels[idx];
+			}
+			
 			newData[j] = VecUtils.copy(this.data.getRow(idx));
 			j++;
 		}
@@ -517,6 +521,16 @@ public class DataSet extends Clust4j implements DeepCloneable, java.io.Serializa
 			getHeaders(),
 			formatter,
 			false
+		);
+	}
+	
+	public DataSet slice(int startInc, int endExc) {
+		int[] labs = (null == labels) ? null : VecUtils.slice(labels, startInc, endExc);
+		
+		return new DataSet(
+			MatUtils.slice(data.getDataRef(), startInc, endExc),
+			labs,
+			getHeaders()
 		);
 	}
 	

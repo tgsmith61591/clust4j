@@ -49,6 +49,7 @@ import com.clust4j.data.BufferedMatrixReaderTests;
 import com.clust4j.data.DataSet;
 import com.clust4j.data.ExampleDataSets;
 import com.clust4j.data.TestDataSet;
+import com.clust4j.data.TrainTestSplitTests;
 import com.clust4j.except.TestExcept;
 import com.clust4j.kernel.KernelTestCases;
 import com.clust4j.log.LogTest;
@@ -108,6 +109,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	TestMetrics.class,
 	TestArrayFormatter.class,
 	TestUtils.class,
+	TrainTestSplitTests.class,
 	VectorTests.class
 })
 

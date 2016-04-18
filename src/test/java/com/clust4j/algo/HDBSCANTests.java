@@ -569,7 +569,6 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		
 		assertTrue(VecUtils.equalsExactly(expectedLabels, h.getLabels()));
 		
-		// TODO fix KD & BALL trees
 		h = new HDBSCAN(X, new HDBSCANParameters().setAlgo(HDBSCAN_Algorithm.PRIMS_KDTREE)).fit();
 		System.out.println(Arrays.toString(h.getLabels()));
 	}
@@ -1401,10 +1400,10 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new HDBSCAN(X, new HDBSCANParameters(1).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
 		
 		labels = new HDBSCAN(X, new HDBSCANParameters().setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // could be noise...
 	}
 	
 	@Test

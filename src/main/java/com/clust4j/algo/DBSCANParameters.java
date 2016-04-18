@@ -20,7 +20,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANPlanner;
+import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
@@ -29,7 +29,7 @@ import com.clust4j.metrics.pairwise.GeometricallySeparable;
  * interface to set custom parameters for DBSCAN
  * @author Taylor G Smith
  */
-final public class DBSCANParameters extends AbstractDBSCANPlanner<DBSCAN> {
+final public class DBSCANParameters extends AbstractDBSCANParameters<DBSCAN> {
 	private static final long serialVersionUID = -5285244186285768512L;
 	
 	private double eps = DBSCAN.DEF_EPS;

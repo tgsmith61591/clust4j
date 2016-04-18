@@ -89,20 +89,20 @@ public abstract class VecUtils {
 	
 	/**
 	 * Create a boolean masking vector to be used in the 
-	 * {@link VecUtils#where(VecDoubleSeries, double, double)} family
+	 * {@link VecUtils#where(DoubleSeries, double, double)} family
 	 * of methods.
 	 * @throws IllegalArgumentException if the input vector is empty
 	 * @throws DimensionMismatchException if the input vector dims do not match
 	 * @author Taylor G Smith
 	 */
-	public static class VecDoubleSeries extends VecSeries {
+	public static class DoubleSeries extends VecSeries {
 		
 		/**
 		 * Private constructor
 		 * @throws IllegalArgumentException if the vector is empty
 		 * @param v
 		 */
-		private VecDoubleSeries(double[] v, Inequality in) {
+		private DoubleSeries(double[] v, Inequality in) {
 			super(v.length, in);
 		}
 		
@@ -113,7 +113,7 @@ public abstract class VecUtils {
 		 * @param val
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
-		public VecDoubleSeries(double[] v, Inequality in, double val) {
+		public DoubleSeries(double[] v, Inequality in, double val) {
 			this(v, in);
 			for(int j = 0; j < n; j++)
 				vec[j] = eval(v[j], val);
@@ -127,7 +127,7 @@ public abstract class VecUtils {
 		 * @throws DimensionMismatchException if the dims of A and B don't match
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
-		public VecDoubleSeries(double[] a, Inequality in, double[] b) {
+		public DoubleSeries(double[] a, Inequality in, double[] b) {
 			this(a, in);
 			if(n != b.length)
 				throw new DimensionMismatchException(n, b.length);
@@ -145,14 +145,14 @@ public abstract class VecUtils {
 	 * @throws DimensionMismatchException if the input vector dims do not match
 	 * @author Taylor G Smith
 	 */
-	public static class VecIntSeries extends VecSeries {
+	public static class IntSeries extends VecSeries {
 		
 		/**
 		 * Private constructor
 		 * @throws IllegalArgumentException if the vector is empty
 		 * @param v
 		 */
-		private VecIntSeries(int[] v, Inequality in) {
+		private IntSeries(int[] v, Inequality in) {
 			super(v.length, in);
 		}
 		
@@ -163,7 +163,7 @@ public abstract class VecUtils {
 		 * @param val
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
-		public VecIntSeries(int[] v, Inequality in, int val) {
+		public IntSeries(int[] v, Inequality in, int val) {
 			this(v, in);
 			for(int j = 0; j < n; j++)
 				vec[j] = eval(v[j], val);
@@ -177,7 +177,7 @@ public abstract class VecUtils {
 		 * @throws DimensionMismatchException if the dims of A and B don't match
 		 * @throws IllegalArgumentException if the vector is empty
 		 */
-		public VecIntSeries(int[] a, Inequality in, int[] b) {
+		public IntSeries(int[] a, Inequality in, int[] b) {
 			this(a, in);
 			if(n != b.length)
 				throw new DimensionMismatchException(n, b.length);
@@ -1553,8 +1553,10 @@ public abstract class VecUtils {
 		
 		if(endExc > a.length)
 			throw new ArrayIndexOutOfBoundsException(endExc);
-		if(startInc < 0 || startInc > a.length || startInc > endExc)
+		if(startInc < 0 || startInc > a.length)
 			throw new ArrayIndexOutOfBoundsException(startInc);
+		if(startInc > endExc)
+			throw new IllegalArgumentException("start index cannot exceed end index");
 		if(startInc == endExc)
 			return new double[]{};
 		
@@ -1570,8 +1572,10 @@ public abstract class VecUtils {
 		
 		if(endExc > a.length)
 			throw new ArrayIndexOutOfBoundsException(endExc);
-		if(startInc < 0 || startInc > a.length || startInc > endExc)
+		if(startInc < 0 || startInc > a.length)
 			throw new ArrayIndexOutOfBoundsException(startInc);
+		if(startInc > endExc)
+			throw new IllegalArgumentException("start index cannot exceed end index");
 		if(startInc == endExc)
 			return new int[]{};
 		
@@ -1708,7 +1712,7 @@ public abstract class VecUtils {
 		return out;
 	}
 	
-	public static double[] where(final VecDoubleSeries series, final double[] x, final double[] y) {
+	public static double[] where(final DoubleSeries series, final double[] x, final double[] y) {
 		checkDims(x,y);
 		
 		final int n = x.length;

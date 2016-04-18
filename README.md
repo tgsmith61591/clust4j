@@ -163,7 +163,7 @@ km.silhouetteScore(); // Uses internally predicted labels
 
 
 ### Making predictions
-Any algorithm implementing a classifier algorithm (`SupervisedClassifier` or `UnsupervisedClassifier`) will implement the method `predict(AbstractRealMatrix)`. After the model has been fit, predictions can be made as follows (using `KMeans` for the example):
+Any algorithm implementing `BaseClassifier` or its sub-interfaces will implement the method `predict(AbstractRealMatrix)`. After the model has been fit, predictions can be made as follows (using `KMeans` for example):
 
 ```java
 KMeans model = new KMeansParameters(2).fitNewModel(mat); // fit the model on the training data

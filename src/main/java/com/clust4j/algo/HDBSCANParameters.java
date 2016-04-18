@@ -20,7 +20,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANPlanner;
+import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
 import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -30,7 +30,7 @@ import com.clust4j.metrics.pairwise.GeometricallySeparable;
  * interface to set custom parameters for HDBSCAN
  * @author Taylor G Smith
  */
-final public class HDBSCANParameters extends AbstractDBSCANPlanner<HDBSCAN> {
+final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 	private static final long serialVersionUID = 7197585563308908685L;
 	
 	private HDBSCAN_Algorithm algo = HDBSCAN.DEF_ALGO;

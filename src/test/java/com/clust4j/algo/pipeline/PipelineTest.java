@@ -42,6 +42,7 @@ import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
 import com.clust4j.data.DataSet;
+import com.clust4j.data.TrainTestSplit;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
@@ -243,7 +244,7 @@ public class PipelineTest implements BaseModelTest {
 		
 		Array2DRowRealMatrix training = data.getData();	// all 150
 		Array2DRowRealMatrix holdout  = new Array2DRowRealMatrix(
-			MatUtils.getRows(training.getData(), VecUtils.arange(50)), false);	// just take the first 50
+			MatUtils.slice(training.getData(), 0, 50), false);	// just take the first 50
 		
 		/*
 		 * Initialize pipe
@@ -290,7 +291,7 @@ public class PipelineTest implements BaseModelTest {
 		
 		Array2DRowRealMatrix training = data.getData();	// all 300+
 		Array2DRowRealMatrix holdout  = new Array2DRowRealMatrix(
-			MatUtils.getRows(training.getData(), VecUtils.arange(50)), false);	// just take the first 50
+			MatUtils.slice(training.getData(), 0, 50), false);	// just take the first 50
 		
 		/*
 		 * Initialize pipe
@@ -328,7 +329,38 @@ public class PipelineTest implements BaseModelTest {
 		int[] fit_labels = VecUtils.slice(pipeline.getTrainingLabels(),0,holdout.getRowDimension()); // only first 50!!
 		int[] predicted_labels = pipeline.predict(holdout);
 		
-		// let's examine the affinity of the fit, and the predicted:
+		// let's examine the accuracy of the fit, and the predicted:
 		System.out.println("Predicted accuracy: " + ACCURACY.evaluate(fit_labels, predicted_labels));
+	}
+	
+	@Test
+	public void testSupervisedFitToPredictWithSplit() {
+		DataSet data = TestSuite.BC_DATASET.shuffle();
+		TrainTestSplit split = new TrainTestSplit(data, 0.7);
+		
+		DataSet training = split.getTrain();
+		DataSet holdout  = split.getTest();
+		
+		/*
+		 * Initialize pipe
+		 */
+		SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+			new NearestCentroidParameters()
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			FeatureNormalization.STANDARD_SCALE,
+			FeatureNormalization.MIN_MAX_SCALE
+		);
+		
+		/*
+		 * Fit the pipe and make predictions
+		 */
+		pipeline.fit(training.getData(), training.getLabels());
+		
+		// let's get predictions...
+		int[] predicted_labels = pipeline.predict(holdout.getData());
+		
+		// let's examine the accuracy of the holdout, and the predicted:
+		System.out.println("Predicted accuracy: " + ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
 	}
 }

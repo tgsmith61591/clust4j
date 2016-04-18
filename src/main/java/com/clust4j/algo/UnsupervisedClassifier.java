@@ -15,8 +15,6 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
-
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 
@@ -35,12 +33,4 @@ public interface UnsupervisedClassifier extends BaseClassifier {
 	 * @return
 	 */
 	public double silhouetteScore();
-	
-	/**
-	 * Predict on new data
-	 * @param newData
-	 * @throws ModelNotFitException if the model hasn't yet been fit
-	 * @return
-	 */
-	public int[] predict(AbstractRealMatrix newData);
 }

@@ -1772,6 +1772,36 @@ public abstract class MatUtils {
 	}
 	
 	/**
+	 * Slice the matrix row-wise from a start index (inclusive) to an end index
+	 * (exclusive), and return a copy of the rows.
+	 * @param a
+	 * @param startInc
+	 * @param endExc
+	 * @throws ArrayIndexOutOfBoundsException if the end index is greater than the matrix length
+	 * or if the start index is less than 0
+	 * @throws IllegalArgumentException if the rows are empty or if the start index exceeds the end index
+	 * @return
+	 */
+	public static double[][] slice(final double[][] a, final int startInc, final int endExc) {
+		checkDims(a);
+		
+		if(endExc > a.length)
+			throw new ArrayIndexOutOfBoundsException(endExc);
+		if(startInc < 0 || startInc > a.length)
+			throw new ArrayIndexOutOfBoundsException(startInc);
+		if(startInc > endExc)
+			throw new IllegalArgumentException("start index cannot exceed end index");
+		if(startInc == endExc)
+			return new double[][]{};
+		
+		final double[][] out = new double[endExc - startInc][];
+		for(int i = startInc, j = 0; i < endExc; i++, j++)
+			out[j] = VecUtils.copy(a[i]);
+		
+		return out;
+	}
+	
+	/**
 	 * Sort a double matrix ascending by the {@link VecUtils#argSort(double[])} method
 	 * @param data
 	 * @param col - the column used for sorting

@@ -45,7 +45,7 @@ import com.clust4j.utils.Series.Inequality;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatUtils.MatSeries;
 import com.clust4j.utils.VecUtils;
-import com.clust4j.utils.VecUtils.VecDoubleSeries;
+import com.clust4j.utils.VecUtils.DoubleSeries;
 
 /**
  * Hierarchical Density-Based Spatial Clustering of Applications with Noise. 
@@ -717,7 +717,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			boolean[] label_filter;
 			boolean val;
 			int current_node, new_node_index, new_node, i, j, trueCt, idx;
-			VecDoubleSeries series;
+			DoubleSeries series;
 			
 			double[][] result = new double[m-1][3];
 			node_labels = VecUtils.arange(m);
@@ -760,7 +760,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 					right[j] = X[current_node][current_labels[j]];
 				
 				// Build the current_distances vector
-				series = new VecDoubleSeries(left, Inequality.LESS_THAN, right);
+				series = new DoubleSeries(left, Inequality.LESS_THAN, right);
 				current_distances = VecUtils.where(series, left, right);
 				
 				
@@ -1371,10 +1371,39 @@ final public class HDBSCAN extends AbstractDBSCAN {
 					" classified noise");
 			
 			// Need to encode labels to maintain order
-			labels = new NoiseyLabelEncoder(labels).fit().getEncodedLabels();
+			final NoiseyLabelEncoder encoder = new NoiseyLabelEncoder(labels).fit();
+			labels = encoder.getEncodedLabels();
 			
 			
+			
+			/*
+			 * In this portion, we build the fit summary... HDBSCAN is hard
+			 * to iteratively update on status, so we will merely provide summary
+			 * statistics on the class labels. Since it's not a centroid-based model
+			 * it wouldn't make since to track any metrics such as WSS, so we'll
+			 * leave it at simple counts and pcts.
+			 */
+			String label_rep;
+			int[] ordered_label_classes = VecUtils.reorder(encoder.getClasses(), VecUtils.argSort(encoder.getClasses()));
+			for(int label: ordered_label_classes) {
+				label_rep = label + (NOISE_CLASS == label ? " (noise)" : "");
+				
+				int count = VecUtils.sum(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, label).get());
+				double pct = (double)count / (double)labels.length;
+				
+				// log the summary
+				fitSummary.add(new Object[]{
+					label_rep,
+					count,
+					pct,
+					timer.wallTime()
+				});
+			}
+			
+			
+			// Close this model out
 			sayBye(timer);
+			
 			
 			// Clean anything with big overhead..
 			dataData = null;
@@ -1616,9 +1645,8 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
-		// TODO
 		return new Object[]{
-			"TODO:"
+			"Class Label","Num. Instances","Pct. Instances","Wall"
 		};
 	}
 	

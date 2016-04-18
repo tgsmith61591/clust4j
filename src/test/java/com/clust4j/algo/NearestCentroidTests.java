@@ -373,11 +373,11 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidParameters().setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 		
 		labels = new NearestCentroid(X, new int[]{0,1,2}, new NearestCentroidParameters().setVerbose(true)).fit().predict(X);
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
 	

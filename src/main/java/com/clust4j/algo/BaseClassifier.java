@@ -15,6 +15,8 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+
 import com.clust4j.metrics.scoring.BinomialClassificationScoring;
 import com.clust4j.metrics.scoring.SilhouetteScore;
 import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
@@ -34,4 +36,12 @@ public interface BaseClassifier extends java.io.Serializable {
 	 * @return
 	 */
 	public int[] getLabels();
+	
+	/**
+	 * Predict on new data
+	 * @param newData
+	 * @throws ModelNotFitException if the model hasn't yet been fit
+	 * @return
+	 */
+	public int[] predict(AbstractRealMatrix newData);
 }

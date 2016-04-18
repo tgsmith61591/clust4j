@@ -653,10 +653,10 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new MeanShift(X, new MeanShiftParameters().setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
 		labels = new MeanShift(X, new MeanShiftParameters(0.5).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 	
 	@Test

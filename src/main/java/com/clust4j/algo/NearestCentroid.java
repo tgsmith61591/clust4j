@@ -30,6 +30,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.scoring.SupervisedEvaluationMetric;
+import com.clust4j.utils.ArrayFormatter;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
@@ -233,8 +234,10 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 				centroids.add(centroid);
 
 				fitSummary.add(new Object[]{
-					encoded, nk[currentClass], 
+					encoded, 
+					nk[currentClass], 
 					KMeans.barycentricDistance(masked, centroid), 
+					ArrayFormatter.arrayToString(centroid),
 					timer.wallTime()
 				});
 			}
@@ -292,9 +295,8 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	
 	@Override
 	final protected Object[] getModelFitSummaryHeaders() {
-		// TODO
 		return new Object[]{
-			"Class Label","Num. Instances","WSS","Wall"
+			"Class Label","Num. Instances","WSS","Centroid","Wall"
 		};
 	}
 	

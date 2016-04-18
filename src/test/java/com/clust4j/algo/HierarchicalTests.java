@@ -285,13 +285,13 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.AVERAGE).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
 		labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.COMPLETE).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		
 		labels = new HierarchicalAgglomerative(X, new HierarchicalAgglomerativeParameters(Linkage.WARD).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 	}
 	
 	@Test

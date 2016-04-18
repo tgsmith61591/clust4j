@@ -41,11 +41,13 @@ public abstract class Series<T> {
 				 * This wouldn't make sense for any variation of
 				 * < or >, so only need to do this for == and !=
 				 */
-				if(anan && bnan)
+				if(anan && bnan) {
 					return true;
-				if(anan ^ bnan)
+				} else if(anan ^ bnan) {
 					return false;
-				return a == b;
+				} else {
+					return a == b;
+				}
 			}
 		},
 		

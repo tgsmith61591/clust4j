@@ -517,7 +517,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new KMeans(X, new KMeansParameters(3).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, 0).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, 0).all());
 		System.out.println();
 	}
 	

@@ -231,10 +231,10 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		final Array2DRowRealMatrix X = new Array2DRowRealMatrix(x, false);
 		
 		int[] labels = new DBSCAN(X, new DBSCANParameters(1).setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // these might be noise in DBSCAN
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, labels[0]).all()); // these might be noise in DBSCAN
 		
 		labels = new DBSCAN(X, new DBSCANParameters().setVerbose(true)).fit().getLabels();
-		assertTrue(new VecUtils.VecIntSeries(labels, Inequality.EQUAL_TO, labels[0]).all());
+		assertTrue(new VecUtils.IntSeries(labels, Inequality.EQUAL_TO, labels[0]).all());
 	}
 	
 	@Test
