@@ -4,12 +4,12 @@
 ![Supported JVM](https://img.shields.io/badge/java-1.8-blue.svg)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-## clust4j
+# clust4j
 A Java-based set of __classification__ clustering algorithms. Built under JDK 1.7 and tested up to JDK 1.8. *This project is currently in ongoing development for the time being and should not be used in production environments*
 
 ___
 ### Installation:
-__Clust4j 1.1.6 prerelease is now available under [releases](https://github.com/tgsmith61591/clust4j/releases)__. To build the bleeding edge, use the included gradle wrapper:
+__clust4j 1.1.6 prerelease is now available under [releases](https://github.com/tgsmith61591/clust4j/releases)__. To build the bleeding edge, use the included gradle wrapper:
 
 ```bash
 git clone https://github.com/tgsmith61591/clust4j.git
@@ -19,10 +19,14 @@ cd clust4j
 ```
 
 ___
-### Clust4j includes some datasets:
+### clust4j includes some datasets:
+Get started quickly with clust4j by loading one of the built-in datasets:
 - Iris
+  - Predict the species of iris given four features corresponding to petal attributes
 - Wine
+  - Predict the type of wine given 13 features derived from a chemical analysis
 - Breast cancer
+  - Predict whether a tumor is benign or malignant given 30 different features, such as "smoothness," "compactness," and "symmetry"
 
 Usage:
 
