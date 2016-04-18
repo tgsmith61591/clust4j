@@ -21,12 +21,14 @@ import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.UnsupervisedClassifier;
 import com.clust4j.algo.UnsupervisedClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.except.ModelNotFitException;
 
 public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClassifier> 
-		extends Pipeline<UnsupervisedClassifierParameters<M>> {
+		extends Pipeline<UnsupervisedClassifierParameters<M>> 
+		implements UnsupervisedClassifier {
 	
 	private static final long serialVersionUID = 8790601917700667359L;
-	protected M fit_model = null; // TODO: use this for predict
+	protected M fit_model = null;
 
 	public UnsupervisedPipeline(final UnsupervisedClassifierParameters<M> planner, final PreProcessor... pipe) {
 		super(planner, pipe);
@@ -39,5 +41,42 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 			// Build/fit the model
 			return fit_model = planner.fitNewModel(copy);
 		}
+	}
+	
+	private void ensureModelFit() {
+		if(null == fit_model) {
+			throw new ModelNotFitException("model has not yet been fit");
+		} else { // this is just to avoid the missed branch for coverage
+			return;
+		}
+	}
+
+	@Override
+	public int[] getLabels() {
+		ensureModelFit();
+		return fit_model.getLabels();
+	}
+
+	@Override
+	public double indexAffinityScore(int[] labels) {
+		ensureModelFit();
+		return fit_model.indexAffinityScore(labels);
+	}
+
+	@Override
+	public double silhouetteScore() {
+		ensureModelFit();
+		return fit_model.silhouetteScore();
+	}
+
+	/**
+	 * Given an incoming dataframe, pipeline transform and
+	 * predict via the fit model
+	 * @param newData
+	 */
+	@Override
+	public int[] predict(AbstractRealMatrix newData) {
+		ensureModelFit();
+		return fit_model.predict(pipelineTransform(newData));
 	}
 }

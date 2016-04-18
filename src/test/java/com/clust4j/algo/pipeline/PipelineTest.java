@@ -41,7 +41,14 @@ import com.clust4j.algo.preprocess.FeatureNormalization;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
+import com.clust4j.data.DataSet;
+import com.clust4j.except.ModelNotFitException;
+import com.clust4j.kernel.GaussianKernel;
+import com.clust4j.metrics.scoring.UnsupervisedIndexAffinity;
 import com.clust4j.utils.MatUtils;
+import com.clust4j.utils.VecUtils;
+
+import static com.clust4j.metrics.scoring.BinomialClassificationScoring.ACCURACY;
 
 public class PipelineTest implements BaseModelTest {
 
@@ -225,5 +232,103 @@ public class PipelineTest implements BaseModelTest {
 			new int[]{2},
 			new int[]{1}
 		}));
+		
+		// coverage love
+		pipeline.getName();
+	}
+	
+	@Test
+	public void testUnsupervisedFitToPredict() {
+		DataSet data = TestSuite.IRIS_DATASET.shuffle();
+		
+		Array2DRowRealMatrix training = data.getData();	// all 150
+		Array2DRowRealMatrix holdout  = new Array2DRowRealMatrix(
+			MatUtils.getRows(training.getData(), VecUtils.arange(50)), false);	// just take the first 50
+		
+		/*
+		 * Initialize pipe
+		 */
+		UnsupervisedPipeline<KMeans> pipeline = new UnsupervisedPipeline<KMeans>(
+			new KMeansParameters(3)
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			FeatureNormalization.STANDARD_SCALE,
+			FeatureNormalization.MIN_MAX_SCALE
+		);
+		
+		/*
+		 * Pre-fit, test that we throw exceptions if called too early
+		 */
+		boolean a = false;
+		try {
+			pipeline.getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Fit the pipe
+		 */
+		pipeline.fit(training);
+		System.out.println("Silhouette: " + pipeline.silhouetteScore());
+		System.out.println("Affinity:   " + pipeline.indexAffinityScore(data.getLabels()));
+		
+		// let's get predictions...
+		int[] fit_labels = VecUtils.slice(pipeline.getLabels(),0,holdout.getRowDimension()); // only first 50!!
+		int[] predicted_labels = pipeline.predict(holdout);
+		
+		// let's examine the affinity of the fit, and the predicted:
+		double affinity = UnsupervisedIndexAffinity.getInstance().evaluate(fit_labels, predicted_labels);
+		System.out.println("Predicted affinity: " + affinity);
+	}
+	
+	@Test
+	public void testSupervisedFitToPredict() {
+		DataSet data = TestSuite.BC_DATASET.shuffle();
+		
+		Array2DRowRealMatrix training = data.getData();	// all 300+
+		Array2DRowRealMatrix holdout  = new Array2DRowRealMatrix(
+			MatUtils.getRows(training.getData(), VecUtils.arange(50)), false);	// just take the first 50
+		
+		/*
+		 * Initialize pipe
+		 */
+		SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+			new NearestCentroidParameters()
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			FeatureNormalization.STANDARD_SCALE,
+			FeatureNormalization.MIN_MAX_SCALE
+		);
+		
+		/*
+		 * Pre-fit, test that we throw exceptions if called too early
+		 */
+		boolean a = false;
+		try {
+			pipeline.getLabels();
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		/*
+		 * Fit the pipe
+		 */
+		pipeline.fit(training, data.getLabels());
+		System.out.println("Default score: " + pipeline.score());
+		System.out.println("Metric score:  " + pipeline.score(ACCURACY));
+		assertNotNull(pipeline.getTrainingLabels());
+		assertNotNull(pipeline.getLabels());
+		
+		// let's get predictions...
+		int[] fit_labels = VecUtils.slice(pipeline.getTrainingLabels(),0,holdout.getRowDimension()); // only first 50!!
+		int[] predicted_labels = pipeline.predict(holdout);
+		
+		// let's examine the affinity of the fit, and the predicted:
+		System.out.println("Predicted accuracy: " + ACCURACY.evaluate(fit_labels, predicted_labels));
 	}
 }

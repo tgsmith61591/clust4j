@@ -35,7 +35,7 @@ data = ExampleDataSets.loadBreastCancer();
 
 
 ____
-### Example data (to use for reproducability):
+### Simple example data (to use for reproducability):
 
 ```java
 final int k = 2;
@@ -159,6 +159,22 @@ Alternatively, the `silhouetteScore` method can be called as follows:
 ```java
 km.silhouetteScore(); // Uses internally predicted labels
 ```
+
+
+
+### Making predictions
+Any algorithm implementing a classifier algorithm (`SupervisedClassifier` or `UnsupervisedClassifier`) will implement the method `predict(AbstractRealMatrix)`. After the model has been fit, predictions can be made as follows (using `KMeans` for the example):
+
+```java
+KMeans model = new KMeansParameters(2).fitNewModel(mat); // fit the model on the training data
+Array2DRowRealMatrix newData = new Array2DRowRealMatrix(new double[][]{ // here's the new data
+    new double[]{0.0, 0.0, 0.0},
+    new double[]{3.0, 0.0, 2.0}
+});
+int[] predicted_labels = model.predict(newData); // returns {0, 1}
+```
+
+__Note__ that `HDBSCAN` does not currently implement a functional `predict` method, and will throw an `UnsupportedOperationException`.
 
 
 ----

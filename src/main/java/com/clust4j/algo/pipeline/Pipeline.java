@@ -19,11 +19,14 @@ package com.clust4j.algo.pipeline;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.Clust4j;
+import com.clust4j.NamedEntity;
 import com.clust4j.algo.BaseClassifierParameters;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.utils.SynchronicityLock;
 
-public abstract class Pipeline<T extends BaseClassifierParameters> extends Clust4j {
+public abstract class Pipeline<T extends BaseClassifierParameters> 
+		extends Clust4j implements NamedEntity {
+	
 	private static final long serialVersionUID = 3491192139356583621L;
 	final Object fitLock = new SynchronicityLock();
 	final PreProcessor[] pipe;
@@ -65,5 +68,8 @@ public abstract class Pipeline<T extends BaseClassifierParameters> extends Clust
 		return operated;
 	}
 	
-	// TODO: predict on new data!!
+	@Override
+	public String getName() {
+		return "Pipeline";
+	}
 }

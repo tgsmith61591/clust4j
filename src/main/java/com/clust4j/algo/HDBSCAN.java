@@ -1632,6 +1632,6 @@ final public class HDBSCAN extends AbstractDBSCAN {
 			throw new DimensionMismatchException(n, newData.getColumnDimension());
 		
 		// TODO: how to predict these???
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("HDBSCAN does not currently support predictions");
 	}
 }
