@@ -179,7 +179,7 @@ __Note__ that `HDBSCAN` does not currently implement a functional `predict` meth
 
 
 ### Putting it all together with the `TrainTestSplit`
-clust4j includes a [`TrainTestSplit`](src/main/java/com/clust4j/data/TestTestSplit.java) class that will shuffle and split a [`DataSet`](src/main/java/com/clust4j/data/DataSet.java) given a training ratio. This can be useful for both `SupervisedClassifier`s as well as `UnsupervisedClassifier`s (especially when leveraging clust4j's own proprietary [`INDEX_AFFINITY`](src/main/java/com/clust4j/metrics/scoring/SupervisedMetric.java) as a scoring metric). Here's an example of how this can be used with `KMeans`:
+clust4j includes a [`TrainTestSplit`](src/main/java/com/clust4j/data/TrainTestSplit.java) class that will shuffle and split a [`DataSet`](src/main/java/com/clust4j/data/DataSet.java) given a training ratio. This can be useful for both `SupervisedClassifier`s as well as `UnsupervisedClassifier`s (especially when leveraging clust4j's own proprietary [`INDEX_AFFINITY`](src/main/java/com/clust4j/metrics/scoring/SupervisedMetric.java) as a scoring metric). Here's an example of how this can be used with `KMeans`:
 
 ```java
 // Load data, get splits
