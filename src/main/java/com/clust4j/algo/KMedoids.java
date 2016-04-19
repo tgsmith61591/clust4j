@@ -148,13 +148,23 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				 * 1. In each cluster, make the point that minimizes 
 				 *    the sum of distances within the cluster the medoid
 				 */
-				clusterAssignments = assignClosestMedoid(newMedoids);
+				try {
+					clusterAssignments = assignClosestMedoid(newMedoids);
+				} catch(IllegalClusterStateException ouch) {
+					exitOnBadDistanceMetric(X, timer);
+					return this;
+				}
 				
 				
 				/*
 				 * 1.5 The entries are not 100% equal, so we can (re)assign medoids...
 				 */
-				rassn = new MedoidReassignmentHandler(clusterAssignments);
+				try {
+					rassn = new MedoidReassignmentHandler(clusterAssignments);
+				} catch(IllegalClusterStateException ouch) {
+					exitOnBadDistanceMetric(X, timer);
+					return this;
+				}
 				
 				/*
 				 * 1.75 This happens in the case of bad kernels that cause
@@ -232,6 +242,17 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	} // End train
 	
 	
+	/**
+	 * Some metrics produce entirely equal dist matrices...
+	 */
+	private void exitOnBadDistanceMetric(double[][] X, LogTimer timer) {
+		warn("distance metric (" + dist_metric + ") produced entirely equal distances");
+		labelFromSingularK(X);
+		fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+		sayBye(timer);
+	}
+	
+	
 	private ClusterAssignments assignClosestMedoid(int[] medoidIdcs) {
 		double minDist;
 		boolean all_tied = true;
@@ -284,7 +305,8 @@ final public class KMedoids extends AbstractCentroidClusterer {
 		
 		/*
 		 * If everything is tied, we need to bail. Shouldn't happen, now
-		 * that we explicitly check earlier on...
+		 * that we explicitly check earlier on... but we can just label from
+		 * a singular K at this point.
 		 */
 		if(all_tied) {
 			throw new IllegalClusterStateException("entirely "
