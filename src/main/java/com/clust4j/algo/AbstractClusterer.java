@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.NamedEntity;
@@ -190,6 +191,17 @@ public abstract class AbstractClusterer
 		final double[][] ref = new double[m][n];
 		final HashSet<Double> unique = new HashSet<>();
 		
+		// Used to compute variance on the fly for summaries later...
+		double[] sum   = new double[n];
+		double[] sumSq = new double[n];
+		double[] maxes = VecUtils.rep(Double.NEGATIVE_INFINITY, n);
+		double[] mins  = VecUtils.rep(Double.POSITIVE_INFINITY, n);
+		
+		// This will store summaries for each column + a header
+		ModelSummary summaries = new ModelSummary(new Object[]{
+			"Feature #","Variance","Std. Dev","Mean","Max","Min"
+		});
+		
 		/*
 		 * Internally performs the copy
 		 */
@@ -203,11 +215,38 @@ public abstract class AbstractClusterer
 						+ "Select a matrix imputation method for "
 						+ "incomplete records"));
 				} else {
+					// copy the entry
 					ref[i][j] = entry;
 					unique.add(entry);
+					
+					// capture stats...
+					sumSq[j] += entry * entry;
+					sum[j]   += entry;
+					maxes[j]  = FastMath.max(entry, maxes[j]);
+					mins[j]   = FastMath.min(entry, mins[j]);
+					
+					// if it's the last row, we can compute these:
+					if(i == m - 1) {
+						double var = (sumSq[j] - (sum[j]*sum[j])/(double)m ) / ((double)m - 1.0);
+						if(var == 0) {
+							warn("zero variance in feature " + j);
+						}
+						
+						summaries.add(new Object[]{
+							j, // feature num
+							var, // var
+							m < 2 ? Double.NaN : FastMath.sqrt(var), // std dev
+							sum[j] / (double)m, // mean
+							maxes[j], // max
+							mins[j] // min
+						});
+					}
 				}
 			}
 		}
+		
+		// Log the summaries
+		summaryLogger(formatter.format(summaries));
 		
 		if(!normalized)
 			warn("feature normalization option is set to false; this is discouraged");
@@ -247,14 +286,13 @@ public abstract class AbstractClusterer
 	}
 	
 	/**
-	 * In the case where we have shuffled data, we have to reorder
-	 * the labels to return to the client. <b>This should be called within
-	 * <tt>getLabels()</tt> operations</b>
+	 * Handles all label copies and ModelNotFitExceptions. 
+	 * <b>This should be called within <tt>getLabels()</tt> operations</b>
 	 * @param data
 	 * @param shuffleOrder
 	 * @return
 	 */
-	protected int[] handleLabelCopy(int[] labels) {
+	protected int[] handleLabelCopy(int[] labels) throws ModelNotFitException {
 		if(null == labels) {
 			error(new ModelNotFitException("model has not been fit yet"));
 			return null;
@@ -384,6 +422,23 @@ public abstract class AbstractClusterer
 		info("--");
 		info("Model Fit Summary:");
 		final Table tab = formatter.format(fitSummary);
+		summaryLogger(tab);
+	}
+	
+	/**
+	 * Used for logging the initialization summary
+	 */
+	protected final void logModelSummary() {
+		info("--");
+		info("Model Init Summary:");
+		final Table tab = formatter.format(modelSummary());
+		summaryLogger(tab);
+	}
+	
+	/**
+	 * Handles logging of tables
+	 */
+	final private void summaryLogger(Table tab) {
 		final String fmt = tab.toString();
 		final String sep = System.getProperty("line.separator");
 		final String[] summary = fmt.split(sep);
@@ -414,23 +469,6 @@ public abstract class AbstractClusterer
 			
 			iter++;
 		}
-	}
-	
-	/**
-	 * Used for logging the initialization summary
-	 */
-	protected final void logModelSummary() {
-		info("--");
-		info("Model Init Summary:");
-		final String sep = System.getProperty("line.separator");
-		
-		final String[] summary = formatter
-			.format(modelSummary())
-			.toString()
-			.split(sep);
-		
-		for(String line: summary)
-			info(line);
 	}
 	
 	protected void setSeparabilityMetric(final GeometricallySeparable sep) {

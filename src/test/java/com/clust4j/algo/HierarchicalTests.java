@@ -147,7 +147,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	
 	@Test
 	public void loadTest() {
-		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
+		Array2DRowRealMatrix mat = getRandom(250, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerativeParameters()
 					.setLinkage(Linkage.AVERAGE)
@@ -156,7 +156,7 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 	
 	@Test
 	public void loadTestKernel() {
-		Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
+		Array2DRowRealMatrix mat = getRandom(250, 10); // need to reduce size for travis CI
 		new HierarchicalAgglomerative(mat,
 			new HierarchicalAgglomerativeParameters()
 					.setLinkage(Linkage.AVERAGE)
