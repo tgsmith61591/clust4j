@@ -107,11 +107,13 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			
 			final LogTimer timer = new LogTimer();
 			final double[][] X = data.getData();
+			final double nan = Double.NaN;
 			
 			// Corner case: K = 1 or all singular
 			if(1 == k) {
 				labelFromSingularK(X);
-				fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+				fitSummary.add(new Object[]{ iter, converged, 
+					tss, tss, tss, nan, nan, timer.wallTime() });
 				sayBye(timer);
 				return this;
 			}
@@ -132,7 +134,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			int[] newMedoids = medoid_indices;
 			
 			// Cost vars
-			cost = Double.POSITIVE_INFINITY;
+			tss = Double.POSITIVE_INFINITY;
 			double bestCost = Double.POSITIVE_INFINITY, 
 				   maxCost = Double.NEGATIVE_INFINITY,
 				   avgCost = Double.NaN;
@@ -176,7 +178,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
 					
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+					fitSummary.add(new Object[]{ iter, converged, tss, tss, tss, nan, nan, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
@@ -198,10 +200,26 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				/*
 				 * 3. Update the fit summary item
 				 */
+				converged = lastIteration || (convergedFromCost = FastMath.abs(tss - bestCost) < tolerance);
+				double wss_sum = nan;
+				if(converged) {
+					this.wss = computeWSS(this.centroids, this.data.getDataRef(), this.labels);
+					wss_sum = VecUtils.sum(wss);
+					this.bss = tss - wss_sum;
+				}
+				
+				/*
+				 * 3.5 If this is the last one, it'll show the wss and bss
+				 */
 				fitSummary.add(new Object[]{ iter, 
-					converged = lastIteration 
-						|| (convergedFromCost = FastMath.abs(cost - bestCost) < tolerance), 
-					maxCost, cost, avgCost, timer.wallTime() });
+					converged, 
+					maxCost, 
+					tss, 
+					avgCost, 
+					wss_sum, 
+					bss, 
+					timer.wallTime()
+				});
 				
 				/*
 				 * 4. Update the costs
@@ -213,7 +231,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 
 				if(tmpCost < bestCost) {
 					bestCost = tmpCost;
-					cost = bestCost;
+					tss = bestCost;
 					labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
 					centroids = rassn.centers;
 					medoid_indices = newMedoids;
@@ -235,7 +253,6 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			reorderLabelsAndCentroids();
 			sayBye(timer);
 			
-			
 			return this;
 		}
 		
@@ -248,7 +265,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	private void exitOnBadDistanceMetric(double[][] X, LogTimer timer) {
 		warn("distance metric (" + dist_metric + ") produced entirely equal distances");
 		labelFromSingularK(X);
-		fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+		fitSummary.add(new Object[]{ iter, converged, tss, tss, tss, Double.NaN, Double.NaN, timer.wallTime() });
 		sayBye(timer);
 	}
 	
@@ -433,7 +450,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	@Override
 	protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Max Cost","Min Cost","Avg Clust. Cost","Wall"
+			"Iter. #","Converged","Max Cost","Min Cost","Avg Clust. Cost","End WSS","End BSS","Wall"
 		};
 	}
 	

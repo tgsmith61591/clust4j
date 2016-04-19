@@ -27,6 +27,7 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.EntryPair;
+import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -76,13 +77,15 @@ final public class KMeans extends AbstractCentroidClusterer {
 
 			final LogTimer timer = new LogTimer();
 			final double[][] X = data.getData();
+			final double[] mean_record = MatUtils.meanRecord(X);
 			final int n = data.getColumnDimension();
+			final double nan = Double.NaN;
 			
 			
 			// Corner case: K = 1 or all singular values
 			if(1 == k) {
 				labelFromSingularK(X);
-				fitSummary.add(new Object[]{ iter, converged, cost, cost, timer.wallTime() });
+				fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, nan, timer.wallTime() });
 				sayBye(timer);
 				return this;
 			}
@@ -96,7 +99,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 			
 			// Keep track of TSS (sum of barycentric distances)
 			double maxCost = Double.NEGATIVE_INFINITY;
-			cost = Double.POSITIVE_INFINITY;
+			tss = Double.POSITIVE_INFINITY;
 			ArrayList<double[]> new_centroids;
 			
 			for(iter = 0; iter < maxIter; iter++) {
@@ -109,7 +112,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 							.setSeed(getSeed())
 							.setMetric(getSeparabilityMetric())
 							.setVerbose(false)).fit();
-				} catch(NaNException nan) {
+				} catch(NaNException NaN) {
 					/*
 					 * If they metric used produces lots of infs or -infs, it 
 					 * makes it hard if not impossible to effectively segment the
@@ -126,7 +129,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
 					
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, cost, cost, cost, timer.wallTime() });
+					fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, nan, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
@@ -178,17 +181,17 @@ final public class KMeans extends AbstractCentroidClusterer {
 				} // end centroid re-assignment
 				
 				// Add current state to fitSummary
-				fitSummary.add(new Object[]{ iter, converged, maxCost, cost, timer.wallTime() });
+				fitSummary.add(new Object[]{ iter, converged, maxCost, tss, nan, nan, timer.wallTime() });
 				
 				
 				// Assign new centroids
 				centroids = new_centroids;
-				double diff = cost - system_cost;	// results in Inf on first iteration
-				cost = system_cost;
+				double diff = tss - system_cost;	// results in Inf on first iteration
+				tss = system_cost;
 				
 				// if diff is Inf, this is the first pass. Max is always first pass
 				if(Double.isInfinite(diff))
-					maxCost = cost; // should always stay the same..
+					maxCost = tss; // should always stay the same..
 				
 				
 				
@@ -203,17 +206,27 @@ final public class KMeans extends AbstractCentroidClusterer {
 				
 			} // end iterations
 			
+			
+			// reorder labels, then get wss and bss...
+			reorderLabelsAndCentroids();
+			this.wss = computeWSS(this.centroids, this.data.getDataRef(), this.labels);
+			double wss_sum = VecUtils.sum(wss);
+			this.bss = tss - wss_sum;
+			
 
 			// last one...
-			fitSummary.add(new Object[]{ iter, 
-				converged, maxCost, cost, timer.wallTime() });
+			fitSummary.add(new Object[]{ 
+				iter, 
+				converged, 
+				maxCost, 
+				tss, wss_sum, bss,
+				timer.wallTime() });
 			
 			if(!converged)
 				warn("algorithm did not converge");
 				
 			
 			// wrap things up, create summary..
-			reorderLabelsAndCentroids();
 			sayBye(timer);
 			
 			
@@ -231,7 +244,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 	@Override
 	protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Max Cost","Min Cost","Wall"
+			"Iter. #","Converged","Max TSS","Min TSS","End WSS","End BSS","Wall"
 		};
 	}
 }

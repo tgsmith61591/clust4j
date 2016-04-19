@@ -203,9 +203,9 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			assertTrue(km.didConverge());
 
 			System.out.println(Arrays.toString(km.getLabels()));
-			System.out.println(km.totalCost());
+			System.out.println(km.getTSS());
 			if(b)
-				assertTrue(km.totalCost() == 9.0);
+				assertTrue(km.getTSS() == 9.0);
 		}
 		
 		// Test predict function -- no longer part of API
@@ -286,12 +286,12 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 				.setVerbose(true)).fit();
 		System.out.println();
 		
-		final double c = km.totalCost();
+		final double c = km.getTSS();
 		km.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
 		KMeans km2 = (KMeans)KMeans.loadObject(new FileInputStream(TestSuite.tmpSerPath));
-		assertTrue(km2.totalCost() == c);
+		assertTrue(km2.getTSS() == c);
 		assertTrue(km.equals(km2));
 		Files.delete(TestSuite.path);
 	}

@@ -125,6 +125,7 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 	
 	
 	
+	
 	/**
 	 * Initializes a new AffinityPropagationModel with default parameters
 	 * @param data

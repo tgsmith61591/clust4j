@@ -343,12 +343,12 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 				.setScale(true)
 				.setVerbose(true)).fit();
 		
-		final double c = km.totalCost();
+		final double c = km.getTSS();
 		km.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
 		assertTrue(TestSuite.file.exists());
 		
 		KMedoids km2 = (KMedoids)KMedoids.loadObject(new FileInputStream(TestSuite.tmpSerPath));
-		assertTrue(km2.totalCost() == c);
+		assertTrue(km2.getTSS() == c);
 		assertTrue(km2.equals(km));
 		Files.delete(TestSuite.path);
 	}

@@ -81,7 +81,10 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final protected int m;
 	
 	volatile protected boolean converged = false;
-	volatile protected double cost = Double.NaN;
+	volatile protected double tss = Double.NaN;
+	volatile protected double bss = Double.NaN;
+	volatile protected double[] wss = null;
+	
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
 	
@@ -389,19 +392,19 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		labels = VecUtils.repInt(0, m);
 		double[] center_record = MatUtils.meanRecord(X);
 		
-		cost = 0;
+		tss = 0;
 		double diff;
 		for(double[] d: X) {
 			for(int j = 0; j < data.getColumnDimension(); j++) {
 				diff = d[j] - center_record[j];
-				cost += diff * diff;
+				tss += diff * diff;
 			}
 		}
 		
 		iter++;
 		converged = true;
 
-		warn("k=1; converged immediately with a TSS of "+cost);
+		warn("k=1; converged immediately with a TSS of "+tss);
 	}
 	
 	@Override
@@ -429,13 +432,17 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		return SILHOUETTE.evaluate(this, getLabels());
 	}
 	
-	/**
-	 * Return the cost of the entire clustering system. For KMeans, this
-	 * equates to total sum of squares
-	 * @return system cost
-	 */
-	public double totalCost() {
-		return cost;
+	
+	public double getTSS() {
+		return tss;
+	}
+	
+	public double[] getWSS() {
+		return wss;
+	}
+	
+	public double getBSS() {
+		return bss;
 	}
 	
 	/**
@@ -467,7 +474,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 	/**
-	 * For computing the within sum of squares
+	 * For computing the total sum of squares
 	 * @param instances
 	 * @param centroid
 	 * @return
@@ -489,6 +496,31 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		}
 		
 		return clust_cost;
+	}
+	
+	protected static double[] computeWSS(ArrayList<double[]> centroids, double[][] X, final int[] labels) {
+		final double[] wss = new double[centroids.size()];
+		
+		int label;
+		double[] row, centroid;
+		double distance;
+		for(int i = 0; i < labels.length; i++) {
+			centroid = centroids.get(i);
+			label = labels[i];
+			row = X[i];
+			
+			// compute barycentric dist
+			distance = 0;
+			double diff;
+			for(int j = 0; j < row.length; j++) {
+				diff = row[j] - centroid[j];
+				distance += (diff * diff);
+			}
+			
+			wss[label] += distance;
+		}
+		
+		return wss;
 	}
 
 	@Override protected abstract AbstractCentroidClusterer fit();
