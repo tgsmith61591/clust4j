@@ -505,8 +505,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		double[] row, centroid;
 		double distance;
 		for(int i = 0; i < labels.length; i++) {
-			centroid = centroids.get(i);
 			label = labels[i];
+			centroid = centroids.get(label);
 			row = X[i];
 			
 			// compute barycentric dist

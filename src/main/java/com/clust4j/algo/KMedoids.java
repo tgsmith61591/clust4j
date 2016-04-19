@@ -203,6 +203,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				converged = lastIteration || (convergedFromCost = FastMath.abs(tss - bestCost) < tolerance);
 				double wss_sum = nan;
 				if(converged) {
+					reorderLabelsAndCentroids();
 					this.wss = computeWSS(this.centroids, this.data.getDataRef(), this.labels);
 					wss_sum = VecUtils.sum(wss);
 					this.bss = tss - wss_sum;
@@ -250,7 +251,6 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			
 				
 			// wrap things up, create summary..
-			reorderLabelsAndCentroids();
 			sayBye(timer);
 			
 			return this;
