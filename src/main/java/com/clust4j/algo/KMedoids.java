@@ -484,9 +484,6 @@ final public class KMedoids extends AbstractCentroidClusterer {
 		final LabelEncoder encoder = new LabelEncoder(labels).fit();
 		labels = encoder.getEncodedLabels();
 		
-		// will always be null in KMedoids until this stage
-		wss = VecUtils.rep(Double.NaN, k);
-		
 		int i = 0;
 		centroids = new ArrayList<>();
 		int[] classes = encoder.getClasses();

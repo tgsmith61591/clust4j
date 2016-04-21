@@ -81,7 +81,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	volatile protected boolean converged = false;
 	volatile protected double tss = 0.0;
 	volatile protected double bss = Double.NaN;
-	volatile protected double[] wss = null;
+	volatile protected double[] wss;
 	
 	volatile protected int[] labels = null;
 	volatile protected int iter = 0;
@@ -342,6 +342,8 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 			}
 		}
 		
+		// Initialize WSS:
+		wss = VecUtils.rep(Double.NaN, k);
 	}
 	
 	@Override

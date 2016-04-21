@@ -247,10 +247,6 @@ final public class KMeans extends AbstractCentroidClusterer {
 		final LabelEncoder encoder = new LabelEncoder(labels).fit();
 		labels = encoder.getEncodedLabels();
 		
-		if(wss_null) {
-			this.wss = VecUtils.rep(Double.NaN, k);
-		}
-		
 		// also reorder centroids... takes O(2K) passes
 		TreeMap<Integer, double[]> tmpCentroids = new TreeMap<>();
 		double[] new_wss = new double[k];
