@@ -18,7 +18,6 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -58,19 +57,18 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		 * may propagate NaNs or Infs or 100% zeros
 		 */
 		
-		/*// should be handled now by returning just one cluster...
-		UNSUPPORTED_METRICS.add(CauchyKernel.class);
-		UNSUPPORTED_METRICS.add(CircularKernel.class);
-		UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
-		UNSUPPORTED_METRICS.add(HyperbolicTangentKernel.class);
-		UNSUPPORTED_METRICS.add(InverseMultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(LogKernel.class);
-		UNSUPPORTED_METRICS.add(MinKernel.class);
-		UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
-		UNSUPPORTED_METRICS.add(PolynomialKernel.class);
-		UNSUPPORTED_METRICS.add(PowerKernel.class);
-		UNSUPPORTED_METRICS.add(SplineKernel.class);
-		*/
+		// should be handled now by returning just one cluster...
+		//UNSUPPORTED_METRICS.add(CauchyKernel.class);
+		//UNSUPPORTED_METRICS.add(CircularKernel.class);
+		//UNSUPPORTED_METRICS.add(GeneralizedMinKernel.class);
+		//UNSUPPORTED_METRICS.add(HyperbolicTangentKernel.class);
+		//UNSUPPORTED_METRICS.add(InverseMultiquadricKernel.class);
+		//UNSUPPORTED_METRICS.add(LogKernel.class);
+		//UNSUPPORTED_METRICS.add(MinKernel.class);
+		//UNSUPPORTED_METRICS.add(MultiquadricKernel.class);
+		//UNSUPPORTED_METRICS.add(PolynomialKernel.class);
+		//UNSUPPORTED_METRICS.add(PowerKernel.class);
+		//UNSUPPORTED_METRICS.add(SplineKernel.class);
 	}
 	
 	
@@ -81,7 +79,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	final protected int m;
 	
 	volatile protected boolean converged = false;
-	volatile protected double tss = Double.NaN;
+	volatile protected double tss = 0.0;
 	volatile protected double bss = Double.NaN;
 	volatile protected double[] wss = null;
 	
@@ -330,6 +328,20 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 		
 		info("selected centroid centers via " + init.getName() + " in " + centTimer.toString());
 		logModelSummary();
+		
+		/*
+		 * The TSS will always be the same -- the sum of squared distances from the mean record.
+		 * We can just compute this here quick and easy.
+		 */
+		final double[][] X = this.data.getDataRef();
+		final double[] mean_record = MatUtils.meanRecord(X);
+		for(int i = 0; i < m; i++) {
+			for(int j = 0; j < mean_record.length; j++){
+				double diff = X[i][j] - mean_record[j];
+				tss += (diff * diff);
+			}
+		}
+		
 	}
 	
 	@Override
@@ -390,20 +402,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 */
 	protected final void labelFromSingularK(final double[][] X) {
 		labels = VecUtils.repInt(0, m);
-		double[] center_record = MatUtils.meanRecord(X);
-		
-		tss = 0;
-		double diff;
-		for(double[] d: X) {
-			for(int j = 0; j < data.getColumnDimension(); j++) {
-				diff = d[j] - center_record[j];
-				tss += diff * diff;
-			}
-		}
-		
+		wss = new double[]{tss};
 		iter++;
 		converged = true;
-
 		warn("k=1; converged immediately with a TSS of "+tss);
 	}
 	
@@ -438,91 +439,18 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	}
 	
 	public double[] getWSS() {
-		return wss;
+		if(null == wss) {
+			return VecUtils.rep(Double.NaN, k);
+		} else {
+			return VecUtils.copy(wss);
+		}
 	}
 	
 	public double getBSS() {
 		return bss;
 	}
-	
-	/**
-	 * Reorder the labels in order of appearance using the 
-	 * {@link LabelEncoder}. Also reorder the centroids to correspond
-	 * with new label order
-	 */
-	protected void reorderLabelsAndCentroids() {
-		/* internal method, so shouldn't happen...
-		if(null == labels)
-			throw new ModelNotFitException("model not yet fit");
-		*/
-		
-		final LabelEncoder encoder = new LabelEncoder(labels).fit();
-		labels =  encoder.getEncodedLabels();
-		
-		// also reorder centroids... takes O(2K) passes
-		TreeMap<Integer, double[]> tmpCentroids = new TreeMap<>(); 
-		// tm seems like overkill, but since KMedoids labels using the
-		// medoid index, we'll either get NPEs or AIOOBEs if we use the array:
-		// final double[][] tmpCentroids = new double[k][];
-		
-		int j = 0;
-		for(int i: encoder.getClasses())
-			tmpCentroids.put(encoder.encodeOrNull(i), centroids.get(j++));
-		
-		for(int i = 0; i < k; i++)
-			centroids.set(i, tmpCentroids.get(i));
-	}
-	
-	/**
-	 * For computing the total sum of squares
-	 * @param instances
-	 * @param centroid
-	 * @return
-	 */
-	protected static double barycentricDistance(double[][] instances, double[] centroid) {
-		double clust_cost = 0.0, diff;
-		final int n = centroid.length;
-		
-		for(double[] instance: instances) {
-			/* internal method, so shouldn't happen...
-			if(n != instance.length)
-				throw new DimensionMismatchException(n, instance.length);
-			*/
-			
-			for(int j = 0; j < n; j++) {
-				diff = instance[j] - centroid[j];
-				clust_cost += diff * diff;
-			}
-		}
-		
-		return clust_cost;
-	}
-	
-	protected static double[] computeWSS(ArrayList<double[]> centroids, double[][] X, final int[] labels) {
-		final double[] wss = new double[centroids.size()];
-		
-		int label;
-		double[] row, centroid;
-		double distance;
-		for(int i = 0; i < labels.length; i++) {
-			label = labels[i];
-			centroid = centroids.get(label);
-			row = X[i];
-			
-			// compute barycentric dist
-			distance = 0;
-			double diff;
-			for(int j = 0; j < row.length; j++) {
-				diff = row[j] - centroid[j];
-				distance += (diff * diff);
-			}
-			
-			wss[label] += distance;
-		}
-		
-		return wss;
-	}
 
+	protected abstract void reorderLabelsAndCentroids();
 	@Override protected abstract AbstractCentroidClusterer fit();
 	protected GeometricallySeparable defMetric() { return AbstractClusterer.DEF_DIST; }
 }

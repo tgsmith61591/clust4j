@@ -147,7 +147,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, 2);
+		KMedoids km = new KMedoidsParameters(2).setVerbose(true).fitNewModel(mat);
 		assertTrue(km.getSeparabilityMetric().equals(Distance.MANHATTAN));
 		
 		km.fit();
@@ -360,6 +360,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
 		double ia = 0;
+		KMedoids kmed;
 		
 		// it's not linearly separable, so most won't perform incredibly well...
 		for(DistanceMetric dist: Distance.values()) {
@@ -369,9 +370,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			KMedoidsParameters km = new KMedoidsParameters(3).setMetric(dist);
 			double i = -1;
 			
-			i = km.fitNewModel(d).fit().indexAffinityScore(actual);
+			kmed = km.fitNewModel(d);
+			i = kmed.indexAffinityScore(actual);
 			
-			System.out.println(dist.getName() + ", " + i);
+			System.out.println(kmed.dist_metric.getName() + ", " + i);
 			if(i > ia) {
 				ia = i;
 				best = dist;

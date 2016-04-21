@@ -30,8 +30,12 @@ public class KMedoidsParameters extends CentroidClustererParameters<KMedoids> {
 	private InitializationStrategy strat = KMedoids.DEF_INIT;
 	private int maxIter = KMedoids.DEF_MAX_ITER;
 	
-	public KMedoidsParameters() { }
+	public KMedoidsParameters() {
+		this.metric = KMedoids.DEF_DIST;
+	}
+	
 	public KMedoidsParameters(int k) {
+		this();
 		this.k = k;
 	}
 	
@@ -72,7 +76,7 @@ public class KMedoidsParameters extends CentroidClustererParameters<KMedoids> {
 	
 	@Override
 	public KMedoidsParameters setMetric(final GeometricallySeparable dist) {
-		this.metric = dist;
+		this.metric = dist; // bad idea in kmedoids
 		return this;
 	}
 	

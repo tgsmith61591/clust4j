@@ -664,4 +664,32 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			assertTrue(a);
 		}
 	}
+	
+	@Test
+	public void testWSS() {
+		KMeans model = new KMeansParameters(3).setVerbose(true).fitNewModel(data_);
+		final double[] wss = model.getWSS();
+		ArrayList<double[]> centroids = model.getCentroids();
+		final int[] labels = model.getLabels();
+		
+		int i = 0, label;
+		double[] wss_assert = new double[3], centroid;
+		for(double[] row: model.data.getData()) {
+			label = labels[i];
+			centroid = centroids.get(label);
+			
+			double sum = 0;
+			for(int j = 0; j < centroid.length; j++) {
+				double diff = row[j] - centroid[j];
+				sum += (diff * diff);
+			}
+			
+			wss_assert[label] += sum;
+			i++;
+		}
+		
+		assertTrue(VecUtils.equalsExactly(wss, wss_assert));
+		assertTrue(model.getTSS() == model.getBSS() + VecUtils.sum(model.getWSS()));
+		assertTrue(new VecUtils.DoubleSeries(new KMeans(data_, 3).getWSS(), Inequality.EQUAL_TO, Double.NaN).all());
+	}
 }

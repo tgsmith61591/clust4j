@@ -1598,6 +1598,18 @@ public abstract class VecUtils {
 		return b;
 	}
 	
+	public static int[] sortAsc(final int[] a) {
+		checkDimsPermitEmpty(a);
+		
+		final int n = a.length;
+		if(n == 0)
+			return new int[]{};
+		
+		final int[] b = copy(a);
+		Arrays.sort(b);
+		return b;
+	}
+	
 	public static double[] sqrt(final double[] a) {
 		final double[] b = new double[a.length];
 		for(int i = 0; i < a.length; i++)
@@ -1633,9 +1645,16 @@ public abstract class VecUtils {
 	}
 	
 	public static double sum(final double[] a) {
-		double sum = 0d;
+		double sum = 0.0;
 		for(double d : a)
 			sum += d;
+		return sum;
+	}
+	
+	public static double sum(Collection<? extends Number> in) {
+		double sum = 0.0;
+		for(Number n: in)
+			sum += n.doubleValue();
 		return sum;
 	}
 	

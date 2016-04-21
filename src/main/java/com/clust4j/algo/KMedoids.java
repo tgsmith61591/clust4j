@@ -76,6 +76,11 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	 */
 	volatile private double[][] dist_mat = null;
 	
+	/**
+	 * Map the index to the WSS
+	 */
+	volatile private TreeMap<Integer, Double> med_to_wss = new TreeMap<>();
+	
 	
 	
 	protected KMedoids(final AbstractRealMatrix data) {
@@ -88,6 +93,12 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	
 	protected KMedoids(final AbstractRealMatrix data, final KMedoidsParameters planner) {
 		super(data, planner);
+		
+		// Check if is Manhattan
+		if(!this.dist_metric.equals(Distance.MANHATTAN)) {
+			warn("KMedoids is intented to run with Manhattan distance, WSS/BSS computations will be inaccurate");
+			//this.dist_metric = Distance.MANHATTAN; // idk that we want to enforce this...
+		}
 	}
 	
 	
@@ -109,11 +120,16 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			final double[][] X = data.getData();
 			final double nan = Double.NaN;
 			
+			
 			// Corner case: K = 1 or all singular
 			if(1 == k) {
 				labelFromSingularK(X);
 				fitSummary.add(new Object[]{ iter, converged, 
-					tss, tss, tss, nan, nan, timer.wallTime() });
+					tss, // tss
+					tss, // avg per cluster
+					tss, // wss
+					nan, // bss (none)
+					timer.wallTime() });
 				sayBye(timer);
 				return this;
 			}
@@ -134,10 +150,9 @@ final public class KMedoids extends AbstractCentroidClusterer {
 			int[] newMedoids = medoid_indices;
 			
 			// Cost vars
-			tss = Double.POSITIVE_INFINITY;
 			double bestCost = Double.POSITIVE_INFINITY, 
 				   maxCost = Double.NEGATIVE_INFINITY,
-				   avgCost = Double.NaN;
+				   avgCost = Double.NaN, wss_sum = nan;
 			
 			
 			// Iterate while the cost decreases:
@@ -178,7 +193,12 @@ final public class KMedoids extends AbstractCentroidClusterer {
 					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
 					
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, tss, tss, tss, nan, nan, timer.wallTime() });
+					fitSummary.add(new Object[]{ iter, converged, 
+							tss, // tss
+							tss, // avg per cluster
+							tss, // wss
+							nan, // bss (none) 
+							timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
@@ -198,45 +218,43 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				
 				
 				/*
-				 * 3. Update the fit summary item
+				 * 3. Update the costs
 				 */
-				converged = lastIteration || (convergedFromCost = FastMath.abs(tss - bestCost) < tolerance);
-				double wss_sum = nan;
+				converged = lastIteration || (convergedFromCost = FastMath.abs(wss_sum - bestCost) < tolerance);
+				double tmp_wss_sum = rassn.new_clusters.total_cst;
+				double tmp_bss = tss - tmp_wss_sum;
+
+				// Check whether greater than max
+				if(tmp_wss_sum > maxCost)
+					maxCost = tmp_wss_sum;
+
+				if(tmp_wss_sum < bestCost) {
+					bestCost = wss_sum = tmp_wss_sum;
+					labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
+					med_to_wss = rassn.new_clusters.costs;
+					centroids = rassn.centers;
+					medoid_indices = newMedoids;
+					bss = tmp_bss;
+					
+					// get avg cost
+					avgCost = wss_sum / (double)k;
+				}
+
 				if(converged) {
 					reorderLabelsAndCentroids();
-					this.wss = computeWSS(this.centroids, this.data.getDataRef(), this.labels);
-					wss_sum = VecUtils.sum(wss);
-					this.bss = tss - wss_sum;
 				}
 				
 				/*
 				 * 3.5 If this is the last one, it'll show the wss and bss
 				 */
 				fitSummary.add(new Object[]{ iter, 
-					converged, 
-					maxCost, 
+					converged,
 					tss, 
 					avgCost, 
 					wss_sum, 
 					bss, 
 					timer.wallTime()
 				});
-				
-				/*
-				 * 4. Update the costs
-				 */
-				double tmpCost = rassn.new_clusters.total_cst;
-				avgCost = tmpCost / (double)k;
-				if(tmpCost > maxCost)
-					maxCost = tmpCost;
-
-				if(tmpCost < bestCost) {
-					bestCost = tmpCost;
-					tss = bestCost;
-					labels = rassn.new_clusters.assn; // will be medoid idcs until encoded at end
-					centroids = rassn.centers;
-					medoid_indices = newMedoids;
-				}
 				
 
 				iter++;
@@ -305,13 +323,12 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				}
 			}
 			
-			
 			/*
 			 * If all of the distances are equal, we can end up with a -1 idx...
 			 */
 			if(-1 == nearest)
-				nearest = medoidIdcs[getSeed().nextInt(k)];
-			else if(!is_a_medoid)
+				nearest = medoidIdcs[getSeed().nextInt(k)]; // select random nearby
+			if(!is_a_medoid)
 				all_tied = false;
 			
 			
@@ -450,8 +467,33 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	@Override
 	protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Max Cost","Min Cost","Avg Clust. Cost","End WSS","End BSS","Wall"
+			"Iter. #","Converged","TSS","Avg Clust. Cost","Min WSS","Max BSS","Wall"
 		};
+	}
+	
+	/**
+	 * Reorder the labels in order of appearance using the 
+	 * {@link LabelEncoder}. Also reorder the centroids to correspond
+	 * with new label order
+	 */
+	protected void reorderLabelsAndCentroids() {
+		
+		/*
+		 *  reorder labels...
+		 */
+		final LabelEncoder encoder = new LabelEncoder(labels).fit();
+		labels = encoder.getEncodedLabels();
+		
+		// will always be null in KMedoids until this stage
+		wss = VecUtils.rep(Double.NaN, k);
+		
+		int i = 0;
+		centroids = new ArrayList<>();
+		int[] classes = encoder.getClasses();
+		for(int claz: classes) {
+			centroids.add(data.getRow(claz)); // an index, not a counter 0 thru k
+			wss[i++] = med_to_wss.get(claz);
+		}
 	}
 	
 	@Override final protected GeometricallySeparable defMetric() { return KMedoids.DEF_DIST; }

@@ -236,7 +236,7 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 				fitSummary.add(new Object[]{
 					encoded, 
 					nk[currentClass], 
-					KMeans.barycentricDistance(masked, centroid), 
+					barycentricDistance(masked, centroid), 
 					ArrayFormatter.arrayToString(centroid),
 					timer.wallTime()
 				});
@@ -269,6 +269,33 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 			sayBye(timer);
 			return this;
 		}
+	}
+	
+
+	
+	/**
+	 * For computing the total sum of squares
+	 * @param instances
+	 * @param centroid
+	 * @return
+	 */
+	protected static double barycentricDistance(double[][] instances, double[] centroid) {
+		double clust_cost = 0.0, diff;
+		final int n = centroid.length;
+		
+		for(double[] instance: instances) {
+			/* internal method, so shouldn't happen...
+			if(n != instance.length)
+				throw new DimensionMismatchException(n, instance.length);
+			*/
+			
+			for(int j = 0; j < n; j++) {
+				diff = instance[j] - centroid[j];
+				clust_cost += diff * diff;
+			}
+		}
+		
+		return clust_cost;
 	}
 	
 	// Tested: passing

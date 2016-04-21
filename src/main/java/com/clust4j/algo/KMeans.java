@@ -16,6 +16,7 @@
 package com.clust4j.algo;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.util.FastMath;
@@ -27,7 +28,6 @@ import com.clust4j.log.LogTimer;
 import com.clust4j.metrics.pairwise.Distance;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.EntryPair;
-import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
 /**
@@ -77,7 +77,6 @@ final public class KMeans extends AbstractCentroidClusterer {
 
 			final LogTimer timer = new LogTimer();
 			final double[][] X = data.getData();
-			final double[] mean_record = MatUtils.meanRecord(X);
 			final int n = data.getColumnDimension();
 			final double nan = Double.NaN;
 			
@@ -85,7 +84,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 			// Corner case: K = 1 or all singular values
 			if(1 == k) {
 				labelFromSingularK(X);
-				fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, nan, timer.wallTime() });
+				fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, timer.wallTime() });
 				sayBye(timer);
 				return this;
 			}
@@ -98,8 +97,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 			
 			
 			// Keep track of TSS (sum of barycentric distances)
-			double maxCost = Double.NEGATIVE_INFINITY;
-			tss = Double.POSITIVE_INFINITY;
+			double last_wss_sum = Double.POSITIVE_INFINITY, wss_sum = 0;
 			ArrayList<double[]> new_centroids;
 			
 			for(iter = 0; iter < maxIter; iter++) {
@@ -129,7 +127,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
 					
 					labelFromSingularK(X);
-					fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, nan, timer.wallTime() });
+					fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, timer.wallTime() });
 					sayBye(timer);
 					return this;
 				}
@@ -138,89 +136,75 @@ final public class KMeans extends AbstractCentroidClusterer {
 				
 				// unpack the EntryPair
 				labels = label_dist.getKey();
-				
-				// Start by computing TSS using barycentric dist
-				double system_cost = 0.0;
-				double[] centroid, new_centroid;
 				new_centroids = new ArrayList<>(k);
-				for(int i = 0; i < k; i++) {
-					centroid = centroids.get(i);
-					new_centroid = new double[n];
+				
+				
+				int label;
+				wss = new double[k];
+				int[] centroid_counts = new int[k];
+				double[] centroid;
+				double[][] new_centroid_arrays = new double[k][n];
+				for(int i = 0; i < m; i++) {
+					label = labels[i];
+					centroid = centroids.get(label);
 					
-					// Compute the current cost for each cluster,
-					// break if difference in TSS < tol. Otherwise
-					// update the centroids to means of clusters.
-					// We can compute what the new clusters will be
-					// here, but don't assign yet
-					int label, count = 0;
-					double clust_cost = 0;
-					for(int row = 0; row < m; row++) {
-						label = labels[row];
-						double diff;
+					// increment count for this centroid
+					double this_cost = 0;
+					centroid_counts[label]++;
+					for(int j = 0; j < centroid.length; j++) {
+						double diff = X[i][j] - centroid[j];
+						this_cost += (diff * diff);
 						
-						if(label == i) {
-							for(int j = 0; j < n; j++) {
-								new_centroid[j] += X[row][j];
-								diff = X[row][j] - centroid[j];
-								clust_cost += diff * diff;
-							}
-							
-							// number in cluster
-							count++;
-						}
+						// Add the the centroid sums
+						new_centroid_arrays[label][j] += X[i][j];
 					}
 					
-					// Update the new centroid (currently a sum) to be a mean
-					for(int j = 0; j < n; j++)
-						new_centroid[j] /= (double)count;
-					new_centroids.add(new_centroid);
-					
-					// Update system cost
-					system_cost += clust_cost;
-					
-				} // end centroid re-assignment
+					// add this cost to the WSS
+					wss[label] += this_cost;
+				}
 				
-				// Add current state to fitSummary
-				fitSummary.add(new Object[]{ iter, converged, maxCost, tss, nan, nan, timer.wallTime() });
+				// one pass of K for some consolidation
+				wss_sum = 0;
+				for(int i = 0; i < k; i++) {
+					wss_sum += wss[i];
+					
+					for(int j = 0; j < n; j++) // meanify
+						new_centroid_arrays[i][j] /= (double)centroid_counts[i];
+					
+					new_centroids.add(new_centroid_arrays[i]);
+				}
+				
+				// update the BSS
+				bss = tss - wss_sum;
+				
 				
 				
 				// Assign new centroids
-				centroids = new_centroids;
-				double diff = tss - system_cost;	// results in Inf on first iteration
-				tss = system_cost;
-				
-				// if diff is Inf, this is the first pass. Max is always first pass
-				if(Double.isInfinite(diff))
-					maxCost = tss; // should always stay the same..
+				double diff = last_wss_sum - wss_sum;
+				last_wss_sum = wss_sum;
 				
 				
+				// Check for convergence and add summary:
+				converged = FastMath.abs(diff) < tolerance; // first iter will be inf
+				fitSummary.add(new Object[]{ 
+					converged ? iter++ : iter, 
+					converged, 
+					tss, wss_sum, bss, 
+					timer.wallTime() });
 				
-				
-				// Check for convergence
-				if( FastMath.abs(diff) < tolerance ) {	// Inf always returns false in comparison
-					// Did converge
-					converged = true;
-					iter++; // Going to break and miss this..
+				if(converged) {
 					break;
+				} else {
+					// otherwise, reassign centroids
+					centroids = new_centroids;
 				}
 				
 			} // end iterations
 			
 			
-			// reorder labels, then get wss and bss...
-			reorderLabelsAndCentroids();
-			this.wss = computeWSS(this.centroids, this.data.getDataRef(), this.labels);
-			double wss_sum = VecUtils.sum(wss);
-			this.bss = tss - wss_sum;
 			
-
-			// last one...
-			fitSummary.add(new Object[]{ 
-				iter, 
-				converged, 
-				maxCost, 
-				tss, wss_sum, bss,
-				timer.wallTime() });
+			// Reorder the labels, centroids and wss indices
+			reorderLabelsAndCentroids();
 			
 			if(!converged)
 				warn("algorithm did not converge");
@@ -244,7 +228,53 @@ final public class KMeans extends AbstractCentroidClusterer {
 	@Override
 	protected Object[] getModelFitSummaryHeaders() {
 		return new Object[]{
-			"Iter. #","Converged","Max TSS","Min TSS","End WSS","End BSS","Wall"
+			"Iter. #","Converged","TSS","WSS","BSS","Wall"
 		};
+	}
+	
+	/**
+	 * Reorder the labels in order of appearance using the 
+	 * {@link LabelEncoder}. Also reorder the centroids to correspond
+	 * with new label order
+	 */
+	@Override
+	protected void reorderLabelsAndCentroids() {
+		boolean wss_null = null == wss;
+		
+		/*
+		 *  reorder labels...
+		 */
+		final LabelEncoder encoder = new LabelEncoder(labels).fit();
+		labels = encoder.getEncodedLabels();
+		
+		if(wss_null) {
+			this.wss = VecUtils.rep(Double.NaN, k);
+		}
+		
+		// also reorder centroids... takes O(2K) passes
+		TreeMap<Integer, double[]> tmpCentroids = new TreeMap<>();
+		double[] new_wss = new double[k];
+		
+		/*
+		 * We have to be delicate about this--KMedoids stores
+		 * labels as indices pointing to which record is the medoid,
+		 * whereas KMeans uses 0 thru K. Thus we can simply index in
+		 * KMeans, but will get an IndexOOB exception in Kmedoids, so
+		 * we need to come up with a universal solution which might
+		 * look ugly at a glance, but is robust to both.
+		 */
+		int encoded;
+		for(int i = 0; i < k; i++) {
+			encoded = encoder.reverseEncodeOrNull(i);
+			tmpCentroids.put(i, centroids.get(encoded));
+			
+			new_wss[i] = wss_null ? Double.NaN : wss[encoded];
+		}
+		
+		for(int i = 0; i < k; i++)
+			centroids.set(i, tmpCentroids.get(i));
+		
+		// reset wss
+		this.wss = new_wss;
 	}
 }
