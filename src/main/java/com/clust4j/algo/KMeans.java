@@ -124,7 +124,7 @@ final public class KMeans extends AbstractCentroidClusterer {
 					  "metric."));
 					 */
 					this.k = 1;
-					warn("(dis)similarity metric cannot partition space without propagating Infs. Returning one cluster");
+					warn("(dis)similarity metric ("+dist_metric+") cannot partition space without propagating Infs. Returning one cluster");
 					
 					labelFromSingularK(X);
 					fitSummary.add(new Object[]{ iter, converged, tss, tss, nan, timer.wallTime() });

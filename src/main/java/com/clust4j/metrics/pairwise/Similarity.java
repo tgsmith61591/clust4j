@@ -60,5 +60,12 @@ public enum Similarity implements SimilarityMetric {
 		public double similarityToPartialSimilarity(double d) {
 			return d;
 		}
+	},
+	
+	;
+	
+	@Override
+	public String toString() {
+		return getName();
 	}
 }

@@ -35,6 +35,23 @@ public class TestGlobals {
 		val = 12.1;
 		assertTrue(GlobalState.Mathematics.gamma(val) == 5.098322784411637E7);
 		assertTrue(GlobalState.Mathematics.lgamma(val) == 17.747007270798743);
+		
+		val = 0.00001;
+		assertTrue(GlobalState.Mathematics.gamma(val) == 1.0 / (val * (1.0 + GlobalState.Mathematics.GAMMA * val)));
+		
+		val = GlobalState.Mathematics.HIGH_BOUND + 1;
+		assertTrue(GlobalState.Mathematics.gamma(val) == Double.POSITIVE_INFINITY);
+		
+		val = 0.0;
+		boolean except = false;
+		try { GlobalState.Mathematics.gamma(val);
+		} catch(IllegalArgumentException i) { except = true;
+		} finally { assertTrue(except); }
+		
+		except = false;
+		try { GlobalState.Mathematics.lgamma(val);
+		} catch(IllegalArgumentException i) { except = true;
+		} finally { assertTrue(except); }
 	}
 
 }

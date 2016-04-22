@@ -438,6 +438,11 @@ public enum Distance implements DistanceMetric, java.io.Serializable {
 		return DEFAULT_P;
 	}
 	
+	@Override
+	public String toString() {
+		return getName();
+	}
+	
 	public static Collection<Distance> binaryDistances() {
 		final ArrayList<Distance> binary= new ArrayList<>();
 		for(Distance d: values()) {

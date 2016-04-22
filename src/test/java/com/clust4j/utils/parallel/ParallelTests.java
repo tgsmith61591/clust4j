@@ -31,9 +31,19 @@ public class ParallelTests {
 	 */
 	@Test
 	public void testAll() {
-		if(GlobalState.ParallelismConf.PARALLELISM_ALLOWED) {
-			testMult();
-			testMultRealBig();
+		if(GlobalState.ParallelismConf.NUM_CORES < 2) {
+			return;
+		} else {
+			boolean original = GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
+			GlobalState.ParallelismConf.PARALLELISM_ALLOWED = true; // force it
+			
+			try {
+				testMult();
+				testMultRealBig();
+			} catch(Exception e) {
+			} finally {
+				GlobalState.ParallelismConf.PARALLELISM_ALLOWED = original;
+			}
 		}
 	}
 	

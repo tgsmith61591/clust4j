@@ -19,6 +19,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class LogProperties {
+	/**
+	 * If we can't find their user name, then it'll just
+	 * end up as "user"...
+	 * @return
+	 */
 	public static String DEFAULT_ROOT() {
 		String usr = System.getProperty("user.name");
 		if(null == usr)
@@ -26,7 +31,7 @@ public class LogProperties {
 		
 		String usr2 = usr.replaceAll(" ", "_");
 		if(usr2.length() == 0)
-			usr2 = "unknown";
+			usr2 = "user";
 		
 		return "/tmp/clust4j-" + usr2;
 	}
