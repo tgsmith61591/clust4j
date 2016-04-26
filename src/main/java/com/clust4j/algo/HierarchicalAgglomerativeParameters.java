@@ -21,7 +21,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 final public class HierarchicalAgglomerativeParameters 
@@ -106,7 +106,7 @@ final public class HierarchicalAgglomerativeParameters
 	}
 
 	@Override
-	public HierarchicalAgglomerativeParameters setNormalizer(FeatureNormalization norm) {
+	public HierarchicalAgglomerativeParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

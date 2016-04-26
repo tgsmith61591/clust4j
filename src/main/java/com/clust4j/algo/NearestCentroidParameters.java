@@ -20,7 +20,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 public class NearestCentroidParameters 
@@ -55,7 +55,7 @@ public class NearestCentroidParameters
 	}
 
 	@Override
-	public NearestCentroidParameters setNormalizer(FeatureNormalization norm) {
+	public NearestCentroidParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

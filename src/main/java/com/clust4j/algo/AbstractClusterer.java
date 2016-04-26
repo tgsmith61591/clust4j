@@ -28,7 +28,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.NamedEntity;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NaNException;
 import com.clust4j.kernel.Kernel;
@@ -59,10 +59,6 @@ public abstract class AbstractClusterer
 	
 	private static final long serialVersionUID = -3623527903903305017L;
 	
-	/** The default {@link FeatureNormalization} enum to use. 
-	 *  The default is {@link FeatureNormalization#STANDARD_SCALE} */
-	public static FeatureNormalization DEF_NORMALIZER = FeatureNormalization.STANDARD_SCALE;
-	
 	/** Whether algorithms should by default behave in a verbose manner */
 	public static boolean DEF_VERBOSE = false;
 	
@@ -90,7 +86,7 @@ public abstract class AbstractClusterer
 	/** Whether to use parallelism */
 	protected final boolean parallel;
 	/** The normalizer */
-	protected final FeatureNormalization normalizer;
+	protected final PreProcessor normalizer;
 	/** Whether the entire matrix is comprised of only one unique value */
 	protected boolean singular_value;
 	
@@ -243,7 +239,8 @@ public abstract class AbstractClusterer
 		/*
 		 * Don't need to copy again, because already internally copied...
 		 */
-		return new Array2DRowRealMatrix(normalized ? normalizer.transform(ref) : ref, false);
+		final Array2DRowRealMatrix ar = new Array2DRowRealMatrix(ref, false);
+		return normalized ? new Array2DRowRealMatrix(normalizer.fit(ar).transform(ar).getData()) : ar;
 	}
 	
 	

@@ -23,7 +23,7 @@ import com.clust4j.utils.TableFormatter;
 
 abstract public class BaseModel extends Clust4j implements java.io.Serializable {
 	private static final long serialVersionUID = 4707757741169405063L;
-	protected final static TableFormatter formatter;
+	public final static TableFormatter formatter;
 	
 	// Initializers
 	static {

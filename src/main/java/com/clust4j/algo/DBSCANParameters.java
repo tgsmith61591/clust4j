@@ -21,7 +21,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -97,7 +97,7 @@ final public class DBSCANParameters extends AbstractDBSCANParameters<DBSCAN> {
 	}
 	
 	@Override
-	public DBSCANParameters setNormalizer(FeatureNormalization norm) {
+	public DBSCANParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

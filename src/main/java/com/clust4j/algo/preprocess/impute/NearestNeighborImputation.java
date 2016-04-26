@@ -267,4 +267,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 	public String getName() {
 		return "NN imputation";
 	}
+	
+	@Override
+	final public NearestNeighborImputation fit(AbstractRealMatrix data) { return this; }
 }

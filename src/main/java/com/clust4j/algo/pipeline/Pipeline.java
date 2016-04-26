@@ -63,7 +63,7 @@ public abstract class Pipeline<T extends BaseClassifierParameters>
 		
 		// Push through pipeline...
 		for(PreProcessor pre: pipe)
-			operated = pre.transform(operated);
+			operated = pre.fit(operated).transform(operated);
 		
 		return operated;
 	}

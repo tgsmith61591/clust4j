@@ -20,7 +20,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 
@@ -148,7 +148,7 @@ final public class MeanShiftParameters
 	}
 
 	@Override
-	public MeanShiftParameters setNormalizer(FeatureNormalization norm) {
+	public MeanShiftParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

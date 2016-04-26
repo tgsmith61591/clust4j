@@ -191,7 +191,6 @@ final public class DBSCAN extends AbstractDBSCAN {
 					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 					.setSeed(getSeed())
 					.setMetric(getSeparabilityMetric())
-					.setNormalizer(normer) // Don't really need because not normalizing...
 					.setVerbose(false))
 				.fit();
 			

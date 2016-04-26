@@ -28,7 +28,7 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseClustererParameters;
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeansParameters;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -148,7 +148,7 @@ public class ClustTests {
 		BaseClustererParameters planner = new BaseClustererParameters(){
 			private static final long serialVersionUID = 1L;
 			@Override public BaseClustererParameters copy() {return this;}
-			@Override public BaseClustererParameters setNormalizer(FeatureNormalization norm) { return this; }
+			@Override public BaseClustererParameters setNormalizer(PreProcessor norm) { return this; }
 			@Override public BaseClustererParameters setScale(boolean b) { return this; }
 			@Override public BaseClustererParameters setSeed(Random rand) { return this; }
 			@Override public BaseClustererParameters setVerbose(boolean b) { return this; }

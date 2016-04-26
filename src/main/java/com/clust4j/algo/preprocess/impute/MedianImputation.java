@@ -125,4 +125,7 @@ public class MedianImputation extends MatrixImputation {
 		sayBye(timer);
 		return copy;
 	}
+	
+	@Override
+	final public MedianImputation fit(AbstractRealMatrix data) { return this; }
 }

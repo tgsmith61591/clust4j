@@ -130,4 +130,8 @@ public class MeanImputation extends MatrixImputation {
 		sayBye(timer);
 		return copy;
 	}
+	
+
+	@Override
+	final public MeanImputation fit(AbstractRealMatrix data) { return this; }
 }

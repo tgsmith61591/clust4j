@@ -17,10 +17,22 @@ package com.clust4j.algo.preprocess;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
+import com.clust4j.Clust4j;
+import com.clust4j.algo.BaseModel;
 import com.clust4j.utils.DeepCloneable;
+import com.clust4j.utils.SynchronicityLock;
+import com.clust4j.utils.TableFormatter;
 
-public interface PreProcessor extends DeepCloneable {
-	@Override public PreProcessor copy();
-	public AbstractRealMatrix transform(AbstractRealMatrix data);
-	public double[][] transform(double[][] data);
+public abstract class PreProcessor extends Clust4j implements DeepCloneable {
+	private static final long serialVersionUID = -312158525538380532L;
+	final public static TableFormatter formatter = BaseModel.formatter;
+	
+	/** The lock to synchronize on for fits */
+	protected final Object fitLock = new SynchronicityLock();
+	
+	protected abstract void checkFit();
+	@Override public abstract PreProcessor copy();
+	public abstract PreProcessor fit(AbstractRealMatrix X);
+	public abstract AbstractRealMatrix transform(AbstractRealMatrix data);
+	public abstract double[][] transform(double[][] data);
 }

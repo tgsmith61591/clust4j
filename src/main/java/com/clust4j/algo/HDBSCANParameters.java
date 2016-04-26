@@ -22,7 +22,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -149,7 +149,7 @@ final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 	}
 	
 	@Override
-	public HDBSCANParameters setNormalizer(FeatureNormalization norm) {
+	public HDBSCANParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

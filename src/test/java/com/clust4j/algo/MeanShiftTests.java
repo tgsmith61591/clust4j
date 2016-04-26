@@ -38,7 +38,7 @@ import com.clust4j.algo.MeanShiftParameters;
 import com.clust4j.algo.MeanShift.MeanShiftSeed;
 import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.algo.RadiusNeighborsParameters;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.except.IllegalClusterStateException;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NonUniformMatrixException;
@@ -439,8 +439,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testAutoEstimationWithScale() {
-		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)FeatureNormalization
-			.STANDARD_SCALE.transform(data_);
+		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)new StandardScaler().fit(data_).transform(data_);
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.6041295821313855

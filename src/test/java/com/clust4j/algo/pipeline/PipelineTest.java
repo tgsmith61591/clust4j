@@ -37,9 +37,10 @@ import com.clust4j.algo.NearestCentroidParameters;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.NearestNeighborsParameters;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.algo.preprocess.PCA;
 import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
 import com.clust4j.data.DataSet;
@@ -68,7 +69,7 @@ public class PipelineTest implements BaseModelTest {
 		// Build the pipeline
 		final UnsupervisedPipeline<KMeans> pipe = new UnsupervisedPipeline<KMeans>(planner, 
 			new PreProcessor[]{
-				FeatureNormalization.STANDARD_SCALE, 
+				new StandardScaler(), 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
@@ -109,7 +110,7 @@ public class PipelineTest implements BaseModelTest {
 		// Build the pipeline
 		final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, 
 			new PreProcessor[]{
-				FeatureNormalization.STANDARD_SCALE, 
+				new StandardScaler(), 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		
@@ -130,7 +131,7 @@ public class PipelineTest implements BaseModelTest {
 		final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
 		
 		// Build the pipeline
-		final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, FeatureNormalization.STANDARD_SCALE);
+		final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, new StandardScaler());
 		
 		@SuppressWarnings("unused")
 		KMedoids km = pipe.fit(mat);
@@ -155,7 +156,7 @@ public class PipelineTest implements BaseModelTest {
 		// Build the pipeline
 		final SupervisedPipeline<NearestCentroid> pipe = new SupervisedPipeline<NearestCentroid>(planner, 
 			new PreProcessor[]{
-				FeatureNormalization.STANDARD_SCALE, 
+				new StandardScaler(), 
 				new MeanImputation(new MeanImputation.MeanImputationPlanner().setVerbose(true)) // Will create a warning
 			});
 		final NearestCentroid nc = pipe.fit(mat, new int[]{0,1,1});
@@ -180,7 +181,7 @@ public class PipelineTest implements BaseModelTest {
 		
 		// Build the pipeline
 		final SupervisedPipeline<NearestCentroid> pipe = new SupervisedPipeline<NearestCentroid>(planner, 
-			FeatureNormalization.STANDARD_SCALE);
+			new StandardScaler());
 		final NearestCentroid nc = pipe.fit(mat, new int[]{0,1,1});
 		
 		assertTrue(nc.getLabels()[0] == 0 && nc.getLabels()[1] == 1);
@@ -222,7 +223,7 @@ public class PipelineTest implements BaseModelTest {
 		
 		PreProcessor[] pipe = new PreProcessor[]{
 			new MedianImputation(),
-			FeatureNormalization.STANDARD_SCALE
+			new StandardScaler()
 		};
 		
 		NeighborsPipeline<NearestNeighbors> pipeline = new NeighborsPipeline<NearestNeighbors>(planner, pipe);
@@ -254,8 +255,8 @@ public class PipelineTest implements BaseModelTest {
 			new KMeansParameters(3)
 				.setVerbose(true)
 				.setMetric(new GaussianKernel()),
-			FeatureNormalization.STANDARD_SCALE,
-			FeatureNormalization.MIN_MAX_SCALE
+			new StandardScaler(),
+			new MinMaxScaler()
 		);
 		
 		/*
@@ -301,8 +302,8 @@ public class PipelineTest implements BaseModelTest {
 			new NearestCentroidParameters()
 				.setVerbose(true)
 				.setMetric(new GaussianKernel()),
-			FeatureNormalization.STANDARD_SCALE,
-			FeatureNormalization.MIN_MAX_SCALE
+			new StandardScaler(),
+			new MinMaxScaler()
 		);
 		
 		/*
@@ -349,8 +350,8 @@ public class PipelineTest implements BaseModelTest {
 			new NearestCentroidParameters()
 				.setVerbose(true)
 				.setMetric(new GaussianKernel()),
-			FeatureNormalization.STANDARD_SCALE,
-			FeatureNormalization.MIN_MAX_SCALE
+			new StandardScaler(),
+			new MinMaxScaler()
 		);
 		
 		/*
@@ -380,9 +381,9 @@ public class PipelineTest implements BaseModelTest {
 			new NearestCentroidParameters()
 				.setVerbose(true)
 				.setMetric(new GaussianKernel()),
-			FeatureNormalization.STANDARD_SCALE,
-			FeatureNormalization.MIN_MAX_SCALE,
-			new PCA(training.getData(), 0.85).fit()
+			new StandardScaler(),
+			new MinMaxScaler(),
+			new PCA(0.85)
 		);
 		
 		/*

@@ -17,7 +17,6 @@ package com.clust4j.algo.preprocess.impute;
 
 import java.util.Random;
 
-import com.clust4j.Clust4j;
 import com.clust4j.NamedEntity;
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.preprocess.PreProcessor;
@@ -36,7 +35,7 @@ import com.clust4j.utils.MatUtils;
  * 
  * @author Taylor G Smith
  */
-public abstract class MatrixImputation extends Clust4j implements Loggable, NamedEntity, PreProcessor {
+public abstract class MatrixImputation extends PreProcessor implements Loggable, NamedEntity {
 	private static final long serialVersionUID = 8816387041123292806L;
 	
 	final public static boolean DEF_VERBOSE = AbstractClusterer.DEF_VERBOSE;
@@ -61,7 +60,10 @@ public abstract class MatrixImputation extends Clust4j implements Loggable, Name
 		abstract public ImputationPlanner setVerbose(boolean b);
 	}
 	
-	
+	@Override
+	final protected void checkFit() {
+		; // no need to fit, just pass
+	}
 	
 	
 	

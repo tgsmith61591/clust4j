@@ -1,6 +1,5 @@
 package com.clust4j.algo.preprocess;
 
-import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
@@ -8,22 +7,14 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.BaseModel;
-import com.clust4j.algo.ModelSummary;
 import com.clust4j.except.ModelNotFitException;
-import com.clust4j.log.Log;
-import com.clust4j.log.Log.Tag.Algo;
-import com.clust4j.log.LogTimer;
-import com.clust4j.log.Loggable;
 import com.clust4j.utils.EntryPair;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
-public class PCA extends BaseModel implements PreProcessor, Loggable {
+public class PCA extends PreProcessor {
 	private static final long serialVersionUID = 9041473302265494386L;
-	final AbstractRealMatrix data;
-	final int m, n;
 	
 	/*
 	 * Run modes:
@@ -35,17 +26,13 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	/*
 	 * Fit vars
 	 */
-	volatile private double[] means;
+	volatile int m, n;
+	volatile MeanCenterer centerer;
 	volatile private double total_var = 0.0;
 	volatile private double[] variabilities;
 	volatile private double[] variability_ratio;
 	volatile private RealMatrix components;
 	volatile private double noise_variance;
-	
-	/*
-	 * Whether there are warnings or not; shouldn't persist after saved
-	 */
-	volatile transient private boolean has_warnings = false;
 	
 	/**
 	 * Copy constructor
@@ -54,49 +41,19 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	 * @param var
 	 * @param vm
 	 */
-	private PCA(AbstractRealMatrix data, int n_components, double var, boolean vm) {
-		// already mean centered
-		this.data = (AbstractRealMatrix)data.copy();
-		this.m = data.getRowDimension(); 
-		this.n = data.getColumnDimension();
-		this.n_components = n_components;
-		this.variability = var;
-		this.var_mode = vm;
-	}
-	
-	/**
-	 * Default constructor
-	 * @param data
-	 */
-	private PCA(AbstractRealMatrix data) {
-		this.m = data.getRowDimension();
-		this.n = data.getColumnDimension();
-
-		// need to mean center...
-		double[][] X = new double[m][n], y = data.getData();
-		this.means = new double[n];
+	private PCA(PCA instance) {
+		this.n_components = instance.n_components;
+		this.variability = instance.variability;
+		this.var_mode = instance.var_mode;
 		
-		// First pass, compute mean...
-		for(int j = 0; j < n; j++) {
-			for(int i = 0; i < m; i++) {
-				means[j] += y[i][j];
-				
-				// if last:
-				if(i == m - 1) {
-					means[j] /= (double)m;
-				}
-			}
-		}
-		
-		// second pass, subtract to center:
-		for(int j = 0; j < n; j++) {
-			for(int i = 0; i < m; i++) {
-				X[i][j] = y[i][j] - means[j];
-			}
-		}
-		
-		// assign
-		this.data = new Array2DRowRealMatrix(X, false);
+		this.m = instance.m;
+		this.n = instance.n;
+		this.centerer = null == centerer ? null : instance.centerer.copy();
+		this.total_var = instance.total_var;
+		this.variabilities = VecUtils.copy(instance.variabilities);
+		this.variability_ratio = VecUtils.copy(instance.variability_ratio);
+		this.components = null == components ? null : instance.components.copy();
+		this.noise_variance = instance.noise_variance;
 	}
 	
 	/**
@@ -104,14 +61,12 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	 * @param data
 	 * @param n_components
 	 */
-	public PCA(AbstractRealMatrix data, int n_components) {
-		this(data);
-		if(n_components < 1 || n_components > n)
-			error(new IllegalArgumentException("n_components must be "
-				+ "greater than 0 and <= num cols in data"));
+	public PCA(int n_components) {
+		if(n_components < 1)
+			throw new IllegalArgumentException("n_components ("+n_components+") must be "
+				+ "greater than 0");
 		
 		this.n_components = n_components;
-		logInit();
 	}
 	
 	/**
@@ -120,36 +75,20 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	 * @param data
 	 * @param variability_explained
 	 */
-	public PCA(AbstractRealMatrix data, double variability_explained) {
-		this(data);
+	public PCA(double variability_explained) {
 		if(variability_explained <= 0.0 || variability_explained > 1.0)
-			error(new IllegalArgumentException("var_explained must be between 0 and 1.0"));
+			throw new IllegalArgumentException("var_explained must be between 0 and 1.0");
 		
 		this.variability = variability_explained;
 		this.n_components = n;
 		this.var_mode = true;
-		logInit();
-	}
-	
-	private void logInit() {
-		ModelSummary ms = new ModelSummary(new Object[]{
-			"n_components","var_thresh","var_mode"
-		});
-		
-		ms.add(new Object[]{
-			n_components, variability, var_mode
-		});
-		
-		String[] fmt = formatter.format(ms).toString()
-			.split(System.getProperty("line.separator"));
-		for(String s : fmt)
-			info(s);
 	}
 	
 	/**
 	 * Check if model is fit
 	 */
-	private void checkFit() {
+	@Override 
+	protected void checkFit() {
 		if(null == this.components)
 			throw new ModelNotFitException("model not yet fit");
 	}
@@ -182,12 +121,21 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	}
 	
 	/**
-	 * Get the cumulative sum of variability ratio explained by each component
+	 * Get the variability ratio explained by each component
 	 * @return
 	 */
 	public double[] getVariabilityRatioExplained() {
 		checkFit();
 		return VecUtils.copy(this.variability_ratio);
+	}
+	
+	/**
+	 * Get the variability ratio explained by each component
+	 * @return
+	 */
+	public double[] getCumulativeVariabilityRatioExplained() {
+		checkFit();
+		return VecUtils.cumsum(this.variability_ratio);
 	}
 	
 	
@@ -198,15 +146,7 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	 */
 	@Override
 	public PCA copy() {
-		PCA copy = new PCA(data, n_components, variability, var_mode);
-		copy.total_var = this.total_var;
-		copy.variabilities = VecUtils.copy(this.variabilities);
-		copy.variability_ratio = VecUtils.copy(this.variability_ratio);
-		copy.noise_variance = this.noise_variance;
-		copy.components = null == this.components ? null : this.components.copy();
-		copy.means = VecUtils.copy(means);
-		
-		return copy;
+		return new PCA(this);
 	}
 
 	@Override
@@ -218,19 +158,7 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	public double[][] transform(double[][] data) {
 		checkFit();
 		MatUtils.checkDimsForUniformity(data);
-		final int n = data[0].length;
-		
-		// Check for dim equality
-		if(n != this.means.length)
-			error(new DimensionMismatchException(n, this.means.length));
-		
-		// Subtract the column means to center
-		double[][] x = new double[data.length][n];
-		for(int j = 0; j < n; j++) {
-			for(int i = 0; i < data.length; i++) {
-				x[i][j] = data[i][j] - this.means[j];
-			}
-		}
+		double[][] x = this.centerer.transform(data);
 		
 		// use block because it's faster for multiplication of potentially large matrices
 		BlockRealMatrix X = new BlockRealMatrix(x);
@@ -283,13 +211,17 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 	}
 	
 	@Override
-	public PCA fit() {
+	public PCA fit(AbstractRealMatrix X) {
 		synchronized(fitLock) {
-			if(null != components) // already fit
-				return this;
+			this.centerer = new MeanCenterer().fit(X);
+			this.m = X.getRowDimension();
+			this.n = X.getColumnDimension();
 			
-			LogTimer timer = new LogTimer();
+			// ensure n_components not too large
+			if(this.n_components > n)
+				this.n_components = n;
 			
+			final AbstractRealMatrix data = this.centerer.transform(X);
 			SingularValueDecomposition svd = new SingularValueDecomposition(data);
 			RealMatrix U = svd.getU(), S = svd.getS(), V = svd.getV().transpose();
 			
@@ -329,16 +261,12 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 					// if it never hits the if block, the n_components is
 					// equal to the number of columns in its entirety
 				}
-				
-				info("need " + n_components + " component"+(n_components==1?"":"s")+
-					" to explain " + (ratio_cumsum[n_components - 1]*100) + "% of variability");
 			}
 			
 			
 			// get noise variance
 			if(n_components < FastMath.min(n, m)) {
 				this.noise_variance = VecUtils.mean(VecUtils.slice(variabilities, n_components, s.length));
-				info("noise variance: " + this.noise_variance);
 			} else {
 				this.noise_variance = 0.0;
 			}
@@ -349,59 +277,7 @@ public class PCA extends BaseModel implements PreProcessor, Loggable {
 			this.variabilities = VecUtils.slice(variabilities, 0, n_components);
 			this.variability_ratio = VecUtils.slice(variability_ratio, 0, n_components);
 			
-			// log out
-			info("cumulatively variability explained in retained "
-				+ "component(s): " + ratio_cumsum[n_components - 1]);
-			sayBye(timer);
-			
 			return this;
 		}
-	}
-
-	@Override
-	public void error(String msg) {
-		Log.err(getLoggerTag(), msg);
-	}
-
-	@Override
-	public void error(RuntimeException thrown) {
-		error(thrown.getMessage());
-		throw thrown;
-	}
-
-	@Override
-	public void warn(String msg) {
-		this.has_warnings = true;
-		Log.warn(getLoggerTag(), msg);
-	}
-
-	@Override
-	public void info(String msg) {
-		Log.info(getLoggerTag(), msg);
-	}
-
-	@Override
-	public void trace(String msg) {
-		Log.trace(getLoggerTag(), msg);
-	}
-
-	@Override
-	public void debug(String msg) {
-		Log.debug(getLoggerTag(), msg);
-	}
-
-	@Override
-	public void sayBye(LogTimer timer) {
-		info("fit PCA model in " + timer.toString());
-	}
-
-	@Override
-	public Algo getLoggerTag() {
-		return Algo.PRINCOMP;
-	}
-
-	@Override
-	public boolean hasWarnings() {
-		return has_warnings;
 	}
 }

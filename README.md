@@ -218,9 +218,9 @@ SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCen
 		.setMetric(new GaussianKernel()),
 
 	// These are the preprocessors that will transform the training data:
-	FeatureNormalization.STANDARD_SCALE,	// first transformation
-	FeatureNormalization.MIN_MAX_SCALE,	// second transformation
-	new PCA(training.getData(), 0.85).fit() // final transformation
+	new StandardScaler(), // first transformation
+	new MinMaxScaler(),   // second transformation
+	new PCA(0.85)         // final transformation
 );
 
 // Fit the pipeline:
@@ -374,13 +374,13 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
         // Unsupervised:
         final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
         // Use of varargs for the PreProcessors is supported
-        final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, Normalize.CENTER_SCALE /*, ... */);
+        final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, new StandardScaler() /*, ... */);
         // Push data through preprocessing pipeline and fit model
         KMedoids km = pipe.fit(mat);
         
         // Supervised:
         final NearestCentroidParameters s_planner = new NearestCentroidParameters().setVerbose(true);
-        final SupervisedPipeline<NearestCentroid> sup_pip = new SupervisedPipeline<NearestCentroid>(s_planner, Normalize.CENTER_SCALE);
+        final SupervisedPipeline<NearestCentroid> sup_pip = new SupervisedPipeline<NearestCentroid>(s_planner, new StandardScaler());
         NearestCentroid model = sup_pip.fit(mat, new int[]{0,1,1});
         ```
 

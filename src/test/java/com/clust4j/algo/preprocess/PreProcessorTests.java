@@ -23,10 +23,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
-import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
-import com.clust4j.algo.preprocess.FeatureNormalization;
-import com.clust4j.except.NonUniformMatrixException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -39,8 +36,9 @@ public class PreProcessorTests {
 			new double[] {3.65816,   0.29518,   2.123316},
 			new double[] {4.1234,    0.27395,   1.8900002}
 		};
-		
-		final double[][] operated = FeatureNormalization.MEAN_CENTER.transform(data);
+
+		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
+		final double[][] operated = new MeanCenterer().fit(d).transform(data);
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
@@ -54,7 +52,8 @@ public class PreProcessorTests {
 			new double[] {4.1234,    0.27395,   1.8900002}
 		};
 		
-		final double[][] operated = FeatureNormalization.STANDARD_SCALE.transform(data);
+		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
+		final double[][] operated = new StandardScaler().fit(d).transform(data);
 		
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, 1e-12));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, 1e-12));
@@ -72,69 +71,31 @@ public class PreProcessorTests {
 			new double[] {3.65816,   0.29518,   2.123316},
 			new double[] {4.1234,    0.27395,   1.8900002}
 		};
-		
-		final double[][] operated = FeatureNormalization.MIN_MAX_SCALE.transform(data);
+
+		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
+		final double[][] operated = new MinMaxScaler().fit(d).transform(data);
 		for(int i = 0; i < operated[0].length; i++) {
 			double[] col = MatUtils.getColumn(operated, i);
 			assertTrue(VecUtils.min(col) >= 0);
 			assertTrue(VecUtils.max(col) <= 1);
 		}
 	}
-
-	@Test(expected=NonUniformMatrixException.class)
-	public void testNUME1() {
-		final double[][] data = new double[][] {
-			new double[] {0.005, 	 0.182751,  0.1284},
-			new double[] {3.65816,   2.123316},
-			new double[] {4.1234,    0.27395,   1.8900002}
-		};
-		
-		FeatureNormalization.MEAN_CENTER.transform(data);
-	}
-	
-	@Test(expected=NonUniformMatrixException.class)
-	public void testNUME2() {
-		final double[][] data = new double[][] {
-			new double[] {0.005, 	 0.182751,  0.1284},
-			new double[] {3.65816,   2.123316},
-			new double[] {4.1234,    0.27395,   1.8900002}
-		};
-		
-		FeatureNormalization.MIN_MAX_SCALE.transform(data);
-	}
-	
-	@Test(expected=NonUniformMatrixException.class)
-	public void testNUME3() {
-		final double[][] data = new double[][] {
-			new double[] {0.005, 	 0.182751,  0.1284},
-			new double[] {3.65816,   2.123316},
-			new double[] {4.1234,    0.27395,   1.8900002}
-		};
-		
-		FeatureNormalization.STANDARD_SCALE.transform(data);
-	}
 	
 	@Test
 	public void testMinMaxScalerBadMinMax() {
 		boolean a = false;
-		final int orig_min = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
-		final int orig_max = GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
 		
 		try {
-			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN = 1;
-			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX = 1;
-			
 			double[][] d = new double[][]{
 				new double[]{1,2,3},
 				new double[]{1,2,3}
 			};
 			
-			FeatureNormalization.MIN_MAX_SCALE.transform(d);
+			final Array2DRowRealMatrix data = new Array2DRowRealMatrix(d, false);
+			new MinMaxScaler(1, 0).fit(data);
 		} catch(IllegalStateException i) {
 			a = true;
 		} finally {
-			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN = orig_min;
-			GlobalState.FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX = orig_max;
 			assertTrue(a);
 		}
 	}
@@ -142,7 +103,7 @@ public class PreProcessorTests {
 	@Test
 	public void testPCA() {
 		final Array2DRowRealMatrix X = TestSuite.IRIS_DATASET.getData();
-		PCA pca = new PCA(X, 2).fit();
+		PCA pca = new PCA(2).fit(X);
 		AbstractRealMatrix xp = pca.transform(X);
 		
 		double[][] expected = new double[][]{
@@ -325,7 +286,7 @@ public class PreProcessorTests {
 		
 		a = false;
 		try {
-			new PCA(X, 0);
+			new PCA(0);
 		} catch(IllegalArgumentException i) {
 			a = true;
 		} finally {
@@ -334,7 +295,7 @@ public class PreProcessorTests {
 		
 		a = false;
 		try {
-			new PCA(X, 6);
+			new PCA(0.0);
 		} catch(IllegalArgumentException i) {
 			a = true;
 		} finally {
@@ -343,16 +304,7 @@ public class PreProcessorTests {
 		
 		a = false;
 		try {
-			new PCA(X, 0.0);
-		} catch(IllegalArgumentException i) {
-			a = true;
-		} finally {
-			assertTrue(a);
-		}
-		
-		a = false;
-		try {
-			new PCA(X, 1.1);
+			new PCA(1.1);
 		} catch(IllegalArgumentException i) {
 			a = true;
 		} finally {
@@ -360,19 +312,11 @@ public class PreProcessorTests {
 		}
 		
 		// Test copy:
-		new PCA(X,1).copy(); // test works on non-fit
-		PCA copy = pca.copy().fit();
+		new PCA(1).copy(); // test works on non-fit
+		PCA copy = pca.copy().fit(X); // refit on the same data
+		
 		// assert fit, basically:
 		assertTrue(MatUtils.equalsExactly(xp.getData(), copy.transform(X).getData()));
 		assertTrue(copy.getNoiseVariance() == pca.getNoiseVariance());
-		
-		/*
-		 * Coverage love:
-		 */
-		pca.warn("coverage");
-		pca.trace("coverage");
-		pca.debug("coverage");
-		assertFalse(copy.hasWarnings());
-		assertTrue(pca.hasWarnings());
 	}
 }

@@ -62,11 +62,6 @@ public abstract class Log {
 			 */
 			PARSER			{ @Override public String toString(){return "PARSER ";} },
 			
-			/*
-			 * For principal component analysis
-			 */
-			PRINCOMP		{ @Override public String toString(){return "PRINCMP";} }
-			
 			;
 			
 			

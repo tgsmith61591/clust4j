@@ -22,7 +22,7 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel.BaseNeighborsPlanner;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighbors> {
@@ -75,7 +75,7 @@ public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighb
 	}
 	
 	@Override
-	public RadiusNeighborsParameters setNormalizer(FeatureNormalization norm) {
+	public RadiusNeighborsParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

@@ -21,7 +21,7 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 final public class KMeansParameters extends CentroidClustererParameters<KMeans> {
@@ -112,7 +112,7 @@ final public class KMeansParameters extends CentroidClustererParameters<KMeans> 
 	}
 
 	@Override
-	public KMeansParameters setNormalizer(FeatureNormalization norm) {
+	public KMeansParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}

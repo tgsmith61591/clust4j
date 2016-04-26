@@ -105,12 +105,6 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		*/
 	}
 	
-	@Test
-	public void testMiscellany() {
-		assertTrue(new NearestCentroidParameters()
-			.getNormalizer().equals(AbstractClusterer.DEF_NORMALIZER));
-	}
-	
 	@Test(expected=ModelNotFitException.class)
 	public void testMNFE1() {
 		new NearestCentroid(data_, target_).getCentroids();

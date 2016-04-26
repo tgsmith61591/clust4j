@@ -20,8 +20,6 @@ import java.util.concurrent.ForkJoinPool;
 
 import org.apache.commons.math3.util.FastMath;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
-
 /**
  * A set of global config values used in multiple classes. Some values may
  * be set to the user's preference, while others are final.
@@ -241,19 +239,5 @@ public abstract class GlobalState {
 		/** 
 		 * The max length a parallel-processed chunk may be */
 		public static int MAX_PARALLEL_CHUNK_SIZE = MAX_SERIAL_VECTOR_LEN / NUM_CORES; //2_500_000;
-	}
-	
-	
-	
-	
-	/**
-	 * A class to hold configurations for FeatureNormalization
-	 * @author Taylor G Smith
-	 */
-	public abstract static class FeatureNormalizationConf {
-		/** The lower bound for the {@link FeatureNormalization#MIN_MAX_SCALE} scaling range. */
-		public static int MIN_MAX_SCALER_RANGE_MIN = 0;
-		/** The upper bound for the {@link FeatureNormalization#MIN_MAX_SCALE} scaling range. */
-		public static int MIN_MAX_SCALER_RANGE_MAX = 1;
 	}
 }

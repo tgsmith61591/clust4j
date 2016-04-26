@@ -19,7 +19,8 @@ package com.clust4j.algo;
 import java.util.Random;
 
 import com.clust4j.Clust4j;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.DeepCloneable;
 
@@ -41,17 +42,17 @@ abstract public class BaseClustererParameters
 		scale 	= AbstractClusterer.DEF_SCALE;
 	protected Random seed = AbstractClusterer.DEF_SEED;
 	protected GeometricallySeparable metric = AbstractClusterer.DEF_DIST;
-	protected FeatureNormalization norm = AbstractClusterer.DEF_NORMALIZER;
+	protected PreProcessor norm = new StandardScaler();
 	
 	@Override abstract public BaseClustererParameters copy();
-	abstract public BaseClustererParameters setNormalizer(final FeatureNormalization norm);
+	abstract public BaseClustererParameters setNormalizer(final PreProcessor norm);
 	abstract public BaseClustererParameters setScale(final boolean b);
 	abstract public BaseClustererParameters setSeed(final Random rand);
 	abstract public BaseClustererParameters setVerbose(final boolean b);
 	abstract public BaseClustererParameters setMetric(final GeometricallySeparable dist);
 	abstract public BaseClustererParameters setForceParallel(final boolean b);
 
-	final public FeatureNormalization getNormalizer() { return norm; }
+	final public PreProcessor getNormalizer() { return norm; }
 	final public GeometricallySeparable getMetric() { return metric; }
 	final public boolean getParallel() 				{ return parallel; }
 	final public boolean getScale()					{ return scale; }

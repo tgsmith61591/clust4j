@@ -31,7 +31,8 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.RadiusNeighborsParameters;
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.MeanCenterer;
+import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
@@ -61,7 +62,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 						.setVerbose(true)
 						.setAlgorithm(alg)
 						.setLeafSize(3)
-						.setNormalizer(FeatureNormalization.MIN_MAX_SCALE)
+						.setNormalizer(new MinMaxScaler())
 						.setSeed(new Random())
 						.setMetric(Distance.RUSSELL_RAO) ).fit();
 		}
@@ -187,7 +188,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
 			.setScale(true)
-			.setNormalizer(FeatureNormalization.MEAN_CENTER)
+			.setNormalizer(new MeanCenterer())
 			.setSeed(new Random())
 			.setMetric(new GaussianKernel())
 			.setVerbose(false).copy().fitNewModel(data);

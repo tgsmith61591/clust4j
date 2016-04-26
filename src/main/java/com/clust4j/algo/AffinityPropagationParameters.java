@@ -17,9 +17,10 @@
 package com.clust4j.algo;
 
 import java.util.Random;
+
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -117,7 +118,7 @@ public class AffinityPropagationParameters
 	}
 
 	@Override
-	public AffinityPropagationParameters setNormalizer(FeatureNormalization norm) {
+	public AffinityPropagationParameters setNormalizer(PreProcessor norm) {
 		this.norm = norm;
 		return this;
 	}
