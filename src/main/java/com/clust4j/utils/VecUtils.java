@@ -714,6 +714,23 @@ public abstract class VecUtils {
 		return innerProdSum / (FastMath.sqrt(normAsum) * FastMath.sqrt(normBsum));
 	}
 	
+	public static double[] cumsum(final double[] a) {
+		checkDimsPermitEmpty(a);
+		
+		final int n = a.length;
+		if(n == 0)
+			return new double[]{};
+		
+		double[] b = new double[n];
+		double sum = 0;
+		for(int i = 0; i < n; i++) {
+			sum += a[i];
+			b[i] = sum;
+		}
+		
+		return b;
+	}
+	
 	/**
 	 * Divide one vector by another
 	 * @param numer

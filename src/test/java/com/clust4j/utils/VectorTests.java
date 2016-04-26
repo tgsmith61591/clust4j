@@ -901,4 +901,13 @@ public class VectorTests {
 		
 		assertTrue(VecUtils.vstack(new int[]{1,2}, new int[]{1,2}).length == 2);
 	}
+	
+	@Test
+	public void testCumSum() {
+		double[] a = new double[]{};
+		assertTrue(VecUtils.equalsExactly(a, VecUtils.cumsum(a)));
+		
+		a = new double[]{131,  15, 118, 100};
+		assertTrue(VecUtils.equalsExactly(VecUtils.cumsum(a), new double[]{131, 146, 264, 364}));
+	}
 }

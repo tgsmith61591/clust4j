@@ -16,7 +16,6 @@
 
 package com.clust4j.algo;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -41,7 +40,6 @@ import com.clust4j.metrics.pairwise.DistanceMetric;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.metrics.pairwise.SimilarityMetric;
 import com.clust4j.utils.MatUtils;
-import com.clust4j.utils.TableFormatter;
 import com.clust4j.utils.TableFormatter.Table;
 import com.clust4j.utils.VecUtils;
 
@@ -60,7 +58,6 @@ public abstract class AbstractClusterer
 		implements Loggable, NamedEntity, java.io.Serializable, MetricValidator {
 	
 	private static final long serialVersionUID = -3623527903903305017L;
-	protected final static TableFormatter formatter;
 	
 	/** The default {@link FeatureNormalization} enum to use. 
 	 *  The default is {@link FeatureNormalization#STANDARD_SCALE} */
@@ -104,16 +101,6 @@ public abstract class AbstractClusterer
 	final private ArrayList<String> warnings = new ArrayList<>();
 	protected final ModelSummary fitSummary;
 	
-	
-	
-	// Initializers
-	static {
-		NumberFormat nf = NumberFormat.getInstance(TableFormatter.DEFAULT_LOCALE);
-		nf.setMaximumFractionDigits(5);
-		formatter = new TableFormatter(nf);
-		formatter.leadWithEmpty = false;
-		formatter.setWhiteSpace(1);
-	}
 	
 	/**
 	 * Build a new instance from another caller
@@ -256,7 +243,7 @@ public abstract class AbstractClusterer
 		/*
 		 * Don't need to copy again, because already internally copied...
 		 */
-		return new Array2DRowRealMatrix(normalized ? normalizer.operate(ref) : ref, false);
+		return new Array2DRowRealMatrix(normalized ? normalizer.transform(ref) : ref, false);
 	}
 	
 	

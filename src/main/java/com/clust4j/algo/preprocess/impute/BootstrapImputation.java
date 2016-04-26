@@ -147,12 +147,12 @@ public class BootstrapImputation extends MatrixImputation {
 	}
 	
 	@Override
-	public AbstractRealMatrix operate(final AbstractRealMatrix dat) {
-		return new Array2DRowRealMatrix(operate(dat.getData()), false);
+	public AbstractRealMatrix transform(final AbstractRealMatrix dat) {
+		return new Array2DRowRealMatrix(transform(dat.getData()), false);
 	}
 	
 	@Override
-	public double[][] operate(final double[][] dat) {
+	public double[][] transform(final double[][] dat) {
 		checkMat(dat);
 		
 		final LogTimer timer = new LogTimer();

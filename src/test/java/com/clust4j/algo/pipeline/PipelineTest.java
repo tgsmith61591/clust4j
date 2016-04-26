@@ -38,6 +38,7 @@ import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.NearestNeighborsParameters;
 import com.clust4j.algo.preprocess.FeatureNormalization;
+import com.clust4j.algo.preprocess.PCA;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
@@ -350,6 +351,38 @@ public class PipelineTest implements BaseModelTest {
 				.setMetric(new GaussianKernel()),
 			FeatureNormalization.STANDARD_SCALE,
 			FeatureNormalization.MIN_MAX_SCALE
+		);
+		
+		/*
+		 * Fit the pipe and make predictions
+		 */
+		pipeline.fit(training.getData(), training.getLabels());
+		
+		// let's get predictions...
+		int[] predicted_labels = pipeline.predict(holdout.getData());
+		
+		// let's examine the accuracy of the holdout, and the predicted:
+		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
+	}
+	
+	@Test
+	public void testPCAPipeline() {
+		DataSet data = TestSuite.BC_DATASET.shuffle();
+		TrainTestSplit split = new TrainTestSplit(data, 0.7);
+		
+		DataSet training = split.getTrain();
+		DataSet holdout  = split.getTest();
+		
+		/*
+		 * Initialize pipe
+		 */
+		SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+			new NearestCentroidParameters()
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			FeatureNormalization.STANDARD_SCALE,
+			FeatureNormalization.MIN_MAX_SCALE,
+			new PCA(training.getData(), 0.85).fit()
 		);
 		
 		/*

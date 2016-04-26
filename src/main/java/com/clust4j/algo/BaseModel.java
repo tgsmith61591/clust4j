@@ -15,11 +15,24 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
+import java.text.NumberFormat;
+
 import com.clust4j.Clust4j;
 import com.clust4j.utils.SynchronicityLock;
+import com.clust4j.utils.TableFormatter;
 
 abstract public class BaseModel extends Clust4j implements java.io.Serializable {
 	private static final long serialVersionUID = 4707757741169405063L;
+	protected final static TableFormatter formatter;
+	
+	// Initializers
+	static {
+		NumberFormat nf = NumberFormat.getInstance(TableFormatter.DEFAULT_LOCALE);
+		nf.setMaximumFractionDigits(5);
+		formatter = new TableFormatter(nf);
+		formatter.leadWithEmpty = false;
+		formatter.setWhiteSpace(1);
+	}
 	
 	/** The lock to synchronize on for fits */
 	protected final Object fitLock = new SynchronicityLock();

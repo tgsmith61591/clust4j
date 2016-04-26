@@ -21,6 +21,6 @@ import com.clust4j.utils.DeepCloneable;
 
 public interface PreProcessor extends DeepCloneable {
 	@Override public PreProcessor copy();
-	public AbstractRealMatrix operate(AbstractRealMatrix data);
-	public double[][] operate(double[][] data);
+	public AbstractRealMatrix transform(AbstractRealMatrix data);
+	public double[][] transform(double[][] data);
 }

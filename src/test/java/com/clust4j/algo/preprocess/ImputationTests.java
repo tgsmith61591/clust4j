@@ -51,7 +51,7 @@ public class ImputationTests {
 			new MeanImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = mean.operate(d);
+		final double[][] imputed = mean.transform(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -73,7 +73,7 @@ public class ImputationTests {
 		final MedianImputation median = new MedianImputation(
 			new MedianImputationPlanner().setSeed(GlobalState.DEFAULT_RANDOM_STATE));
 		
-		final double[][] imputed = median.operate(d);
+		final double[][] imputed = median.transform(d);
 		final double[][] res = new double[][]{
 			new double[]{1.5,	1, 		2},
 			new double[]{1, 	1.5, 	3},
@@ -81,8 +81,8 @@ public class ImputationTests {
 		};
 		
 		assertTrue(MatUtils.equalsExactly(res, imputed));
-		assertTrue(MatUtils.equalsExactly(res, median.copy().operate(d)));
-		assertTrue(MatUtils.equalsExactly(res, median.operate(new Array2DRowRealMatrix(d)).getData() ));
+		assertTrue(MatUtils.equalsExactly(res, median.copy().transform(d)));
+		assertTrue(MatUtils.equalsExactly(res, median.transform(new Array2DRowRealMatrix(d)).getData() ));
 	}
 	
 	@Test
@@ -98,7 +98,7 @@ public class ImputationTests {
 			new MedianImputationPlanner()
 				.setVerbose(true));
 		
-		final double[][] imputed = median.operate(d);
+		final double[][] imputed = median.transform(d);
 		final double[][] res = new double[][]{
 			new double[]{2,		1, 		2},
 			new double[]{1, 	2, 		3},
@@ -134,13 +134,13 @@ public class ImputationTests {
 						.setBootstrapper(strap)
 						.setVerbose(true)
 						.setMethodOfCentralTendency(method))
-					.operate(d);
+					.transform(d);
 				
 				BootstrapTest.printMatrix(res);
 			}
 		}
 		
-		new BootstrapImputation().operate(new Array2DRowRealMatrix(d)); // ensure doesn't break;
+		new BootstrapImputation().transform(new Array2DRowRealMatrix(d)); // ensure doesn't break;
 	}
 	
 	@Test
@@ -156,7 +156,7 @@ public class ImputationTests {
 			new NearestNeighborImputation.NNImputationPlanner()
 				.setK(1).setVerbose(true));
 		
-		final double[][] imputed = nni.operate(d);
+		final double[][] imputed = nni.transform(d);
 		final double[][] res = new double[][]{
 			new double[]{1,	 		 1, 		 2},
 			new double[]{1, 		 1, 		 3},
@@ -181,7 +181,7 @@ public class ImputationTests {
 				new double[]{9,		 Double.NaN, 7}
 			};
 			
-			m.operate(d);
+			m.transform(d);
 		} catch(NaNException n) {
 			a = true;
 		} finally {
@@ -211,10 +211,10 @@ public class ImputationTests {
 			new double[]{1.4,	 	 5, 		 6},
 		};
 		
-		new BootstrapImputation().operate(d);
-		new MeanImputation().operate(d);
-		new MedianImputation().operate(d);
-		new NearestNeighborImputation().operate(d);
+		new BootstrapImputation().transform(d);
+		new MeanImputation().transform(d);
+		new MedianImputation().transform(d);
+		new NearestNeighborImputation().transform(d);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -262,8 +262,8 @@ public class ImputationTests {
 		};
 		
 		final Array2DRowRealMatrix a = new Array2DRowRealMatrix(d);
-		assertTrue(MatUtils.equalsExactly(nn.operate(d), nn2.operate(d)));
-		assertTrue(MatUtils.equalsExactly(nn.operate(a).getData(), nn2.operate(a).getData()));
+		assertTrue(MatUtils.equalsExactly(nn.transform(d), nn2.transform(d)));
+		assertTrue(MatUtils.equalsExactly(nn.transform(a).getData(), nn2.transform(a).getData()));
 	}
 	
 	@Test(expected=NaNException.class)
@@ -281,7 +281,7 @@ public class ImputationTests {
 		};
 		
 		NearestNeighborImputation nn = new NearestNeighborImputation(3);
-		nn.operate(d); // thrown here
+		nn.transform(d); // thrown here
 	}
 	
 	@Test(expected=NaNException.class)
@@ -299,7 +299,7 @@ public class ImputationTests {
 		};
 		
 		NearestNeighborImputation nn = new NearestNeighborImputation(1);
-		nn.operate(d); // thrown here
+		nn.transform(d); // thrown here
 	}
 	
 	@Test
@@ -321,7 +321,7 @@ public class ImputationTests {
 		/*
 		 * there are less complete records than k, so k should adjust
 		 */
-		nn.operate(d);
+		nn.transform(d);
 		assertTrue(nn.getK() < 3);
 		
 		// coverage love
@@ -339,7 +339,7 @@ public class ImputationTests {
 		
 		boolean a = false;
 		try {
-			new BootstrapImputation().operate(d);
+			new BootstrapImputation().transform(d);
 		} catch(NaNException n) {
 			a = true;
 		} finally {

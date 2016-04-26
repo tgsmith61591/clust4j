@@ -22,10 +22,10 @@ import java.util.ArrayList;
  * for pretty printing of various models' fit summaries.
  * @author Taylor G Smith
  */
-class ModelSummary extends ArrayList<Object[]> {
+public class ModelSummary extends ArrayList<Object[]> {
 	private static final long serialVersionUID = -8584383967988199855L;
 	
-	ModelSummary(final Object[] ... objs) {
+	public ModelSummary(final Object[] ... objs) {
 		super();
 		for(Object[] o: objs)
 			this.add(o);

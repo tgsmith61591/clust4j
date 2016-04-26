@@ -440,7 +440,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void testAutoEstimationWithScale() {
 		Array2DRowRealMatrix iris = (Array2DRowRealMatrix)FeatureNormalization
-			.STANDARD_SCALE.operate(data_);
+			.STANDARD_SCALE.transform(data_);
 		final double[][] X = iris.getData();
 		
 		// MS estimates bw at 1.6041295821313855

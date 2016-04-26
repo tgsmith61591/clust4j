@@ -31,7 +31,7 @@ public enum FeatureNormalization implements PreProcessor {
 	MEAN_CENTER {
 		
 		@Override
-		public double[][] operate(double[][] data) {
+		public double[][] transform(double[][] data) {
 			/*
 			 * This method gets called tons of times, and needs
 			 * to be highly optimized. Thus, we won't use build in
@@ -79,7 +79,7 @@ public enum FeatureNormalization implements PreProcessor {
 	     * than or equal to {@link FeatureNormalizationConf#MIN_MAX_SCALER_RANGE_MAX}
 		 */
 		@Override
-		public double[][] operate(double[][] data) {
+		public double[][] transform(double[][] data) {
 			int RANGE_MIN = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MIN;
 			int RANGE_MAX = FeatureNormalizationConf.MIN_MAX_SCALER_RANGE_MAX;
 			
@@ -130,7 +130,7 @@ public enum FeatureNormalization implements PreProcessor {
 	STANDARD_SCALE {
 
 		@Override
-		public double[][] operate(double[][] data) {
+		public double[][] transform(double[][] data) {
 			/*
 			 * This method gets called tons of times, and needs
 			 * to be highly optimized. Thus, we won't use build in
@@ -203,8 +203,8 @@ public enum FeatureNormalization implements PreProcessor {
 	;
 
 	@Override
-	public AbstractRealMatrix operate(AbstractRealMatrix data) {
-		return new Array2DRowRealMatrix(operate(data.getData()), false);
+	public AbstractRealMatrix transform(AbstractRealMatrix data) {
+		return new Array2DRowRealMatrix(transform(data.getData()), false);
 	}
 
 	@Override
