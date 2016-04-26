@@ -368,16 +368,20 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	@Override
 	public boolean didConverge() {
-		return converged;
+		synchronized(fitLock) {
+			return converged;
+		}
 	}
 	
 	@Override
 	public ArrayList<double[]> getCentroids() {
-		final ArrayList<double[]> cent = new ArrayList<double[]>();
-		for(double[] d : centroids)
-			cent.add(VecUtils.copy(d));
-		
-		return cent;
+		synchronized(fitLock) {
+			final ArrayList<double[]> cent = new ArrayList<double[]>();
+			for(double[] d : centroids)
+				cent.add(VecUtils.copy(d));
+			
+			return cent;
+		}
 	}
 	
 	/**
@@ -385,7 +389,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	 */
 	@Override
 	public int[] getLabels() {
-		return super.handleLabelCopy(labels);
+		synchronized(fitLock) {
+			return super.handleLabelCopy(labels);
+		}
 	}
 	
 	@Override
@@ -412,7 +418,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	@Override
 	public int itersElapsed() {
-		return iter;
+		synchronized(fitLock) {
+			return iter;
+		}
 	}
 	
 	/** {@inheritDoc} */
@@ -437,19 +445,25 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	
 	public double getTSS() {
+		// doesn't need to be synchronized, because
+		// calculated in the constructor always
 		return tss;
 	}
 	
 	public double[] getWSS() {
-		if(null == wss) {
-			return VecUtils.rep(Double.NaN, k);
-		} else {
-			return VecUtils.copy(wss);
+		synchronized(fitLock) {
+			if(null == wss) {
+				return VecUtils.rep(Double.NaN, k);
+			} else {
+				return VecUtils.copy(wss);
+			}
 		}
 	}
 	
 	public double getBSS() {
-		return bss;
+		synchronized(fitLock) {
+			return bss;
+		}
 	}
 
 	protected abstract void reorderLabelsAndCentroids();

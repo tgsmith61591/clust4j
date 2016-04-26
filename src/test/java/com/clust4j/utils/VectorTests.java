@@ -896,6 +896,8 @@ public class VectorTests {
 		}
 		
 		assertTrue(VecUtils.equalsExactly(VecUtils.sortAsc(new double[]{}), new double[]{}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.sortAsc(new int[]{}), new int[]{}));
+		assertTrue(VecUtils.equalsExactly(VecUtils.sortAsc(new int[]{3,2,1}), new int[]{1,2,3}));
 		assertTrue(VecUtils.equalsExactly(VecUtils.sqrt(new double[]{9,16,25}), new double[]{3,4,5}));
 		assertTrue(VecUtils.unique(new double[]{1,2,1}).size() == 2);
 		

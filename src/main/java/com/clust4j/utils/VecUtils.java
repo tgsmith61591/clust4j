@@ -17,7 +17,6 @@ package com.clust4j.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -408,19 +407,6 @@ public abstract class VecUtils {
 	}
 	
 	/**
-	 * Given a vector, returns a vector of ints corresponding to the position
-	 * of the original elements the indices in which they would be ordered were they sorted.
-	 * <br> EX: <tt>argSort({5,1,3,4}) = {1,2,3,0}</tt>, where reordering the input vector
-	 * in the index order <tt>{1,2,3,0}</tt> would effectively sort the input vector.
-	 * @param a
-	 * @throws IllegalArgumentException if the input vector is empty
-	 * @return the ascending sort order of indices
-	 */
-	public static int[] argSort(final Collection<Integer> a) {
-		return argSort(ArgSorter.asArray(a));
-	}
-	
-	/**
 	 * Class to arg sort double and int arrays
 	 * @author Taylor G Smith
 	 */
@@ -472,17 +458,6 @@ public abstract class VecUtils {
 	        int[] b = new int[a.length];
 	        for (int i = 0; i < b.length; i++) {
 	            b[i] = a[i].intValue();
-	        }
-	        
-	        return b;
-	    }
-	    
-	    static <T extends Number> int[] asArray(final Collection<T> a) {
-	    	int[] b = new int[a.size()];
-	    	
-	    	int i = 0;
-	        for (T t: a) {
-	            b[i++] = t.intValue();
 	        }
 	        
 	        return b;
@@ -1665,13 +1640,6 @@ public abstract class VecUtils {
 		double sum = 0.0;
 		for(double d : a)
 			sum += d;
-		return sum;
-	}
-	
-	public static double sum(Collection<? extends Number> in) {
-		double sum = 0.0;
-		for(Number n: in)
-			sum += n.doubleValue();
 		return sum;
 	}
 	

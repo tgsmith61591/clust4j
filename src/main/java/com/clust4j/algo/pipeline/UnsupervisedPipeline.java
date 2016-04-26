@@ -42,30 +42,22 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 			return fit_model = planner.fitNewModel(copy);
 		}
 	}
-	
-	private void ensureModelFit() {
-		if(null == fit_model) {
-			throw new ModelNotFitException("model has not yet been fit");
-		} else { // this is just to avoid the missed branch for coverage
-			return;
-		}
-	}
 
 	@Override
 	public int[] getLabels() {
-		ensureModelFit();
+		checkFit();
 		return fit_model.getLabels();
 	}
 
 	@Override
 	public double indexAffinityScore(int[] labels) {
-		ensureModelFit();
+		checkFit();
 		return fit_model.indexAffinityScore(labels);
 	}
 
 	@Override
 	public double silhouetteScore() {
-		ensureModelFit();
+		checkFit();
 		return fit_model.silhouetteScore();
 	}
 
@@ -76,7 +68,7 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 	 */
 	@Override
 	public int[] predict(AbstractRealMatrix newData) {
-		ensureModelFit();
+		checkFit();
 		return fit_model.predict(pipelineTransform(newData));
 	}
 	

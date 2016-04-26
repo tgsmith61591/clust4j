@@ -43,36 +43,28 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 			return fit_model = planner.fitNewModel(copy, y);
 		}
 	}
-	
-	private void ensureModelFit() {
-		if(null == fit_model) {
-			throw new ModelNotFitException("model has not yet been fit");
-		} else { // this is just to avoid the missed branch for coverage
-			return;
-		}
-	}
 
 	@Override
 	public int[] getLabels() {
-		ensureModelFit();
+		checkFit();
 		return fit_model.getLabels();
 	}
 
 	@Override
 	public int[] getTrainingLabels() {
-		ensureModelFit();
+		checkFit();
 		return fit_model.getTrainingLabels();
 	}
 
 	@Override
 	public double score() {
-		ensureModelFit();
+		checkFit();
 		return fit_model.score();
 	}
 
 	@Override
 	public double score(SupervisedMetric metric) {
-		ensureModelFit();
+		checkFit();
 		return fit_model.score(metric);
 	}
 
@@ -83,7 +75,7 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 	 */
 	@Override
 	public int[] predict(AbstractRealMatrix newData) {
-		ensureModelFit();
+		checkFit();
 		return fit_model.predict(pipelineTransform(newData));
 	}
 	

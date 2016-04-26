@@ -24,6 +24,7 @@ import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
+import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
@@ -38,7 +39,14 @@ public class PreProcessorTests {
 		};
 
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
-		final double[][] operated = new MeanCenterer().fit(d).transform(data);
+		MeanCenterer norm = new MeanCenterer();
+		double[][] operated = norm.fit(d).transform(data);
+		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
+		
+		// test copy
+		operated = norm.copy().transform(data);
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
@@ -94,6 +102,85 @@ public class PreProcessorTests {
 			final Array2DRowRealMatrix data = new Array2DRowRealMatrix(d, false);
 			new MinMaxScaler(1, 0).fit(data);
 		} catch(IllegalStateException i) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+	}
+	
+	@Test
+	public void testScalersNotFit() {
+		boolean a = false;
+		try {
+			new StandardScaler().transform(TestSuite.IRIS_DATASET.getData());
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new StandardScaler().fit(TestSuite.IRIS_DATASET.getData())
+				.transform(new double[][]{new double[]{1}});
+		} catch(DimensionMismatchException d) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new PCA(1).transform(TestSuite.IRIS_DATASET.getData());
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new PCA(1).fit(TestSuite.IRIS_DATASET.getData())
+				.transform(new double[][]{new double[]{1}});
+		} catch(DimensionMismatchException d) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new MinMaxScaler().transform(TestSuite.IRIS_DATASET.getData());
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new MinMaxScaler().fit(TestSuite.IRIS_DATASET.getData())
+				.transform(new double[][]{new double[]{1}});
+		} catch(DimensionMismatchException d) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new MeanCenterer().transform(TestSuite.IRIS_DATASET.getData());
+		} catch(ModelNotFitException m) {
+			a = true;
+		} finally {
+			assertTrue(a);
+		}
+		
+		a = false;
+		try {
+			new MeanCenterer().fit(TestSuite.IRIS_DATASET.getData())
+				.transform(new double[][]{new double[]{1}});
+		} catch(DimensionMismatchException d) {
 			a = true;
 		} finally {
 			assertTrue(a);
@@ -318,5 +405,13 @@ public class PreProcessorTests {
 		// assert fit, basically:
 		assertTrue(MatUtils.equalsExactly(xp.getData(), copy.transform(X).getData()));
 		assertTrue(copy.getNoiseVariance() == pca.getNoiseVariance());
+		assertTrue(VecUtils.equalsExactly(pca.getCumulativeVariabilityRatioExplained(), 
+			new double[]{
+				0.9246162071742684, 
+				0.9776317750248033
+		}));
+		
+		PCA p = new PCA(15).fit(TestSuite.IRIS_DATASET.getData());
+		assertTrue(p.getComponents().getColumnDimension() == 4);
 	}
 }

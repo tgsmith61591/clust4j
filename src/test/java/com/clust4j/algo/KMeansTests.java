@@ -25,6 +25,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -691,5 +693,76 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		assertTrue(VecUtils.equalsExactly(wss, wss_assert));
 		assertTrue(model.getTSS() == model.getBSS() + VecUtils.sum(model.getWSS()));
 		assertTrue(new VecUtils.DoubleSeries(new KMeans(data_, 3).getWSS(), Inequality.EQUAL_TO, Double.NaN).all());
+	}
+	
+	
+	/**
+	 * For testing synchronicity
+	 * @author Taylor G Smith
+	 */
+	abstract static public class KMRunnable implements Runnable {
+		boolean hasRun = false;
+		final KMeans model;
+		int[] labels = new int[0];
+		
+		public KMRunnable(KMeans model) {
+			this.model = model;
+		}
+		
+		public KMRunnable(KMRunnable runner) {
+			this.model = runner.model;
+		}
+	}
+	
+	@Test
+	public void testSynchronization() {
+		/*
+		 * This is hard to test!
+		 */
+		KMeans km = new KMeans(data_, new KMeansParameters(3).setVerbose(true));
+		
+		// create a 2 thread pool with a small buffer for the runnable jobs
+		ExecutorService threadPool = Executors.newCachedThreadPool();
+		
+		// this job executes the fit after a brief nap
+		KMRunnable first = new KMRunnable(km){
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(1000);
+					this.model.fit();
+					this.hasRun = true;
+				} catch(InterruptedException e) {
+					System.out.println("First failed!");
+				} finally {
+					assertNotNull(this.model.getLabels());
+				}
+			}
+		};
+
+		// this tries to get the volatile objs too early...
+		KMRunnable second = new KMRunnable(first){
+			@Override
+			public void run() {
+				boolean was_fit = true;
+				
+				try {
+					this.labels = model.getLabels();
+					this.hasRun = true;
+				} catch(ModelNotFitException m) {
+					this.labels = null;
+					was_fit = false;
+				} finally {
+					System.out.println("Second");
+					assertFalse(was_fit);
+					assertNull(this.labels);
+				}
+			}
+		};
+		
+		
+		// submit 2 jobs that take a while to run
+		threadPool.execute(first);
+		threadPool.execute(second);
 	}
 }

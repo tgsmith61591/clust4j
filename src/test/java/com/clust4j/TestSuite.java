@@ -100,6 +100,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	QuadTupTests.class,
 	RadiusNeighborsTests.class,
 	SeriesTests.class,
+	TestArrayFormatter.class,
 	TestClust4j.class,
 	TestDataSet.class,
 	TestDistanceEnums.class,
@@ -107,7 +108,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	TestGlobals.class,
 	TestLabelEncoder.class,
 	TestMetrics.class,
-	TestArrayFormatter.class,
+	TestPublicAPI.class,
 	TestUtils.class,
 	TrainTestSplitTests.class,
 	VectorTests.class

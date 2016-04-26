@@ -16,12 +16,10 @@
 package com.clust4j.utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.util.Precision;
 
@@ -38,9 +36,6 @@ import com.clust4j.utils.parallel.map.DistributedMatrixMultiplication;
  */
 public abstract class MatUtils {
 	final static String MAT_DIM_ERR_MSG = "illegal mat dim: ";
-	
-	/** Size at which to use BlockRealMatrix for multiplication */
-	public final static int BLOCK_MAT_THRESH = 1000;
 	public final static int MIN_ACCEPTABLE_MAT_LEN = 1;
 	
 	/**
@@ -1190,16 +1185,10 @@ public abstract class MatUtils {
 		checkDims(a);
 		checkDims(b);
 		
-		// The following classes implicitly handle the multiplication criteria
-		if(a.length > BLOCK_MAT_THRESH || b.length > BLOCK_MAT_THRESH) {
-			final BlockRealMatrix aa = new BlockRealMatrix(a);
-			final BlockRealMatrix bb = new BlockRealMatrix(b);
-			return aa.multiply(bb).getData();
-		}
+		final BlockRealMatrix aa = new BlockRealMatrix(a);
+		final BlockRealMatrix bb = new BlockRealMatrix(b);
 		
-		final Array2DRowRealMatrix aa = new Array2DRowRealMatrix(a, false);
-		final Array2DRowRealMatrix bb = new Array2DRowRealMatrix(b, false);
-		return aa.multiply(bb).getDataRef();
+		return aa.multiply(bb).getData();
 	}
 	
 	/**
@@ -1340,10 +1329,6 @@ public abstract class MatUtils {
 			out[i] = VecUtils.randomGaussian(n, seed, scalar);
 		
 		return out;
-	}
-	
-	public static double[][] reorder(final double[][] data, final Collection<Integer> order) {
-		return reorder(data, VecUtils.ArgSorter.asArray(order));
 	}
 	
 	/**

@@ -60,7 +60,7 @@ public class ParallelTests {
 			final double[][] cb = MatUtils.multiplyDistributed(a, b);
 			long paraTime = System.currentTimeMillis() - start;
 			
-			assertTrue(MatUtils.equalsExactly(ca, cb));
+			assertTrue(MatUtils.equalsWithTolerance(ca, cb, 1e-6));
 			System.out.println("Dist MatMult test:\tParallel="+paraTime+", Serial="+serialTime);
 		} catch(OutOfMemoryError e) {
 			// don't propagate these...
