@@ -197,6 +197,40 @@ int[] predicted_labels = model.predict(test.getData());
 double affinity = ClassificationScoring.INDEX_AFFINITY.evaluate(test.getLabels(), predicted_labels)
 ```
 
+
+
+### Put your model into a `Pipeline`:
+clust4j includes a `Pipeline` object to feed data through a series of ordered `PreProcessor`s and finally, into a clustering model (see below, in the utilities section for more info). Here's an example:
+
+```java
+// Let's predict whether a tumor is malignant or benign:
+TrainTestSplit split = new TrainTestSplit(ExampleDataSets.loadBreastCancer(), 0.7);
+
+// Get the splits
+DataSet training = split.getTrain();
+DataSet holdout  = split.getTest();
+
+// Initialize pipe
+SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+	// This is the parameter class for the model that will be fit
+	new NearestCentroidParameters()
+		.setVerbose(true)
+		.setMetric(new GaussianKernel()),
+
+	// These are the preprocessors that will transform the training data:
+	FeatureNormalization.STANDARD_SCALE,	// first transformation
+	FeatureNormalization.MIN_MAX_SCALE,	// second transformation
+	new PCA(training.getData(), 0.85).fit() // final transformation
+);
+
+// Fit the pipeline:
+pipeline.fit(training.getData(), training.getLabels());
+
+// Make predictions:
+int[] predicted_labels = pipeline.predict(holdout.getData());
+```
+
+
 ----
 ### Separability metrics
 A number of separability metrics are available for use:
