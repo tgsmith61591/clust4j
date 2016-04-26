@@ -37,7 +37,7 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 
 	public M fit(final AbstractRealMatrix data, int[] y) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = pipelineTransform(data);
+			AbstractRealMatrix copy = pipelineFitTransform(data);
 	
 			// Build/fit the model -- the model should handle the dim check internally
 			return fit_model = planner.fitNewModel(copy, y);
@@ -85,5 +85,11 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 	public int[] predict(AbstractRealMatrix newData) {
 		ensureModelFit();
 		return fit_model.predict(pipelineTransform(newData));
+	}
+	
+	@Override
+	protected void checkFit() {
+		if(null == fit_model)
+			throw new ModelNotFitException("model not yet fit");
 	}
 }

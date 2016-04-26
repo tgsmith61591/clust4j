@@ -58,18 +58,36 @@ public abstract class Pipeline<T extends BaseClassifierParameters>
 	 * @param data
 	 * @return
 	 */
-	public final AbstractRealMatrix pipelineTransform(AbstractRealMatrix data) {
+	protected final AbstractRealMatrix pipelineFitTransform(AbstractRealMatrix data) {
 		AbstractRealMatrix operated = data;
 		
-		// Push through pipeline...
+		// Push through pipeline... fits the models in place
 		for(PreProcessor pre: pipe)
 			operated = pre.fit(operated).transform(operated);
 		
 		return operated;
 	}
 	
+	/**
+	 * Apply the pipeline to test data
+	 * @param data
+	 * @return
+	 */
+	protected final AbstractRealMatrix pipelineTransform(AbstractRealMatrix data) {
+		AbstractRealMatrix operated = data;
+		
+		// Push through pipeline... the models are already fit...
+		for(PreProcessor pre: pipe)
+			operated = pre.transform(operated);
+		
+		return operated;
+	}
+	
+	
 	@Override
 	public String getName() {
 		return "Pipeline";
 	}
+	
+	abstract protected void checkFit();
 }

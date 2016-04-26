@@ -36,7 +36,7 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 
 	public M fit(final AbstractRealMatrix data) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = pipelineTransform(data);
+			AbstractRealMatrix copy = pipelineFitTransform(data);
 	
 			// Build/fit the model
 			return fit_model = planner.fitNewModel(copy);
@@ -78,5 +78,11 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 	public int[] predict(AbstractRealMatrix newData) {
 		ensureModelFit();
 		return fit_model.predict(pipelineTransform(newData));
+	}
+	
+	@Override
+	protected void checkFit() {
+		if(null == fit_model)
+			throw new ModelNotFitException("model not yet fit");
 	}
 }
