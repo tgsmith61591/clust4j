@@ -221,7 +221,6 @@ public class HierarchicalTests implements ClusterTest, ClassifierTest, BaseModel
 		HierarchicalAgglomerative agglom = 
 			new HierarchicalAgglomerative(matrix, 
 				new HierarchicalAgglomerativeParameters()
-					.setScale(true)
 					.setVerbose(true)).fit();
 		
 		final int[] l = agglom.getLabels();

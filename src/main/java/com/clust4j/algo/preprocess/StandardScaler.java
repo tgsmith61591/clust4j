@@ -25,7 +25,7 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class StandardScaler extends PreProcessor {
+public class StandardScaler extends Transformer {
 	private static final long serialVersionUID = 8999017379613060521L;
 	volatile double[] means;
 	volatile double[] stdevs;
@@ -122,5 +122,27 @@ public class StandardScaler extends PreProcessor {
 		
 		// assign
 		return X;
+	}
+	
+	@Override
+	public AbstractRealMatrix inverseTransform(AbstractRealMatrix X) {
+		checkFit();
+		
+		// This effectively copies, so no need to do a copy later
+		double[][] data = X.getData();
+		final int m = data.length;
+		final int n = data[0].length;
+		
+		if(n != means.length)
+			throw new DimensionMismatchException(n, means.length);
+		
+		for(int j = 0; j < n; j++) {
+			for(int i = 0; i < m; i++) {
+				data[i][j] *= stdevs[j]; // first re-scale
+				data[i][j] += means[j];  // then add means
+			}
+		}
+		
+		return new Array2DRowRealMatrix(data, false);
 	}
 }

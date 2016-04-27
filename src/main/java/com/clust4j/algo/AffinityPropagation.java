@@ -178,9 +178,9 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Damping","Scale","Allow Par.","Max Iter","Tolerance","Add Noise"
+				"Num Rows","Num Cols","Metric","Damping","Allow Par.","Max Iter","Tolerance","Add Noise"
 			}, new Object[]{
-				m,data.getColumnDimension(),getSeparabilityMetric(),damping,normalized,
+				m,data.getColumnDimension(),getSeparabilityMetric(),damping,
 				parallel,
 				maxIter, tolerance, addNoise
 			});
@@ -209,7 +209,6 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 				&& VecUtils.equalsExactly(this.labels, a.labels)
 				&& this.tolerance == a.tolerance
 				&& this.addNoise == a.addNoise
-				&& this.normalized == a.normalized
 				&& this.maxIter == a.maxIter
 				&& this.damping == a.damping;
 		}

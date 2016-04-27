@@ -131,7 +131,5 @@ public class MeanImputation extends MatrixImputation {
 		return copy;
 	}
 	
-
-	@Override
-	final public MeanImputation fit(AbstractRealMatrix data) { return this; }
+	@Override final public MeanImputation fit(AbstractRealMatrix x){return this;}
 }

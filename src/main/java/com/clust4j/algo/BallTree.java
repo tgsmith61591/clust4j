@@ -47,10 +47,12 @@ public class BallTree extends NearestNeighborHeapSearch {
 		
 		/*
 		 * Want all distance metrics EXCEPT binary dist metrics
+		 * and Canberra -- it tends to behave oddly on non-normalized data
 		 */
 		for(Distance dm: Distance.values()) {
-			if(!dm.isBinaryDistance())
+			if(!dm.isBinaryDistance() && !dm.equals(Distance.CANBERRA)) {
 				VALID_METRICS.add(dm.getClass());
+			}
 		}
 		
 		VALID_METRICS.add(MinkowskiDistance.class);

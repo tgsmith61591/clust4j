@@ -28,7 +28,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
 import com.clust4j.NamedEntity;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.except.NaNException;
 import com.clust4j.kernel.Kernel;
@@ -47,8 +46,7 @@ import com.clust4j.utils.VecUtils;
  * 
  * The highest level of cluster abstraction in clust4j, AbstractClusterer
  * provides the interface for classifier clustering (both supervised and unsupervised).
- * It also provides all the functionality for any BaseClustererPlanner classes,
- * data normalizing and logging.
+ * It also provides all the functionality for any BaseClustererPlanner classes and logging.
  * 
  * @author Taylor G Smith &lt;tgsmith61591@gmail.com&gt;
  *
@@ -61,9 +59,6 @@ public abstract class AbstractClusterer
 	
 	/** Whether algorithms should by default behave in a verbose manner */
 	public static boolean DEF_VERBOSE = false;
-	
-	/** Whether algorithms should by default normalize the columns */
-	public static boolean DEF_SCALE = false;
 	
 	/** By default, uses the {@link GlobalState#DEFAULT_RANDOM_STATE} */
 	protected final static Random DEF_SEED = GlobalState.DEFAULT_RANDOM_STATE;
@@ -81,12 +76,8 @@ public abstract class AbstractClusterer
 	protected final Random random_state;
 	/** Verbose for heavily logging */
 	final private boolean verbose;
-	/** Whether we scale or not */
-	protected final boolean normalized;
 	/** Whether to use parallelism */
 	protected final boolean parallel;
-	/** The normalizer */
-	protected final PreProcessor normalizer;
 	/** Whether the entire matrix is comprised of only one unique value */
 	protected boolean singular_value;
 	
@@ -117,10 +108,8 @@ public abstract class AbstractClusterer
 		this.modelKey 		= getName() + "_" + UUID.randomUUID();
 		this.random_state 	= null == planner ? caller.random_state : planner.getSeed();
 		this.data 			= caller.data; // Use the reference
-		this.normalized		= caller.normalized;
 		this.parallel 		= caller.parallel;
 		this.fitSummary 	= new ModelSummary(getModelFitSummaryHeaders());
-		this.normalizer 	= null == planner ? caller.normalizer : planner.getNormalizer();
 		this.singular_value = caller.singular_value;
 	}
 	
@@ -130,10 +119,6 @@ public abstract class AbstractClusterer
 		this.verbose = planner.getVerbose();
 		this.modelKey = getName() + "_" + UUID.randomUUID();
 		this.random_state = planner.getSeed();
-		
-		// Scale if needed
-		this.normalized = planner.getScale();
-		this.normalizer = planner.getNormalizer();
 		
 		// Determine whether we should parallelize
 		this.parallel = planner.getParallel() && GlobalState.ParallelismConf.PARALLELISM_ALLOWED;
@@ -231,16 +216,13 @@ public abstract class AbstractClusterer
 		// Log the summaries
 		summaryLogger(formatter.format(summaries));
 		
-		if(!normalized)
-			warn("feature normalization option is set to false; this is discouraged");
 		if(unique.size() == 1)
 			this.singular_value = true;
 
 		/*
 		 * Don't need to copy again, because already internally copied...
 		 */
-		final Array2DRowRealMatrix ar = new Array2DRowRealMatrix(ref, false);
-		return normalized ? new Array2DRowRealMatrix(normalizer.fit(ar).transform(ar).getData()) : ar;
+		return new Array2DRowRealMatrix(ref, false);
 	}
 	
 	

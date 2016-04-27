@@ -31,8 +31,6 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.RadiusNeighborsParameters;
-import com.clust4j.algo.preprocess.MeanCenterer;
-import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
@@ -62,7 +60,6 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 						.setVerbose(true)
 						.setAlgorithm(alg)
 						.setLeafSize(3)
-						.setNormalizer(new MinMaxScaler())
 						.setSeed(new Random())
 						.setMetric(Distance.RUSSELL_RAO) ).fit();
 		}
@@ -187,8 +184,6 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		RadiusNeighbors nn = new RadiusNeighborsParameters(1.0)
 			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
-			.setScale(true)
-			.setNormalizer(new MeanCenterer())
 			.setSeed(new Random())
 			.setMetric(new GaussianKernel())
 			.setVerbose(false).copy().fitNewModel(data);
@@ -262,8 +257,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		RadiusNeighbors nn = new RadiusNeighbors(iris, 
 			new RadiusNeighborsParameters(5.0)
-				.setVerbose(true)
-				.setScale(true)).fit();
+				.setVerbose(true)).fit();
 		
 		final int[][] c = nn.getNeighbors().getIndices();
 		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
@@ -311,7 +305,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testValidMetrics() {
 		RadiusNeighbors model;
 		final double rad = 3.0;
-		final RadiusNeighborsParameters planner = new RadiusNeighborsParameters(rad).setScale(true);
+		final RadiusNeighborsParameters planner = new RadiusNeighborsParameters(rad);
 		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
 		
 		/*
@@ -351,7 +345,7 @@ public class RadiusNeighborsTests implements ClusterTest, BaseModelTest {
 		 * Travis CI only has 1 core, so we have to ensure this
 		 * will work even on single core machines...
 		 */
-		RadiusNeighborsParameters planner = new RadiusNeighborsParameters(0.5).setScale(true).setForceParallel(true);
+		RadiusNeighborsParameters planner = new RadiusNeighborsParameters(0.5).setForceParallel(true);
 		RadiusNeighbors model = planner.fitNewModel(iris).fit();
 		model.getNeighbors(iris.getData(), true);
 		model.getNeighbors(iris.getData());

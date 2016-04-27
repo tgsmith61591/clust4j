@@ -220,12 +220,11 @@ final public class MeanShift
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Bandwidth","Scale","Allow Par.","Max Iter.","Tolerance"
+				"Num Rows","Num Cols","Metric","Bandwidth","Allow Par.","Max Iter.","Tolerance"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
 				getSeparabilityMetric(),
 				(autoEstimate ? "(auto) " : "") + bandwidth,
-				normalized,
 				parallel,
 				maxIter, tolerance
 			});

@@ -30,7 +30,6 @@ public abstract class PreProcessor extends Clust4j implements DeepCloneable {
 	/** The lock to synchronize on for fits */
 	protected final Object fitLock = new SynchronicityLock();
 	
-	protected abstract void checkFit();
 	@Override public abstract PreProcessor copy();
 	public abstract PreProcessor fit(AbstractRealMatrix X);
 	public abstract AbstractRealMatrix transform(AbstractRealMatrix data);

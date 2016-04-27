@@ -29,12 +29,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.algo.KMeansParameters;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
@@ -142,7 +144,8 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeansParameters(2).setScale(true)).fit();
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		KMeans km = new KMeans(scaler.transform(mat), new KMeansParameters(2)).fit();
 
 		assertTrue(km.getLabels()[0] == 0 && km.getLabels()[1] == 1);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -160,7 +163,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeansParameters(3).setScale(false)).fit();
+		KMeans km = new KMeans(mat, new KMeansParameters(3)).fit();
 		
 		assertTrue(km.getK() == 3);
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -179,7 +182,8 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMeans km = new KMeans(mat, new KMeansParameters(3).setScale(true)).fit();
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		KMeans km = new KMeans(scaler.transform(mat), new KMeansParameters(3)).fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
 		assertTrue(km.getLabels()[0] != km.getLabels()[3]);
@@ -196,12 +200,14 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			new double[] {100,       200,       100}
 		};
 		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		final AbstractRealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{true, false};
 		
 		KMeans km = null;
 		for(boolean b : scale) {
-			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeansParameters(1).setScale(b)).fit();
+			km = new KMeans(b ? X : mat, new KMeansParameters(1)).fit();
 			assertTrue(km.didConverge());
 
 			System.out.println(Arrays.toString(km.getLabels()));
@@ -223,12 +229,14 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			new double[] {3.000,     3.000,     3.000}
 		};
 		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		final AbstractRealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{true, false};
 		
 		KMeans km = null;
 		for(boolean b : scale) {
-			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMeans(mat, new KMeansParameters(2).setScale(b));
+			km = new KMeans(b ? X : mat, new KMeansParameters(2));
 			km.fit();
 		}
 	}
@@ -237,14 +245,17 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	@Test
 	public void KMeansLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
+		
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5,7};
 		
 		KMeans km = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				km = new KMeans(mat, new KMeansParameters(k).setScale(b));
+				km = new KMeans(b ? X : mat, new KMeansParameters(k));
 				km.fit();
 			}
 		}
@@ -255,7 +266,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	public void KMeansLoadTest2FullLogger() {
 		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
 		KMeans km = new KMeans(mat, new KMeansParameters(5)
-					.setScale(true)
 					.setVerbose(true)
 				);
 		km.fit();
@@ -272,8 +282,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		for(int k : ks) {
 			km = new KMeans(mat, new KMeansParameters(k)
 					.setMetric(kernel)
-					.setVerbose(true)
-					.setScale(false));
+					.setVerbose(true));
 			km.fit();
 			System.out.println();
 		}
@@ -284,7 +293,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		KMeans km = new KMeans(data_,
 			new KMeansParameters(3)
-				.setScale(true)
 				.setVerbose(true)).fit();
 		System.out.println();
 		
@@ -380,7 +388,6 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		for(InitializationStrategy s: strats) {
 			KMeans model = new KMeans(data, new KMeansParameters(3)
 				.setInitializationStrategy(s)
-				.setScale(true)
 				.setVerbose(true)).fit();
 			
 			System.out.println("Silhouette score: " + model.silhouetteScore());
@@ -438,6 +445,9 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	static void findBestDistMetric(DataSet ds, int k) {
 		final Array2DRowRealMatrix d = ds.getData();
+		StandardScaler scaler = new StandardScaler().fit(d);
+		final AbstractRealMatrix X = scaler.transform(d);
+		
 		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
 		double ia = 0;
@@ -449,10 +459,10 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansParameters km = new KMeansParameters(k).setScale(true).setMetric(dist);
+			KMeansParameters km = new KMeansParameters(k).setMetric(dist);
 			double i = -1;
 			
-			model = km.fitNewModel(d).fit();
+			model = km.fitNewModel(X);
 			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			
@@ -473,6 +483,8 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	static void findBestKernelMetric(DataSet ds, int k) {
 		Array2DRowRealMatrix d = ds.getData();
+		StandardScaler scaler = new StandardScaler().fit(d);
+		final AbstractRealMatrix X = scaler.transform(d);
 		final int[] actual = ds.getLabels();
 		
 		GeometricallySeparable best = null;
@@ -485,11 +497,10 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 			if(KMeans.UNSUPPORTED_METRICS.contains(dist.getClass()))
 				continue;
 			
-			KMeansParameters km = new KMeansParameters(k).setScale(true).setMetric(dist);
+			KMeansParameters km = new KMeansParameters(k).setMetric(dist);
 			double i = -1;
 			
-			model = km.fitNewModel(d);
-			model.fit();
+			model = km.fitNewModel(X);
 			if(model.getK() != k) // gets modified if totally equal
 				continue;
 			

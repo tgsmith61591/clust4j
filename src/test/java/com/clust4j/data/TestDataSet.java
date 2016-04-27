@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.text.DecimalFormat;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
@@ -45,6 +46,7 @@ import com.clust4j.algo.KMedoidsParameters;
 import com.clust4j.algo.MeanShift;
 import com.clust4j.algo.MeanShiftParameters;
 import com.clust4j.algo.UnsupervisedClassifier;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.MatrixFormatter;
 import com.clust4j.utils.VecUtils;
@@ -113,6 +115,8 @@ public class TestDataSet
 		int[] labels = shuffled.getLabels();
 		
 		final Array2DRowRealMatrix data = shuffled.getData();
+		StandardScaler scaler = new StandardScaler().fit(data);
+		AbstractRealMatrix X = scaler.transform(data);
 		//final int[] actual = shuffled.getLabels();
 		
 		final boolean verbose = false;
@@ -121,48 +125,40 @@ public class TestDataSet
 			
 			// Go down the line alpha...
 			AffinityPropagation ap = new AffinityPropagationParameters()
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(ap, b);
 			
 			
 			DBSCAN db = new DBSCANParameters()
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(db, b);
 			
 			HDBSCAN hdb = new HDBSCANParameters()
-					.setScale(b)
-					//.setAlgo(com.clust4j.algo.HDBSCAN.Algorithm.PRIMS_KDTREE)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(hdb, b);
 			
 			HierarchicalAgglomerative ha = new HierarchicalAgglomerativeParameters()
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(ha, b);
 			
 			
 			KMeans kmn = new KMeansParameters(k)
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(kmn, b, labels);
 			
 			KMedoids kmd = new KMedoidsParameters(k)
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(kmd, b, labels);
 			
 			MeanShift ms = new MeanShiftParameters()
-					.setScale(b)
 					.setVerbose(verbose)
-					.fitNewModel(data);
+					.fitNewModel(b ? X : data);
 			stdout(ms, b);
 			
 			

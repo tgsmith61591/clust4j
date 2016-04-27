@@ -316,10 +316,10 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo.","Scale","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
+				"Num Rows","Num Cols","Metric","Algo.","Allow Par.","Min Pts.","Min Clust. Size","Alpha"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
-				getSeparabilityMetric(),algo,normalized,
+				getSeparabilityMetric(),algo,
 				parallel,
 				minPts, min_cluster_size,alpha
 			});

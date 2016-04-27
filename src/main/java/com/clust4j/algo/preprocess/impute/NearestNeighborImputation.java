@@ -198,7 +198,6 @@ public class NearestNeighborImputation extends MatrixImputation {
 			completeCols = excludeCols(complete, impute_indices);
 			
 			nbrs = new NearestNeighborsParameters(k)
-					.setScale(false)
 					.setVerbose(false)
 					.setSeed(getSeed())
 					.setMetric(this.sep)
@@ -267,7 +266,6 @@ public class NearestNeighborImputation extends MatrixImputation {
 	public String getName() {
 		return "NN imputation";
 	}
-	
-	@Override
-	final public NearestNeighborImputation fit(AbstractRealMatrix data) { return this; }
+
+	@Override final public NearestNeighborImputation fit(AbstractRealMatrix x){return this;}
 }

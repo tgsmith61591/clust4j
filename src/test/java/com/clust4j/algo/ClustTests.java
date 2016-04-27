@@ -28,7 +28,7 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseClustererParameters;
 import com.clust4j.algo.DBSCAN;
 import com.clust4j.algo.KMeansParameters;
-import com.clust4j.algo.preprocess.PreProcessor;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.except.NaNException;
 import com.clust4j.log.Log.Tag.Algo;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -57,10 +57,11 @@ public class ClustTests {
 	public void mutabilityTest1() {
 		final double eps = 0.3;
 		final Array2DRowRealMatrix mat = getRandom(5,5);
+		StandardScaler scaler = new StandardScaler().fit(mat);
 		final double val11 = mat.getEntry(0, 0);
 		
 		DBSCAN db1 = new DBSCAN(mat, eps); // No scaling
-		DBSCAN db2 = new DBSCAN(mat, new DBSCANParameters(eps).setScale(true));
+		DBSCAN db2 = new DBSCAN(scaler.transform(mat), eps);
 		
 		// Testing mutability of scaling
 		assertTrue(db1.getData().getEntry(0, 0) == val11);
@@ -129,8 +130,8 @@ public class ClustTests {
 		
 		assertFalse(k1.hashCode() == k2.hashCode());
 		assertFalse(k1.getVerbose());
-		assertTrue(k1.hasWarnings());
-		assertNotNull(k1.getWarnings());
+		assertFalse(k1.hasWarnings());
+		assertNull(k1.getWarnings());
 		
 		/*
 		 * Just for coverage love...
@@ -148,8 +149,6 @@ public class ClustTests {
 		BaseClustererParameters planner = new BaseClustererParameters(){
 			private static final long serialVersionUID = 1L;
 			@Override public BaseClustererParameters copy() {return this;}
-			@Override public BaseClustererParameters setNormalizer(PreProcessor norm) { return this; }
-			@Override public BaseClustererParameters setScale(boolean b) { return this; }
 			@Override public BaseClustererParameters setSeed(Random rand) { return this; }
 			@Override public BaseClustererParameters setVerbose(boolean b) { return this; }
 			@Override public BaseClustererParameters setMetric(GeometricallySeparable dist) { return this; }

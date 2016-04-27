@@ -20,7 +20,6 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
 
@@ -88,12 +87,10 @@ final public class MeanShiftParameters
 			.setAutoBandwidthEstimationQuantile(autoEstimateBWQuantile)
 			.setMaxIter(maxIter)
 			.setMinChange(minChange)
-			.setScale(scale)
 			.setSeed(seed)
 			.setSeeds(seeds)
 			.setMetric(metric)
 			.setVerbose(verbose)
-			.setNormalizer(norm)
 			.setForceParallel(parallel);
 	}
 	
@@ -118,12 +115,6 @@ final public class MeanShiftParameters
 	}
 	
 	@Override
-	public MeanShiftParameters setScale(final boolean scale) {
-		this.scale = scale;
-		return this;
-	}
-	
-	@Override
 	public MeanShiftParameters setSeed(final Random seed) {
 		this.seed = seed;
 		return this;
@@ -144,12 +135,6 @@ final public class MeanShiftParameters
 	@Override
 	public MeanShiftParameters setVerbose(final boolean v) {
 		this.verbose = v;
-		return this;
-	}
-
-	@Override
-	public MeanShiftParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 	

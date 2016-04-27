@@ -20,7 +20,6 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 public class NearestCentroidParameters 
@@ -41,8 +40,6 @@ public class NearestCentroidParameters
 	@Override
 	public NearestCentroidParameters copy() {
 		return new NearestCentroidParameters()
-				.setNormalizer(norm)
-				.setScale(scale)
 				.setSeed(seed)
 				.setMetric(metric)
 				.setShrinkage(shrinkage)
@@ -55,20 +52,8 @@ public class NearestCentroidParameters
 	}
 
 	@Override
-	public NearestCentroidParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
-		return this;
-	}
-
-	@Override
 	public NearestCentroidParameters setForceParallel(boolean b) {
 		this.parallel = b;
-		return this;
-	}
-
-	@Override
-	public NearestCentroidParameters setScale(boolean b) {
-		this.scale = b;
 		return this;
 	}
 

@@ -22,7 +22,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -60,11 +59,9 @@ final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 			.setLeafSize(leafSize)
 			.setMinClustSize(min_cluster_size)
 			.setMinPts(minPts)
-			.setScale(scale)
 			.setMetric(metric)
 			.setSeed(seed)
 			.setVerbose(verbose)
-			.setNormalizer(norm)
 			.setForceParallel(parallel);
 	}
 	
@@ -126,12 +123,6 @@ final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 	}
 	
 	@Override
-	public HDBSCANParameters setScale(final boolean scale) {
-		this.scale = scale;
-		return this;
-	}
-	
-	@Override
 	public HDBSCANParameters setSeed(final Random seed) {
 		this.seed = seed;
 		return this;
@@ -145,12 +136,6 @@ final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 	
 	public HDBSCANParameters setVerbose(final boolean v) {
 		this.verbose = v;
-		return this;
-	}
-	
-	@Override
-	public HDBSCANParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 }

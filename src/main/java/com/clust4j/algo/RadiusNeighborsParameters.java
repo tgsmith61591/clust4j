@@ -22,7 +22,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel.BaseNeighborsPlanner;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighbors> {
@@ -50,8 +49,6 @@ public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighb
 	public RadiusNeighborsParameters copy() {
 		return new RadiusNeighborsParameters(radius)
 			.setAlgorithm(algo)
-			.setNormalizer(norm)
-			.setScale(scale)
 			.setSeed(seed)
 			.setMetric(metric)
 			.setVerbose(verbose)
@@ -71,18 +68,6 @@ public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighb
 
 	public RadiusNeighborsParameters setLeafSize(int leafSize) {
 		this.leafSize = leafSize;
-		return this;
-	}
-	
-	@Override
-	public RadiusNeighborsParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
-		return this;
-	}
-
-	@Override
-	public RadiusNeighborsParameters setScale(boolean b) {
-		this.scale = b;
 		return this;
 	}
 

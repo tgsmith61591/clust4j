@@ -22,7 +22,6 @@ import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel.BaseNeighborsPlanner;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 public class NearestNeighborsParameters extends BaseNeighborsPlanner<NearestNeighbors> {
@@ -50,8 +49,6 @@ public class NearestNeighborsParameters extends BaseNeighborsPlanner<NearestNeig
 	public NearestNeighborsParameters copy() {
 		return new NearestNeighborsParameters(k)
 			.setAlgorithm(algo)
-			.setNormalizer(norm)
-			.setScale(scale)
 			.setSeed(seed)
 			.setMetric(metric)
 			.setVerbose(verbose)
@@ -71,18 +68,6 @@ public class NearestNeighborsParameters extends BaseNeighborsPlanner<NearestNeig
 
 	public NearestNeighborsParameters setLeafSize(int leafSize) {
 		this.leafSize = leafSize;
-		return this;
-	}
-	
-	@Override
-	public NearestNeighborsParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
-		return this;
-	}
-
-	@Override
-	public NearestNeighborsParameters setScale(boolean b) {
-		this.scale = b;
 		return this;
 	}
 

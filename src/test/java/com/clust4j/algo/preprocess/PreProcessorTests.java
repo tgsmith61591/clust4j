@@ -39,8 +39,10 @@ public class PreProcessorTests {
 		};
 
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
-		MeanCenterer norm = new MeanCenterer();
-		double[][] operated = norm.fit(d).transform(data);
+		MeanCenterer norm = new MeanCenterer().fit(d);
+		AbstractRealMatrix scaled = norm.transform(d);
+		double[][] operated = scaled.getData();
+		
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
@@ -50,6 +52,16 @@ public class PreProcessorTests {
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
+		
+		// Test inverse transform.
+		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(scaled).getData(), 1e-8));
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			norm.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -61,7 +73,9 @@ public class PreProcessorTests {
 		};
 		
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
-		final double[][] operated = new StandardScaler().fit(d).transform(data);
+		final StandardScaler norm = new StandardScaler().fit(d);
+		final AbstractRealMatrix normed = norm.transform(d);
+		final double[][] operated = normed.getData();
 		
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, 1e-12));
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 1)), 0, 1e-12));
@@ -70,6 +84,16 @@ public class PreProcessorTests {
 		assertTrue(Precision.equals(VecUtils.stdDev(MatUtils.getColumn(operated, 0)), 1, 1e-12));
 		assertTrue(Precision.equals(VecUtils.stdDev(MatUtils.getColumn(operated, 1)), 1, 1e-12));
 		assertTrue(Precision.equals(VecUtils.stdDev(MatUtils.getColumn(operated, 2)), 1, 1e-12));
+		
+		// test inverse transform
+		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(normed).getData(), 1e-8));
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			norm.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -81,12 +105,25 @@ public class PreProcessorTests {
 		};
 
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
-		final double[][] operated = new MinMaxScaler().fit(d).transform(data);
+		final MinMaxScaler norm = new MinMaxScaler().fit(d);
+		final AbstractRealMatrix normed = norm.transform(d);
+		final double[][] operated = normed.getData();
+		
 		for(int i = 0; i < operated[0].length; i++) {
 			double[] col = MatUtils.getColumn(operated, i);
 			assertTrue(VecUtils.min(col) >= 0);
 			assertTrue(VecUtils.max(col) <= 1);
 		}
+		
+		// test inverse transform
+		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(normed).getData(), 1e-8));
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			norm.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -358,6 +395,13 @@ public class PreProcessorTests {
 		}, 1e-3));
 		
 		assertTrue(MatUtils.equalsWithTolerance(MatUtils.abs(expected), MatUtils.abs(xp.getData()), 1e-4));
+		
+		
+		// Test inverse transform... we definitely get some bad floating precision here...
+		AbstractRealMatrix inverse = pca.inverseTransform(xp);
+		assertTrue(MatUtils.equalsWithTolerance(TestSuite.IRIS_DATASET.getData().getData(), inverse.getData(), 0.75));
+		
+		
 		
 		/*
 		 * Test exceptions...

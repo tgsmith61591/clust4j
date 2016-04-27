@@ -174,10 +174,10 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Linkage","Scale","Allow Par.","Num. Clusters"
+				"Num Rows","Num Cols","Metric","Linkage","Allow Par.","Num. Clusters"
 			}, new Object[]{
 				data.getRowDimension(),data.getColumnDimension(),
-				getSeparabilityMetric(),linkage,normalized,
+				getSeparabilityMetric(),linkage,
 				parallel,
 				num_clusters
 			});

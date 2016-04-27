@@ -29,7 +29,7 @@ import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 import com.clust4j.utils.MatUtils.Axis;
 
-public class PCA extends PreProcessor {
+public class PCA extends Transformer {
 	private static final long serialVersionUID = 9041473302265494386L;
 	
 	/*
@@ -295,5 +295,15 @@ public class PCA extends PreProcessor {
 			
 			return this;
 		}
+	}
+	
+	@Override
+	public AbstractRealMatrix inverseTransform(AbstractRealMatrix X) {
+		checkFit();
+		
+		// get the product of X times the components (not transposed)
+		// and then add back in the mean...
+		AbstractRealMatrix x = (AbstractRealMatrix) X.multiply(this.components);
+		return this.centerer.inverseTransform(x);
 	}
 }

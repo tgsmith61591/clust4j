@@ -25,7 +25,7 @@ import com.clust4j.except.ModelNotFitException;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-public class MinMaxScaler extends PreProcessor {
+public class MinMaxScaler extends Transformer {
 	private static final long serialVersionUID = 2028554388465841136L;
 	public static final int DEF_MIN = 0;
 	public static final int DEF_MAX = 1;
@@ -122,5 +122,33 @@ public class MinMaxScaler extends PreProcessor {
 		
 		// assign
 		return X;
+	}
+	
+	@Override
+	public AbstractRealMatrix inverseTransform(AbstractRealMatrix X) {
+		checkFit();
+		
+		// This effectively copies, so no need to do a copy later
+		double[][] data = X.getData();
+		final int m = data.length;
+		final int n = data[0].length;
+		
+		if(n != mins.length)
+			throw new DimensionMismatchException(n, mins.length);
+		
+		double rng, mn;
+		for(int j = 0; j < n; j++) {
+			mn = mins[j];
+			rng= maxes[j] - mn;
+			
+			for(int i = 0; i < m; i++) {
+				data[i][j] -= min; // First subtract the min
+				data[i][j] /= (max - min); // then divide over max - min
+				data[i][j] *= rng; // multiply back by the range
+				data[i][j] += mn; // finally add the mn back
+			}
+		}
+		
+		return new Array2DRowRealMatrix(data, false);
 	}
 }

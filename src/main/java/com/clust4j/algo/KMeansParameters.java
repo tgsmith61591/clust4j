@@ -21,7 +21,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 final public class KMeansParameters extends CentroidClustererParameters<KMeans> {
@@ -45,11 +44,9 @@ final public class KMeansParameters extends CentroidClustererParameters<KMeans> 
 		return new KMeansParameters(k)
 			.setMaxIter(maxIter)
 			.setConvergenceCriteria(minChange)
-			.setScale(scale)
 			.setMetric(metric)
 			.setVerbose(verbose)
 			.setSeed(seed)
-			.setNormalizer(norm)
 			.setInitializationStrategy(strat)
 			.setForceParallel(parallel);
 	}
@@ -94,12 +91,6 @@ final public class KMeansParameters extends CentroidClustererParameters<KMeans> 
 	}
 	
 	@Override
-	public KMeansParameters setScale(final boolean scale) {
-		this.scale = scale;
-		return this;
-	}
-	
-	@Override
 	public KMeansParameters setSeed(final Random seed) {
 		this.seed = seed;
 		return this;
@@ -108,12 +99,6 @@ final public class KMeansParameters extends CentroidClustererParameters<KMeans> 
 	@Override
 	public KMeansParameters setVerbose(final boolean v) {
 		this.verbose = v;
-		return this;
-	}
-
-	@Override
-	public KMeansParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 }

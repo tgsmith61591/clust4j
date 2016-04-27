@@ -354,9 +354,9 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","K","Scale","Allow Par.","Max Iter","Tolerance","Init."
+				"Num Rows","Num Cols","Metric","K","Allow Par.","Max Iter","Tolerance","Init."
 			}, new Object[]{
-				m,data.getColumnDimension(),getSeparabilityMetric(),k,normalized,
+				m,data.getColumnDimension(),getSeparabilityMetric(),k,
 				parallel,
 				maxIter, tolerance, init.toString()
 			});

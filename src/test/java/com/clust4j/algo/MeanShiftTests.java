@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
@@ -72,7 +73,6 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 3);
 		assertTrue(ms.getNumberOfNoisePoints() == 0);
-		assertTrue(ms.hasWarnings()); // will be because we don't standardize
 	}
 	
 	@Test
@@ -100,7 +100,6 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		ms = new MeanShift(mat, new MeanShiftParameters(0.05)
 				.setVerbose(true)).fit();
 		assertTrue(ms.getNumberOfIdentifiedClusters() == 5);
-		assertTrue(ms.hasWarnings()); // will because not normalizing
 		System.out.println();
 	}
 	
@@ -343,10 +342,11 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	@Test
 	public void MeanShiftTestIris() {
 		Array2DRowRealMatrix iris = data_;
+		StandardScaler scaler = new StandardScaler().fit(iris);
+		AbstractRealMatrix X = scaler.transform(iris);
 		
-		MeanShift ms = new MeanShift(iris, 
-			new MeanShiftParameters()
-				.setScale(true)).fit();
+		MeanShift ms = new MeanShift(X, 
+			new MeanShiftParameters()).fit();
 		
 		// sklearn output
 		int[] expected = new LabelEncoder(new int[]{
@@ -574,9 +574,8 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	
 	@Test
 	public void testOnWineDataScaled() {
-		new MeanShift(wine,
+		new MeanShift(new StandardScaler().fit(wine).transform(wine),
 			new MeanShiftParameters()
-				.setScale(true)
 				.setVerbose(true)).fit();
 	}
 	
@@ -783,12 +782,12 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 		 * This is a hard test to replicate... that all points are too far from provided seeds
 		 */
 		try {
+			StandardScaler scaler = new StandardScaler().fit(data_);
 			new MeanShiftParameters(1.5)
-				.setScale(true)
 				.setSeeds(new double[][]{
 					new double[]{1500,1250,1300,1557},
 					new double[]{150,175,250,189}
-				}).fitNewModel(data_).fit();
+				}).fitNewModel(scaler.transform(data_)).fit();
 		} catch(IllegalClusterStateException i) {
 			a = true;
 		} finally {

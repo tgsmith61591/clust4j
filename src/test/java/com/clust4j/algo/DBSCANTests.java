@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.DBSCANParameters;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -90,8 +91,10 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Test
 	public void DBSCANTest1() {
 		final Array2DRowRealMatrix mat = getRandom(1500, 10);
-		new DBSCAN(mat, new DBSCANParameters(0.05)
-			.setScale(true)
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		
+		new DBSCAN(scaler.transform(mat), 
+			new DBSCANParameters(0.05)
 			.setVerbose(true)).fit();
 		System.out.println();
 	}
@@ -104,15 +107,16 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 				new double[] {4.12344,   3.0001,    2.89002}
 			};
 			
-			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		StandardScaler scaler = new StandardScaler().fit(mat);
 			
 			
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
-		DBSCAN db = new DBSCAN(mat, new DBSCANParameters(0.75)
-			.setScale(true)
-			.setMinPts(1)
-			.setVerbose(true))
-				.fit();
+		DBSCAN db = new DBSCAN(scaler.transform(mat), 
+			new DBSCANParameters(0.75)
+				.setMinPts(1)
+				.setVerbose(true))
+					.fit();
 		System.out.println();
 		
 		assertTrue(db.getNumberOfIdentifiedClusters() > 0);
@@ -129,11 +133,12 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(train_array);
+		StandardScaler scaler = new StandardScaler().fit(mat);
 			
 			
 		assertTrue(Distance.EUCLIDEAN.getDistance(train_array[1], train_array[2]) > 0.5);
-		DBSCAN db = new DBSCAN(mat, new DBSCANParameters(0.75)
-			.setScale(true)
+		DBSCAN db = new DBSCAN(scaler.transform(mat), 
+			new DBSCANParameters(0.75)
 			.setMinPts(1)
 			.setVerbose(true))
 				.fit();
@@ -161,11 +166,12 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	@Test
 	public void DBSCANKernelTest1() {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		
 		Kernel kernel = new RadialBasisKernel(0.05);
-		DBSCAN db = new DBSCAN(mat, 
+		DBSCAN db = new DBSCAN(scaler.transform(mat), 
 				new DBSCANParameters(0.05)
 					.setMetric(kernel)
-					.setScale(true)
 					.setVerbose(true)).fit();
 		System.out.println();
 		assertTrue(db.hasWarnings());
@@ -179,7 +185,6 @@ public class DBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest {
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		DBSCAN db = new DBSCAN(data, 
 			new DBSCANParameters(0.75)
-				.setScale(true)
 				.setMinPts(1)
 				.setVerbose(true)).fit();
 		System.out.println();

@@ -20,7 +20,6 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -58,12 +57,10 @@ public class AffinityPropagationParameters
 			.setIterBreak(iterBreak)
 			.setMaxIter(maxIter)
 			.setMinChange(minChange)
-			.setScale(scale)
 			.setSeed(seed)
 			.setMetric(metric)
 			.setVerbose(verbose)
 			.useGaussianSmoothing(addNoise)
-			.setNormalizer(norm)
 			.setForceParallel(parallel);
 	}
 	
@@ -88,12 +85,6 @@ public class AffinityPropagationParameters
 	}
 
 	@Override
-	public AffinityPropagationParameters setScale(boolean b) {
-		scale = b;
-		return this;
-	}
-
-	@Override
 	public AffinityPropagationParameters setSeed(Random rand) {
 		seed = rand;
 		return this;
@@ -114,12 +105,6 @@ public class AffinityPropagationParameters
 	@Override
 	public AffinityPropagationParameters setMetric(GeometricallySeparable dist) {
 		this.metric = dist;
-		return this;
-	}
-
-	@Override
-	public AffinityPropagationParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 }

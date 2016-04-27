@@ -70,10 +70,10 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","Radius","Leaf Size","Scale","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","Radius","Leaf Size","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
-				alg, radius, leafSize, normalized,
+				alg, radius, leafSize,
 				parallel
 			});
 	}

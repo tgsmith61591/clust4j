@@ -389,19 +389,19 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 ----
 
 ### Things to note:
- - The default `BaseClustererParameters.getScale()` currently returns `false`. This decision was made in an attempt to mitigate data transformations in instances where the analyst may not expect/desire them.  Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering and can be set in any algorithm's respective `Planner` class.  Example on a `KMeans` constructor:
+ - Note that [normalization *is* recommended](http://datascience.stackexchange.com/questions/6715/is-it-necessary-to-standardize-your-data-before-clustering?newreg=f574bddafe484441a7ba99d0d02b0069) prior to clustering.  Example on a `KMeans` constructor:
 
     ```java
-    // For normalization, simply add `.setScale(true)` on any `BaseClustererParameters` class
-    new KMeansParameters(k).setScale(true);
+    // For normalization, simply use a `PreProcessor`:
+    PreProcessor p = new StandardScaler().fit(X);
+    KMeans km = new KMeansParameters(k).fitNewModel(p.transform(X));
     ```
 
  - By default, logging is disabled. This can be enabled by instance in any `BaseClustererParameters` class by invoking `.setVerbose(true)`.
- - Note that both of the above settings may be set globally:
+ - Note that the default setting may be set globally:
 
     ```java
     AbstractClusterer.DEF_VERBOSE = true;
-    AbstractClusterer.DEF_SCALE = true;
     ```
 
 

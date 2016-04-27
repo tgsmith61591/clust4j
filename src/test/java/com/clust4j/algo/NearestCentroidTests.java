@@ -140,8 +140,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		NearestCentroid nn = new NearestCentroid(data_, target_,
 			new NearestCentroidParameters()
-				.setVerbose(true)
-				.setScale(true)).fit();
+				.setVerbose(true)).fit();
 		
 		final int[] c = nn.getLabels();
 		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
@@ -164,8 +163,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(X, false);
 		NearestCentroid nn = new NearestCentroid(mat, new int[]{0,1,2},
 			new NearestCentroidParameters()
-				.setVerbose(true)
-				.setScale(false)).fit();
+				.setVerbose(true)).fit();
 		
 		Array2DRowRealMatrix Y = new Array2DRowRealMatrix(
 			new double[][]{
@@ -281,15 +279,13 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 		new NearestCentroid(data, new int[]{0,1,1,2});
 	}
 	
-	@Test(expected=NullPointerException.class)
-	public void testNPE() {
+	@Test
+	public void testNoWarnings() {
 		NearestCentroid n = new NearestCentroid(data, new int[]{0,1,1}, 
 			new NearestCentroidParameters()
-				.setNormalizer(null)
 				.setSeed(new Random())
-				.setScale(true)
 				.setVerbose(false));
-		assertTrue(n.hasWarnings());
+		assertFalse(n.hasWarnings());
 		assertTrue(n.getSeparabilityMetric().equals(AbstractClusterer.DEF_DIST));
 	}
 	
@@ -377,7 +373,7 @@ public class NearestCentroidTests implements ClassifierTest, ClusterTest, BaseMo
 	
 	@Test
 	public void testValidMetrics() {
-		final NearestCentroidParameters planner = new NearestCentroidParameters().setScale(true);
+		final NearestCentroidParameters planner = new NearestCentroidParameters();
 		NearestCentroid model;
 		final Array2DRowRealMatrix small = TestSuite.IRIS_SMALL.getData();
 		

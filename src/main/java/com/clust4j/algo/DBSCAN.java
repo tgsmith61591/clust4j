@@ -119,10 +119,10 @@ final public class DBSCAN extends AbstractDBSCAN {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Scale","Allow Par."
+				"Num Rows","Num Cols","Metric","Epsilon","Min Pts.","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
-				eps, minPts, normalized,
+				eps, minPts,
 				parallel
 			});
 	}
@@ -188,7 +188,6 @@ final public class DBSCAN extends AbstractDBSCAN {
 			final LogTimer rnTimer = new LogTimer();
 			final RadiusNeighbors rnModel = new RadiusNeighbors(data,
 				new RadiusNeighborsParameters(eps)
-					.setScale(false) // Don't need to because if scaled in DBSCAN, data already scaled
 					.setSeed(getSeed())
 					.setMetric(getSeparabilityMetric())
 					.setVerbose(false))

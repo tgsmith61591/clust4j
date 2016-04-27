@@ -74,10 +74,10 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 	@Override
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
-				"Num Rows","Num Cols","Metric","Algo","K","Leaf Size","Scale","Allow Par."
+				"Num Rows","Num Cols","Metric","Algo","K","Leaf Size","Allow Par."
 			}, new Object[]{
 				m,data.getColumnDimension(),getSeparabilityMetric(),
-				alg, kNeighbors, leafSize, normalized,
+				alg, kNeighbors, leafSize,
 				parallel
 			});
 	}

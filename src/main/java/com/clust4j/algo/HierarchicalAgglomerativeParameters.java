@@ -21,7 +21,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 final public class HierarchicalAgglomerativeParameters 
@@ -49,11 +48,9 @@ final public class HierarchicalAgglomerativeParameters
 	public HierarchicalAgglomerativeParameters copy() {
 		return new HierarchicalAgglomerativeParameters(linkage)
 			.setMetric(metric)
-			.setScale(scale)
 			.setSeed(seed)
 			.setVerbose(verbose)
 			.setNumClusters(num_clusters)
-			.setNormalizer(norm)
 			.setForceParallel(parallel);
 	}
 
@@ -82,12 +79,6 @@ final public class HierarchicalAgglomerativeParameters
 	}
 
 	@Override
-	public HierarchicalAgglomerativeParameters setScale(boolean b) {
-		this.scale = b;
-		return this;
-	}
-
-	@Override
 	public HierarchicalAgglomerativeParameters setSeed(final Random seed) {
 		this.seed = seed;
 		return this;
@@ -102,12 +93,6 @@ final public class HierarchicalAgglomerativeParameters
 	@Override
 	public HierarchicalAgglomerativeParameters setMetric(GeometricallySeparable dist) {
 		this.metric = dist;
-		return this;
-	}
-
-	@Override
-	public HierarchicalAgglomerativeParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 }

@@ -203,6 +203,5 @@ public class BootstrapImputation extends MatrixImputation {
 		return copy;
 	}
 	
-	@Override
-	final public BootstrapImputation fit(AbstractRealMatrix data) { return this; }
+	@Override final public BootstrapImputation fit(AbstractRealMatrix x){return this;}
 }

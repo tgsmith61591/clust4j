@@ -137,10 +137,10 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	final protected ModelSummary modelSummary() {
 		return new ModelSummary(new Object[]{
 			"Num Rows","Num Cols","Metric","Num Classes",
-			"Shrinkage","Scale","Allow Par."
+			"Shrinkage","Allow Par."
 		}, new Object[]{
 			m,data.getColumnDimension(),getSeparabilityMetric(),numClasses,
-			shrinkage, normalized,
+			shrinkage,
 			parallel
 		});
 	}

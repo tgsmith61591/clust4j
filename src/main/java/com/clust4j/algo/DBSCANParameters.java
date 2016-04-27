@@ -21,7 +21,6 @@ import java.util.Random;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 
 import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
-import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
@@ -50,11 +49,9 @@ final public class DBSCANParameters extends AbstractDBSCANParameters<DBSCAN> {
 	public DBSCANParameters copy() {
 		return new DBSCANParameters(eps)
 			.setMinPts(minPts)
-			.setScale(scale)
 			.setMetric(metric)
 			.setSeed(seed)
 			.setVerbose(verbose)
-			.setNormalizer(norm)
 			.setForceParallel(parallel);
 	}
 	
@@ -74,12 +71,6 @@ final public class DBSCANParameters extends AbstractDBSCANParameters<DBSCAN> {
 	}
 	
 	@Override
-	public DBSCANParameters setScale(final boolean scale) {
-		this.scale = scale;
-		return this;
-	}
-	
-	@Override
 	public DBSCANParameters setSeed(final Random seed) {
 		this.seed = seed;
 		return this;
@@ -93,12 +84,6 @@ final public class DBSCANParameters extends AbstractDBSCANParameters<DBSCAN> {
 	
 	public DBSCANParameters setVerbose(final boolean v) {
 		this.verbose = v;
-		return this;
-	}
-	
-	@Override
-	public DBSCANParameters setNormalizer(PreProcessor norm) {
-		this.norm = norm;
 		return this;
 	}
 	

@@ -106,7 +106,6 @@ final public class KMeans extends AbstractCentroidClusterer {
 				try {
 					model = new NearestCentroid(CentroidUtils.centroidsToMatrix(centroids, false), 
 						VecUtils.arange(k), new NearestCentroidParameters()
-							.setScale(false) // already scaled maybe
 							.setSeed(getSeed())
 							.setMetric(getSeparabilityMetric())
 							.setVerbose(false)).fit();

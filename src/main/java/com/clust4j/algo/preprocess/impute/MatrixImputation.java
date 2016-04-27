@@ -61,12 +61,6 @@ public abstract class MatrixImputation extends PreProcessor implements Loggable,
 		abstract public ImputationPlanner setVerbose(boolean b);
 	}
 	
-	@Override
-	final protected void checkFit() {
-		; // no need to fit, just pass
-	}
-	
-	
 	
 	/**
 	 * Call this prior to every process call!

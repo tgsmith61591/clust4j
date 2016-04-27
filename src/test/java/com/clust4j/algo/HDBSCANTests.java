@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -41,6 +42,7 @@ import com.clust4j.algo.HDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.LinkageTreeUtils;
 import com.clust4j.algo.HDBSCAN.TreeUnionFind;
 import com.clust4j.algo.HDBSCAN.UnionFind;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.data.DataSet;
 import com.clust4j.except.ModelNotFitException;
@@ -466,8 +468,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	public void testDataSet() { // See if the iris dataset works...
 		new HDBSCAN(iris, 
 				new HDBSCANParameters(1)
-					.setVerbose(true)
-					.setScale(true)).fit();
+					.setVerbose(true)).fit();
 		
 	}
 
@@ -513,8 +514,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		HDBSCAN hd = new HDBSCAN(DATA, 
 			new HDBSCANParameters(1)
-				.setVerbose(true)
-				.setScale(true)).fit();
+				.setVerbose(true)).fit();
 		System.out.println();
 
 		final int[] labels = hd.getLabels();
@@ -1408,15 +1408,17 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 	
 	@Test
 	public void testValidMetrics() {
-		HDBSCAN model;
+		HDBSCAN model = null;
 		HDBSCAN_Algorithm algo;
+		StandardScaler scaler = new StandardScaler().fit(iris);
+		AbstractRealMatrix X = scaler.transform(iris);
 		
 		/*
 		 * Generic first... should theoretically allow similarity metrics as well...
 		 */
 		algo = HDBSCAN_Algorithm.GENERIC;
 		for(DistanceMetric d: Distance.values()) {
-			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
+			model = new HDBSCAN(X, new HDBSCANParameters().setAlgo(algo).setMetric(d)).fit();
 			
 			if(!model.isValidMetric(d)) {
 				assertTrue(model.hasWarnings());
@@ -1425,7 +1427,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		}
 		
 		for(Kernel k: KernelTestCases.all_kernels) {
-			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(k)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setMetric(k)).fit();
 			
 			if(!model.isValidMetric(k)) {
 				assertTrue(model.hasWarnings());
@@ -1443,7 +1445,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			boolean warnings_thrown = false;
 			for(DistanceMetric d: new DistanceMetric[]{Distance.EUCLIDEAN, 
 					Distance.MANHATTAN, Distance.CHEBYSHEV, new MinkowskiDistance(2.0)}) {
-				model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setMetric(d)).fit();
 				
 				if(model.hasWarnings()) {
 					warnings_thrown= true;
@@ -1452,12 +1454,12 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			}
 			
 			assertFalse(warnings_thrown);
-			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Distance.CANBERRA)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setMetric(Distance.CANBERRA)).fit();
 			assertTrue(model.hasWarnings());
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 			
 			// try a few sim metrics to assert the same
-			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			model = new HDBSCAN(iris, new HDBSCANParameters().setAlgo(algo).setMetric(Similarity.COSINE)).fit();
 			assertTrue(model.hasWarnings());
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
@@ -1476,7 +1478,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			final Array2DRowRealMatrix small = irisSmall.getData();
 			
 			for(Distance d: Distance.values()) {
-				model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(d)).fit();
+				model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setMetric(d)).fit();
 				
 				if(model.hasWarnings()) {
 					assertTrue(!model.isValidMetric(d));
@@ -1484,13 +1486,13 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 			}
 			
 			// Try minkowski and haversine...
-			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(new MinkowskiDistance(1.5))).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setMetric(new MinkowskiDistance(1.5))).fit();
 			assertFalse(model.hasWarnings());
-			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Distance.HAVERSINE.MI)).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setMetric(Distance.HAVERSINE.MI)).fit();
 			assertFalse(model.hasWarnings());
 			
 			// assert sim doesn't fly for ball tree...
-			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setScale(true).setMetric(Similarity.COSINE)).fit();
+			model = new HDBSCAN(small, new HDBSCANParameters().setAlgo(algo).setMetric(Similarity.COSINE)).fit();
 			assertTrue(model.dist_metric.equals(Distance.EUCLIDEAN));
 		}
 	}

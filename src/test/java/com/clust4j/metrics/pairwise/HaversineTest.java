@@ -17,8 +17,7 @@ package com.clust4j.metrics.pairwise;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
-
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
@@ -26,6 +25,7 @@ import com.clust4j.algo.AbstractCentroidClusterer;
 import com.clust4j.algo.CentroidClustererParameters;
 import com.clust4j.algo.KMeansParameters;
 import com.clust4j.algo.KMedoidsParameters;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.utils.VecUtils;
 
 public class HaversineTest {
@@ -41,15 +41,16 @@ public class HaversineTest {
 	public void test1() {
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		
 		AbstractCentroidClusterer km;
 		CentroidClustererParameters<? extends AbstractCentroidClusterer> planner;
 		
 		planner = new KMeansParameters(2)
 				.setVerbose(true)
 				.setMetric(Distance.HAVERSINE.MI)
-				.setVerbose(true)
-				.setScale(true);
-		km = planner.fitNewModel(mat);
+				.setVerbose(true);
+		km = planner.fitNewModel(scaler.transform(mat));
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);
@@ -60,24 +61,30 @@ public class HaversineTest {
 	public void test2() {
 
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
+		
 		AbstractCentroidClusterer km;
 		CentroidClustererParameters<? extends AbstractCentroidClusterer> planner;
 		
 		planner = new KMedoidsParameters(2)
 			.setVerbose(true)
 			.setMetric(Distance.HAVERSINE.MI)
-			.setVerbose(true)
-			.setScale(false);
-		km = planner.fitNewModel(mat);
+			.setVerbose(true);
+		km = planner.fitNewModel(X);
 		
 		int[] kmlabels = km.getLabels();
 		assertTrue(kmlabels[0] == kmlabels[1] && kmlabels[1] == kmlabels[2]);
 		assertTrue(kmlabels[1] != kmlabels[3] && kmlabels[3] == kmlabels[4]);
 		assertTrue(kmlabels[0] == 0 && kmlabels[1] == 0 && kmlabels[2] == 0);
-		System.out.println(Arrays.toString(km.getCentroids().get(0)));
-		assertTrue( VecUtils.equalsExactly(km.getCentroids().get(0), coordinates[0]) ); // First one should be Austin
 		
-		System.out.println( Arrays.toString(km.getCentroids().get(0)) + "; " + Arrays.toString(km.getCentroids().get(1)) );
+
+		// Inverse transform the centroid:
+		double[][] c = new double[][]{km.getCentroids().get(0)};
+		Array2DRowRealMatrix cm = new Array2DRowRealMatrix(c, false);
+		AbstractRealMatrix inverse = scaler.inverseTransform(cm);
+		
+		assertTrue( VecUtils.equalsExactly(inverse.getRow(0), coordinates[0]) ); // First one should be Austin
 	}
 
 }

@@ -25,12 +25,14 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
 import com.clust4j.algo.KMedoidsParameters;
+import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.data.DataSet;
 import com.clust4j.kernel.HyperbolicTangentKernel;
 import com.clust4j.kernel.Kernel;
@@ -169,9 +171,11 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, 
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
+		
+		KMedoids km = new KMedoids(X, 
 				new KMedoidsParameters(2)
-					.setScale(true)
 					.setVerbose(true));
 		km.fit();
 
@@ -198,7 +202,6 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		KMedoids km = new KMedoids(mat, 
 				new KMedoidsParameters(3)
-					.setScale(false)
 					.setVerbose(true));
 		km.fit();
 
@@ -219,7 +222,10 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoidsParameters(3).setScale(true));
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
+		
+		KMedoids km = new KMedoids(X, new KMedoidsParameters(3));
 		km.fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -238,7 +244,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		};
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-		KMedoids km = new KMedoids(mat, new KMedoidsParameters(3).setScale(false));
+		KMedoids km = new KMedoids(mat, new KMedoidsParameters(3));
 		km.fit();
 		
 		assertTrue(km.getLabels()[1] == km.getLabels()[2]);
@@ -261,12 +267,14 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			new double[] {100,       200,       100}
 		};
 		
+		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{false, true};
 		
 		KMedoids km = null;
 		for(boolean b : scale) {
-			final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
-			km = new KMedoids(mat, new KMedoidsParameters(1).setScale(b));
+			km = new KMedoids(b ? X : mat, new KMedoidsParameters(1));
 			km.fit();
 			assertTrue(km.didConverge());
 		}
@@ -274,16 +282,18 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	
 	@Test
 	public void KMedoidsLoadTest1() {
-		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
+		StandardScaler scaler = new StandardScaler().fit(mat);
+		AbstractRealMatrix X = scaler.transform(mat);
+		
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5};
 		
 		KMedoids km = null;
 		for(boolean b : scale) {
 			for(int k : ks) {
-				km = new KMedoids(mat, 
+				km = new KMedoids(b ? X : mat, 
 						new KMedoidsParameters(k)
-							.setScale(b)
 							.setVerbose(true));
 				km.fit();
 			}
@@ -292,10 +302,9 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 
 	@Test
 	public void KMedoidsLoadTest2FullLogger() {
-		final Array2DRowRealMatrix mat = getRandom(500, 10); // need to reduce size for travis CI
+		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		KMedoids km = new KMedoids(mat, 
 				new KMedoidsParameters(5)
-					.setScale(true)
 					.setVerbose(true)
 				);
 		km.fit();
@@ -312,8 +321,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			km = new KMedoids(mat, 
 					new KMedoidsParameters(k)
 						.setMetric(kernel)
-						.setVerbose(true)
-						.setScale(false));
+						.setVerbose(true));
 			km.fit();
 		}
 		System.out.println();
@@ -329,8 +337,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 			new KMedoids(mat, 
 				new KMedoidsParameters(k)
 					.setMetric(kernel)
-					.setVerbose(true)
-					.setScale(false)).fit();
+					.setVerbose(true)).fit();
 		}
 		System.out.println();
 	}
@@ -340,7 +347,6 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		KMedoids km = new KMedoids(irisdata,
 			new KMedoidsParameters(3)
-				.setScale(true)
 				.setVerbose(true)).fit();
 		
 		final double c = km.getTSS();
@@ -400,7 +406,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 				continue;
 			
 			System.out.println(dist);
-			KMedoidsParameters km = new KMedoidsParameters(3).setScale(true).setMetric(dist);
+			KMedoidsParameters km = new KMedoidsParameters(3).setMetric(dist);
 			double i = -1;
 			
 			model = km.fitNewModel(d).fit();

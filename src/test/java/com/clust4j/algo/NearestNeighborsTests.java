@@ -33,8 +33,6 @@ import com.clust4j.TestSuite;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.NearestNeighborsParameters;
-import com.clust4j.algo.preprocess.MeanCenterer;
-import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
 import com.clust4j.metrics.pairwise.Distance;
@@ -87,8 +85,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testSerialization() throws IOException, ClassNotFoundException {
 		NearestNeighbors nn = new NearestNeighbors(data, 
 			new NearestNeighborsParameters(5)
-				.setVerbose(true)
-				.setScale(true)).fit();
+				.setVerbose(true)).fit();
 		
 		final int[][] c = nn.getNeighbors().getIndices();
 		nn.saveObject(new FileOutputStream(TestSuite.tmpSerPath));
@@ -255,7 +252,6 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 					.setVerbose(true)
 					.setAlgorithm(alg)
 					.setLeafSize(3)
-					.setNormalizer(new MinMaxScaler())
 					.setSeed(new Random())
 					.setMetric(Distance.RUSSELL_RAO) ).fit();
 		}
@@ -407,8 +403,6 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 		NearestNeighbors nn = new NearestNeighborsParameters(1)
 			.setAlgorithm(BaseNeighborsModel.NeighborsAlgorithm.BALL_TREE)
 			.setLeafSize(40)
-			.setScale(true)
-			.setNormalizer(new MeanCenterer())
 			.setSeed(new Random())
 			.setMetric(new GaussianKernel())
 			.setVerbose(false).copy().fitNewModel(data);
@@ -561,7 +555,7 @@ public class NearestNeighborsTests implements ClusterTest, BaseModelTest {
 	public void testValidMetrics() {
 		NearestNeighbors model;
 		final int nn = 3;
-		final NearestNeighborsParameters planner = new NearestNeighborsParameters(nn).setScale(true);
+		final NearestNeighborsParameters planner = new NearestNeighborsParameters(nn);
 		Array2DRowRealMatrix small= TestSuite.IRIS_SMALL.getData();
 		
 		/*
