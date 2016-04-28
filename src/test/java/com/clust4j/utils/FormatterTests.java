@@ -61,6 +61,7 @@ public class FormatterTests {
 		formatter.format(d);
 	}
 	
+	@Test
 	public void testIntHead() {
 		int[][] i = new int[][]{
 			new int[]{1,2,3},
@@ -77,14 +78,15 @@ public class FormatterTests {
 		assertTrue(left_align.getAlignment() == ColumnAlignment.LEFT);
 		left_align.toggleAlignment();
 		assertTrue(left_align.getAlignment() == ColumnAlignment.RIGHT);
-		assertTrue(left_align.getPrefix().isEmpty());
-		assertTrue(left_align.getSuffix().isEmpty());
-		assertTrue(left_align.getRowPrefix().isEmpty());
-		assertTrue(left_align.getRowSuffix().isEmpty());
-		assertTrue(left_align.getColumnSeparator().isEmpty());
-		assertTrue(left_align.getRowSeparator().equals(System.getProperty("line.separator")));
+		
+		assertTrue(left_align.prefix.isEmpty());
+		assertTrue(left_align.suffix.isEmpty());
+		assertTrue(left_align.rowPrefix.isEmpty());
+		assertTrue(left_align.rowSuffix.isEmpty());
+		assertTrue(left_align.columnSeparator.isEmpty());
+		assertTrue(left_align.rowSeparator.equals(System.getProperty("line.separator")));
 		assertTrue(left_align.getWhitespace() == 4);
-		assertNotNull(left_align.getFormat());
+		assertNotNull(left_align.format);
 		
 	}
 }

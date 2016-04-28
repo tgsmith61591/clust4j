@@ -29,49 +29,73 @@ public class TableFormatter implements java.io.Serializable {
 	private static final long serialVersionUID = -4944015740188846236L;
 
 	public static enum ColumnAlignment implements java.io.Serializable {
-		LEFT, 
-		RIGHT
+		LEFT {
+			@Override
+			String justify(String appender, String f) {
+				StringBuilder entry = new StringBuilder();
+				entry.append(f);
+				entry.append(appender);
+				return entry.toString();
+			}
+		}, 
+		
+		RIGHT {
+			@Override
+			String justify(String appender, String f) {
+				StringBuilder entry = new StringBuilder();
+				entry.append(appender);
+				entry.append(f);
+				return entry.toString();
+			}
+		}
+		;
+		
+		abstract String justify(String appender, String f);
 	}
 	
     /** The default prefix: "". */
-    protected static final String DEFAULT_PREFIX = "";
+	public static final String DEFAULT_PREFIX = "";
     /** The default suffix: "". */
-    protected static final String DEFAULT_SUFFIX = "";
+	public static final String DEFAULT_SUFFIX = "";
     /** The default row prefix: "". */
-    protected static final String DEFAULT_ROW_PREFIX = "";
+	public static final String DEFAULT_ROW_PREFIX = "";
     /** The default row suffix: "". */
-    protected static final String DEFAULT_ROW_SUFFIX = "";
+	public static final String DEFAULT_ROW_SUFFIX = "";
     /** The default row separator: "\n". */
-    protected static final String DEFAULT_ROW_SEPARATOR = System.getProperty("line.separator");
+	public static final String DEFAULT_ROW_SEPARATOR = System.getProperty("line.separator");
     /** The default column separator: "". */
-    protected static final String DEFAULT_COLUMN_SEPARATOR = "";
+	public static final String DEFAULT_COLUMN_SEPARATOR = "";
     /** The default locale */
     public static final Locale DEFAULT_LOCALE = Locale.US;
     /** The default number format */
-    protected static final NumberFormat DEFAULT_NUMBER_FORMAT = NumberFormat.getInstance(DEFAULT_LOCALE); 
+    public static final NumberFormat DEFAULT_NUMBER_FORMAT = NumberFormat.getInstance(DEFAULT_LOCALE); 
     /** The default whitespace between columns */
-    protected static final int DEFAULT_WHITE_SPACE = 4;
+    public static final int DEFAULT_WHITE_SPACE = 4;
     /** Default column alignment */
-    protected static final ColumnAlignment DEFAULT_ALIGNMENT = RIGHT;
+    public static final ColumnAlignment DEFAULT_ALIGNMENT = RIGHT;
     static final String NULL_STR = "--";
     static final int MIN_WIDTH = 3;
 
     
-    
+    /*
+     * Don't want 100k getters/setters for these...
+     */
     /** Prefix. */
-    protected final String prefix;
+    public String prefix;
     /** Suffix. */
-    protected final String suffix;
+    public String suffix;
     /** Row prefix. */
-    protected final String rowPrefix;
+    public String rowPrefix;
     /** Row suffix. */
-    protected final String rowSuffix;
+    public String rowSuffix;
     /** Row separator. */
-    protected final String rowSeparator;
+    public String rowSeparator;
     /** Column separator. */
-    protected final String columnSeparator;
+    public String columnSeparator;
     /** The format used for components. */
-    protected final NumberFormat format;
+    public NumberFormat format;
+    
+    
     /** The whitespace between cols */
     protected int whiteSpace;
 	/** Line sep */
@@ -182,7 +206,6 @@ public class TableFormatter implements java.io.Serializable {
 			}
 
 			// Now append plus width, etc.
-			boolean rightJustify = align.equals(RIGHT);
 			for (int row = 0; row < numRows; row++) {
 
 				// Build the break formatter if the first iteration...
@@ -202,14 +225,7 @@ public class TableFormatter implements java.io.Serializable {
 						int def = colMaxLen - len;
 						String appender = getAppenderOfLen(def);
 
-						if (rightJustify) {
-							entry.append(appender);
-							entry.append(f);
-						} else {
-							entry.append(f);
-							entry.append(appender);
-						}
-
+						entry.append(align.justify(appender, f));
 						linebreak.append(entry.toString()
 								+ (col == cols - 1 ? rowSuffix + lineSep
 										: colSepStr));
@@ -228,14 +244,7 @@ public class TableFormatter implements java.io.Serializable {
 					int deficit = colMaxLen - len;
 					String appender = getAppenderOfLen(deficit);
 
-					if (rightJustify) {
-						entry.append(appender);
-						entry.append(f);
-					} else {
-						entry.append(f);
-						entry.append(appender);
-					}
-
+					entry.append(align.justify(appender, f));
 					rowBuild.append(entry.toString()
 							+ (col == cols - 1 ? rowSuffix + lineSep
 									: colSepStr));
@@ -300,34 +309,6 @@ public class TableFormatter implements java.io.Serializable {
     	char[] whiteSpaceArr = new char[n];
     	Arrays.fill(whiteSpaceArr, ' ');
     	return new String(whiteSpaceArr);
-    }
-    
-    public String getPrefix() {
-    	return prefix;
-    }
-    
-    public String getSuffix() {
-    	return suffix;
-    }
-    
-    public String getRowPrefix() {
-    	return rowPrefix;
-    }
-    
-    public String getRowSuffix() {
-    	return rowSuffix;
-    }
-    
-    public String getRowSeparator() {
-    	return rowSeparator;
-    }
-    
-    public String getColumnSeparator() {
-    	return columnSeparator;
-    }
-    
-    public NumberFormat getFormat() {
-    	return format;
     }
     
     public int getWhitespace() {

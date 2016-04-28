@@ -39,6 +39,12 @@ public class PCA extends Transformer {
 	private double variability = Double.NaN;
 	private boolean var_mode = false;
 	
+	/**
+	 * Whether to retain U and S
+	 */
+	protected boolean retain = false;
+	volatile protected RealMatrix S, U;
+	
 	/*
 	 * Fit vars
 	 */
@@ -46,9 +52,9 @@ public class PCA extends Transformer {
 	volatile MeanCenterer centerer;
 	volatile private double total_var = 0.0;
 	volatile private double[] variabilities;
-	volatile private double[] variability_ratio;
-	volatile private RealMatrix components;
+	volatile protected double[] variability_ratio;
 	volatile private double noise_variance;
+	volatile protected RealMatrix components;
 	
 	/**
 	 * Copy constructor
@@ -64,12 +70,14 @@ public class PCA extends Transformer {
 		
 		this.m = instance.m;
 		this.n = instance.n;
-		this.centerer = null == centerer ? null : instance.centerer.copy();
+		this.centerer = null == instance.centerer ? null : instance.centerer.copy();
 		this.total_var = instance.total_var;
 		this.variabilities = VecUtils.copy(instance.variabilities);
 		this.variability_ratio = VecUtils.copy(instance.variability_ratio);
-		this.components = null == components ? null : instance.components.copy();
+		this.components = null == instance.components ? null : instance.components.copy();
 		this.noise_variance = instance.noise_variance;
+		this.S = null == instance.S ? null : instance.S.copy();
+		this.U = null == instance.U ? null : instance.U.copy();
 	}
 	
 	/**
@@ -99,6 +107,7 @@ public class PCA extends Transformer {
 		this.n_components = n;
 		this.var_mode = true;
 	}
+	
 	
 	/**
 	 * Check if model is fit
@@ -189,7 +198,7 @@ public class PCA extends Transformer {
 	 * @param V
 	 * @return
 	 */
-	private static EntryPair<RealMatrix, RealMatrix> eigenSignFlip(RealMatrix U, RealMatrix V) {
+	static EntryPair<RealMatrix, RealMatrix> eigenSignFlip(RealMatrix U, RealMatrix V) {
 		// need to get column arg maxes of abs vals of U
 		double[][] u = U.getData();
 		double[][] v = V.getData();
@@ -292,6 +301,12 @@ public class PCA extends Transformer {
 			this.components = new Array2DRowRealMatrix(MatUtils.slice(components_.getData(), 0, n_components), false);
 			this.variabilities = VecUtils.slice(variabilities, 0, n_components);
 			this.variability_ratio = VecUtils.slice(variability_ratio, 0, n_components);
+			
+			if(retain) {
+				this.U = new Array2DRowRealMatrix(MatUtils.slice(U.getData(), 0, n_components), false);;
+				this.S = new Array2DRowRealMatrix(MatUtils.slice(S.getData(), 0, n_components), false);;
+			}
+			
 			
 			return this;
 		}

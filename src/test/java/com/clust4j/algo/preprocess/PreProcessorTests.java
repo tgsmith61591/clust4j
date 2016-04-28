@@ -389,6 +389,8 @@ public class PreProcessorTests {
 		 */
 		assertTrue(VecUtils.equalsWithTolerance(pca.getVariabilityExplained(), new double[]{4.19667516,  0.24062861}, 1e-4));
 		assertTrue(VecUtils.equalsWithTolerance(pca.getVariabilityRatioExplained(), new double[]{0.92461621,  0.05301557}, 1e-4));
+		
+		
 		assertTrue(MatUtils.equalsWithTolerance(MatUtils.abs(pca.getComponents().getData()), new double[][]{
 			new double[]{ 0.36158968,  0.08226889,  0.85657211,  0.35884393},
 			new double[]{ 0.65653988,  0.72971237,  0.1757674 ,  0.07470647}

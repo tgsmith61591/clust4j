@@ -1629,12 +1629,12 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	abstract void initNode		(NearestNeighborHeapSearch tree, int i_node, int idx_start, int idx_end);
 	
 	// Dist functions
-	abstract double maxDist		(NearestNeighborHeapSearch tree, int i_node, double[] pt);
+	//abstract double maxDist		(NearestNeighborHeapSearch tree, int i_node, double[] pt);
 	abstract double minDist		(NearestNeighborHeapSearch tree, int i_node, double[] pt);
 	abstract double maxDistDual	(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract double minDistDual	(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract void minMaxDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt, MutableDouble minDist, MutableDouble maxDist);
-	abstract double maxRDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt);
+	//abstract double maxRDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt);
 	abstract double minRDist	(NearestNeighborHeapSearch tree, int i_node, double[] pt);
 	abstract double maxRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);
 	abstract double minRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2);

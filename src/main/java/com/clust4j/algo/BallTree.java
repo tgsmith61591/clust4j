@@ -167,6 +167,7 @@ public class BallTree extends NearestNeighborHeapSearch {
 		return tree.dist_metric.distanceToPartialDistance(minDist(tree, i_node, pt));
 	}
 
+	/*
 	@Override
 	double maxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
 		double dist_pt = tree.dist(pt, tree.node_bounds[0][i_node]);
@@ -177,6 +178,7 @@ public class BallTree extends NearestNeighborHeapSearch {
 	double maxRDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
 		return tree.dist_metric.distanceToPartialDistance(maxDist(tree, i_node, pt));
 	}
+	*/
 
 	@Override
 	double maxRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {

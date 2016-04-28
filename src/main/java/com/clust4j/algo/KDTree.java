@@ -196,14 +196,15 @@ public class KDTree extends NearestNeighborHeapSearch {
 	}
 
 	@Override
+	double maxDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
+		return tree1.dist_metric.partialDistanceToDistance(maxRDistDual(tree1, iNode1, tree2, iNode2));
+	}
+
+	/*
+	@Override
 	double maxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt) {
 		double d = maxRDist(tree, i_node, pt);
 		return tree.dist_metric.partialDistanceToDistance(d);
-	}
-
-	@Override
-	double maxDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
-		return tree1.dist_metric.partialDistanceToDistance(maxRDistDual(tree1, iNode1, tree2, iNode2));
 	}
 
 	@Override
@@ -227,6 +228,7 @@ public class KDTree extends NearestNeighborHeapSearch {
 		
 		return rdist;
 	}
+	*/
 
 	@Override
 	double maxRDistDual(NearestNeighborHeapSearch tree1, int iNode1, NearestNeighborHeapSearch tree2, int iNode2) {
@@ -255,6 +257,7 @@ public class KDTree extends NearestNeighborHeapSearch {
 		
 		return rdist;
 	}
+	
 
 	@Override
 	void minMaxDist(NearestNeighborHeapSearch tree, int i_node, double[] pt, MutableDouble minDist, MutableDouble maxDist) {

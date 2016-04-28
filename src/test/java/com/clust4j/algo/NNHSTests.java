@@ -1610,6 +1610,14 @@ public class NNHSTests {
 		tree.twoPointCorrelation(X, -1, true);
 		tree.twoPointCorrelation(X, -1.0);
 		tree.twoPointCorrelation(X, new double[]{1,2});
+		
+		
+		
+		// Make it a ball tree, now.
+		KMeans loggable = new KMeans(IRIS, 3); // don't fit, just using the logger...
+		tree = new BallTree(IRIS, Distance.EUCLIDEAN, loggable);
+		int[] corr = tree.twoPointCorrelation(X, -1, false);
+		assertTrue(VecUtils.equalsExactly(corr, VecUtils.repInt(0, X.length)));
 	}
 	
 	@Test(expected=DimensionMismatchException.class)
