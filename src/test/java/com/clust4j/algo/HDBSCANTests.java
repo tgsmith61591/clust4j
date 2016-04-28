@@ -29,8 +29,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
@@ -1411,7 +1411,7 @@ public class HDBSCANTests implements ClusterTest, ClassifierTest, BaseModelTest 
 		HDBSCAN model = null;
 		HDBSCAN_Algorithm algo;
 		StandardScaler scaler = new StandardScaler().fit(iris);
-		AbstractRealMatrix X = scaler.transform(iris);
+		RealMatrix X = scaler.transform(iris);
 		
 		/*
 		 * Generic first... should theoretically allow similarity metrics as well...

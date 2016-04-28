@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
@@ -150,11 +150,11 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	
 	
 	
-	protected HierarchicalAgglomerative(AbstractRealMatrix data) {
+	protected HierarchicalAgglomerative(RealMatrix data) {
 		this(data, new HierarchicalAgglomerativeParameters());
 	}
 
-	protected HierarchicalAgglomerative(AbstractRealMatrix data, 
+	protected HierarchicalAgglomerative(RealMatrix data, 
 			HierarchicalAgglomerativeParameters planner) {
 		super(data, planner, planner.getNumClusters());
 		this.linkage = planner.getLinkage();
@@ -198,7 +198,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 		private static final long serialVersionUID = -7329893729526766664L;
 		final protected double[] dists;
 		
-		EfficientDistanceMatrix(final AbstractRealMatrix data, GeometricallySeparable dist, boolean partial) {
+		EfficientDistanceMatrix(final RealMatrix data, GeometricallySeparable dist, boolean partial) {
 			this.dists = build(data.getData(), dist, partial);
 		}
 		
@@ -625,7 +625,7 @@ final public class HierarchicalAgglomerative extends AbstractPartitionalClustere
 	
 	/** {@inheritDoc} */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		final int[] fit_labels = getLabels(); // throws the MNF exception if not fit
 		final int numSamples = newData.getRowDimension(), n = newData.getColumnDimension();
 		

@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 public interface SupervisedClassifierParameters<T extends AbstractClusterer & SupervisedClassifier> 
 		extends BaseClassifierParameters {
@@ -26,5 +26,5 @@ public interface SupervisedClassifierParameters<T extends AbstractClusterer & Su
 	 * @param y
 	 * @return
 	 */
-	public T fitNewModel(AbstractRealMatrix data, int[] y);
+	public T fitNewModel(RealMatrix data, int[] y);
 }

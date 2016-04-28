@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.metrics.scoring.SupervisedMetric;
 import static com.clust4j.metrics.scoring.UnsupervisedMetric.SILHOUETTE;
@@ -26,7 +26,7 @@ public abstract class AbstractAutonomousClusterer extends AbstractClusterer impl
 	 */
 	private static final long serialVersionUID = -4704891508225126315L;
 
-	public AbstractAutonomousClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
+	public AbstractAutonomousClusterer(RealMatrix data, BaseClustererParameters planner) {
 		super(data, planner);
 	}
 	

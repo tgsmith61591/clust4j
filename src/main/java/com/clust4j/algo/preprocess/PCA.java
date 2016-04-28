@@ -16,10 +16,9 @@
 
 package com.clust4j.algo.preprocess;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.util.FastMath;
 
@@ -175,7 +174,7 @@ public class PCA extends Transformer {
 	}
 
 	@Override
-	public AbstractRealMatrix transform(AbstractRealMatrix data) {
+	public RealMatrix transform(RealMatrix data) {
 		return new Array2DRowRealMatrix(transform(data.getData()), false);
 	}
 
@@ -236,7 +235,7 @@ public class PCA extends Transformer {
 	}
 	
 	@Override
-	public PCA fit(AbstractRealMatrix X) {
+	public PCA fit(RealMatrix X) {
 		synchronized(fitLock) {
 			this.centerer = new MeanCenterer().fit(X);
 			this.m = X.getRowDimension();
@@ -246,7 +245,7 @@ public class PCA extends Transformer {
 			if(this.n_components > n)
 				this.n_components = n;
 			
-			final AbstractRealMatrix data = this.centerer.transform(X);
+			final RealMatrix data = this.centerer.transform(X);
 			SingularValueDecomposition svd = new SingularValueDecomposition(data);
 			RealMatrix U = svd.getU(), S = svd.getS(), V = svd.getV().transpose();
 			
@@ -313,12 +312,12 @@ public class PCA extends Transformer {
 	}
 	
 	@Override
-	public AbstractRealMatrix inverseTransform(AbstractRealMatrix X) {
+	public RealMatrix inverseTransform(RealMatrix X) {
 		checkFit();
 		
 		// get the product of X times the components (not transposed)
 		// and then add back in the mean...
-		AbstractRealMatrix x = (AbstractRealMatrix) X.multiply(this.components);
+		RealMatrix x = (RealMatrix) X.multiply(this.components);
 		return this.centerer.inverseTransform(x);
 	}
 }

@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
@@ -172,7 +172,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		
 		KMedoids km = new KMedoids(X, 
 				new KMedoidsParameters(2)
@@ -223,7 +223,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		
 		KMedoids km = new KMedoids(X, new KMedoidsParameters(3));
 		km.fit();
@@ -269,7 +269,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{false, true};
 		
 		KMedoids km = null;
@@ -284,7 +284,7 @@ public class KMedoidsTests implements ClusterTest, ClassifierTest, ConvergeableT
 	public void KMedoidsLoadTest1() {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5};

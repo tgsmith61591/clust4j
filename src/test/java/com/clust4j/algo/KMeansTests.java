@@ -29,13 +29,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
 import com.clust4j.GlobalState;
 import com.clust4j.TestSuite;
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
+import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.StandardScaler;
 import com.clust4j.algo.KMeansParameters;
 import com.clust4j.data.DataSet;
@@ -202,7 +203,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		final AbstractRealMatrix X = scaler.transform(mat);
+		final RealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{true, false};
 		
 		KMeans km = null;
@@ -231,7 +232,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 		
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(data);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		final AbstractRealMatrix X = scaler.transform(mat);
+		final RealMatrix X = scaler.transform(mat);
 		final boolean[] scale = new boolean[]{true, false};
 		
 		KMeans km = null;
@@ -247,7 +248,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	public void KMeansLoadTest1() {
 		final Array2DRowRealMatrix mat = getRandom(400, 10); // need to reduce size for travis CI
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		
 		final boolean[] scale = new boolean[] {false, true};
 		final int[] ks = new int[] {1,3,5,7};
@@ -445,8 +446,8 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	
 	static void findBestDistMetric(DataSet ds, int k) {
 		final Array2DRowRealMatrix d = ds.getData();
-		StandardScaler scaler = new StandardScaler().fit(d);
-		final AbstractRealMatrix X = scaler.transform(d);
+		PreProcessor scaler = new StandardScaler().fit(d);
+		final RealMatrix X = scaler.transform(d);
 		
 		final int[] actual = ds.getLabels();
 		GeometricallySeparable best = null;
@@ -484,7 +485,7 @@ public class KMeansTests implements ClassifierTest, ClusterTest, ConvergeableTes
 	static void findBestKernelMetric(DataSet ds, int k) {
 		Array2DRowRealMatrix d = ds.getData();
 		StandardScaler scaler = new StandardScaler().fit(d);
-		final AbstractRealMatrix X = scaler.transform(d);
+		final RealMatrix X = scaler.transform(d);
 		final int[] actual = ds.getLabels();
 		
 		GeometricallySeparable best = null;

@@ -17,7 +17,7 @@ package com.clust4j.algo;
 
 import java.util.HashSet;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -67,27 +67,27 @@ public class BallTree extends NearestNeighborHeapSearch {
 	
 	
 	
-	public BallTree(final AbstractRealMatrix X) {
+	public BallTree(final RealMatrix X) {
 		super(X);
 	}
 	
-	public BallTree(final AbstractRealMatrix X, int leaf_size) {
+	public BallTree(final RealMatrix X, int leaf_size) {
 		super(X, leaf_size);
 	}
 	
-	public BallTree(final AbstractRealMatrix X, DistanceMetric dist) {
+	public BallTree(final RealMatrix X, DistanceMetric dist) {
 		super(X, dist);
 	}
 	
-	public BallTree(final AbstractRealMatrix X, Loggable logger) {
+	public BallTree(final RealMatrix X, Loggable logger) {
 		super(X, logger);
 	}
 	
-	public BallTree(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist) {
+	public BallTree(final RealMatrix X, int leaf_size, DistanceMetric dist) {
 		super(X, leaf_size, dist);
 	}
 	
-	public BallTree(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
+	public BallTree(final RealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
 		super(X, leaf_size, dist, logger);
 	}
 	
@@ -97,7 +97,7 @@ public class BallTree extends NearestNeighborHeapSearch {
 	 * @param dist
 	 * @param logger
 	 */
-	public BallTree(final AbstractRealMatrix X, DistanceMetric dist, Loggable logger) {
+	public BallTree(final RealMatrix X, DistanceMetric dist, Loggable logger) {
 		super(X, dist, logger);
 	}
 	

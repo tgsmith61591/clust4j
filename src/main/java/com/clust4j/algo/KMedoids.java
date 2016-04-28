@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.except.IllegalClusterStateException;
@@ -83,15 +83,15 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	
 	
 	
-	protected KMedoids(final AbstractRealMatrix data) {
+	protected KMedoids(final RealMatrix data) {
 		this(data, DEF_K);
 	}
 	
-	protected KMedoids(final AbstractRealMatrix data, final int k) {
+	protected KMedoids(final RealMatrix data, final int k) {
 		this(data, new KMedoidsParameters(k).setMetric(Distance.MANHATTAN));
 	}
 	
-	protected KMedoids(final AbstractRealMatrix data, final KMedoidsParameters planner) {
+	protected KMedoids(final RealMatrix data, final KMedoidsParameters planner) {
 		super(data, planner);
 		
 		// Check if is Manhattan

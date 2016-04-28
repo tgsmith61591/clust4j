@@ -18,7 +18,7 @@ package com.clust4j.algo.preprocess.impute;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel;
@@ -125,7 +125,7 @@ public class NearestNeighborImputation extends MatrixImputation {
 	}
 	
 	@Override
-	public AbstractRealMatrix transform(final AbstractRealMatrix dat) {
+	public RealMatrix transform(final RealMatrix dat) {
 		return new Array2DRowRealMatrix(transform(dat.getData()), false);
 	}
 
@@ -267,5 +267,5 @@ public class NearestNeighborImputation extends MatrixImputation {
 		return "NN imputation";
 	}
 
-	@Override final public NearestNeighborImputation fit(AbstractRealMatrix x){return this;}
+	@Override final public NearestNeighborImputation fit(RealMatrix x){return this;}
 }

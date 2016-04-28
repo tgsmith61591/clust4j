@@ -18,7 +18,7 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.NearestCentroidParameters;
@@ -47,15 +47,15 @@ final public class KMeans extends AbstractCentroidClusterer {
 	
 	
 	
-	protected KMeans(final AbstractRealMatrix data) {
+	protected KMeans(final RealMatrix data) {
 		this(data, DEF_K);
 	}
 	
-	protected KMeans(final AbstractRealMatrix data, final int k) {
+	protected KMeans(final RealMatrix data, final int k) {
 		this(data, new KMeansParameters(k));
 	}
 	
-	protected KMeans(final AbstractRealMatrix data, final KMeansParameters planner) {
+	protected KMeans(final RealMatrix data, final KMeansParameters planner) {
 		super(data, planner);
 	}
 	

@@ -18,7 +18,7 @@ package com.clust4j.utils;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 public class MatrixFormatter extends TableFormatter {
 	private static final long serialVersionUID = 6065772725783899020L;
@@ -62,11 +62,11 @@ public class MatrixFormatter extends TableFormatter {
     	return format(MatUtils.toDouble(mat), numRows);
     }
     
-    public Table format(AbstractRealMatrix matrix) {
+    public Table format(RealMatrix matrix) {
     	return format(matrix, matrix.getRowDimension());
     }
     
-    public Table format(AbstractRealMatrix matrix, int numRows) {
+    public Table format(RealMatrix matrix, int numRows) {
     	return format(matrix.getData(), numRows);
     }
     

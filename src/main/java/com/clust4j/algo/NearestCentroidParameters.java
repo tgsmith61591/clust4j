@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
@@ -33,7 +33,7 @@ public class NearestCentroidParameters
 	}
 
 	@Override
-	public NearestCentroid fitNewModel(AbstractRealMatrix data, int[] y) {
+	public NearestCentroid fitNewModel(RealMatrix data, int[] y) {
 		return new NearestCentroid(data, y, copy()).fit();
 	}
 

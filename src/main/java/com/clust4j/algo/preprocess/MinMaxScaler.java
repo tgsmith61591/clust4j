@@ -17,7 +17,7 @@
 package com.clust4j.algo.preprocess;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -68,7 +68,7 @@ public class MinMaxScaler extends Transformer {
 	}
 
 	@Override
-	public MinMaxScaler fit(AbstractRealMatrix X) {
+	public MinMaxScaler fit(RealMatrix X) {
 		synchronized(fitLock) {
 			final int m = X.getRowDimension();
 			final int n = X.getColumnDimension();
@@ -94,7 +94,7 @@ public class MinMaxScaler extends Transformer {
 	}
 
 	@Override
-	public AbstractRealMatrix transform(AbstractRealMatrix data) {
+	public RealMatrix transform(RealMatrix data) {
 		return new Array2DRowRealMatrix(transform(data.getData()), false);
 	}
 
@@ -125,7 +125,7 @@ public class MinMaxScaler extends Transformer {
 	}
 	
 	@Override
-	public AbstractRealMatrix inverseTransform(AbstractRealMatrix X) {
+	public RealMatrix inverseTransform(RealMatrix X) {
 		checkFit();
 		
 		// This effectively copies, so no need to do a copy later

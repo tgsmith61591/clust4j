@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.except.ModelNotFitException;
@@ -82,7 +82,7 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
 	 * @throws IllegalArgumentException if there is only one unique class in y
 	 */
-	protected NearestCentroid(AbstractRealMatrix data, int[] y) {
+	protected NearestCentroid(RealMatrix data, int[] y) {
 		this(data, y, new NearestCentroidParameters());
 	}
 	
@@ -95,7 +95,7 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	 * @throws DimensionMismatchException if the dims of y do not match the dims of data
 	 * @throws IllegalArgumentException if there is only one unique class in y
 	 */
-	protected NearestCentroid(AbstractRealMatrix data, int[] y, NearestCentroidParameters planner) {
+	protected NearestCentroid(RealMatrix data, int[] y, NearestCentroidParameters planner) {
 		super(data, planner);
 
 		VecUtils.checkDims(y);
@@ -389,7 +389,7 @@ final public class NearestCentroid extends AbstractClusterer implements Supervis
 	}
 
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		return predict(newData.getData()).getKey();
 	}
 	

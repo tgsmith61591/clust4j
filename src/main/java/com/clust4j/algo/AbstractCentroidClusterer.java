@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.NamedEntity;
@@ -292,7 +292,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	
 	
-	public AbstractCentroidClusterer(AbstractRealMatrix data,
+	public AbstractCentroidClusterer(RealMatrix data,
 			CentroidClustererParameters<? extends AbstractCentroidClusterer> planner) {
 		super(data, planner, planner.getK());
 		
@@ -432,7 +432,7 @@ public abstract class AbstractCentroidClusterer extends AbstractPartitionalClust
 	
 	/** {@inheritDoc} */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		return CentroidUtils.predict(this, newData);
 	}
 

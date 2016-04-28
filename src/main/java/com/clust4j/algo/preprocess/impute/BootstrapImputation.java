@@ -17,7 +17,7 @@ package com.clust4j.algo.preprocess.impute;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.except.NaNException;
@@ -147,7 +147,7 @@ public class BootstrapImputation extends MatrixImputation {
 	}
 	
 	@Override
-	public AbstractRealMatrix transform(final AbstractRealMatrix dat) {
+	public RealMatrix transform(final RealMatrix dat) {
 		return new Array2DRowRealMatrix(transform(dat.getData()), false);
 	}
 	
@@ -203,5 +203,5 @@ public class BootstrapImputation extends MatrixImputation {
 		return copy;
 	}
 	
-	@Override final public BootstrapImputation fit(AbstractRealMatrix x){return this;}
+	@Override final public BootstrapImputation fit(RealMatrix x){return this;}
 }

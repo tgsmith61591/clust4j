@@ -16,7 +16,7 @@
 
 package com.clust4j.algo.pipeline;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel;
 import com.clust4j.algo.NeighborsClassifierParameters;
@@ -33,9 +33,9 @@ public class NeighborsPipeline<M extends BaseNeighborsModel>
 		super(planner, pipe);
 	}
 	
-	public M fit(final AbstractRealMatrix data) {
+	public M fit(final RealMatrix data) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = pipelineFitTransform(data);
+			RealMatrix copy = pipelineFitTransform(data);
 	
 			// Build/fit the model -- the model should handle the dim check internally
 			return fit_model = planner.fitNewModel(copy);

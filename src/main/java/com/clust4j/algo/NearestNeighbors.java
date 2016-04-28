@@ -17,7 +17,7 @@ package com.clust4j.algo;
 
 import java.util.concurrent.RejectedExecutionException;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.Neighborhood;
@@ -31,7 +31,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 8306843374522289973L;
 
 	
-	protected NearestNeighbors(AbstractRealMatrix data) {
+	protected NearestNeighbors(RealMatrix data) {
 		this(data, DEF_K);
 	}
 	
@@ -39,7 +39,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 		this(caller, DEF_K);
 	}
 
-	protected NearestNeighbors(AbstractRealMatrix data, int k) {
+	protected NearestNeighbors(RealMatrix data, int k) {
 		this(data, new NearestNeighborsParameters(k));
 	}
 	
@@ -47,7 +47,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 		this(caller, new NearestNeighborsParameters(k));
 	}
 
-	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsParameters planner) {
+	protected NearestNeighbors(RealMatrix data, NearestNeighborsParameters planner) {
 		this(data, planner, false);
 	}
 	
@@ -57,7 +57,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 		logModelSummary();
 	}
 	
-	protected NearestNeighbors(AbstractRealMatrix data, NearestNeighborsParameters planner, boolean as_is) {
+	protected NearestNeighbors(RealMatrix data, NearestNeighborsParameters planner, boolean as_is) {
 		super(data, planner, as_is);
 		validateK(kNeighbors, m);
 		logModelSummary();
@@ -220,7 +220,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 	}
 	
 	@Override
-	public Neighborhood getNeighbors(AbstractRealMatrix x) {
+	public Neighborhood getNeighbors(RealMatrix x) {
 		return getNeighbors(x, kNeighbors);
 	}
 	
@@ -243,7 +243,7 @@ final public class NearestNeighbors extends BaseNeighborsModel {
 		return getNeighbors(x, kNeighbors, false);
 	}
 	
-	public Neighborhood getNeighbors(AbstractRealMatrix x, int k) {
+	public Neighborhood getNeighbors(RealMatrix x, int k) {
 		return getNeighbors(x.getData(), k, parallel);
 	}
 	

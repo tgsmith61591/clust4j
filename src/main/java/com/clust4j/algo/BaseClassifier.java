@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.metrics.scoring.UnsupervisedMetric;
@@ -43,5 +43,5 @@ public interface BaseClassifier extends java.io.Serializable {
 	 * @throws ModelNotFitException if the model hasn't yet been fit
 	 * @return
 	 */
-	public int[] predict(AbstractRealMatrix newData);
+	public int[] predict(RealMatrix newData);
 }

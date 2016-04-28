@@ -18,14 +18,14 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 
 /**
  * A model setup class for {@link AffinityPropagation}. This class houses all
  * of the hyper-parameter settings to build an {@link AffinityPropagation} instance
- * using the {@link #fitNewModel(AbstractRealMatrix)} method.
+ * using the {@link #fitNewModel(RealMatrix)} method.
  * @author Taylor G Smith
  */
 public class AffinityPropagationParameters 
@@ -46,7 +46,7 @@ public class AffinityPropagationParameters
 	}
 
 	@Override
-	public AffinityPropagation fitNewModel(AbstractRealMatrix data) {
+	public AffinityPropagation fitNewModel(RealMatrix data) {
 		return new AffinityPropagation(data, this.copy()).fit();
 	}
 	

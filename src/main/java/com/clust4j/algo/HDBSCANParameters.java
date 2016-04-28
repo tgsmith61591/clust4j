@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.AbstractDBSCAN.AbstractDBSCANParameters;
 import com.clust4j.algo.HDBSCAN.HDBSCAN_Algorithm;
@@ -46,7 +46,7 @@ final public class HDBSCANParameters extends AbstractDBSCANParameters<HDBSCAN> {
 
 	
 	@Override
-	public HDBSCAN fitNewModel(AbstractRealMatrix data) {
+	public HDBSCAN fitNewModel(RealMatrix data) {
 		return new HDBSCAN(data, this.copy()).fit();
 	}
 	

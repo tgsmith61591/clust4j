@@ -16,7 +16,7 @@
 
 package com.clust4j.algo.pipeline;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.Clust4j;
 import com.clust4j.NamedEntity;
@@ -58,8 +58,8 @@ public abstract class Pipeline<T extends BaseClassifierParameters>
 	 * @param data
 	 * @return
 	 */
-	protected final AbstractRealMatrix pipelineFitTransform(AbstractRealMatrix data) {
-		AbstractRealMatrix operated = data;
+	protected final RealMatrix pipelineFitTransform(RealMatrix data) {
+		RealMatrix operated = data;
 		
 		// Push through pipeline... fits the models in place
 		for(PreProcessor pre: pipe)
@@ -73,8 +73,8 @@ public abstract class Pipeline<T extends BaseClassifierParameters>
 	 * @param data
 	 * @return
 	 */
-	protected final AbstractRealMatrix pipelineTransform(AbstractRealMatrix data) {
-		AbstractRealMatrix operated = data;
+	protected final RealMatrix pipelineTransform(RealMatrix data) {
+		RealMatrix operated = data;
 		
 		// Push through pipeline... the models are already fit...
 		for(PreProcessor pre: pipe)

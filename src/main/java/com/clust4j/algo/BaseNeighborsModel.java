@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.GlobalState;
 import com.clust4j.algo.Neighborhood;
@@ -45,7 +45,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	protected volatile Neighborhood res;
 
 	interface TreeBuilder extends MetricValidator {
-		public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data, 
+		public NearestNeighborHeapSearch buildTree(RealMatrix data, 
 				int leafSize, BaseNeighborsModel logger);
 	}
 	
@@ -53,7 +53,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		AUTO {
 
 			@Override
-			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
+			public NearestNeighborHeapSearch buildTree(RealMatrix data,
 					int leafSize, BaseNeighborsModel logger) {
 				
 				NeighborsAlgorithm alg = delegateAlgorithm(data);
@@ -70,7 +70,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		KD_TREE {
 
 			@Override
-			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
+			public NearestNeighborHeapSearch buildTree(RealMatrix data,
 					int leafSize, BaseNeighborsModel logger) {
 				logger.alg = this;
 				return new KDTree(data, leafSize, handleMetric(this, logger), logger);
@@ -85,7 +85,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		BALL_TREE {
 
 			@Override
-			public NearestNeighborHeapSearch buildTree(AbstractRealMatrix data,
+			public NearestNeighborHeapSearch buildTree(RealMatrix data,
 					int leafSize, BaseNeighborsModel logger) {
 				logger.alg = this;
 				return new BallTree(data, leafSize, handleMetric(this, logger), logger);
@@ -97,7 +97,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 			}
 		};
 		
-		private static NeighborsAlgorithm delegateAlgorithm(AbstractRealMatrix arm) {
+		private static NeighborsAlgorithm delegateAlgorithm(RealMatrix arm) {
 			int mn = arm.getColumnDimension() * arm.getRowDimension();
 			return mn > GlobalState.ParallelismConf.MIN_ELEMENTS ?
 				BALL_TREE : KD_TREE;
@@ -125,12 +125,12 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		init(planner);
 	}
 	
-	protected BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner, boolean as_is) {
+	protected BaseNeighborsModel(RealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner, boolean as_is) {
 		super(data, planner, as_is);
 		init(planner);
 	}
 	
-	protected BaseNeighborsModel(AbstractRealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
+	protected BaseNeighborsModel(RealMatrix data, BaseNeighborsPlanner<? extends BaseNeighborsModel> planner) {
 		super(data, planner);
 		init(planner);
 	}
@@ -171,7 +171,7 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 		protected int leafSize = DEF_LEAF_SIZE;
 		protected NeighborsAlgorithm algo = DEF_ALGO;
 		
-		@Override abstract public T fitNewModel(AbstractRealMatrix d);
+		@Override abstract public T fitNewModel(RealMatrix d);
 		abstract public BaseNeighborsPlanner<T> setAlgorithm(NeighborsAlgorithm algo);
 		abstract public Integer getK();
 		abstract public Double getRadius();
@@ -267,6 +267,6 @@ abstract public class BaseNeighborsModel extends AbstractClusterer {
 	}
 	
 	
-	abstract Neighborhood getNeighbors(AbstractRealMatrix matrix);
+	abstract Neighborhood getNeighbors(RealMatrix matrix);
 	@Override abstract protected BaseNeighborsModel fit();
 }

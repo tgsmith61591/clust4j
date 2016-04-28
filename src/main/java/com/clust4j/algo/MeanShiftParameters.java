@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
 import com.clust4j.utils.MatUtils;
@@ -76,7 +76,7 @@ final public class MeanShiftParameters
 	}
 	
 	@Override
-	public MeanShift fitNewModel(AbstractRealMatrix data) {
+	public MeanShift fitNewModel(RealMatrix data) {
 		return new MeanShift(data, this.copy()).fit();
 	}
 	

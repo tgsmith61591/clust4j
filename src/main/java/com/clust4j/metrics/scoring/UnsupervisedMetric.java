@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.AbstractClusterer;
@@ -33,7 +33,7 @@ import com.clust4j.utils.VecUtils;
 public enum UnsupervisedMetric implements EvaluationMetric {
 	SILHOUETTE {
 		@Override
-		public double evaluate(AbstractRealMatrix data, final int[] labels) {
+		public double evaluate(RealMatrix data, final int[] labels) {
 
 			double[][] X = data.getData();
 			DistanceMetric metric = Distance.EUCLIDEAN;
@@ -161,5 +161,5 @@ public enum UnsupervisedMetric implements EvaluationMetric {
 	;
 	
 	public abstract double evaluate(AbstractClusterer model, int[] labels);
-	public abstract double evaluate(AbstractRealMatrix mat, int[] labels);
+	public abstract double evaluate(RealMatrix mat, int[] labels);
 }

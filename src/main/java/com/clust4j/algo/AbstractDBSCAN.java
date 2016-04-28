@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 abstract class AbstractDBSCAN extends AbstractDensityClusterer implements NoiseyClusterer {
 	private static final long serialVersionUID = 5247910788105653778L;
@@ -26,7 +26,7 @@ abstract class AbstractDBSCAN extends AbstractDensityClusterer implements Noisey
 	final protected int minPts;
 	protected double eps = DEF_EPS;
 
-	public AbstractDBSCAN(AbstractRealMatrix data, AbstractDBSCANParameters<? extends AbstractDBSCAN> planner) {
+	public AbstractDBSCAN(RealMatrix data, AbstractDBSCANParameters<? extends AbstractDBSCAN> planner) {
 		super(data, planner);
 		
 		this.minPts = planner.getMinPts();

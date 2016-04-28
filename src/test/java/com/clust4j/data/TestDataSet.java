@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.text.DecimalFormat;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
@@ -116,7 +116,7 @@ public class TestDataSet
 		
 		final Array2DRowRealMatrix data = shuffled.getData();
 		StandardScaler scaler = new StandardScaler().fit(data);
-		AbstractRealMatrix X = scaler.transform(data);
+		RealMatrix X = scaler.transform(data);
 		//final int[] actual = shuffled.getLabels();
 		
 		final boolean verbose = false;

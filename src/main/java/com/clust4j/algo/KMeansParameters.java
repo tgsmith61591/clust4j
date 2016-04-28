@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -35,7 +35,7 @@ final public class KMeansParameters extends CentroidClustererParameters<KMeans> 
 	}
 	
 	@Override
-	public KMeans fitNewModel(final AbstractRealMatrix data) {
+	public KMeans fitNewModel(final RealMatrix data) {
 		return new KMeans(data, this.copy()).fit();
 	}
 	

@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 	/**
@@ -29,7 +29,7 @@ public abstract class AbstractPartitionalClusterer extends AbstractClusterer {
 	protected int k;
 	
 	public AbstractPartitionalClusterer(
-			AbstractRealMatrix data, 
+			RealMatrix data, 
 			BaseClustererParameters planner,
 			final int k) 
 	{

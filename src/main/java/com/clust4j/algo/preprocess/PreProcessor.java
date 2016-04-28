@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo.preprocess;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.Clust4j;
 import com.clust4j.algo.BaseModel;
@@ -31,7 +31,7 @@ public abstract class PreProcessor extends Clust4j implements DeepCloneable {
 	protected final Object fitLock = new SynchronicityLock();
 	
 	@Override public abstract PreProcessor copy();
-	public abstract PreProcessor fit(AbstractRealMatrix X);
-	public abstract AbstractRealMatrix transform(AbstractRealMatrix data);
+	public abstract PreProcessor fit(RealMatrix X);
+	public abstract RealMatrix transform(RealMatrix data);
 	public abstract double[][] transform(double[][] data);
 }

@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.HierarchicalAgglomerative.Linkage;
 import com.clust4j.metrics.pairwise.GeometricallySeparable;
@@ -40,7 +40,7 @@ final public class HierarchicalAgglomerativeParameters
 	}
 
 	@Override
-	public HierarchicalAgglomerative fitNewModel(AbstractRealMatrix data) {
+	public HierarchicalAgglomerative fitNewModel(RealMatrix data) {
 		return new HierarchicalAgglomerative(data, this.copy()).fit();
 	}
 

@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
@@ -124,7 +124,7 @@ final public class MeanShift
 	 * @param data
 	 * @param bandwidth
 	 */
-	protected MeanShift(AbstractRealMatrix data, final double bandwidth) {
+	protected MeanShift(RealMatrix data, final double bandwidth) {
 		this(data, new MeanShiftParameters(bandwidth));
 	}
 	
@@ -133,7 +133,7 @@ final public class MeanShift
 	 * @param data
 	 * @param bandwidth
 	 */
-	protected MeanShift(AbstractRealMatrix data) {
+	protected MeanShift(RealMatrix data) {
 		this(data, new MeanShiftParameters());
 	}
 	
@@ -142,7 +142,7 @@ final public class MeanShift
 	 * @param data
 	 * @param planner
 	 */
-	protected MeanShift(AbstractRealMatrix data, MeanShiftParameters planner) {
+	protected MeanShift(RealMatrix data, MeanShiftParameters planner) {
 		super(data, planner);
 		
 		
@@ -1099,7 +1099,7 @@ final public class MeanShift
 	
 	/** {@inheritDoc} */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		return CentroidUtils.predict(this, newData);
 	}
 }

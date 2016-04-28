@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo.pipeline;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.SupervisedClassifier;
@@ -35,9 +35,9 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 		super(planner, pipe);
 	}
 
-	public M fit(final AbstractRealMatrix data, int[] y) {
+	public M fit(final RealMatrix data, int[] y) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = pipelineFitTransform(data);
+			RealMatrix copy = pipelineFitTransform(data);
 	
 			// Build/fit the model -- the model should handle the dim check internally
 			return fit_model = planner.fitNewModel(copy, y);
@@ -74,7 +74,7 @@ public class SupervisedPipeline<M extends AbstractClusterer & SupervisedClassifi
 	 * @param newData
 	 */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		checkFit();
 		return fit_model.predict(pipelineTransform(newData));
 	}

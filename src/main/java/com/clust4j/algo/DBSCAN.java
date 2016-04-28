@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Stack;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.RadiusNeighborsParameters;
 import com.clust4j.log.LogTimer;
@@ -78,7 +78,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	 * Constructs an instance of DBSCAN from the default epsilon
 	 * @param data
 	 */
-	protected DBSCAN(final AbstractRealMatrix data) {
+	protected DBSCAN(final RealMatrix data) {
 		this(data, DEF_EPS);
 	}
 	
@@ -88,7 +88,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	 * @param eps
 	 * @param data
 	 */
-	protected DBSCAN(final AbstractRealMatrix data, final double eps) {
+	protected DBSCAN(final RealMatrix data, final double eps) {
 		this(data, new DBSCANParameters(eps));
 	}
 	
@@ -97,7 +97,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	 * @param builder
 	 * @param data
 	 */
-	protected DBSCAN(final AbstractRealMatrix data, final DBSCANParameters planner) {
+	protected DBSCAN(final RealMatrix data, final DBSCANParameters planner) {
 		super(data, planner);
 		this.m = data.getRowDimension();
 		this.eps = planner.getEps();
@@ -322,7 +322,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 	
 	/** {@inheritDoc} */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		final int[] fit_labels = getLabels(); // propagates errors
 		final int n = newData.getColumnDimension();
 		

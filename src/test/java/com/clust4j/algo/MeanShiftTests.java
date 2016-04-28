@@ -28,7 +28,7 @@ import java.util.TreeSet;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
@@ -343,7 +343,7 @@ public class MeanShiftTests implements ClusterTest, ClassifierTest, Convergeable
 	public void MeanShiftTestIris() {
 		Array2DRowRealMatrix iris = data_;
 		StandardScaler scaler = new StandardScaler().fit(iris);
-		AbstractRealMatrix X = scaler.transform(iris);
+		RealMatrix X = scaler.transform(iris);
 		
 		MeanShift ms = new MeanShift(X, 
 			new MeanShiftParameters()).fit();

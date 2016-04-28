@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
@@ -279,7 +279,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * Constructs an instance of HDBSCAN from the default values
 	 * @param data
 	 */
-	protected HDBSCAN(final AbstractRealMatrix data) {
+	protected HDBSCAN(final RealMatrix data) {
 		this(data, DEF_MIN_PTS);
 	}
 	
@@ -288,7 +288,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * @param eps
 	 * @param data
 	 */
-	protected HDBSCAN(final AbstractRealMatrix data, final int minPts) {
+	protected HDBSCAN(final RealMatrix data, final int minPts) {
 		this(data, new HDBSCANParameters(minPts));
 	}
 	
@@ -298,7 +298,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	 * @param builder
 	 * @param data
 	 */
-	protected HDBSCAN(final AbstractRealMatrix data, final HDBSCANParameters planner) {
+	protected HDBSCAN(final RealMatrix data, final HDBSCANParameters planner) {
 		super(data, planner);
 		
 		this.algo = planner.getAlgo();
@@ -1651,7 +1651,7 @@ final public class HDBSCAN extends AbstractDBSCAN {
 	}
 	
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		@SuppressWarnings("unused")
 		final int[] fit_labels = getLabels(); // throws the exception if not fit
 		final int n = newData.getColumnDimension();

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
@@ -130,7 +130,7 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 	 * Initializes a new AffinityPropagationModel with default parameters
 	 * @param data
 	 */
-	protected AffinityPropagation(final AbstractRealMatrix data) {
+	protected AffinityPropagation(final RealMatrix data) {
 		this(data, new AffinityPropagationParameters());
 	}
 	
@@ -139,7 +139,7 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 	 * @param data
 	 * @param planner
 	 */
-	public AffinityPropagation(final AbstractRealMatrix data, final AffinityPropagationParameters planner) {
+	public AffinityPropagation(final RealMatrix data, final AffinityPropagationParameters planner) {
 		super(data, planner);
 		
 		
@@ -810,7 +810,7 @@ final public class AffinityPropagation extends AbstractAutonomousClusterer imple
 	
 	/** {@inheritDoc} */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		return CentroidUtils.predict(this, newData);
 	}
 }

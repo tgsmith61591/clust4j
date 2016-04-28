@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.GlobalState;
@@ -113,7 +113,7 @@ public abstract class AbstractClusterer
 		this.singular_value = caller.singular_value;
 	}
 	
-	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner, boolean as_is) {
+	protected AbstractClusterer(RealMatrix data, BaseClustererParameters planner, boolean as_is) {
 		
 		this.dist_metric = planner.getMetric();
 		this.verbose = planner.getVerbose();
@@ -148,13 +148,13 @@ public abstract class AbstractClusterer
 	 * @param data
 	 * @param planner
 	 */
-	protected AbstractClusterer(AbstractRealMatrix data, BaseClustererParameters planner) {
+	protected AbstractClusterer(RealMatrix data, BaseClustererParameters planner) {
 		this(data, planner, false);
 	}
 	
 	
 	
-	final private Array2DRowRealMatrix initData(final AbstractRealMatrix data) {
+	final private Array2DRowRealMatrix initData(final RealMatrix data) {
 		final int m = data.getRowDimension(), n = data.getColumnDimension();
 		final double[][] ref = new double[m][n];
 		final HashSet<Double> unique = new HashSet<>();
@@ -273,8 +273,8 @@ public abstract class AbstractClusterer
 	 * alterations of the data.
 	 * @return copy of data
 	 */
-	public AbstractRealMatrix getData() {
-		return (AbstractRealMatrix) data.copy();
+	public RealMatrix getData() {
+		return data.copy();
 	}
 	
 	

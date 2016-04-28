@@ -18,7 +18,7 @@ package com.clust4j.algo;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.log.Loggable;
@@ -76,19 +76,19 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	
 	
 	
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X) {
+	public NearestNeighborHeapSearch(final RealMatrix X) {
 		this(X, DEF_LEAF_SIZE, DEF_DIST);
 	}
 	
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, int leaf_size) {
+	public NearestNeighborHeapSearch(final RealMatrix X, int leaf_size) {
 		this(X, leaf_size, DEF_DIST);
 	}
 	
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, DistanceMetric dist) {
+	public NearestNeighborHeapSearch(final RealMatrix X, DistanceMetric dist) {
 		this(X, DEF_LEAF_SIZE, dist);
 	}
 	
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, Loggable logger) {
+	public NearestNeighborHeapSearch(final RealMatrix X, Loggable logger) {
 		this(X, DEF_LEAF_SIZE, DEF_DIST, logger);
 	}
 	
@@ -98,7 +98,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	 * @param leaf_size
 	 * @param dist
 	 */
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist) {
+	public NearestNeighborHeapSearch(final RealMatrix X, int leaf_size, DistanceMetric dist) {
 		this(X, leaf_size, dist, null);
 	}
 	
@@ -108,7 +108,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	 * @param dist
 	 * @param logger
 	 */
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, DistanceMetric dist, Loggable logger) {
+	public NearestNeighborHeapSearch(final RealMatrix X, DistanceMetric dist, Loggable logger) {
 		this(X, DEF_LEAF_SIZE, dist, logger);
 	}
 	
@@ -119,7 +119,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 	 * @param dist
 	 * @param logger
 	 */
-	public NearestNeighborHeapSearch(final AbstractRealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
+	public NearestNeighborHeapSearch(final RealMatrix X, int leaf_size, DistanceMetric dist, Loggable logger) {
 		this(X.getData(), leaf_size, dist, logger);
 	}
 	
@@ -1285,7 +1285,7 @@ abstract class NearestNeighborHeapSearch implements java.io.Serializable {
 		RadiusNeighbors.validateRadius(radius);
 	}
 	
-	public Neighborhood queryRadius(final AbstractRealMatrix X, double[] radius, boolean sort) {
+	public Neighborhood queryRadius(final RealMatrix X, double[] radius, boolean sort) {
 		return queryRadius(X.getData(), radius, sort);
 	}
 	

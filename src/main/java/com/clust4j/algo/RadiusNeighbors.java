@@ -17,7 +17,7 @@ package com.clust4j.algo;
 
 import java.util.concurrent.RejectedExecutionException;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.Neighborhood;
@@ -30,11 +30,11 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 	private static final long serialVersionUID = 3620377771231699918L;
 	
 	
-	protected RadiusNeighbors(AbstractRealMatrix data) {
+	protected RadiusNeighbors(RealMatrix data) {
 		this(data, DEF_RADIUS);
 	}
 	
-	protected RadiusNeighbors(AbstractRealMatrix data, double radius) {
+	protected RadiusNeighbors(RealMatrix data, double radius) {
 		this(data, new RadiusNeighborsParameters(radius));
 	}
 	
@@ -42,7 +42,7 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 		this(caller, new RadiusNeighborsParameters(radius));
 	}
 
-	protected RadiusNeighbors(AbstractRealMatrix data, RadiusNeighborsParameters planner) {
+	protected RadiusNeighbors(RealMatrix data, RadiusNeighborsParameters planner) {
 		super(data, planner);
 		validateRadius(planner.getRadius());
 		logModelSummary();
@@ -54,7 +54,7 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 		logModelSummary();
 	}
 	
-	protected RadiusNeighbors(AbstractRealMatrix data, RadiusNeighborsParameters planner, boolean as_is) {
+	protected RadiusNeighbors(RealMatrix data, RadiusNeighborsParameters planner, boolean as_is) {
 		super(data, planner, as_is);
 		validateRadius(planner.getRadius());
 		logModelSummary();
@@ -183,7 +183,7 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 	}
 
 	@Override
-	public Neighborhood getNeighbors(AbstractRealMatrix x) {
+	public Neighborhood getNeighbors(RealMatrix x) {
 		return getNeighbors(x, radius);
 	}
 	
@@ -206,7 +206,7 @@ final public class RadiusNeighbors extends BaseNeighborsModel {
 		return getNeighbors(x, radius, false);
 	}
 	
-	public Neighborhood getNeighbors(AbstractRealMatrix x, double rad) {
+	public Neighborhood getNeighbors(RealMatrix x, double rad) {
 		return getNeighbors(x.getData(), rad, parallel);
 	}
 	

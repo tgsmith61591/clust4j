@@ -18,7 +18,7 @@ package com.clust4j.algo;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 import com.clust4j.except.ModelNotFitException;
@@ -53,7 +53,7 @@ public interface CentroidLearner extends java.io.Serializable {
 		 * @throws ModelNotFitException if the model isn't fit
 		 */
 		protected static <E extends AbstractClusterer & CentroidLearner & BaseClassifier>
-				int[] predict(E model, AbstractRealMatrix newData) throws ModelNotFitException {
+				int[] predict(E model, RealMatrix newData) throws ModelNotFitException {
 			
 			/*
 			 * First get the ground truth from the estimator...

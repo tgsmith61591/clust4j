@@ -18,7 +18,7 @@ package com.clust4j.algo;
 
 import java.util.Random;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.BaseNeighborsModel.BaseNeighborsPlanner;
 import com.clust4j.algo.BaseNeighborsModel.NeighborsAlgorithm;
@@ -35,7 +35,7 @@ public class RadiusNeighborsParameters extends BaseNeighborsPlanner<RadiusNeighb
 
 	
 	@Override
-	public RadiusNeighbors fitNewModel(AbstractRealMatrix data) {
+	public RadiusNeighbors fitNewModel(RealMatrix data) {
 		return new RadiusNeighbors(data, this.copy()).fit();
 	}
 

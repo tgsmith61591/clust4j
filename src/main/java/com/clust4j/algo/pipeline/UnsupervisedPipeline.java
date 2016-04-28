@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.clust4j.algo.pipeline;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.AbstractClusterer;
 import com.clust4j.algo.UnsupervisedClassifier;
@@ -34,9 +34,9 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 		super(planner, pipe);
 	}
 
-	public M fit(final AbstractRealMatrix data) {
+	public M fit(final RealMatrix data) {
 		synchronized(fitLock) {
-			AbstractRealMatrix copy = pipelineFitTransform(data);
+			RealMatrix copy = pipelineFitTransform(data);
 	
 			// Build/fit the model
 			return fit_model = planner.fitNewModel(copy);
@@ -67,7 +67,7 @@ public class UnsupervisedPipeline<M extends AbstractClusterer & UnsupervisedClas
 	 * @param newData
 	 */
 	@Override
-	public int[] predict(AbstractRealMatrix newData) {
+	public int[] predict(RealMatrix newData) {
 		checkFit();
 		return fit_model.predict(pipelineTransform(newData));
 	}

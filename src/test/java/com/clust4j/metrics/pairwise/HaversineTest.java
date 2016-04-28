@@ -17,7 +17,7 @@ package com.clust4j.metrics.pairwise;
 
 import static org.junit.Assert.*;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.junit.Test;
 
@@ -62,7 +62,7 @@ public class HaversineTest {
 
 		final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(coordinates, false);
 		StandardScaler scaler = new StandardScaler().fit(mat);
-		AbstractRealMatrix X = scaler.transform(mat);
+		RealMatrix X = scaler.transform(mat);
 		
 		AbstractCentroidClusterer km;
 		CentroidClustererParameters<? extends AbstractCentroidClusterer> planner;
@@ -82,7 +82,7 @@ public class HaversineTest {
 		// Inverse transform the centroid:
 		double[][] c = new double[][]{km.getCentroids().get(0)};
 		Array2DRowRealMatrix cm = new Array2DRowRealMatrix(c, false);
-		AbstractRealMatrix inverse = scaler.inverseTransform(cm);
+		RealMatrix inverse = scaler.inverseTransform(cm);
 		
 		assertTrue( VecUtils.equalsExactly(inverse.getRow(0), coordinates[0]) ); // First one should be Austin
 	}

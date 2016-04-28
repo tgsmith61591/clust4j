@@ -16,7 +16,7 @@
 
 package com.clust4j.algo;
 
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 
 import com.clust4j.algo.AbstractCentroidClusterer.InitializationStrategy;
 
@@ -27,7 +27,7 @@ public abstract class CentroidClustererParameters<T extends AbstractCentroidClus
 	protected int k = AbstractCentroidClusterer.DEF_K;
 	protected double minChange = AbstractCentroidClusterer.DEF_CONVERGENCE_TOLERANCE;
 
-	@Override abstract public T fitNewModel(AbstractRealMatrix mat);
+	@Override abstract public T fitNewModel(RealMatrix mat);
 	@Override abstract public int getMaxIter();
 	abstract public InitializationStrategy getInitializationStrategy();
 	abstract public CentroidClustererParameters<T> setConvergenceCriteria(final double min);

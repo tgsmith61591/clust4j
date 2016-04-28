@@ -18,7 +18,7 @@ package com.clust4j.algo.preprocess;
 import static org.junit.Assert.*;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.util.Precision;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class PreProcessorTests {
 
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
 		MeanCenterer norm = new MeanCenterer().fit(d);
-		AbstractRealMatrix scaled = norm.transform(d);
+		RealMatrix scaled = norm.transform(d);
 		double[][] operated = scaled.getData();
 		
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
@@ -55,6 +55,72 @@ public class PreProcessorTests {
 		
 		// Test inverse transform.
 		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(scaled).getData(), 1e-8));
+		
+		// copy coverage
+		norm.copy();
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			norm.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
+	}
+	
+	@Test
+	public void testMedianCenter() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+
+		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
+		MedianCenterer norm = new MedianCenterer().fit(d);
+		RealMatrix scaled = norm.transform(d);
+		double[][] operated = scaled.getData();
+		
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
+		
+		// test copy
+		operated = norm.copy().transform(data);
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 0)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 1)), 0, Precision.EPSILON));
+		assertTrue(Precision.equals(VecUtils.median(MatUtils.getColumn(operated, 2)), 0, Precision.EPSILON));
+		
+		// Test inverse transform.
+		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(scaled).getData(), 1e-8));
+		
+		// copy coverage
+		norm.copy();
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			norm.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
+	}
+	
+	@Test
+	public void testRobustScaler() {
+		final double[][] data = new double[][] {
+			new double[] {0.005, 	 0.182751,  0.1284},
+			new double[] {3.65816,   0.29518,   2.123316},
+			new double[] {4.1234,    0.27395,   1.8900002}
+		};
+
+		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
+		RobustScaler norm = new RobustScaler().fit(d);
+		RealMatrix scaled = norm.transform(d);
+		
+		// Test inverse transform.
+		assertTrue(MatUtils.equalsWithTolerance(data, norm.inverseTransform(scaled).getData(), 1e-8));
+		
+		// copy coverage
+		norm.copy();
 		
 		// test dim mismatch
 		boolean a = false;
@@ -74,7 +140,7 @@ public class PreProcessorTests {
 		
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
 		final StandardScaler norm = new StandardScaler().fit(d);
-		final AbstractRealMatrix normed = norm.transform(d);
+		final RealMatrix normed = norm.transform(d);
 		final double[][] operated = normed.getData();
 		
 		assertTrue(Precision.equals(VecUtils.mean(MatUtils.getColumn(operated, 0)), 0, 1e-12));
@@ -106,7 +172,7 @@ public class PreProcessorTests {
 
 		final Array2DRowRealMatrix d = new Array2DRowRealMatrix(data, false);
 		final MinMaxScaler norm = new MinMaxScaler().fit(d);
-		final AbstractRealMatrix normed = norm.transform(d);
+		final RealMatrix normed = norm.transform(d);
 		final double[][] operated = normed.getData();
 		
 		for(int i = 0; i < operated[0].length; i++) {
@@ -228,7 +294,7 @@ public class PreProcessorTests {
 	public void testPCA() {
 		final Array2DRowRealMatrix X = TestSuite.IRIS_DATASET.getData();
 		PCA pca = new PCA(2).fit(X);
-		AbstractRealMatrix xp = pca.transform(X);
+		RealMatrix xp = pca.transform(X);
 		
 		double[][] expected = new double[][]{
 			new double[]{-2.68420713, -0.32660731},
@@ -400,7 +466,7 @@ public class PreProcessorTests {
 		
 		
 		// Test inverse transform... we definitely get some bad floating precision here...
-		AbstractRealMatrix inverse = pca.inverseTransform(xp);
+		RealMatrix inverse = pca.inverseTransform(xp);
 		assertTrue(MatUtils.equalsWithTolerance(TestSuite.IRIS_DATASET.getData().getData(), inverse.getData(), 0.75));
 		
 		
