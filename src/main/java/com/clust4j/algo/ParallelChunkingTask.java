@@ -30,8 +30,8 @@ import com.clust4j.utils.MatrixFormatter;
 public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implements NamedEntity {
 	private static final long serialVersionUID = 6377106189203872639L;
 	final LogTimer timer;
-	final ChunkingStrategy strategy;
-	final ArrayList<Chunk> chunks;
+	final public ChunkingStrategy strategy;
+	final public ArrayList<Chunk> chunks;
 	
 	
 	/**
@@ -41,7 +41,7 @@ public abstract class ParallelChunkingTask<T> extends RecursiveTask<T> implement
 	public static class Chunk implements java.io.Serializable {
 		private static final long serialVersionUID = -4981036399670388292L;
 		final double[][] chunk;
-		final int start;
+		final public int start;
 		
 		public Chunk(final double[][] c, int start_idx) {
 			this.chunk = c;

@@ -65,6 +65,57 @@ public class PreProcessorTests {
 			norm.inverseTransform(TestSuite.getRandom(2, 2));
 		} catch(DimensionMismatchException dim) { a = true; }
 		finally { assertTrue(a); }
+		
+		// test not fit
+		a = false;
+		try {
+			new MeanCenterer().transform(d);
+		} catch(ModelNotFitException dim) { a = true; }
+		finally { assertTrue(a); }
+	}
+	
+	@Test
+	public void testBoxCoxTransformer() {
+		Array2DRowRealMatrix iris = TestSuite.IRIS_DATASET.getData();
+		BoxCoxTransformer bc = new BoxCoxTransformer().fit(iris);
+		
+		RealMatrix X = bc.transform(iris);
+		
+		// Since we floor at 1.0, we suffer some accuracy issues on inverse transform...
+		assertTrue(MatUtils.equalsWithTolerance(bc.inverseTransform(X).getData(), iris.getData(), 1.0));
+		
+		// Test a large matrix...
+		Array2DRowRealMatrix big = TestSuite.getRandom(400, 5);
+		bc = new BoxCoxTransformer().fit(big);
+		X = bc.transform(big);
+		
+		// test dim mismatch
+		boolean a = false;
+		try {
+			bc.inverseTransform(TestSuite.getRandom(2, 2));
+		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
+		
+		// test not fit
+		a = false;
+		try {
+			new BoxCoxTransformer().transform(iris);
+		} catch(ModelNotFitException dim) { a = true; }
+		finally { assertTrue(a); }
+		
+		// Test too small:
+		a = false;
+		try {
+			new BoxCoxTransformer().fit(TestSuite.getRandom(1, 5));
+		} catch(IllegalArgumentException i) { a = true; }
+		finally { assertTrue(a); }
+		
+		// Test not strictly positive:
+		a = false;
+		try {
+			new BoxCoxTransformer().fit(new Array2DRowRealMatrix(5, 5));
+		} catch(IllegalArgumentException i) { a = true; }
+		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -102,6 +153,13 @@ public class PreProcessorTests {
 			norm.inverseTransform(TestSuite.getRandom(2, 2));
 		} catch(DimensionMismatchException dim) { a = true; }
 		finally { assertTrue(a); }
+		
+		// test not fit
+		a = false;
+		try {
+			new MedianCenterer().transform(d);
+		} catch(ModelNotFitException dim) { a = true; }
+		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -127,6 +185,13 @@ public class PreProcessorTests {
 		try {
 			norm.inverseTransform(TestSuite.getRandom(2, 2));
 		} catch(DimensionMismatchException dim) { a = true; }
+		finally { assertTrue(a); }
+		
+		// test not fit
+		a = false;
+		try {
+			new RobustScaler().transform(d);
+		} catch(ModelNotFitException dim) { a = true; }
 		finally { assertTrue(a); }
 	}
 	

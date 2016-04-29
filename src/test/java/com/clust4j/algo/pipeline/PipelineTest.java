@@ -37,6 +37,7 @@ import com.clust4j.algo.NearestCentroidParameters;
 import com.clust4j.algo.Neighborhood;
 import com.clust4j.algo.NearestNeighbors;
 import com.clust4j.algo.NearestNeighborsParameters;
+import com.clust4j.algo.preprocess.BoxCoxTransformer;
 import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.algo.preprocess.PCA;
 import com.clust4j.algo.preprocess.PreProcessor;
@@ -384,6 +385,39 @@ public class PipelineTest implements BaseModelTest {
 			new StandardScaler(),
 			new MinMaxScaler(),
 			new PCA(0.85)
+		);
+		
+		/*
+		 * Fit the pipe and make predictions
+		 */
+		pipeline.fit(training.getData(), training.getLabels());
+		
+		// let's get predictions...
+		int[] predicted_labels = pipeline.predict(holdout.getData());
+		
+		// let's examine the accuracy of the holdout, and the predicted:
+		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
+	}
+	
+	@Test
+	public void testBoxCoxPipeline() {
+		DataSet data = TestSuite.BC_DATASET.shuffle();
+		TrainTestSplit split = new TrainTestSplit(data, 0.7);
+		
+		DataSet training = split.getTrain();
+		DataSet holdout  = split.getTest();
+		
+		/*
+		 * Initialize pipe
+		 */
+		SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+			new NearestCentroidParameters()
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			new StandardScaler(),
+			new MinMaxScaler(),
+			new PCA(0.85),
+			new BoxCoxTransformer()
 		);
 		
 		/*
