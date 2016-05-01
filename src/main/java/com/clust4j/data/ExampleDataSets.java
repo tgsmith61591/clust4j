@@ -331,4 +331,13 @@ abstract public class ExampleDataSets {
 	public static DataSet loadBreastCancer() {
 		return BreastCancerLoader.load();
 	}
+	
+	/**
+	 * A simple toy dataset of two crescent-shaped features intertwining.
+	 * Good for benchmarking.
+	 * @return the toy moons dataset
+	 */
+	public static DataSet loadToyMoons() {
+		return ToyMoonsLoader.load();
+	}
 }

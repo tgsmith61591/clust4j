@@ -353,7 +353,8 @@ final public class DBSCAN extends AbstractDBSCAN {
 				 * we can just avoid the next step and exit early
 				 */
 			} else { // otherwise, we know there is something in the radius--noise or other
-				for(int j = 0; j < n; j++) {
+				int j = 0;
+				while(j < idx_row.length) {
 					current_class = fit_labels[idx_row[j]];
 					
 					/*
@@ -363,7 +364,7 @@ final public class DBSCAN extends AbstractDBSCAN {
 					 * need to keep going.
 					 */
 					if(NOISE_CLASS == current_class) {
-						continue;
+						j++;
 					} else {
 						break;
 					}

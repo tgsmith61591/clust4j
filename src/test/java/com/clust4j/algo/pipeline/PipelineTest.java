@@ -22,8 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.junit.Test;
 
 import com.clust4j.TestSuite;
@@ -46,6 +48,7 @@ import com.clust4j.algo.preprocess.WeightTransformer;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
 import com.clust4j.data.DataSet;
+import com.clust4j.data.ExampleDataSets;
 import com.clust4j.data.TrainTestSplit;
 import com.clust4j.except.ModelNotFitException;
 import com.clust4j.kernel.GaussianKernel;
@@ -53,7 +56,7 @@ import com.clust4j.metrics.scoring.SupervisedMetric;
 import com.clust4j.utils.MatUtils;
 import com.clust4j.utils.VecUtils;
 
-import static com.clust4j.metrics.scoring.SupervisedMetric.BINOMIAL_ACCURACY;
+import static com.clust4j.metrics.scoring.SupervisedMetric.*;
 
 public class PipelineTest implements BaseModelTest {
 
@@ -486,5 +489,37 @@ public class PipelineTest implements BaseModelTest {
 		/*
 		 * This performs better than all of the other pipelines! This indicates we may not need all the features.
 		 */
+	}
+	
+	
+	
+	@Test
+	public void testMoonSet() {
+		DataSet moons = ExampleDataSets.loadToyMoons();
+		
+		// Add a Z offset...
+		moons.addColumn("X3", VecUtils.scalarMultiply(VecUtils.asDouble(moons.getLabels()), 0.5));
+		
+		final int[] actuals = moons.getLabels();
+		RealMatrix data = moons.getData();
+		
+		// LE MODEL PARAMS
+		KMeansParameters params = new KMeansParameters(2)
+			;
+		
+		// Without any preprocessing:
+		int[] predicted_labels = params.fitNewModel(data).getLabels();
+		System.out.println(Arrays.toString(predicted_labels));
+		System.out.println("Accuracy sans pre-processing: " + INDEX_AFFINITY.evaluate(actuals, predicted_labels));
+	
+		// With just a bit of preprocessing...
+		UnsupervisedPipeline<KMeans> pipe = new UnsupervisedPipeline<KMeans>(
+			params,
+			new WeightTransformer(new double[]{0.5, 0.0, 2.0})
+		);
+		
+		predicted_labels = pipe.fit(data).getLabels();
+		System.out.println(Arrays.toString(predicted_labels));
+		System.out.println("Accuracy with PCA: " + INDEX_AFFINITY.evaluate(actuals, predicted_labels));
 	}
 }
