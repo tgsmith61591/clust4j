@@ -42,6 +42,7 @@ import com.clust4j.algo.preprocess.MinMaxScaler;
 import com.clust4j.algo.preprocess.PCA;
 import com.clust4j.algo.preprocess.PreProcessor;
 import com.clust4j.algo.preprocess.StandardScaler;
+import com.clust4j.algo.preprocess.WeightTransformer;
 import com.clust4j.algo.preprocess.impute.MeanImputation;
 import com.clust4j.algo.preprocess.impute.MedianImputation;
 import com.clust4j.data.DataSet;
@@ -430,5 +431,60 @@ public class PipelineTest implements BaseModelTest {
 		
 		// let's examine the accuracy of the holdout, and the predicted:
 		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
+	}
+	
+	@Test
+	public void testWeightingPipeline() {
+		DataSet data = TestSuite.BC_DATASET.shuffle();
+		TrainTestSplit split = new TrainTestSplit(data, 0.7);
+		
+		DataSet training = split.getTrain();
+		DataSet holdout  = split.getTest();
+		
+		
+		// Initialize the weights...
+		double[] weights = new double[]{
+			/*
+			 * There are 30 features, and each 3 are related.
+			 * Maybe we just want 10 {1.0, 0.0, 0.0} to see how it works?
+			 */
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0,
+			1.0,0.0,0.0
+		};
+		
+		/*
+		 * Initialize pipe
+		 */
+		SupervisedPipeline<NearestCentroid> pipeline = new SupervisedPipeline<NearestCentroid>(
+			new NearestCentroidParameters()
+				.setVerbose(true)
+				.setMetric(new GaussianKernel()),
+			new StandardScaler(),
+			new MinMaxScaler(),
+			new WeightTransformer(weights)
+		);
+		
+		/*
+		 * Fit the pipe and make predictions
+		 */
+		pipeline.fit(training.getData(), training.getLabels());
+		
+		// let's get predictions...
+		int[] predicted_labels = pipeline.predict(holdout.getData());
+		
+		// let's examine the accuracy of the holdout, and the predicted:
+		System.out.println("Predicted accuracy: " + BINOMIAL_ACCURACY.evaluate(holdout.getLabels(), predicted_labels));
+	
+		/*
+		 * This performs better than all of the other pipelines! This indicates we may not need all the features.
+		 */
 	}
 }

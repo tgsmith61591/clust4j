@@ -21,6 +21,7 @@ import java.util.Random;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.Precision;
 
 import com.clust4j.except.NonUniformMatrixException;
@@ -727,6 +728,18 @@ public abstract class MatUtils {
 			out[i] = data[i][i];
 		
 		return out;
+	}
+	
+	/**
+	 * Assess whether every element in the matrices are exactly equal
+	 * @param a
+	 * @param b
+	 * @throws IllegalArgumentException if the matrix rows are empty
+	 * @throws DimensionMismatchException if the matrix dims don't match
+	 * @return true if all equal, false otherwise
+	 */
+	public static boolean equalsExactly(final RealMatrix a, final RealMatrix b) {
+		return equalsExactly(a.getData(),b.getData());
 	}
 	
 	/**

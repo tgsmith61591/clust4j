@@ -31,23 +31,23 @@ import com.clust4j.utils.VecUtils;
 
 public class BoxCoxTransformer extends Transformer {
 	private static final long serialVersionUID = -5397818601304593058L;
-	public static final double DEF_LAM_MIN = 0.05;
+	public static final double DEF_LAM_MIN = -1.0; // -1, 0 and .5 are the most common lambdas
 	public static final double DEF_LAM_MAX = 0.5;
-	public static final double DEF_LAM_INC = 0.05;
+	public static final double DEF_LAM_INC = 0.10;
 	static final double zero = 1e-12;
 	
 	/*
 	 * Lambda search parameters
 	 */
-	final private double lambda_min;
-	final private double lambda_max;
-	final private double increment;
+	final protected double lambda_min;
+	final protected double lambda_max;
+	final protected double increment;
 	
 	volatile protected double[] lambdas;
 	volatile protected double[] shift;
 	
 	
-	private BoxCoxTransformer(BoxCoxTransformer bc) {
+	protected BoxCoxTransformer(BoxCoxTransformer bc) {
 		this.lambdas = VecUtils.copy(bc.lambdas);
 		this.shift = VecUtils.copy(bc.shift);
 		this.lambda_min = bc.lambda_min;
@@ -60,23 +60,15 @@ public class BoxCoxTransformer extends Transformer {
 	}
 	
 	public BoxCoxTransformer(double lam_min, double lam_max, double increment) {
-		ensureAllPositive(lam_min, lam_max, increment);
 		
 		if(lam_max <= lam_min)
 			throw new IllegalArgumentException("lam_max must exceed lam_min");
+		if(increment <= 0)
+			throw new IllegalArgumentException("increment must be positive");
 		
 		this.lambda_min = lam_min;
 		this.lambda_max = lam_max;
 		this.increment = increment;
-	}
-	
-	
-	private static void ensureAllPositive(double...a) {
-		for(double d: a) {
-			if(d <= 0.0) {
-				throw new IllegalArgumentException("all values must be positive");
-			}
-		}
 	}
 	
 	
@@ -138,15 +130,17 @@ public class BoxCoxTransformer extends Transformer {
 	static class ParallelLambdaEstimator extends ParallelChunkingTask<double[]> {
 		private static final long serialVersionUID = 6510959845256491305L;
 		
+		private BoxCoxTransformer transformer;
 		private double[] shift;
 		private double[] lambdas;
 		private int lo, hi;
 		private double lmin, lmax, increment;
 
-		public ParallelLambdaEstimator(double[][] X, double[] shift, double lmin, double lmax, double inc) {
+		public ParallelLambdaEstimator(BoxCoxTransformer t, double[][] X, double[] shift, double lmin, double lmax, double inc) {
 			super(X);
 			
 			// Init lambdas and shift
+			this.transformer = t;
 			this.shift = shift;
 			this.lambdas = new double[shift.length];
 			this.lmin = lmin;
@@ -160,6 +154,7 @@ public class BoxCoxTransformer extends Transformer {
 		public ParallelLambdaEstimator(ParallelLambdaEstimator instance, int lo, int hi) {
 			super(instance);
 			
+			this.transformer = instance.transformer;
 			this.shift = instance.shift;
 			this.lambdas = instance.lambdas;
 			this.lmin = instance.lmin;
@@ -192,7 +187,7 @@ public class BoxCoxTransformer extends Transformer {
 					// Create the transformed feature:
 					double[] trans = new double[m];
 					for(int j = 0; j < m; j++) {
-						trans[j] = lambdaTransform(feature[j], shift_factor, lambda);
+						trans[j] = transformer.lambdaTransform(feature[j], shift_factor, lambda);
 						sumSq += (trans[j] * trans[j]);
 						sum += trans[j];
 					}
@@ -247,8 +242,8 @@ public class BoxCoxTransformer extends Transformer {
 			}
 		}
 		
-		static double[] doAll(double[][] X, double[] shift, double min, double max, double inc) {
-			return getThreadPool().invoke(new ParallelLambdaEstimator(X, shift, min, max, inc));
+		static double[] doAll(BoxCoxTransformer t, double[][] X, double[] shift, double min, double max, double inc) {
+			return getThreadPool().invoke(new ParallelLambdaEstimator(t, X, shift, min, max, inc));
 		}
 	}
 	
@@ -261,7 +256,7 @@ public class BoxCoxTransformer extends Transformer {
 	 * @param lambda
 	 * @return
 	 */
-	static double lambdaTransform(double y, double shift, double lambda) {
+	double lambdaTransform(double y, double shift, double lambda) {
 		double shifted = FastMath.max(y + shift, 1.0);
 		
 		//if(shifted < 1.0) {
@@ -277,6 +272,20 @@ public class BoxCoxTransformer extends Transformer {
 			return FastMath.log(shifted);
 		} else {
 			return (FastMath.pow(shifted, lambda) - 1.0) / lambda;
+		}
+	}
+	
+	public void estimateShifts(double[][] x) {
+		final int n = x.length;
+		
+		for(int j = 0; j < n; j++) {
+			double fac = 0.0;
+			double min = VecUtils.min(x[j]);
+			if(min < 0) {
+				fac = 1.0 - min;
+			}
+			
+			this.shift[j] = fac;
 		}
 	}
 
@@ -295,20 +304,11 @@ public class BoxCoxTransformer extends Transformer {
 			// Transpose so we can use VecUtils more efficiently,
 			// and then chunk the data for parallel operation
 			double[][] x = X.transpose().getData();
-			for(int j = 0; j < n; j++) {
-				double fac = 0.0;
-				double min = VecUtils.min(x[j]);
-				if(min < 0) {
-					fac = 1.0 - min;
-				}
-				
-				this.shift[j] = fac;
-			}
-			
+			estimateShifts(x);
 			
 			// Estimate the lambdas in parallel...
 			try {
-				this.lambdas = ParallelLambdaEstimator.doAll(x, shift, lambda_min, lambda_max, increment);
+				this.lambdas = ParallelLambdaEstimator.doAll(this, x, shift, lambda_min, lambda_max, increment);
 			} catch(NotStrictlyPositiveException nspe) {
 				throw new IllegalArgumentException("is one of your columns a constant?", nspe);
 			}

@@ -55,6 +55,11 @@ public class StandardScaler extends Transformer {
 		synchronized(fitLock) {
 			final int m = data.getRowDimension();
 			final int n = data.getColumnDimension();
+			
+			if(m < 2)
+				throw new IllegalArgumentException("cannot "
+					+ "meaningfully compute standard deviation "
+					+ "on fewer than two observations");
 
 			// need to mean center...
 			this.means = new double[n];
