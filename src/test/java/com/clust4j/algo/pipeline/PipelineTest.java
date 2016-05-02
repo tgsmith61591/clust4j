@@ -497,9 +497,6 @@ public class PipelineTest implements BaseModelTest {
 	public void testMoonSet() {
 		DataSet moons = ExampleDataSets.loadToyMoons();
 		
-		// Add a Z offset...
-		moons.addColumn("X3", VecUtils.scalarMultiply(VecUtils.asDouble(moons.getLabels()), 0.5));
-		
 		final int[] actuals = moons.getLabels();
 		RealMatrix data = moons.getData();
 		
@@ -512,7 +509,7 @@ public class PipelineTest implements BaseModelTest {
 		System.out.println(Arrays.toString(predicted_labels));
 		System.out.println("Accuracy sans pre-processing: " + INDEX_AFFINITY.evaluate(actuals, predicted_labels));
 	
-		// With just a bit of preprocessing...
+		// With weighting
 		UnsupervisedPipeline<KMeans> pipe = new UnsupervisedPipeline<KMeans>(
 			params,
 			new WeightTransformer(new double[]{0.5, 0.0, 2.0})
@@ -520,6 +517,6 @@ public class PipelineTest implements BaseModelTest {
 		
 		predicted_labels = pipe.fit(data).getLabels();
 		System.out.println(Arrays.toString(predicted_labels));
-		System.out.println("Accuracy with PCA: " + INDEX_AFFINITY.evaluate(actuals, predicted_labels));
+		System.out.println("Accuracy with weighting: " + INDEX_AFFINITY.evaluate(actuals, predicted_labels));
 	}
 }
