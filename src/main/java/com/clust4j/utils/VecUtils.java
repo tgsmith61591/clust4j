@@ -1675,7 +1675,13 @@ public abstract class VecUtils {
 		return var(a, DEF_SUBTRACT_ONE_VAR);
 	}
 	
-	final protected static double var(final double[] a, final double mean) {
+	/**
+	 * Compute the variance of a vector given the mean.
+	 * @param a
+	 * @param mean
+	 * @return
+	 */
+	final public static double var(final double[] a, final double mean) {
 		return var(a, mean, DEF_SUBTRACT_ONE_VAR);
 	}
 	
@@ -1689,6 +1695,7 @@ public abstract class VecUtils {
 			double res = x - mean; // Want to avoid math.pow...
 			sum += res * res;
 		}
+		
 		return sum / ((double)a.length - (n_minus_one ? 1.0 : 0.0));
 	}
 	

@@ -16,12 +16,10 @@
 
 package com.clust4j.algo.preprocess;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.algo.ParallelChunkingTask;
@@ -35,6 +33,7 @@ public class BoxCoxTransformer extends Transformer {
 	public static final double DEF_LAM_MAX = 0.5;
 	public static final double DEF_LAM_INC = 0.10;
 	static final double zero = 1e-12;
+	static final double shift_floor = 1e-8;
 	
 	/*
 	 * Lambda search parameters
@@ -170,40 +169,37 @@ public class BoxCoxTransformer extends Transformer {
 			double[][] x = chunk.get();
 			int start = chunk.start; // retrieve idx of shift & lambda
 			
-			NormalDistribution norm;
 			double shift_factor;
 			for(double[] feature: x) {
 				int m = feature.length;
 				shift_factor = this.shift[start];
 				
 				// for each lambda in the range:
-				double min_kolmogorov = Double.POSITIVE_INFINITY;
+				double min_llf = Double.POSITIVE_INFINITY;
 				double best_lambda = Double.NaN;
 				for(double lambda = lmin; lambda <= lmax; lambda += increment) {
-					
-					// We need to keep track of the mean as we go... also stddev
-					double sum = 0.0, sumSq = 0.0, mean, var, std;
 					
 					// Create the transformed feature:
 					double[] trans = new double[m];
 					for(int j = 0; j < m; j++) {
 						trans[j] = transformer.lambdaTransform(feature[j], shift_factor, lambda);
-						sumSq += (trans[j] * trans[j]);
-						sum += trans[j];
 					}
-					
-					// Update mean & stddev:
-					mean = sum / (double) m;
-					var = (sumSq - (sum*sum)/(double)m ) / ((double)m - 1.0);
-					std = FastMath.sqrt(var);
-					norm = new NormalDistribution(mean, std);
 					
 					// Test goodness of fit
-					double ks = goodnessOfFitTest(trans, norm);
-					if(ks < min_kolmogorov) {
-						min_kolmogorov = ks;
+					double mle = transformer.mle(VecUtils.scalarAdd(feature, shift_factor), trans, lambda);
+
+					// if NaN, continue.
+					if(Double.isNaN(mle)) {
+						continue;
+						
+					} else if(mle < min_llf) {
+						min_llf = mle;
 						best_lambda = lambda;
 					}
+				}
+				
+				if(Double.isNaN(best_lambda)) {
+					throw new NotStrictlyPositiveException(best_lambda);
 				}
 				
 				this.lambdas[start] = best_lambda;
@@ -213,15 +209,6 @@ public class BoxCoxTransformer extends Transformer {
 			// Since this works in place, this is unnecessary,
 			// but we have to match the signature of the API
 			return lambdas;
-		}
-		
-		/**
-		 * Perform test for normality using the Kolmogorov-Smirnov test
-		 * @param transformed
-		 * @return
-		 */
-		static double goodnessOfFitTest(double[] transformed, NormalDistribution norm) {
-			return new KolmogorovSmirnovTest().kolmogorovSmirnovTest(norm, transformed);
 		}
 
 		@Override
@@ -247,6 +234,47 @@ public class BoxCoxTransformer extends Transformer {
 		}
 	}
 	
+	/**
+	 * Perform test for normality using the Kolmogorov-Smirnov test
+	 * @param transformed
+	 * @return
+	 */
+	double mle(double[] data, double[] y, double lam) {
+		// compute the log-likelihood function. If it's the BoxCox, we can
+		// take the log, as we know it's already shifted. Else, We can't take the log of data, as there could be
+	    // zeros or negatives. Thus, we need to shift both distributions
+	    // up by some artbitrary factor just for the LLF computation
+		if(this instanceof YeoJohnsonTransformer) {
+			double min_d = VecUtils.min(data);
+			double min_y = VecUtils.min(y);
+			
+			double shift = 0.0;
+			if(min_d <= zero) {
+				shift = FastMath.abs(min_d) + 1.0;
+				data = VecUtils.scalarAdd(data, shift);
+			}
+			
+			// same goes for y...
+			if(min_y <= zero) {
+				shift = FastMath.abs(min_y) + 1.0;
+				y = VecUtils.scalarAdd(y, shift);
+			}
+		}
+		
+		// compute the variance on potentially shifted data
+		double var = VecUtils.var(y, false);
+		
+		// if the var is 0.0, means all the values were identical in y,
+		// so we'll return NaN so we don't optimize for this value of lam
+		if(0 == var)
+			return Double.NaN;
+		
+		double llf = (lam - 1.0) * VecUtils.sum(VecUtils.log(data));
+		llf -= data.length / 2.0 * FastMath.log(var);
+		
+		return -llf;
+	}
+	
 	
 	
 	/**
@@ -257,7 +285,7 @@ public class BoxCoxTransformer extends Transformer {
 	 * @return
 	 */
 	double lambdaTransform(double y, double shift, double lambda) {
-		double shifted = FastMath.max(y + shift, 1.0);
+		double shifted = FastMath.max(y + shift, shift_floor);
 		
 		//if(shifted < 1.0) {
 			/*
@@ -282,7 +310,7 @@ public class BoxCoxTransformer extends Transformer {
 			double fac = 0.0;
 			double min = VecUtils.min(x[j]);
 			if(min < 0) {
-				fac = 1.0 - min;
+				fac = shift_floor - min;
 			}
 			
 			this.shift[j] = fac;
