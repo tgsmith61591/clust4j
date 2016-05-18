@@ -23,5 +23,10 @@ package com.clust4j.optimize;
  * @param <T>
  */
 public interface OptimizableCaller {
+	/**
+	 * The function whose output to minimize
+	 * @param val
+	 * @return
+	 */
 	public double doCall(double val);
 }
