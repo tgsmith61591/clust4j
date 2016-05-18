@@ -17,8 +17,6 @@ package com.clust4j.algo.preprocess;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
-
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -114,27 +112,6 @@ public class PreProcessorTests {
 			new BoxCoxTransformer().fit(TestSuite.getRandom(1, 5));
 		} catch(IllegalArgumentException i) { a = true; }
 		finally { assertTrue(a); }
-		
-		// Test not strictly positive:
-		a = false;
-		try {
-			new BoxCoxTransformer().fit(new Array2DRowRealMatrix(5, 5));
-		} catch(IllegalArgumentException i) { a = true; }
-		finally { assertTrue(a); }
-		
-		// Ensure negative or zero increment is a no-no
-		a = false;
-		try {
-			new BoxCoxTransformer(-1.0, 3.0, 0.0);
-		} catch(IllegalArgumentException dim) { a = true; }
-		finally { assertTrue(a); }
-		
-		// Ensure bad max lambda is a no-no
-		a = false;
-		try {
-			new BoxCoxTransformer(-1.0, -2.0, 1.0);
-		} catch(IllegalArgumentException dim) { a = true; }
-		finally { assertTrue(a); }
 	}
 	
 	@Test
@@ -143,11 +120,12 @@ public class PreProcessorTests {
 		YeoJohnsonTransformer bc = new YeoJohnsonTransformer().fit(iris);
 		
 		RealMatrix X = bc.transform(iris);
-		System.out.println(TestSuite.formatter.format(X));
-		System.out.println(Arrays.toString(bc.lambdas));
+		//System.out.println(TestSuite.formatter.format(X));
+		//System.out.println(Arrays.toString(bc.lambdas));
 		
 		// make sure it works...
 		bc.inverseTransform(X);
+		//System.out.println(TestSuite.formatter.format(bc.inverseTransform(X)));
 		
 		// we suffer some accuracy issues on inverse transform due to log bases, etc...
 		//assertTrue(MatUtils.equalsWithTolerance(bc.inverseTransform(X).getData(), iris.getData(), 1.0));
@@ -176,27 +154,6 @@ public class PreProcessorTests {
 		try {
 			new YeoJohnsonTransformer().fit(TestSuite.getRandom(1, 5));
 		} catch(IllegalArgumentException i) { a = true; }
-		finally { assertTrue(a); }
-		
-		// Test not strictly positive:
-		a = false;
-		try {
-			new YeoJohnsonTransformer().fit(new Array2DRowRealMatrix(5, 5));
-		} catch(IllegalArgumentException i) { a = true; }
-		finally { assertTrue(a); }
-		
-		// Ensure negative or zero increment is a no-no
-		a = false;
-		try {
-			new YeoJohnsonTransformer(-1.0, 3.0, 0.0);
-		} catch(IllegalArgumentException dim) { a = true; }
-		finally { assertTrue(a); }
-		
-		// Ensure bad max lambda is a no-no
-		a = false;
-		try {
-			new YeoJohnsonTransformer(-1.0, -2.0, 1.0);
-		} catch(IllegalArgumentException dim) { a = true; }
 		finally { assertTrue(a); }
 	}
 	

@@ -57,6 +57,7 @@ import com.clust4j.metrics.pairwise.HaversineTest;
 import com.clust4j.metrics.pairwise.PairwiseTests;
 import com.clust4j.metrics.pairwise.TestDistanceEnums;
 import com.clust4j.metrics.scoring.TestMetrics;
+import com.clust4j.optimize.TestOptimizer;
 import com.clust4j.sample.BootstrapTest;
 import com.clust4j.utils.FormatterTests;
 import com.clust4j.utils.HeapTests;
@@ -108,6 +109,7 @@ import com.clust4j.utils.parallel.ParallelTests;
 	TestGlobals.class,
 	TestLabelEncoder.class,
 	TestMetrics.class,
+	TestOptimizer.class,
 	TestPublicAPI.class,
 	TestUtils.class,
 	TrainTestSplitTests.class,
