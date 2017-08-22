@@ -56,82 +56,82 @@ final Array2DRowRealMatrix mat = new Array2DRowRealMatrix(new double[][] {
 - **Partitional algorithms**:
   - [*k*-Means](https://en.wikipedia.org/wiki/K-means_clustering), an unsupervised clustering method that aims to partition *n* observations into *k* clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.
 
-        ```java
-        KMeans km = new KMeansParameters(k).fitNewModel(mat);
-        final int[] results = km.getLabels();
-        ```
+     ```java
+     KMeans km = new KMeansParameters(k).fitNewModel(mat);
+     final int[] results = km.getLabels();
+     ```
 
   - [*k*-Medoids](https://en.wikipedia.org/wiki/K-medoids), an unsupervised clustering method that chooses datapoints as centers (medoids or exemplars) and works with an arbitrary matrix of distances between datapoints instead of using the Euclidean norm.
 
-        ```java
-        KMedoids km = new KMedoidsParameters(k).fitNewModel(mat);
-        final int[] results = km.getLabels();
-        ```
+     ```java
+     KMedoids km = new KMedoidsParameters(k).fitNewModel(mat);
+     final int[] results = km.getLabels();
+     ```
 
   - [Affinity Propagation](https://en.wikipedia.org/wiki/Affinity_propagation), a clustering algorithm based on the concept of "message passing" between data points.Like `KMedoids`, Affinity Propagation finds "exemplars", members of the input set that are representative of clusters.
 
-        ```java
-        AffinityPropagation ap = new AffinityPropagationParameters().fitNewModel(mat);
-        final int[] results = ap.getLabels();
-        ```
+     ```java
+     AffinityPropagation ap = new AffinityPropagationParameters().fitNewModel(mat);
+     final int[] results = ap.getLabels();
+     ```
 
 
 - **Hierarchical algorithms**:
   - [HierarchicalAgglomerative](https://en.wikipedia.org/wiki/Hierarchical_clustering), a "bottom up" approach: each observation starts in its own cluster, and pairs of clusters are merged as one moves up the hierarchy. Agglomerative clustering is __not__ computationally friendly in how it scales. The agglomerative clustering procedure performs at O(n<sup>2</sup>), but far outperforms its cousin, [Divisive Clustering](http://nlp.stanford.edu/IR-book/html/htmledition/divisive-clustering-1.html).
 
-        ```java
-        HierarchicalAgglomerative a = new HierarchicalAgglomerativeParameters().fitNewModel(mat);
-        final int[] results = a.getLabels();
-        ```
+     ```java
+     HierarchicalAgglomerative a = new HierarchicalAgglomerativeParameters().fitNewModel(mat);
+     final int[] results = a.getLabels();
+     ```
 
 - **Density-based algorithms**:
   - [DBSCAN](http://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf), a density-based clustering algorithm: given a set of points in some space, it groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 
-        ```java
-        DBSCAN db = new DBSCANParameters(0.75).fitNewModel(mat);
-        final int[] results = db.getLabels();
-        ```
+     ```java
+     DBSCAN db = new DBSCANParameters(0.75).fitNewModel(mat);
+     final int[] results = db.getLabels();
+     ```
 
   - [HDBSCAN](http://link.springer.com/chapter/10.1007%2F978-3-642-37456-2_14), a density-based clustering algorithm: performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon. This implementation includes five algorithms: PrimsKD, PrimsBall, BoruvkaKD and BoruvkaBall.
 
-        ```java
-        HDBSCAN hdb = new HDBSCANParameters().fitNewModel(mat);
-        final int[] results = hdb.getLabels();
-        ```
+     ```java
+     HDBSCAN hdb = new HDBSCANParameters().fitNewModel(mat);
+     final int[] results = hdb.getLabels();
+     ```
 
   - [MeanShift](https://en.wikipedia.org/wiki/Mean_shift), a non-parametric feature-space analysis technique for locating the maxima of a density function, a so-called mode-seeking algorithm.
 
-        ```java
-        MeanShift ms = new MeanShiftParameters(0.5).fitNewModel(mat);
-        final int[] results = ms.getLabels();
-        ```
+     ```java
+     MeanShift ms = new MeanShiftParameters(0.5).fitNewModel(mat);
+     final int[] results = ms.getLabels();
+     ```
 
 - **Neighbor point clustering algorithms**:
   - `NearestNeighbors`, a neighbor clusterer that will fit the *k*-nearest points for each record in a matrix.
 
-        ```java
-        NearestNeighbors nn = new NearestNeighborsParameters(k).fitNewModel(mat);
-        Neighborhood neighborhood = nn.getNeighbors();
-        int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
-        double[][] distances = neighborhood.getDistances(); // The corresponding distances
-        ```
+     ```java
+     NearestNeighbors nn = new NearestNeighborsParameters(k).fitNewModel(mat);
+     Neighborhood neighborhood = nn.getNeighbors();
+     int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
+     double[][] distances = neighborhood.getDistances(); // The corresponding distances
+     ```
 
   - `RadiusNeighbors`, a neighbor clusterer that will fit the nearest points within a given radius.
 
-        ```java
-        RadiusNeighbors rn = new RadiusNeighborsParameters(1.5).fitNewModel(mat);
-        Neighborhood neighborhood = rn.getNeighbors();
-        int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
-        double[][] distances = neighborhood.getDistances(); // The corresponding distances
-        ```
+     ```java
+     RadiusNeighbors rn = new RadiusNeighborsParameters(1.5).fitNewModel(mat);
+     Neighborhood neighborhood = rn.getNeighbors();
+     int[][] indices = neighborhood.getIndices(); // The indices in order of nearness
+     double[][] distances = neighborhood.getDistances(); // The corresponding distances
+     ```
 
 - **Supervised clustering algorithms**:
   - `NearestCentroid`, a supervised algorithm that fits centroids based on a set of observed labels.
 
-        ```java
-        NearestCentroid nc = new NearestCentroidParameters().fitNewModel(mat, new int[]{0,1,1});
-        // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data
-        ```
+     ```java
+     NearestCentroid nc = new NearestCentroidParameters().fitNewModel(mat, new int[]{0,1,1});
+     // you can use .predict(AbstractRealMatrix) to retrieve predicted class labels on new data
+     ```
 
 
 
@@ -370,19 +370,19 @@ __Note:__ though similarity metrics *may* be used with any clustering algorithm,
 - **Pipeline**:
   - Construct a pipeline of `PreProcessor`s through which to push new data, resulting in a cluster fit:
         
-        ```java
-        // Unsupervised:
-        final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
-        // Use of varargs for the PreProcessors is supported
-        final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, new StandardScaler() /*, ... */);
-        // Push data through preprocessing pipeline and fit model
-        KMedoids km = pipe.fit(mat);
-        
-        // Supervised:
-        final NearestCentroidParameters s_planner = new NearestCentroidParameters().setVerbose(true);
-        final SupervisedPipeline<NearestCentroid> sup_pip = new SupervisedPipeline<NearestCentroid>(s_planner, new StandardScaler());
-        NearestCentroid model = sup_pip.fit(mat, new int[]{0,1,1});
-        ```
+     ```java
+     // Unsupervised:
+     final KMedoidsParameters planner = new KMedoidsParameters(2).setVerbose(true);
+     // Use of varargs for the PreProcessors is supported
+     final UnsupervisedPipeline<KMedoids> pipe = new UnsupervisedPipeline<KMedoids>(planner, new StandardScaler() /*, ... */);
+     // Push data through preprocessing pipeline and fit model
+     KMedoids km = pipe.fit(mat);
+     
+     // Supervised:
+     final NearestCentroidParameters s_planner = new NearestCentroidParameters().setVerbose(true);
+     final SupervisedPipeline<NearestCentroid> sup_pip = new SupervisedPipeline<NearestCentroid>(s_planner, new StandardScaler());
+     NearestCentroid model = sup_pip.fit(mat, new int[]{0,1,1});
+     ```
 
 
 
