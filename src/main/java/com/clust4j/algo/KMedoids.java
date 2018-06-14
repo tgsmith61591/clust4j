@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
 import com.clust4j.except.IllegalClusterStateException;
@@ -75,33 +77,44 @@ final public class KMedoids extends AbstractCentroidClusterer {
 	 * to free up heap space.
 	 */
 	volatile private double[][] dist_mat = null;
+	volatile private double[] weighted_vector = null;
 	
 	/**
 	 * Map the index to the WSS
 	 */
 	volatile private TreeMap<Integer, Double> med_to_wss = new TreeMap<>();
-	
-	
+
+	protected KMedoids(final RealMatrix data, final RealVector weights) {
+		this(data, weights, DEF_K);
+	}
 	
 	protected KMedoids(final RealMatrix data) {
 		this(data, DEF_K);
 	}
-	
+
+	protected KMedoids(final RealMatrix data, final RealVector weights, final int k) {
+		this(data, weights, new KMedoidsParameters(k).setMetric(Distance.MANHATTAN));
+	}
+
 	protected KMedoids(final RealMatrix data, final int k) {
 		this(data, new KMedoidsParameters(k).setMetric(Distance.MANHATTAN));
 	}
-	
-	protected KMedoids(final RealMatrix data, final KMedoidsParameters planner) {
+
+	protected KMedoids(final RealMatrix data, final RealVector weights, final KMedoidsParameters planner) {
 		super(data, planner);
-		
+		weighted_vector = weights.toArray();
 		// Check if is Manhattan
 		if(!this.dist_metric.equals(Distance.MANHATTAN)) {
 			warn("KMedoids is intented to run with Manhattan distance, WSS/BSS computations will be inaccurate");
 			//this.dist_metric = Distance.MANHATTAN; // idk that we want to enforce this...
 		}
 	}
-	
-	
+
+	protected KMedoids(final RealMatrix data, final KMedoidsParameters planner) {
+		this(data, new ArrayRealVector(data.getRowDimension(), 1), planner);
+	}
+
+
 	
 	
 	@Override
@@ -317,8 +330,8 @@ final public class KMedoids extends AbstractCentroidClusterer {
 				rowIdx = FastMath.min(i, medoid);
 				colIdx = FastMath.max(i, medoid);
 				
-				if(dist_mat[rowIdx][colIdx] < minDist) {
-					minDist = dist_mat[rowIdx][colIdx];
+				if((dist_mat[rowIdx][colIdx] * weighted_vector[i])< minDist) {
+					minDist = dist_mat[rowIdx][colIdx] * weighted_vector[i];
 					nearest = medoid;
 				}
 			}
@@ -398,7 +411,7 @@ final public class KMedoids extends AbstractCentroidClusterer {
 						rowIdx = FastMath.min(a, b);
 						colIdx = FastMath.max(a, b);
 						
-						medoidCost += dist_mat[rowIdx][colIdx];
+						medoidCost += dist_mat[rowIdx][colIdx] * weighted_vector[b];
 					}
 
 					if(medoidCost < minCost) {
