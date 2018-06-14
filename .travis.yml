@@ -1,6 +1,8 @@
 language: java
+dist: trusty
+sudo: false
 jdk:
-  - openjdk7
+  - openjdk8
   - oraclejdk8
 
 branches:
