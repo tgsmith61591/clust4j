@@ -43,6 +43,11 @@ test {
     }
 }
 
+javadoc {
+    source += sourceSets.main.allJava
+    classpath += configurations.compile
+}
+
 dependencies {
     compile 'log4j:log4j:1.2.17'
     compile 'org.apache.commons:commons-math3:3.6.1'
